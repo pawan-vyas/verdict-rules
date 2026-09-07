@@ -30,28 +30,47 @@ is checking it doesn't erode either one:
    change to this package only makes sense described in terms of one
    consumer's problem, it's in the wrong file.
 
-## How this package is typically consumed — plan for no release step
+## How this package is released and consumed
 
-If this package is vendored into a consumer's own monorepo rather than
-published and versioned, it's commonly wired in as an **editable local
-path** dependency (e.g. `uv`'s `[tool.uv.sources]`,
-`{ path = "../verdict", editable = true }`) rather than a version
-pinned from PyPI or an internal index. That has a real consequence for
-how careful a change needs to be whenever it's true:
+This package is published to PyPI as `verdict-rules`, with a real
+version pin standing between a change here and any consumer's
+production code — the normal "cut a release, consumers upgrade when
+ready" safety net applies, unlike an internal package vendored via an
+editable local path.
 
-- There is no "cut a release, consumers upgrade when ready" safety net.
-  A change saved to this package is live for every consumer's very next
-  process restart — there's no version pin standing between a bug here
-  and it reaching production code that depends on this package.
-- `pyproject.toml`'s `version` field is documentation, not necessarily a
-  gate — check whether anything in your own setup actually reads or
-  enforces it. Bump it on a meaningful change regardless (it's the one
-  place a future reader can see how far things have drifted from
-  `0.1.0`).
-- Practically: run this package's own test suite (`uv run pytest`,
-  below) *and* grep every consumer codebase you know about for
-  `from verdict import` before merging a change to a public type's
-  shape — see "Consumer impact checklist" below.
+Release procedure, once a change is ready to ship:
+
+1. Bump `python/pyproject.toml`'s `version` (semver;
+   `0.x` while the public API is still settling — a breaking change
+   bumps `MINOR` pre-1.0, `MAJOR` after).
+2. Add a `## python-vX.Y.Z` entry to the repo-root `CHANGELOG.md`, in
+   the same commit as the version bump — never backfilled later.
+3. Commit, then tag `python-vX.Y.Z` (the `python-` prefix matters: tags
+   are scoped per language, since each one releases independently to
+   its own registry — see `CHANGELOG.md`'s own intro).
+4. Push the tag. CI's `release-python.yml` does everything else: builds
+   the sdist/wheel, publishes to PyPI via Trusted Publishing, builds the
+   skill-distribution artifacts, and attaches all of it to a GitHub
+   Release.
+
+Two things stay true independent of the release step:
+
+- `pyproject.toml`'s `version` field is the single source of truth for
+  what shipped — CI asserts it matches the tag being pushed and fails
+  loudly on drift, rather than silently publishing a mismatch.
+- Before merging a change to a public type's shape, run this package's
+  own test suite (`uv run pytest`, below) *and* grep every consumer
+  codebase you know about for `from verdict import` — a version pin
+  protects a consumer from an *unwanted* upgrade, not from a real bug in
+  a version they do take — see "Consumer impact checklist" below.
+
+A consumer can still choose to vendor this package via an editable
+local path instead of a normal PyPI dependency (e.g. inside their own
+monorepo, before it's ready to depend on a public release). That
+reintroduces the old risk this section used to describe: no version pin
+between a change here and that consumer's next process restart, so the
+same test-suite-plus-grep discipline above matters even more in that
+setup, not less.
 
 ## Where to make a change
 
