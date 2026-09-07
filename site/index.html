@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verdict — rules that hold up under cross-examination</title>
+<meta name="description" content="A small, zero-dependency, async-native rule-evaluation engine. Structural typing, real short-circuiting, and a verdict that always explains itself.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,600&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Page — legal-paper cream, with a crimson accent (court stamp / red-ink
+       annotation) instead of the brown-gold this design started with — the
+       combination of a warm-cream page AND a brown-gold accent read as
+       antique/rustic rather than "a document," so the accent moved to a
+       single, cooler red hue instead, and the neutral inks were desaturated
+       to read as gray rather than brown. */
+    --page:     #F1E8D2;
+    --panel:    #E7DBB9;
+    --panel-2:  #DECBA0;
+    --line:     #CBB884;
+    --line-2:   #B29F6C;
+    --ink:      #1C1A16;
+    --ink-dim:  #46433C;
+    --ink-40:   #726D62;
+    --accent:      #A3342A;
+    --accent-dk:   #7C241C;
+    --accent-glow: rgba(163,52,42,0.16);
+    --redline:  #A3342A;
+    --ok:       #2F7A46;
+
+    /* Code blocks stay dark for contrast against the light page — a stamped
+       excerpt on a document, not a themed panel that follows page color. */
+    --code-bg:   #1C160D;
+    --code-line: #35291A;
+    --code-text: #E7DCC3;
+    --code-dim:  #93876A;
+    --code-kw:   #D8CBAA;
+    --code-str:  #E8B448;
+    --code-ok:   #5FCB86;
+    --code-err:  #E8604A;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* html needs its own explicit background, not just body's -- an overscroll
+     ("rubber-band") bounce on macOS/iOS briefly exposes area above/below the
+     body's own box, and without this it fell through to the browser's
+     default (near-black) canvas, showing as a jarring dark strip mid-scroll. */
+  html { scroll-behavior: smooth; background: var(--page); }
+
+  body {
+    background: var(--page);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 300;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden; /* backstop -- this is a single vertical-scroll page */
+  }
+
+  /* Grid items default to min-width: auto, which refuses to shrink below a
+     child's intrinsic content width (a long monospace line, an unbroken
+     code comment) -- confirmed at 375px this forced the whole .hero grid,
+     and therefore the page, wider than the viewport, clipping both columns'
+     text at the right edge. Every grid container's direct children need
+     min-width: 0 explicitly to actually respect their track's width. */
+  .hero-left, .hero-right, .act, .enter-text, .enter-right,
+  .install-tabs-col, .install-seq, .feat {
+    min-width: 0;
+  }
+
+  ::selection { background: var(--accent-glow); color: var(--ink); }
+
+  /* Code blocks keep a dark background regardless of the page theme (see
+     :root's comment above) -- the default selection above would force dark
+     text onto that same dark background and make a selection unreadable.
+     Re-scope selection for every dark-code-background context explicitly. */
+  .act-code::selection, .act-code *::selection,
+  .cp-code::selection, .cp-code *::selection,
+  .demo-body::selection, .demo-body *::selection {
+    background: rgba(232,180,72,0.35);
+    color: var(--code-text);
+  }
+
+  /* ════════════════════════════
+     NAV
+  ════════════════════════════ */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4rem;
+    height: 3.75rem;
+    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: 0;
+    background: var(--page); /* fully opaque -- a translucent nav let whatever
+      was scrolling underneath (including an overscroll-bounce artifact)
+      show through during scroll */
+    z-index: 100;
+  }
+
+  .nav-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.125rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .nav-logo .dim { font-weight: 400; font-style: italic; color: var(--ink-40); }
+
+  .nav-links { display: flex; gap: 2.5rem; list-style: none; align-items: center; }
+
+  .nav-links a {
+    font-size: 0.8125rem;
+    font-weight: 400;
+    color: var(--ink-dim);
+    text-decoration: none;
+    transition: color 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 0.4375rem;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  /* Shared icon sizing for every link/button that pairs an inline SVG with a
+     label — nav, doubts, footer, and CTA buttons all use this one class so
+     the icon system reads as one consistent language across the page. */
+  .icon { width: 0.9375rem; height: 0.9375rem; flex-shrink: 0; }
+
+  /* ════════════════════════════
+     HERO
+  ════════════════════════════ */
+  .hero {
+    /* Fills the first viewport cleanly (minus the sticky nav's own height) so
+       the next section never bleeds into view at common laptop window sizes
+       before any real scrolling happens -- confirmed against 1440x900 and
+       1512x824, both of which showed the journey banner peeking in before
+       this was added. svh falls back to plain vh on browsers without it. */
+    min-height: calc(100vh - 3.75rem);
+    min-height: calc(100svh - 3.75rem);
+    padding: 4rem 4rem 3rem;
+    border-bottom: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5rem;
+    align-items: center;
+  }
+
+  .hero-kicker {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1.25rem;
+  }
+
+  .hero-h1 { margin-bottom: 1.75rem; line-height: 1; font-family: 'Playfair Display', serif; }
+
+  .h1-bold {
+    display: block;
+    font-size: clamp(3rem, 6.5vw, 5.5rem);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    line-height: 1.05;
+  }
+
+  .h1-thin {
+    display: block;
+    font-size: clamp(3rem, 6.5vw, 5.5rem);
+    font-style: italic;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    color: var(--accent);
+    line-height: 1.05;
+  }
+
+  .hero-hook {
+    font-size: 1.125rem;
+    font-weight: 300;
+    color: var(--ink-dim);
+    line-height: 1.75;
+    max-width: 30rem;
+  }
+
+  .hero-hook strong { font-weight: 600; color: var(--ink); }
+  .hero-hook code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.9em;
+    color: var(--accent-dk);
+    background: var(--panel);
+    padding: 0.1rem 0.35rem;
+    border-radius: 2px;
+  }
+
+  .scroll-nudge {
+    margin-top: 2rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--ink-40);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .scroll-nudge:hover { color: var(--accent); }
+
+  .scroll-arrow { font-size: 1rem; animation: bob 2s ease-in-out infinite; }
+
+  @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-arrow { animation: none; }
+    html { scroll-behavior: auto; }
+  }
+
+  /* Docket / case-file card — the signature element */
+  .hero-right { padding-bottom: 0.5rem; position: relative; }
+
+  .docket {
+    background: var(--panel);
+    border: 1px solid var(--line-2);
+    border-radius: 4px;
+    padding: 1.75rem 2rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 1px 0 rgba(36,28,16,0.05);
+  }
+
+  .docket::before {
+    /* case-file top perforation, not a border-radius card default */
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: repeating-linear-gradient(90deg, var(--accent) 0 6px, transparent 6px 13px);
+    opacity: 0.7;
+  }
+
+  .docket-no {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    color: var(--ink-40);
+    text-transform: uppercase;
+    margin-bottom: 1.25rem;
+    padding-right: 6.5rem; /* keep clear of the stamp's absolute position */
+  }
+
+  .docket-word {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    margin-bottom: 0.35rem;
+  }
+
+  .docket-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    margin-bottom: 0.875rem;
+  }
+
+  .docket-phonetic {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-style: italic;
+    font-weight: 400;
+    color: var(--accent-dk);
+  }
+
+  .docket-pos {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-40);
+  }
+
+  .docket-sep { border: none; border-top: 1px solid var(--line-2); margin-bottom: 0.875rem; }
+
+  .docket-def {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.0625rem;
+    font-weight: 400;
+    color: var(--ink-dim);
+    line-height: 1.75;
+    margin-bottom: 0.75rem;
+  }
+
+  .docket-def code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85em;
+    color: var(--accent-dk);
+  }
+
+  .docket-example {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 1rem;
+    color: var(--ink-40);
+    padding-left: 1rem;
+    border-left: 2px solid var(--line-2);
+  }
+
+  .stamp {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: var(--redline);
+    border: 2px solid var(--redline);
+    border-radius: 3px;
+    padding: 0.3rem 0.65rem;
+    transform: rotate(9deg);
+    opacity: 0.9;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* ════════════════════════════
+     JOURNEY — three acts
+  ════════════════════════════ */
+  .journey { background: var(--panel); border-bottom: 1px solid var(--line); }
+
+  .journey-banner {
+    padding: 1.75rem 4rem;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: baseline;
+    gap: 2rem;
+  }
+
+  .journey-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .journey-byline {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-style: italic;
+    font-weight: 400;
+    color: var(--ink-dim);
+  }
+
+  .journey-acts { display: grid; grid-template-columns: repeat(3, 1fr); }
+
+  .act { padding: 2.25rem 2.5rem 2.5rem; border-right: 1px solid var(--line); }
+  .act:last-child { border-right: none; }
+
+  .act-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-40);
+    margin-bottom: 0.875rem;
+  }
+
+  .act-word {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 0.25rem;
+  }
+
+  .act-phonetic {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 1rem;
+    color: var(--accent-dk);
+    display: block;
+    margin-bottom: 0.875rem;
+  }
+
+  .act-rule { border: none; border-top: 1px solid var(--line); margin-bottom: 1rem; }
+
+  .act-body {
+    font-size: 0.9375rem;
+    font-weight: 300;
+    color: var(--ink-dim);
+    line-height: 1.75;
+    margin-bottom: 0.875rem;
+  }
+
+  .act-body strong { font-weight: 600; color: var(--ink); }
+
+  .act-code {
+    background: var(--code-bg);
+    border: 1px solid var(--code-line);
+    border-radius: 3px;
+    padding: 0.875rem 1rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    line-height: 1.7;
+    color: var(--code-text);
+    overflow-x: auto;
+    margin-bottom: 0.875rem;
+    white-space: pre-wrap;
+  }
+
+  .cm { color: var(--code-dim); }
+  .ck { color: var(--code-kw); }
+  .cs { color: var(--code-str); }
+  .ce { color: var(--code-err); }
+
+  .act-sting {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-style: italic;
+    font-weight: 400;
+    color: var(--ink-dim);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.625rem;
+    line-height: 1.65;
+  }
+
+  .act-sting::before { content: '—'; color: var(--ink-40); flex-shrink: 0; }
+
+  .journey-coda {
+    padding: 1.625rem 4rem;
+    border-top: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .journey-coda-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.0625rem;
+    font-style: italic;
+    font-weight: 400;
+    color: var(--ink-dim);
+  }
+
+  .journey-coda-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .journey-coda-link:hover { color: var(--accent-dk); }
+
+  /* ════════════════════════════
+     ENTER VERDICT
+  ════════════════════════════ */
+  .enter { background: var(--page); border-bottom: 1px solid var(--line); padding: 4.5rem 4rem 4rem; }
+
+  .enter-kicker {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1.25rem;
+  }
+
+  .enter-heading { margin-bottom: 2rem; font-family: 'Playfair Display', serif; }
+
+  .enter-h2-bold {
+    display: block;
+    font-size: clamp(2.75rem, 5.5vw, 4.75rem);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    color: var(--ink);
+  }
+
+  .enter-h2-thin {
+    display: block;
+    font-size: clamp(2.75rem, 5.5vw, 4.75rem);
+    font-style: italic;
+    font-weight: 400;
+    line-height: 1.05;
+    color: var(--accent);
+  }
+
+  .enter-body-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; }
+
+  .enter-p {
+    font-size: 1.0625rem;
+    font-weight: 300;
+    color: var(--ink-dim);
+    line-height: 1.75;
+    margin-bottom: 1.125rem;
+  }
+
+  .enter-p strong { font-weight: 600; color: var(--ink); }
+  .enter-p code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.9em;
+    color: var(--accent-dk);
+    background: var(--panel);
+    padding: 0.1rem 0.35rem;
+    border-radius: 2px;
+  }
+
+  .gen-note {
+    margin-top: 1.25rem;
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    background: var(--panel);
+  }
+
+  .gen-note-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-40);
+    margin-bottom: 0.75rem;
+  }
+
+  .gen-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.875rem; }
+
+  .gen-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 0.3rem 0.75rem;
+    border: 1px solid var(--line-2);
+    border-radius: 2px;
+    color: var(--ink-dim);
+    background: var(--page);
+  }
+
+  .gen-tag.planned {
+    color: var(--ink-40);
+    border-style: dashed;
+    background: transparent;
+    font-weight: 400;
+    font-style: italic;
+  }
+
+  .gen-note-sub { font-size: 0.875rem; font-weight: 300; color: var(--ink-40); line-height: 1.65; }
+  .gen-note-sub strong { font-weight: 600; color: var(--ink-dim); }
+  .gen-note-sub code { font-family: 'IBM Plex Mono', monospace; font-size: 0.9em; color: var(--accent-dk); }
+
+  .caps-strip { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.75rem; }
+
+  .cap { font-size: 0.75rem; font-weight: 500; color: var(--ink-dim); display: flex; align-items: center; gap: 0.35rem; }
+  .cap::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+  .code-comparison { border: 1px solid var(--code-line); border-radius: 3px; overflow: hidden; margin-bottom: 2rem; }
+
+  .cp-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid var(--code-line);
+    background: #241C10;
+  }
+
+  .cp-header + .cp-header { border-top: 1px solid var(--code-line); }
+
+  .cp-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--code-dim);
+  }
+
+  .badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.5625rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.5rem;
+    border-radius: 2px;
+  }
+
+  .badge-bad { background: rgba(232,96,74,0.18); color: var(--code-err); }
+  .badge-ok  { background: rgba(95,203,134,0.18); color: var(--code-ok); }
+
+  .cp-code {
+    padding: 1.25rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8125rem;
+    line-height: 1.8;
+    background: var(--code-bg);
+    overflow-x: auto;
+    color: var(--code-text);
+  }
+
+  .c-cmt { color: var(--code-dim); }
+  .c-kw  { color: var(--code-kw); }
+  .c-str { color: var(--code-str); }
+  .c-ok  { color: var(--code-ok); font-weight: 500; }
+  .c-err { color: var(--code-err); }
+
+  .enter-ctas { display: flex; align-items: center; gap: 2rem; flex-wrap: wrap; }
+
+  .btn-main {
+    background: var(--accent);
+    color: var(--page);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    padding: 0.875rem 2rem;
+    text-decoration: none;
+    border-radius: 3px;
+    transition: background 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-main:hover { background: var(--accent-dk); }
+
+  .btn-ghost {
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: var(--ink-dim);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    transition: color 0.15s;
+  }
+
+  .btn-ghost::after { content: '→'; transition: transform 0.15s; }
+  .btn-ghost:hover { color: var(--ink); }
+  .btn-ghost:hover::after { transform: translateX(4px); }
+
+  /* ════════════════════════════
+     FEATURES
+  ════════════════════════════ */
+  .features { padding: 6rem 4rem; border-bottom: 1px solid var(--line); background: var(--panel); }
+
+  .sec-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 4rem;
+  }
+
+  .sec-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .sec-count { font-family: 'IBM Plex Mono', monospace; font-size: 0.6875rem; font-weight: 400; color: var(--ink-40); letter-spacing: 0.08em; }
+
+  .feats-grid { display: grid; grid-template-columns: repeat(4, 1fr); }
+
+  .feat { padding-right: 3rem; margin-right: 3rem; border-right: 1px solid var(--line); }
+  .feat:last-child { border-right: none; padding-right: 0; margin-right: 0; }
+
+  .feat-idx { font-family: 'IBM Plex Mono', monospace; font-size: 0.625rem; font-weight: 500; color: var(--ink-40); letter-spacing: 0.1em; margin-bottom: 1.25rem; }
+
+  .feat-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1875rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    margin-bottom: 0.75rem;
+    line-height: 1.25;
+  }
+
+  .feat-desc { font-size: 0.9375rem; font-weight: 300; color: var(--ink-dim); line-height: 1.8; }
+  .feat-desc code { font-family: 'IBM Plex Mono', monospace; font-size: 0.85em; color: var(--accent-dk); }
+
+  /* ════════════════════════════
+     INSTALL
+  ════════════════════════════ */
+  .install-section { background: var(--page); padding: 4.5rem 4rem; }
+
+  .install-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 3rem;
+    flex-wrap: wrap;
+    padding-bottom: 1.75rem;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 2.5rem;
+  }
+
+  .install-kicker {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.875rem;
+  }
+
+  .install-heading {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    color: var(--ink);
+  }
+
+  .install-sub { font-size: 0.9375rem; font-weight: 300; color: var(--ink-40); line-height: 1.75; max-width: 22rem; text-align: right; }
+
+  .install-body { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: start; }
+
+  .tab-group { display: flex; gap: 0; margin-bottom: 0; }
+
+  .tab {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--line-2);
+    border-bottom: none;
+    border-radius: 3px 3px 0 0;
+    cursor: pointer;
+    color: var(--ink-40);
+    background: transparent;
+    transition: color 0.15s, background 0.15s;
+  }
+
+  .tab.active { background: var(--panel); color: var(--accent-dk); border-color: var(--line-2); }
+
+  .panel { background: var(--panel); border: 1px solid var(--line-2); border-radius: 0 3px 3px 3px; padding: 1.25rem 1.5rem; display: none; }
+  .panel.active { display: block; }
+
+  .term-row { display: flex; align-items: center; gap: 0.625rem; cursor: pointer; }
+  .t-dollar { font-family: 'IBM Plex Mono', monospace; font-size: 0.875rem; color: var(--ink-40); }
+  .t-cmd { font-family: 'IBM Plex Mono', monospace; font-size: 0.875rem; color: var(--ink); flex: 1; }
+  .t-copy { font-size: 0.625rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--line-2); transition: color 0.15s; font-family: 'IBM Plex Mono', monospace; }
+  .term-row:hover .t-copy { color: var(--accent); }
+
+  .install-note { margin-top: 1rem; font-size: 0.8125rem; color: var(--ink-40); line-height: 1.7; }
+  .install-note strong { color: var(--ink-dim); font-weight: 500; }
+  .install-note code { font-family: 'IBM Plex Mono', monospace; font-size: 0.9em; color: var(--accent-dk); }
+
+  .demo-window { background: var(--code-bg); border: 1px solid var(--code-line); border-radius: 5px; overflow: hidden; }
+
+  .demo-titlebar {
+    display: flex;
+    align-items: center;
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--code-line);
+    background: #241C10;
+    gap: 0.4rem;
+  }
+
+  .demo-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--code-line); flex-shrink: 0; }
+  .demo-wintitle { font-family: 'IBM Plex Mono', monospace; font-size: 0.625rem; color: var(--code-dim); letter-spacing: 0.06em; margin: 0 auto; }
+
+  .demo-body {
+    padding: 1.25rem 1.5rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8125rem;
+    line-height: 1.85;
+    white-space: pre-wrap;
+    color: var(--code-text);
+  }
+
+  .d-kw { color: var(--code-kw); }
+  .d-str { color: var(--code-str); }
+  .d-cmt { color: var(--code-dim); }
+  .d-out { color: var(--code-text); }
+  .d-ok { color: var(--code-ok); font-weight: 500; }
+
+  /* ════════════════════════════
+     DOUBTS + FOOTER
+  ════════════════════════════ */
+  .doubts {
+    padding: 3.5rem 4rem;
+    background: var(--panel);
+    border-top: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 4rem;
+    flex-wrap: wrap;
+  }
+
+  .doubts-q { font-family: 'Playfair Display', serif; font-size: 1.1875rem; font-style: italic; font-weight: 400; color: var(--ink-40); flex-shrink: 0; }
+  .doubts-links { display: flex; gap: 2.5rem; flex-wrap: wrap; align-items: center; }
+
+  .doubts-link {
+    font-size: 0.9375rem;
+    font-weight: 400;
+    color: var(--ink-dim);
+    text-decoration: none;
+    transition: color 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4375rem;
+  }
+  .doubts-link::after { content: ' →'; transition: transform 0.15s; display: inline-block; }
+  .doubts-link:hover { color: var(--accent-dk); }
+  .doubts-link:hover::after { transform: translateX(3px); }
+
+  footer {
+    padding: 1.75rem 4rem;
+    border-top: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    background: var(--page);
+  }
+
+  .footer-brand { font-family: 'Playfair Display', serif; font-size: 0.9375rem; font-weight: 700; letter-spacing: -0.01em; color: var(--ink); }
+  .footer-brand .dim { font-weight: 400; font-style: italic; color: var(--ink-40); }
+
+  .footer-links { display: flex; gap: 2rem; }
+  .footer-links a {
+    font-size: 0.8125rem;
+    font-weight: 300;
+    color: var(--ink-40);
+    text-decoration: none;
+    transition: color 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
+  .footer-links a:hover { color: var(--accent-dk); }
+
+  .footer-meta { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; font-weight: 300; color: var(--ink-40); }
+
+  /* ════════════════════════════
+     RESPONSIVE
+  ════════════════════════════ */
+  @media (max-width: 1100px) {
+    .feats-grid { grid-template-columns: repeat(2, 1fr); gap: 2.5rem; row-gap: 2.5rem; }
+    .feat { border-right: none; padding-right: 0; margin-right: 0; }
+  }
+
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; gap: 3rem; padding: 3.5rem 2.5rem 3rem; }
+    .journey-acts { grid-template-columns: 1fr; }
+    .act { border-right: none; border-bottom: 1px solid var(--line); }
+    .act:last-child { border-bottom: none; }
+    .enter { padding: 3.5rem 2.5rem; }
+    .enter-body-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+    .install-header { flex-direction: column; align-items: flex-start; }
+    .install-sub { text-align: left; }
+    .install-body { grid-template-columns: 1fr; gap: 2.5rem; }
+    .features { padding: 4rem 2.5rem; }
+  }
+
+  @media (max-width: 640px) {
+    nav { padding: 0 1.5rem; }
+    /* The 3 nav links plus wordmark don't fit at phone width without wrapping
+       or forcing horizontal page overflow -- both links sets are already
+       repeated in the footer and the doubts section below, so drop them
+       here rather than adding a hamburger menu for a single-page site. */
+    .nav-links { display: none; }
+    .hero, .journey-banner, .install-section, .doubts, footer { padding-left: 1.5rem; padding-right: 1.5rem; }
+    .act { padding: 1.75rem 1.5rem 2rem; }
+    .enter { padding: 3rem 1.5rem; }
+    .h1-bold, .h1-thin { font-size: 2.75rem; }
+    .enter-h2-bold, .enter-h2-thin { font-size: 2.25rem; }
+    .stamp { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="nav-logo">Verdict<span class="dim"> rules</span></a>
+  <ul class="nav-links">
+    <li>
+      <a href="https://github.com/pawan-vyas/verdict-rules/blob/main/python/docs/quickstart.md">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v18H6.5A2.5 2.5 0 0 0 4 22.5V4.5z"/><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/></svg>
+        <span>Docs</span>
+      </a>
+    </li>
+    <li>
+      <a href="https://pypi.org/project/verdict-rules/">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+        <span>PyPI</span>
+      </a>
+    </li>
+    <li>
+      <a href="https://github.com/pawan-vyas/verdict-rules">
+        <svg class="icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        <span>GitHub</span>
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="hero-left">
+    <p class="hero-kicker">Open Source · MIT · Zero Dependencies · Forever</p>
+    <div class="hero-h1">
+      <span class="h1-bold">Every rule</span>
+      <span class="h1-bold">gets a fair</span>
+      <span class="h1-thin">hearing.</span>
+    </div>
+    <p class="hero-hook">
+      You've written the <code>if</code>/<code>elif</code> ladder. You've pulled the thresholds
+      into a config table. You've reached for a real rules engine — and inherited its class
+      hierarchy, its registry, its own ladder hiding one level down.
+      <strong>Then a rule needed to explain itself, and none of them could.</strong>
+    </p>
+    <a href="#journey" class="scroll-nudge">
+      <span>The familiar story</span>
+      <span class="scroll-arrow">↓</span>
+    </a>
+  </div>
+
+  <div class="hero-right">
+    <div class="docket">
+      <span class="stamp">Exhibit A</span>
+      <p class="docket-no">No. 0.1.0 — PY · Ct. of Rule Evaluation</p>
+      <p class="docket-word">ver·dict</p>
+      <div class="docket-meta">
+        <span class="docket-phonetic">/ vər-dikt /</span>
+        <span class="docket-pos">noun</span>
+      </div>
+      <hr class="docket-sep">
+      <p class="docket-def">
+        A decision reached by weighing the facts before it — what a jury renders after
+        testimony. Here: what a <code>Rule</code> renders after weighing a context. Pass or
+        fail, with its reasoning attached.
+      </p>
+      <p class="docket-example">"The verdict wasn't guilty or innocent — it was 'passed, because three of four conditions held, and here's which one didn't.'"</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── JOURNEY ── -->
+<section class="journey" id="journey">
+  <div class="journey-banner">
+    <span class="journey-label">The familiar story</span>
+    <span class="journey-byline">Every codebase arrives at this the same way.</span>
+  </div>
+
+  <div class="journey-acts">
+
+    <div class="act">
+      <p class="act-num">Act I</p>
+      <h3 class="act-word">if/el·if</h3>
+      <span class="act-phonetic">/ if-el-if / n., ladder</span>
+      <hr class="act-rule">
+      <p class="act-body">
+        It ships fast. A total check, a membership check, a promo-code fallback — three
+        conditions, one function, done. Then a fourth condition arrives that depends on the
+        outcome of the first two. <strong>Evaluation order becomes load-bearing</strong>, and
+        nobody wrote that down.
+      </p>
+      <div class="act-code"><span class="ck">async def</span> ships_free(order):
+    <span class="ck">if</span> order[<span class="cs">"total"</span>] >= 100:
+        <span class="ck">return</span> <span class="ck">True</span>
+    <span class="ck">elif</span> order[<span class="cs">"is_premium"</span>]:
+        <span class="ck">return</span> <span class="ck">True</span>
+    <span class="ck">else</span>:
+        <span class="ck">return await</span> check_promo(order)
+<span class="cm"># the promo check runs last because</span>
+<span class="cm"># someone happened to write it last —</span>
+<span class="cm"># not because it's the expensive one.</span></div>
+      <p class="act-sting">You survive it. You add a comment. You swear the next one will be a real design.</p>
+    </div>
+
+    <div class="act">
+      <p class="act-num">Act II</p>
+      <h3 class="act-word">con·fig ta·ble</h3>
+      <span class="act-phonetic">/ kon-fig tay-bel / n.</span>
+      <hr class="act-rule">
+      <p class="act-body">
+        You pull the thresholds into a database row — no more redeploying for a marketing
+        change. Genuinely better. But nothing says whether the rows combine with
+        <strong>all-must-pass</strong> or <strong>any-one-will-do</strong>, and an empty
+        table's meaning ("nothing configured") is a coin flip nobody decided on purpose.
+      </p>
+      <div class="act-code"><span class="cm"># rule_rows table</span>
+{ <span class="cs">"category"</span>: <span class="cs">"Manager"</span>, <span class="cs">"group"</span>: <span class="cs">"HQ"</span> }
+{ <span class="cs">"category"</span>: <span class="cs">"Analyst"</span>, <span class="cs">"group"</span>: <span class="cs">"Support"</span> }
+<span class="cm"># AND across rows, or OR? Depends who</span>
+<span class="cm"># you ask. An empty table: passes or</span>
+<span class="cm"># fails? Also depends who you ask.</span></div>
+      <p class="act-sting">It's data now. The ambiguity just moved with it.</p>
+    </div>
+
+    <div class="act">
+      <p class="act-num">Act III</p>
+      <h3 class="act-word">the frame·work</h3>
+      <span class="act-phonetic">/ dhe fraym-werk / n.</span>
+      <hr class="act-rule">
+      <p class="act-body">
+        You reach for a proper rules engine — a real one, with a base class to extend, a
+        registry to populate, a DSL to learn. Then you need one rule that only applies to a
+        single screen, and <strong>the abstraction gets in the way</strong> of the one thing it
+        was supposed to make easy: adding a rule.
+      </p>
+      <div class="act-code"><span class="cm"># somewhere in the framework's docs</span>
+<span class="ck">class</span> MyRule(BaseRule):
+    <span class="ck">def</span> __init__(self):
+        <span class="ck">super</span>().__init__(registry=<span class="ck">True</span>)
+    <span class="cm"># register(), validate(), compile() ...</span>
+    <span class="cm"># six methods to override for one check</span></div>
+      <p class="act-sting">One requirement. A framework's worth of ceremony. Permanent overhead.</p>
+    </div>
+
+  </div>
+
+  <div class="journey-coda">
+    <span class="journey-coda-text">The same story. Every codebase, every domain.</span>
+    <a href="#enter" class="journey-coda-link">Enter Verdict <span class="scroll-arrow">↓</span></a>
+  </div>
+</section>
+
+<!-- ── ENTER VERDICT ── -->
+<section class="enter" id="enter">
+  <p class="enter-kicker">Enter Verdict.</p>
+  <div class="enter-heading">
+    <span class="enter-h2-bold">One protocol.</span>
+    <span class="enter-h2-thin">Every rule.</span>
+  </div>
+
+  <div class="enter-body-grid">
+    <div class="enter-text">
+      <p class="enter-p">
+        A <code>Rule</code> is anything with a <code>name</code>, an optional <code>group</code>,
+        and an <code>async evaluate(context)</code> method — a structural
+        <strong>Protocol</strong>, not a base class. No registration, no inheritance, no
+        subclassing to satisfy. If it walks like a rule, it is one.
+      </p>
+      <p class="enter-p">
+        <code>AndRule</code>/<code>OrRule</code> short-circuit exactly the way
+        <code>and</code>/<code>or</code> already do in your head — and it's a
+        <strong>real contract, not an optimization</strong>: the rule after the deciding one
+        genuinely never runs. Every verdict carries its own reasoning in
+        <code>RuleResult.data</code>, opaque to Verdict itself, fully readable by you.
+      </p>
+      <div class="gen-note">
+        <p class="gen-note-label">Ships today</p>
+        <div class="gen-tags">
+          <span class="gen-tag">Python</span>
+          <span class="gen-tag planned">JS / TS — planned</span>
+          <span class="gen-tag planned">C# — planned</span>
+        </div>
+        <p class="gen-note-sub">Same <code>Rule</code>/<code>Engine</code>/<code>Result</code> design, <strong>every language it ever ships for.</strong></p>
+      </div>
+      <div class="caps-strip">
+        <span class="cap">Structural typing</span>
+        <span class="cap">Real short-circuiting</span>
+        <span class="cap">Vacuous-truth safety</span>
+        <span class="cap">Zero dependencies</span>
+        <span class="cap">Oracle/differential testing</span>
+        <span class="cap">AI-agent skill included</span>
+      </div>
+    </div>
+
+    <div class="enter-right">
+      <div class="code-comparison">
+        <div>
+          <div class="cp-header">
+            <span class="cp-title">Before — hand-rolled ladder</span>
+            <span class="badge badge-bad">Silent drift</span>
+          </div>
+          <pre class="cp-code"><span class="c-cmt"># a 4th condition means editing this</span>
+<span class="c-kw">async def</span> can_proceed(ctx):
+    <span class="c-kw">if</span> ctx[<span class="c-str">"requests"</span>] >= ctx[<span class="c-str">"limit"</span>]:
+        <span class="c-kw">return</span> <span class="c-kw">False</span>
+    <span class="c-kw">if</span> ctx[<span class="c-str">"status"</span>] != <span class="c-str">"active"</span>:
+        <span class="c-kw">return</span> <span class="c-kw">False</span>
+    <span class="c-kw">return</span> <span class="c-kw">True</span>
+<span class="c-err"># which check failed? no idea — just False.</span></pre>
+        </div>
+        <div>
+          <div class="cp-header" style="border-top:1px solid var(--code-line)">
+            <span class="cp-title">After — verdict</span>
+            <span class="badge badge-ok">Self-explaining</span>
+          </div>
+          <pre class="cp-code"><span class="c-cmt"># a 4th condition is a 4th FunctionRule</span>
+can_proceed = AndRule(<span class="c-str">"can_proceed"</span>, [
+    FunctionRule(<span class="c-str">"under_limit"</span>, under_limit),
+    FunctionRule(<span class="c-str">"in_good_standing"</span>, in_good_standing),
+])
+result = <span class="c-kw">await</span> engine.run_named(<span class="c-str">"can_proceed"</span>, ctx)
+<span class="c-ok"># result.data → which sub-rule passed,</span>
+<span class="c-ok"># which didn't. Every time. For free.</span></pre>
+        </div>
+      </div>
+      <div class="enter-ctas">
+        <a href="#install" class="btn-main">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Install Verdict
+        </a>
+        <a href="https://github.com/pawan-vyas/verdict-rules/blob/main/python/docs/quickstart.md" class="btn-ghost">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v18H6.5A2.5 2.5 0 0 0 4 22.5V4.5z"/><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/></svg>
+          Read the quickstart
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FEATURES ── -->
+<section class="features">
+  <div class="sec-header">
+    <span class="sec-label">On the record</span>
+    <span class="sec-count">6 findings</span>
+  </div>
+  <div class="feats-grid">
+    <div class="feat">
+      <p class="feat-idx">01 / structure</p>
+      <h3 class="feat-title">Structural, not inherited</h3>
+      <p class="feat-desc"><code>Rule</code> is a <strong>Protocol</strong>. Any object with the right shape qualifies — no base class, no registry, no import cycle back into this package.</p>
+    </div>
+    <div class="feat">
+      <p class="feat-idx">02 / execution</p>
+      <h3 class="feat-title">Short-circuiting is a promise</h3>
+      <p class="feat-desc">Evaluation is always <strong>sequential, never concurrent</strong> — the rule after a deciding failure or pass genuinely never runs. Proven by a call-counter test, not assumed.</p>
+    </div>
+    <div class="feat">
+      <p class="feat-idx">03 / correctness</p>
+      <h3 class="feat-title">Vacuous truth, decided on purpose</h3>
+      <p class="feat-desc">An empty <code>AndRule</code> passes; an empty <code>OrRule</code> fails — the same asymmetry <code>all([])</code>/<code>any([])</code> already have in plain Python, made explicit per composite.</p>
+    </div>
+    <div class="feat">
+      <p class="feat-idx">04 / footprint</p>
+      <h3 class="feat-title">Zero dependencies</h3>
+      <p class="feat-desc">Nothing to audit, nothing to pin, nothing that breaks because a transitive package changed underneath it. One small, standalone package.</p>
+    </div>
+    <div class="feat">
+      <p class="feat-idx">05 / testing</p>
+      <h3 class="feat-title">Oracle/differential testing</h3>
+      <p class="feat-desc">The shipped example runs 500 deterministically-seeded random cases against an independent, deliberately-dumb oracle — a regression net wider than anyone would hand-curate.</p>
+    </div>
+    <div class="feat">
+      <p class="feat-idx">06 / tooling</p>
+      <h3 class="feat-title">Ships with an AI-agent skill</h3>
+      <p class="feat-desc">A vendorable skill teaches Claude, Cursor, and six other harnesses when to reach for Verdict and how to extend it — <code>scripts/install.sh</code> wires it into any repo.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── INSTALL ── -->
+<section class="install-section" id="install">
+  <div class="install-header">
+    <div>
+      <p class="install-kicker">Start in one minute</p>
+      <h2 class="install-heading">Install Verdict.</h2>
+    </div>
+    <p class="install-sub">Pure Python. No compiled extensions, no runtime services.</p>
+  </div>
+
+  <div class="install-body">
+    <div class="install-tabs-col">
+      <div class="tab-group">
+        <button class="tab active" onclick="switchTab('pip', this)">pip</button>
+        <button class="tab" onclick="switchTab('uv', this)">uv</button>
+      </div>
+      <div class="tab-panels">
+        <div class="panel active" id="panel-pip">
+          <div class="term-row" onclick="copyLine(this, 'pip install verdict-rules')">
+            <span class="t-dollar">$</span>
+            <span class="t-cmd">pip install verdict-rules</span>
+            <span class="t-copy">Copy</span>
+          </div>
+        </div>
+        <div class="panel" id="panel-uv">
+          <div class="term-row" onclick="copyLine(this, 'uv add verdict-rules')">
+            <span class="t-dollar">$</span>
+            <span class="t-cmd">uv add verdict-rules</span>
+            <span class="t-copy">Copy</span>
+          </div>
+        </div>
+      </div>
+      <p class="install-note">
+        The PyPI distribution is named <strong>verdict-rules</strong> (the plain name
+        <code>verdict</code> was already taken) — the import name stays <code>verdict</code>,
+        unchanged.
+      </p>
+    </div>
+
+    <div class="install-seq">
+      <div class="demo-window">
+        <div class="demo-titlebar">
+          <span class="demo-dot"></span><span class="demo-dot"></span><span class="demo-dot"></span>
+          <span class="demo-wintitle">first_rule.py</span>
+        </div>
+        <div class="demo-body"><span class="d-kw">from</span> verdict <span class="d-kw">import</span> FunctionRule, AndRule, RuleResult, RulesEngine
+
+<span class="d-kw">async def</span> under_limit(ctx):
+    <span class="d-kw">return</span> RuleResult(rule_name=<span class="d-str">"under_limit"</span>,
+        passed=ctx[<span class="d-str">"requests_this_minute"</span>] &lt; ctx[<span class="d-str">"limit"</span>])
+
+<span class="d-kw">async def</span> in_good_standing(ctx):
+    <span class="d-kw">return</span> RuleResult(rule_name=<span class="d-str">"in_good_standing"</span>,
+        passed=ctx[<span class="d-str">"account_status"</span>] == <span class="d-str">"active"</span>)
+
+can_proceed = AndRule(<span class="d-str">"can_proceed"</span>, [
+    FunctionRule(<span class="d-str">"under_limit"</span>, under_limit),
+    FunctionRule(<span class="d-str">"in_good_standing"</span>, in_good_standing),
+])
+engine = RulesEngine([can_proceed])
+result = <span class="d-kw">await</span> engine.run_named(<span class="d-str">"can_proceed"</span>, {
+    <span class="d-str">"requests_this_minute"</span>: 3, <span class="d-str">"limit"</span>: 10, <span class="d-str">"account_status"</span>: <span class="d-str">"active"</span>,
+})
+<span class="d-cmt"># result.passed</span>
+<span class="d-ok">True</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── DOUBTS ── -->
+<section class="doubts">
+  <p class="doubts-q">Having doubts?</p>
+  <div class="doubts-links">
+    <a href="https://github.com/pawan-vyas/verdict-rules/blob/main/python/docs/quickstart.md" class="doubts-link">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v18H6.5A2.5 2.5 0 0 0 4 22.5V4.5z"/><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/></svg>
+      Read the quickstart
+    </a>
+    <a href="https://github.com/pawan-vyas/verdict-rules/blob/main/docs/architecture.md" class="doubts-link">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      Read the architecture
+    </a>
+    <a href="https://github.com/pawan-vyas/verdict-rules" class="doubts-link">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6 2 12l6 6"/><path d="M16 6l6 6-6 6"/></svg>
+      Browse the source
+    </a>
+    <a href="https://github.com/pawan-vyas/verdict-rules/issues/new/choose" class="doubts-link">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.82 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      Ask a question
+    </a>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <span class="footer-brand">Verdict<span class="dim"> rules</span></span>
+  <div class="footer-links">
+    <a href="https://github.com/pawan-vyas/verdict-rules">
+      <svg class="icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      GitHub
+    </a>
+    <a href="https://pypi.org/project/verdict-rules/">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+      PyPI
+    </a>
+    <a href="https://github.com/pawan-vyas/verdict-rules/blob/main/CHANGELOG.md">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Changelog
+    </a>
+    <a href="https://github.com/pawan-vyas/verdict-rules/blob/main/LICENSE">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18"/><path d="M8 21h8"/><path d="M5 7h14"/><path d="M5 7 2 13a3 3 0 0 0 6 0L5 7z"/><path d="M19 7l-3 6a3 3 0 0 0 6 0l-3-6z"/></svg>
+      MIT License
+    </a>
+  </div>
+  <span class="footer-meta">&copy; 2026 verdict-rules</span>
+</footer>
+
+<script>
+  function switchTab(id, btn) {
+    document.querySelectorAll('.tab').forEach(function (t) { t.classList.remove('active'); });
+    document.querySelectorAll('.panel').forEach(function (p) { p.classList.remove('active'); });
+    btn.classList.add('active');
+    document.getElementById('panel-' + id).classList.add('active');
+  }
+
+  function copyLine(row, text) {
+    navigator.clipboard.writeText(text);
+    var hint = row.querySelector('.t-copy');
+    var prev = hint.textContent;
+    hint.textContent = 'Copied!';
+    setTimeout(function () { hint.textContent = prev; }, 1800);
+  }
+</script>
+
+</body>
+</html>

@@ -1,5 +1,8 @@
 # Verdict
 
+> This project lives as an extension of an idea from my mentor and
+> guiding light — `@SanjayVyas`.
+
 Every system built long enough accumulates the same shape of question:
 *given what I know right now, is this allowed?* A rate limiter asks it
 of a request. An access check asks it of a caller. A checkout page asks
