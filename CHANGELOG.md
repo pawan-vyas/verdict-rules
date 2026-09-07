@@ -13,12 +13,9 @@ is released and consumed" section for the release procedure and each
 language's own `AGENTS.md` for what counts as a breaking change in that
 language.
 
-## python-v0.1.0 (unreleased)
+## python-v0.1.0 (2026-09-07)
 
-Prepared, not yet tagged — the first tag/publish happens once
-`release-python.yml` exists to respond to it, per the release procedure
-in `docs/maintenance.md`. Once tagged, this section becomes
-`## python-v0.1.0` with the tag's actual date.
+Initial public release.
 
 - Initial extraction from a private monorepo into this standalone,
   publicly-published repository.
