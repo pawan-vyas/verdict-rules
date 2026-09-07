@@ -122,3 +122,10 @@ cd python/
 uv sync
 uv run pytest
 ```
+
+## Contributing
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for how to set up a change and
+what it needs to prove before it's mergeable, and
+[`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) for community standards.
+Licensed under [MIT](LICENSE).
