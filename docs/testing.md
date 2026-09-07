@@ -5,11 +5,14 @@
 > change must add to its own test suite before it's done. If you're
 > looking for *what to change where* for a given kind of change, see
 > [`maintenance.md`](maintenance.md) — this doc is specifically about
-> proving that change correct.
+> proving that change correct. The contracts and checklist below apply
+> to every language this package ever ships for; only Python ships
+> today, so every command and path below is Python's (`python/`).
 
 ## Current state, as of this writing
 
 ```bash
+$ cd python/
 $ uv run pytest --cov=verdict --cov-report=term-missing -q
 ........................                                             [100%]
 24 passed in 0.04s
@@ -44,7 +47,7 @@ suite above proves narrow, unit-level contracts in isolation; that
 example project proves the primitives compose correctly *together*, the
 way a real consumer actually uses them, across a far wider space of
 inputs than anyone would hand-curate, and its own
-[`testing.md`](../examples/graduation_verdict/docs/testing.md)
+[`testing.md`](../python/examples/graduation_verdict/docs/testing.md)
 explains why that makes it a regression net for `verdict` itself, not
 just a sample.
 
@@ -169,8 +172,9 @@ file named the same way if the new code lives in a new module.
 ## Running tests
 
 ```bash
+cd python/            # this package's own root
 uv sync              # once, or after pyproject.toml changes
-uv run pytest        # the whole suite, from this package's own root
+uv run pytest        # the whole suite
 uv run pytest --cov=verdict --cov-report=term-missing   # with the coverage report above
 ```
 
@@ -187,6 +191,6 @@ package's test suite is as standalone as the package itself.
 - [`extension.md`](extension.md) — testing guidance for code you write
   *using* verdict lives with your own project's conventions, not here;
   this doc is specifically about testing verdict itself.
-- [`../examples/graduation_verdict/docs/testing.md`](../examples/graduation_verdict/docs/testing.md) —
+- [`../python/examples/graduation_verdict/docs/testing.md`](../python/examples/graduation_verdict/docs/testing.md) —
   the second testing layer described above, and why it plays a
   regression-net role this doc's own suite doesn't.

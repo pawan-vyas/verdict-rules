@@ -165,12 +165,12 @@ graph TB
 >    CGPA/attendance checks) built from the *same* rule objects the
 >    engine already holds. Nothing is re-evaluated to build it, and
 >    nothing about it is retained between calls — see verdict's own
->    [`architecture.md`](../../../docs/architecture.md#type-structure)
+>    [`architecture.md`](../../../../docs/architecture.md#type-structure)
 >    for why a `Rule` instance's lifecycle isn't owned by any one
 >    structure that references it.
 > 3. **The elective requirement is neither `AndRule` nor `OrRule`** —
 >    "at least 2 of 3" is exactly verdict's
->    [`extension.md`](../../../docs/extension.md#recipe-2--a-genuinely-new-rule-shape)
+>    [`extension.md`](../../../../docs/extension.md#recipe-2--a-genuinely-new-rule-shape)
 >    Recipe 2 (`ThresholdRule`), named `AtLeastNRule` here and used for
 >    something a real curriculum actually needs, not a toy count.
 

@@ -20,8 +20,9 @@ is checking it doesn't erode either one:
    not a default. If a future need genuinely can't be met without one,
    that's a real design conversation (does it belong in this package at
    all, or in a consumer's own adapter?), not a routine dependency bump.
-2. **No knowledge of any specific domain.** Nothing under `src/verdict/`
-   should ever import or reference rate limiting, access grants,
+2. **No knowledge of any specific domain.** Nothing under a language's
+   own package source (today: `python/src/verdict/`) should ever import
+   or reference rate limiting, access grants,
    discounts, or any other consumer's vocabulary. Domain-specific logic
    belongs in the *consumer's own* adapter module — see
    [`extension.md`](extension.md#recipe-3--keep-your-own-domain-out-of-verdict-in-one-adapter-module)
@@ -56,13 +57,13 @@ how careful a change needs to be whenever it's true:
 
 | I want to... | Touch this file |
 |---|---|
-| Add a new concrete `Rule` shape (a new composite, a weighted combinator) | `src/verdict/rule.py` — or a new module if it doesn't naturally fit alongside `FunctionRule`/`AndRule`/`OrRule`; export it from `src/verdict/__init__.py`'s `__all__` either way |
-| Change what `RuleResult`/`RunResult` carries | `src/verdict/result.py` — both are frozen dataclasses, so adding a *required* field breaks every construction site in `rule.py` and `engine.py`, and in both real consumers (see checklist below) |
-| Add a new `RulesEngine` run mode (a new selection axis beyond "by name"/"by group") | `src/verdict/engine.py` — needs its own index built in `__init__`, the same way `_by_name`/`_by_group` already are |
-| Change the `Rule` `Protocol` itself (its required attributes/method signature) | `src/verdict/rule.py` — the highest-blast-radius change this package can make; every existing `Rule` implementation anywhere (including in consumers) must still satisfy the new shape |
-| Update *why* something is built this way | `docs/architecture.md` |
-| Update the quickstart's concepts/example | `docs/quickstart.md` |
-| Update the narrative front door | the root `README.md` — a distinct doc from `docs/quickstart.md`, not a copy of it |
+| Add a new concrete `Rule` shape (a new composite, a weighted combinator) | `python/src/verdict/rule.py` — or a new module if it doesn't naturally fit alongside `FunctionRule`/`AndRule`/`OrRule`; export it from `python/src/verdict/__init__.py`'s `__all__` either way |
+| Change what `RuleResult`/`RunResult` carries | `python/src/verdict/result.py` — both are frozen dataclasses, so adding a *required* field breaks every construction site in `rule.py` and `engine.py`, and in both real consumers (see checklist below) |
+| Add a new `RulesEngine` run mode (a new selection axis beyond "by name"/"by group") | `python/src/verdict/engine.py` — needs its own index built in `__init__`, the same way `_by_name`/`_by_group` already are |
+| Change the `Rule` `Protocol` itself (its required attributes/method signature) | `python/src/verdict/rule.py` — the highest-blast-radius change this package can make; every existing `Rule` implementation anywhere (including in consumers) must still satisfy the new shape |
+| Update *why* something is built this way | `architecture.md` (this directory) |
+| Update the quickstart's concepts/example | `python/docs/quickstart.md` |
+| Update the narrative front door | the root `README.md` — a distinct doc from `python/docs/quickstart.md`, not a copy of it |
 
 ```mermaid
 graph TB
@@ -168,12 +169,12 @@ Before merging a change in either category:
    suite for whatever real adapters exist — a change that's internally
    consistent here can still break a consumer's own assumptions about
    field names it reads out of `RuleResult.data`.
-4. Run `uv run pytest examples/graduation_verdict/` too — the one
-   "consumer" always available without needing access to anyone else's
-   codebase, and broad enough (heterogeneous rule shapes, a custom
-   `Rule` type, all three run modes together) to catch an interaction
-   bug the narrower checks above might miss. See its own
-   [`../examples/graduation_verdict/docs/testing.md`](../examples/graduation_verdict/docs/testing.md)
+4. Run `uv run pytest examples/graduation_verdict/` (from `python/`) too
+   — the one "consumer" always available without needing access to
+   anyone else's codebase, and broad enough (heterogeneous rule shapes,
+   a custom `Rule` type, all three run modes together) to catch an
+   interaction bug the narrower checks above might miss. See its own
+   [`../python/examples/graduation_verdict/docs/testing.md`](../python/examples/graduation_verdict/docs/testing.md)
    for why it plays this role.
 
 ## When `architecture.md` needs updating, and when it doesn't
@@ -202,15 +203,17 @@ here (short-circuiting, vacuous truth).
 ## Related docs
 
 - [`../README.md`](../README.md) — the narrative front door.
-- [`quickstart.md`](quickstart.md) — core concepts and the one worked example.
+- [`../python/docs/quickstart.md`](../python/docs/quickstart.md) — core
+  concepts and the one worked example.
 - [`architecture.md`](architecture.md) — type structure, execution
   model, and the reasoning behind each design choice.
 - [`extension.md`](extension.md) — building on top of this package from
   a consumer's own code, without changing anything here.
 - [`testing.md`](testing.md) — the full testing checklist and current
   suite coverage.
-- [`samples/`](samples/1_README.md) — worked, domain-flavored examples of
-  where a rule engine like this earns its keep.
+- [`../python/docs/samples/`](../python/docs/samples/1_README.md) —
+  worked, domain-flavored examples of where a rule engine like this
+  earns its keep.
 - [`future_plan.md`](future_plan.md) — exploratory, not-yet-decided
   feature candidates and the test used to evaluate them; read before
   proposing a new core `Rule` shape.

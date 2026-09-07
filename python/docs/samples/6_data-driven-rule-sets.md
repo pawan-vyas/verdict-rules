@@ -193,7 +193,7 @@ async def evaluate_against_current_config(context: dict, *, combine: str) -> boo
 
 ## Related
 
-- [`../extension.md`](../extension.md#recipe-4--build-rule-sets-from-stored-configuration-at-runtime) —
+- [`../extension.md`](../../../docs/extension.md#recipe-4--build-rule-sets-from-stored-configuration-at-runtime) —
   the general recipe this sample is a fuller version of; that doc also
   describes the two real, unrelated, in-production consumers this
   pattern actually backs.

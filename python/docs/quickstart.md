@@ -2,10 +2,11 @@
 # Verdict — Quickstart
 
 > The five names you need, and one complete example using all of them.
-> See the top-level [`README.md`](../README.md) for what this package is
-> and why it's shaped this way in narrative form, and
-> [`architecture.md`](architecture.md) for the full design reasoning —
-> this doc is just "how do I start."
+> See [`../README.md`](../README.md) for this package's own
+> pip-install/first-rule quickstart, the top-level
+> [`../../README.md`](../../README.md) for what Verdict is in narrative
+> form, and [`../../docs/architecture.md`](../../docs/architecture.md)
+> for the full design reasoning — this doc is just "how do I start."
 
 ## Core concepts
 
@@ -108,7 +109,7 @@ sequenceDiagram
 Because rules are just objects, they're straightforward to build up at
 runtime from whatever configuration a caller already has, rather than
 hand-writing one `FunctionRule` per case — see
-[`extension.md`](extension.md#recipe-4--build-rule-sets-from-stored-configuration-at-runtime)
+[`extension.md`](../../docs/extension.md#recipe-4--build-rule-sets-from-stored-configuration-at-runtime)
 for the recipe and
 [`samples/6_data-driven-rule-sets.md`](samples/6_data-driven-rule-sets.md)
 for a fuller worked version grounded in how this package is actually
@@ -116,10 +117,11 @@ used in production.
 
 ## Related docs
 
-- [`../README.md`](../README.md) — the narrative front door.
-- [`architecture.md`](architecture.md) — the full design reasoning.
-- [`extension.md`](extension.md) — building on top of this package from
-  your own code.
-- [`testing.md`](testing.md) — `uv sync && uv run pytest`, and what a
-  test here actually needs to prove.
+- [`../../README.md`](../../README.md) — the narrative front door.
+- [`../../docs/architecture.md`](../../docs/architecture.md) — the full
+  design reasoning.
+- [`../../docs/extension.md`](../../docs/extension.md) — building on top
+  of this package from your own code.
+- [`../../docs/testing.md`](../../docs/testing.md) — `uv sync && uv run
+  pytest`, and what a test here actually needs to prove.
 - [`samples/`](samples/1_README.md) — more worked examples.

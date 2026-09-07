@@ -22,6 +22,6 @@
 Each of samples 1-6 is deliberately small enough to read start-to-finish
 in a couple of minutes; sample 7 is the exception — see its own doc for
 why. For the underlying concepts these lean on, see
-[`../quickstart.md`](../quickstart.md), [`../architecture.md`](../architecture.md)
-(why it's shaped this way), and [`../extension.md`](../extension.md)
+[`../quickstart.md`](../quickstart.md), [`../architecture.md`](../../../docs/architecture.md)
+(why it's shaped this way), and [`../extension.md`](../../../docs/extension.md)
 (the recipes these samples are instances of).

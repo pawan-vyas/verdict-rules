@@ -75,9 +75,9 @@ graph LR
 >    cached or mutated one.
 >
 > Nothing in this picture knows what the facts *mean* — that's the
-> point. See [`docs/samples/`](docs/samples/1_README.md) for the same
-> shape answering a rate-limit check, an access grant, or a discount
-> question, with zero changes to Verdict itself.
+> point. See [`python/docs/samples/`](python/docs/samples/1_README.md)
+> for the same shape answering a rate-limit check, an access grant, or a
+> discount question, with zero changes to Verdict itself.
 
 ## Why it's shaped this way
 
@@ -95,19 +95,30 @@ graph LR
 
 ## Where to go next
 
+Verdict is a polyglot design — the `Rule`/`FunctionRule`/`AndRule`/
+`OrRule`/`RulesEngine` shape and its execution-model guarantees are
+meant to exist in more than one language. **Only Python ships today.**
+The docs below split the same way the repo does: language-agnostic
+design rationale lives at the repo root; anything with directly
+runnable code lives under that language's own directory.
+
 | Doc | For |
 |---|---|
-| [`docs/quickstart.md`](docs/quickstart.md) | The quickstart — core concepts and a full worked example |
+| [`python/README.md`](python/README.md) | Python quickstart — `pip install verdict-rules`, first rule |
+| [`python/docs/quickstart.md`](python/docs/quickstart.md) | Core concepts and a full worked example |
 | [`docs/architecture.md`](docs/architecture.md) | Why it's shaped this way, in depth — type structure, the execution model |
 | [`docs/extension.md`](docs/extension.md) | Building on top of it from your own code, with no changes here |
 | [`docs/maintenance.md`](docs/maintenance.md) | Changing this package itself |
 | [`docs/testing.md`](docs/testing.md) | How the test suite is organized, and what a change needs to prove |
-| [`docs/samples/`](docs/samples/1_README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
-| [`examples/`](examples/README.md) | Full, tested mini-projects behind the more comprehensive samples — real code, real tests, real docs |
+| [`docs/future_plan.md`](docs/future_plan.md) | Exploratory feature candidates, and the test used to evaluate one |
+| [`python/docs/samples/`](python/docs/samples/1_README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
+| [`python/examples/`](python/examples/README.md) | Full, tested mini-projects behind the more comprehensive samples — real code, real tests, real docs |
+| [`skills/verdict/SKILL.md`](skills/verdict/SKILL.md) | The AI-agent skill for building with Verdict |
 
 ## Development
 
 ```bash
+cd python/
 uv sync
 uv run pytest
 ```

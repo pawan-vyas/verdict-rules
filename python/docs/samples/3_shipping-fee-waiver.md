@@ -74,7 +74,7 @@ sequenceDiagram
 >    only an order failing both pays for `R3`'s external call. This
 >    ordering is a real part of the contract, not an implementation
 >    detail — see
->    [`../architecture.md`](../architecture.md#execution-model-sequential-not-concurrent)
+>    [`../architecture.md`](../../../docs/architecture.md#execution-model-sequential-not-concurrent)
 >    for why `verdict` guarantees rules run one at a time, in the order
 >    given, rather than concurrently.
 
@@ -113,6 +113,6 @@ ships_free = OrRule(
 
 - [`dynamic-discounts.md`](2_dynamic-discounts.md) — the `AndRule` mirror
   image (every condition must pass, not just one).
-- [`../architecture.md`](../architecture.md#execution-model-sequential-not-concurrent) —
+- [`../architecture.md`](../../../docs/architecture.md#execution-model-sequential-not-concurrent) —
   why short-circuiting only means something because evaluation is
   sequential, never concurrent.

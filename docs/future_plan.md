@@ -6,7 +6,10 @@
 > addition to this package, applied honestly to a few real candidates,
 > not a backlog anyone is committed to building. Re-derive the reasoning
 > below before treating any item here as decided; a candidate's status
-> can and should change if real usage changes.
+> can and should change if real usage changes. The evaluation test
+> itself applies to every language this package ever ships for; only
+> Python ships today, so every candidate and file path below is
+> Python's.
 
 ## The actual test, not "does it sound useful"
 
@@ -162,8 +165,8 @@ is urgent enough to build without a specific trigger:
   `group_names`, or simple iteration) — `_by_name`/`_by_group` already
   hold exactly this data privately; nothing needs to be computed, only
   exposed. The recurring gap this would close showed up organically
-  while writing [`samples/5_content-moderation-routing.md`](samples/5_content-moderation-routing.md)
-  and [`samples/6_data-driven-rule-sets.md`](samples/6_data-driven-rule-sets.md)'s
+  while writing [`samples/5_content-moderation-routing.md`](../python/docs/samples/5_content-moderation-routing.md)
+  and [`samples/6_data-driven-rule-sets.md`](../python/docs/samples/6_data-driven-rule-sets.md)'s
   own "naive way" sections: an admin/audit screen that wants to list
   "every currently-active rule" has no way to ask an engine that today
   short of reaching into its private attributes. Real subtlety is mild
@@ -172,7 +175,8 @@ is urgent enough to build without a specific trigger:
 - **A shared, tested helper for walking a `RuleResult`/`RunResult` tree**
   into a plain, JSON-able structure — every sample in this doc set that
   needs a "why did/didn't this pass" breakdown
-  (`samples/2_dynamic-discounts.md`, `samples/4_loyalty-tier-promotion.md`)
+  ([`samples/2_dynamic-discounts.md`](../python/docs/samples/2_dynamic-discounts.md),
+  [`samples/4_loyalty-tier-promotion.md`](../python/docs/samples/4_loyalty-tier-promotion.md))
   manually destructures `result.results[0].data`, and the
   rate-limiting adapter mentioned above does the identical thing in
   production (`[r.data for r in combined.data]`). The real subtlety:
@@ -204,12 +208,12 @@ pattern is hand-written a third time, promote it" candidates, not
   current consumer today. Watching for repeated demand across ≥2 real
   consumers, per the test above, before considering it further.
 - **Publishing this package to a real index instead of an editable
-  local path dependency** — not a feature question at all, a
-  distribution question, and the answer is genuinely "not yet": the
-  editable-path model (see
-  [`maintenance.md`](maintenance.md#how-this-package-is-typically-consumed--plan-for-no-release-step))
-  only stops working the day a consumer *outside this repository* needs
-  this package. No such consumer exists today.
+  local path dependency** — was an open question as of this section's
+  original writing; superseded by events. This package now *is* a
+  standalone, publicly-published repo distributing to PyPI as
+  `verdict-rules` — see the repo-root `README.md` and
+  [`maintenance.md`](maintenance.md#how-this-package-is-typically-consumed--plan-for-no-release-step)
+  for the model that decision replaced.
 
 ## Related docs
 

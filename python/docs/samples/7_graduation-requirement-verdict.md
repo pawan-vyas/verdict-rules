@@ -86,10 +86,10 @@ graph TB
 - [`6_data-driven-rule-sets.md`](6_data-driven-rule-sets.md) — the
   simpler version of "build rules from stored config," with one
   uniform rule shape per row instead of three.
-- [`../extension.md`](../extension.md#recipe-2--a-genuinely-new-rule-shape) —
+- [`../extension.md`](../../../docs/extension.md#recipe-2--a-genuinely-new-rule-shape) —
   the `ThresholdRule`/`AtLeastNRule` recipe this sample's elective
   requirement is a real instance of.
-- [`../architecture.md`](../architecture.md#three-ways-to-run-rules-and-when-each-is-the-right-one) —
+- [`../architecture.md`](../../../docs/architecture.md#three-ways-to-run-rules-and-when-each-is-the-right-one) —
   the general reasoning behind reaching for `run_named`/`run_group`/
   `run_all` vs. a bare composite, applied here to three concrete
   callers at once.

@@ -3,9 +3,11 @@
 
 > For people building *on top of* Verdict from their own codebase — a new
 > rule shape, a new domain, a new way of assembling rules — without
-> changing anything under `src/verdict/` itself. If the change you're
-> making genuinely belongs inside this package, see
-> [`maintenance.md`](maintenance.md) instead.
+> changing anything under the package's own source itself (today, that's
+> Python's `python/src/verdict/`; the same recipes apply unchanged in any
+> future language this package ships for, against that language's own
+> source tree). If the change you're making genuinely belongs inside this
+> package, see [`maintenance.md`](maintenance.md) instead.
 
 The short version: because [`Rule`](architecture.md#type-structure) is a
 structural `Protocol`, not an abstract base class, everything below is
@@ -236,7 +238,7 @@ combined_rule = AndRule("combined", configured_rules)
 An empty `load_rule_configs()` produces an empty `AndRule`, which
 vacuously passes — "nothing configured" and "nothing to enforce" fall
 out of the same rule, no special-casing needed at the call site. See
-[`samples/6_data-driven-rule-sets.md`](samples/6_data-driven-rule-sets.md)
+[`python/docs/samples/6_data-driven-rule-sets.md`](../python/docs/samples/6_data-driven-rule-sets.md)
 for a fuller worked version of this, grounded in how this package is
 actually used in production for both rate-limit windows and
 access-control conditions.
@@ -317,10 +319,10 @@ plain one from the outside.
 - Subclass anything — `Rule` is a `Protocol`, not an `ABC`.
 - Import `verdict` from more than one adapter module per domain (Recipe
   3) — if you find yourself doing that, that's the signal to consolidate.
-- Change anything under `src/verdict/` for any of the recipes above —
-  if a recipe seems to require that, it likely belongs in
-  [`maintenance.md`](maintenance.md) instead, as a change to the package
-  itself rather than an extension of it.
+- Change anything under a language's own package source for any of the
+  recipes above — if a recipe seems to require that, it likely belongs
+  in [`maintenance.md`](maintenance.md) instead, as a change to the
+  package itself rather than an extension of it.
 
 ## Related docs
 
@@ -329,5 +331,5 @@ plain one from the outside.
 - [`maintenance.md`](maintenance.md) — changing this package itself.
 - [`testing.md`](testing.md) — testing verdict itself, if a recipe here
   turns out to need a change on that side after all.
-- [`samples/`](samples/1_README.md) — full worked examples using these
-  recipes end-to-end.
+- [`python/docs/samples/`](../python/docs/samples/1_README.md) — full
+  worked examples using these recipes end-to-end.

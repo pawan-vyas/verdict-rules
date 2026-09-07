@@ -33,7 +33,7 @@ against real, varied data, it functions as an integration/e2e test for
   narrow, unit-level contracts in isolation — short-circuit behavior,
   vacuous-truth polarity — each against minimal fixtures built just to
   exercise that one contract. See verdict's own
-  [`testing.md`](../../../docs/testing.md) for the full reasoning.
+  [`testing.md`](../../../../docs/testing.md) for the full reasoning.
 - This project proves those same primitives compose correctly *together*,
   the way a real consumer's code actually uses them — heterogeneous
   rule shapes built from external data, `Rule` objects shared between
@@ -77,7 +77,7 @@ graph LR
 > project alongside `tests/` with no extra configuration) is the
 > concrete action — run it after any change to `src/verdict/`, not just
 > a change to this project. This is also cross-linked from verdict's
-> own [`maintenance.md`](../../../docs/maintenance.md#consumer-impact-checklist-for-a-shape-change)
+> own [`maintenance.md`](../../../../docs/maintenance.md#consumer-impact-checklist-for-a-shape-change)
 > consumer-impact checklist as one of the things to re-run, alongside
 > any external consumer's own suite.
 
@@ -179,9 +179,9 @@ uv run pytest examples/graduation_verdict/
 - [`architecture.md`](architecture.md) — why it's built the way it is.
 - [`maintenance.md`](maintenance.md) — how to extend it.
 - [`../README.md`](../README.md) — how to run the demo.
-- [`../../../docs/maintenance.md`](../../../docs/maintenance.md) —
+- [`../../../../docs/maintenance.md`](../../../../docs/maintenance.md) —
   verdict's own maintenance guide, whose consumer-impact checklist
   points back here.
-- [`../../../docs/testing.md`](../../../docs/testing.md) — verdict's
+- [`../../../../docs/testing.md`](../../../../docs/testing.md) — verdict's
   own testing guide, which this project complements rather than
   duplicates.

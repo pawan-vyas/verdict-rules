@@ -26,6 +26,6 @@ After any change, re-run the tests — see
 - [`testing.md`](testing.md) — how it's tested, and its regression-net
   role for `verdict` itself.
 - [`../README.md`](../README.md) — how to run the demo and the tests.
-- [`../../../docs/maintenance.md`](../../../docs/maintenance.md) —
+- [`../../../../docs/maintenance.md`](../../../../docs/maintenance.md) —
   verdict's own maintenance guide, whose consumer-impact checklist
   points back here.
