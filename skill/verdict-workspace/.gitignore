@@ -1,0 +1,6 @@
+# Point-in-time working material from a skill-creator eval loop: subagent
+# solution outputs, timing, per-run grading, aggregate benchmarks, and viewer
+# feedback. Regenerable by re-running the eval loop against evals/evals.json,
+# which is the one file in this workspace that's actually committed.
+iteration-*/
+benchmarks/
