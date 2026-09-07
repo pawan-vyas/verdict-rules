@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Verdict favicon: an abstract gavel, mid-strike; ties directly to the
+       word "verdict" itself rather than a generic mark, and stays legible as
+       a simple silhouette at 16px. Crimson matches the site's own accent. -->
+  <rect x="4" y="11.5" width="21" height="7" rx="3.5" transform="rotate(-30 14.5 15)" fill="#A3342A"/>
+  <rect x="7" y="24" width="16" height="4.5" rx="2.25" fill="#A3342A"/>
+</svg>
