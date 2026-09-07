@@ -1,5 +1,10 @@
 # Verdict
 
+[![PyPI](https://img.shields.io/pypi/v/verdict-rules.svg)](https://pypi.org/project/verdict-rules/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/verdict-rules.svg)](https://pypi.org/project/verdict-rules/)
+[![Tests](https://github.com/pawan-vyas/verdict-rules/actions/workflows/test-python.yml/badge.svg)](https://github.com/pawan-vyas/verdict-rules/actions/workflows/test-python.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 > This project lives as an extension of an idea from my mentor and
 > guiding light — [`@SanjayVyas`](https://github.com/SanjayVyas), to
 > whom I owe everything I know about building software that lasts; and
