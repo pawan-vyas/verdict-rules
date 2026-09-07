@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Build artifacts
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+
+# Editor/OS
+.DS_Store
+.vscode/
+.idea/
+
+# Skill eval loop working material — see skill/verdict-workspace/.gitignore
+# for the specific rule (only evals/evals.json is tracked, everything else
+# there is point-in-time, regenerable working output).
