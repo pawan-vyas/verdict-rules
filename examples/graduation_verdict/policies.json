@@ -1,0 +1,45 @@
+{
+  "elective_minimum": 2,
+  "subjects": [
+    {
+      "subject_id": "MATH101",
+      "subject_type": "academic",
+      "written_min_pct": 40
+    },
+    {
+      "subject_id": "ENG101",
+      "subject_type": "academic",
+      "written_min_pct": 40
+    },
+    {
+      "subject_id": "WORKSHOP201",
+      "subject_type": "vocational",
+      "written_min_pct": 40,
+      "practical_min_pct": 60
+    },
+    {
+      "subject_id": "FRENCH101",
+      "subject_type": "language",
+      "written_min_pct": 40,
+      "exemption_allowed": true
+    },
+    {
+      "subject_id": "ELECTIVE_ART",
+      "subject_type": "academic",
+      "written_min_pct": 40,
+      "is_elective": true
+    },
+    {
+      "subject_id": "ELECTIVE_MUSIC",
+      "subject_type": "academic",
+      "written_min_pct": 40,
+      "is_elective": true
+    },
+    {
+      "subject_id": "ELECTIVE_CS",
+      "subject_type": "academic",
+      "written_min_pct": 40,
+      "is_elective": true
+    }
+  ]
+}
