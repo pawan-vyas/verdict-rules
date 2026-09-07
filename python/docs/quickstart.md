@@ -16,9 +16,9 @@
   inheriting from anything.
 - **`FunctionRule`** — wraps a plain async predicate as a `Rule`. The
   common case: most rules are "run this function against the context."
-- **`ComboRule`** / **`OrRule`** — composite rules that combine other
+- **`AndRule`** / **`OrRule`** — composite rules that combine other
   rules, short-circuiting the same way a boolean `and`/`or` expression
-  would (`ComboRule` stops at the first failure, `OrRule` stops at the
+  would (`AndRule` stops at the first failure, `OrRule` stops at the
   first pass).
 - **`RulesEngine`** — holds a set of rules and runs them three ways:
   `run_all` (every rule, full diagnostic picture — deliberately does
@@ -33,7 +33,7 @@
 
 ```python
 import asyncio
-from verdict import ComboRule, FunctionRule, RuleResult, RulesEngine
+from verdict import AndRule, FunctionRule, RuleResult, RulesEngine
 
 
 async def under_daily_limit(context: dict) -> RuleResult:
@@ -54,7 +54,7 @@ async def account_in_good_standing(context: dict) -> RuleResult:
 
 
 async def main() -> None:
-    can_proceed = ComboRule(
+    can_proceed = AndRule(
         "can_proceed",
         [
             FunctionRule("under_daily_limit", under_daily_limit),
@@ -77,7 +77,7 @@ asyncio.run(main())
 sequenceDiagram
     participant Caller as 📞 main()
     participant Engine as ⚙️ RulesEngine
-    participant Combo as 🔀 ComboRule<br/>can_proceed
+    participant Combo as 🔀 AndRule<br/>can_proceed
     participant R1 as ✅ under_daily_limit
     participant R2 as ✅ account_in_good_standing
 
@@ -87,7 +87,7 @@ sequenceDiagram
     R1-->>Combo: RuleResult(passed=True)
     Combo->>R2: evaluate(context)
     R2-->>Combo: RuleResult(passed=True)
-    Note over Combo: Both sub-rules passed —<br/>ComboRule itself passes
+    Note over Combo: Both sub-rules passed —<br/>AndRule itself passes
     Combo-->>Engine: RuleResult(passed=True)
     Engine-->>Caller: RuleResult(passed=True)
 ```
@@ -96,7 +96,7 @@ sequenceDiagram
 > 1. **The engine looks up `"can_proceed"` by name** — `run_named` is
 >    exactly one dict lookup plus one `evaluate()` call on whatever it
 >    finds.
-> 2. **`ComboRule` evaluates its two sub-rules in order** — the plain
+> 2. **`AndRule` evaluates its two sub-rules in order** — the plain
 >    field comparison, then the account-status check — stopping at the
 >    first failure if there is one (neither fails here, so both run).
 > 3. **The composite's own result is what the engine hands back** — the

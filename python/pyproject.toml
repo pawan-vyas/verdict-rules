@@ -1,17 +1,57 @@
 [project]
-name = "verdict"
+name = "verdict-rules"
 version = "0.1.0"
 description = "A small, zero-dependency, async-native rule-evaluation engine for Python."
 readme = "README.md"
 authors = [
     { name = "Pawan Vyas", email = "pawan.vyas.self@gmail.com" }
 ]
-requires-python = ">=3.14"
+# SPDX expression, not a file reference -- LICENSE lives at the repo root
+# (it covers the whole polyglot repo, not just this Python package), and a
+# plain SPDX string needs no file to be bundled into the sdist to be valid.
+license = "MIT"
+requires-python = ">=3.10"
 dependencies = []
+keywords = [
+    "rules-engine",
+    "rule-evaluation",
+    "eligibility",
+    "policy-evaluation",
+    "decision-engine",
+    "async",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Typing :: Typed",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[project.urls]
+Homepage = "https://github.com/pawan-vyas/verdict-rules"
+Repository = "https://github.com/pawan-vyas/verdict-rules"
+Issues = "https://github.com/pawan-vyas/verdict-rules/issues"
+Changelog = "https://github.com/pawan-vyas/verdict-rules/blob/main/CHANGELOG.md"
 
 [build-system]
-requires = ["uv_build>=0.11.14,<0.12.0"]
+requires = ["uv_build>=0.11.14,<0.13.0"]
 build-backend = "uv_build"
+
+[tool.uv.build-backend]
+# The distribution name is "verdict-rules" (PyPI's own "verdict" name is
+# already taken by an unrelated package), but the import name stays plain
+# "verdict" -- the same distribution-name/import-name split as
+# beautifulsoup4 -> bs4. Without this, uv_build looks for
+# src/verdict_rules/ (the normalized project name) instead of src/verdict/.
+module-name = "verdict"
 
 [dependency-groups]
 dev = [
