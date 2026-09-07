@@ -1,7 +1,7 @@
 # Verdict
 
 > This project lives as an extension of an idea from my mentor and
-> guiding light — @SanjayVyas, to whom I owe everything I know about building software that lasts.
+> guiding light — @SanjayVyas, to whom I owe everything I know about building software that lasts; and beyond.
 
 Every system built long enough accumulates the same shape of question:
 *given what I know right now, is this allowed?* A rate limiter asks it
