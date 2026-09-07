@@ -20,6 +20,10 @@ venv/
 .vscode/
 .idea/
 
-# Skill eval loop working material — see skill/verdict-workspace/.gitignore
+# Skill eval loop working material — see skills/verdict-workspace/.gitignore
 # for the specific rule (only evals/evals.json is tracked, everything else
 # there is point-in-time, regenerable working output).
+
+# JS/TS + C# SDK session-resume notes — local planning material, not meant
+# to be committed until those SDKs are actually being built for real.
+/RESUME.md
