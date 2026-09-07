@@ -28,6 +28,21 @@ Python, verdict may simply not have an SDK for it yet.
 Everything below this point is the **Python** guidance — see
 `references/python/` for all six reference files.
 
+## Installing it
+
+```bash
+pip install verdict-rules
+# or: uv add verdict-rules
+```
+
+The PyPI **distribution name** is `verdict-rules` (the plain name
+`verdict` was already taken by an unrelated package) — the **import
+name stays `verdict`**, unchanged: `from verdict import Rule,
+FunctionRule, AndRule, OrRule, RulesEngine`. If a project's own
+`pyproject.toml`/`requirements.txt` doesn't have `verdict-rules` yet,
+add it before writing any code against `verdict` — don't assume it's
+already a dependency just because the import works in one file today.
+
 ## When this applies
 
 Reach for `verdict` when a requirement is shaped like "combine several
