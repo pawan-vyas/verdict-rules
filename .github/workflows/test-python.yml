@@ -1,0 +1,44 @@
+# Named to leave room for test-js.yml/test-csharp.yml siblings once those languages ship — each
+# language's own workflow stays independently path-filtered, so adding a second language is a new
+# workflow file, never an edit to this one.
+name: Test (Python)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "python/**"
+      - ".github/workflows/test-python.yml"
+  pull_request:
+    paths:
+      - "python/**"
+      - ".github/workflows/test-python.yml"
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # requires-python floor is 3.10 (see python/pyproject.toml) — the matrix covers that floor
+        # through the newest stable release, not just whatever the dev machine happens to run.
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        working-directory: python
+        run: uv sync --python ${{ matrix.python-version }}
+
+      - name: Run tests
+        working-directory: python
+        run: uv run --python ${{ matrix.python-version }} pytest --cov=verdict --cov-report=term-missing

@@ -1,0 +1,102 @@
+# Triggered by a python-vX.Y.Z tag push (the language-scoped tagging regimen — see
+# docs/maintenance.md's "How this package is released and consumed" and CHANGELOG.md's intro).
+# Named to leave room for release-js.yml/release-csharp.yml siblings once those languages ship,
+# each triggered by its own tag prefix.
+#
+# Registered on PyPI as a Trusted Publisher for this exact repo/workflow-filename/environment
+# combination — see the "pypi" environment below. No API token is stored as a secret anywhere;
+# PyPI verifies the OIDC token GitHub issues to the publish-pypi job instead.
+name: Release (Python)
+
+on:
+  push:
+    tags:
+      - "python-v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          version="${tag#python-v}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Verify pyproject.toml version matches the tag
+        working-directory: python
+        run: |
+          declared="$(grep -m1 '^version = ' pyproject.toml | sed -E 's/version = "(.*)"/\1/')"
+          if [ "$declared" != "${{ steps.version.outputs.version }}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} declares version ${{ steps.version.outputs.version }}, but pyproject.toml says $declared. Fix the mismatch and re-tag before releasing."
+            exit 1
+          fi
+
+      - name: Build sdist and wheel
+        working-directory: python
+        run: uv build
+
+      - name: Upload Python build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-dist
+          path: python/dist/
+
+  publish-pypi:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write # required for PyPI Trusted Publishing (OIDC) — no API token needed
+    steps:
+      - name: Download Python build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: python-dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+
+  github-release:
+    needs: [build, publish-pypi]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Build skill-distribution artifacts
+        run: |
+          chmod +x scripts/build.sh
+          ./scripts/build.sh
+          mkdir -p release-assets
+          cp dist/verdict-plugin.zip dist/verdict.skill dist/verdict-tools.zip release-assets/
+
+      - name: Download Python build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: python-dist
+          path: release-assets/
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "Python v${{ needs.build.outputs.version }}" \
+            --generate-notes \
+            release-assets/*
