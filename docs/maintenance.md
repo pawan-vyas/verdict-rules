@@ -116,6 +116,44 @@ between a change here and that consumer's next process restart, so the
 same test-suite-plus-grep discipline above matters even more in that
 setup, not less.
 
+### The import name, and what a second distribution would look like
+
+This package installs a directory named `verdict` containing an
+`__init__.py`, which is what makes `from verdict import RulesEngine`
+work. That is a deliberate, settled choice, and it decides the shape of
+any future add-on package.
+
+If a second distribution is ever published — a testing helper, say — it
+takes its **own top-level import name**:
+
+```python
+from verdict import RulesEngine          # this package
+from verdict_testing import FakeRule     # a hypothetical add-on
+```
+
+rather than extending this one's namespace as `verdict.testing`. The
+alternative would require `verdict/` to have no `__init__.py`, since
+only a directory without one can be shared across installed
+distributions. Dropping it would break `from verdict import …` for
+every existing user and every code sample in these docs, in exchange for
+an import style no planned package needs. The separate-name convention
+is also what most of the ecosystem already does — `pytest-cov` imports
+as `pytest_cov`, and so on.
+
+Note that PyPI offers nothing that reserves `verdict-rules-*` names, so
+an add-on distribution's name is held the same way this one's is: by
+publishing it. A registry-level namespace mechanism has been designed
+but is not deployed; there is nothing to apply for today.
+
+**Not to be confused with extras.** `pip install verdict-rules[x]`
+syntax refers to *optional dependency groups* declared by a package
+about itself — it installs the same distribution plus some extra
+dependencies. It creates no new distribution and no new import name.
+This package declares `dependencies = []` and no optional groups, so it
+has no extras to offer. The `[dependency-groups]` block in
+`python/pyproject.toml` is a separate, development-only mechanism and is
+not published.
+
 ## Where to make a change
 
 | I want to... | Touch this file |
