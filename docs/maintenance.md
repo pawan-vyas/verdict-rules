@@ -43,6 +43,16 @@ Release procedure, once a change is ready to ship:
 1. Bump `python/pyproject.toml`'s `version` (semver;
    `0.x` while the public API is still settling — a breaking change
    bumps `MINOR` pre-1.0, `MAJOR` after).
+
+   **One carve-out, pre-1.0 only**: removing behaviour that was never
+   intended and has no valid use may go in `PATCH`. The bar is
+   deliberately high — not "we think nobody relies on it" but "there is
+   no way to rely on it correctly." `0.1.1` is the precedent: an unknown
+   group returned a vacuous pass, which could only ever fire on a typo
+   or a stale name, because a group exists exactly when some rule
+   declares it. Anything a caller could legitimately have depended on is
+   a breaking change and takes `MINOR`, however unlikely that dependency
+   seems.
 2. Add a `## python-vX.Y.Z` entry to the repo-root `CHANGELOG.md`, in
    the same commit as the version bump — never backfilled later.
 3. Commit, then tag `python-vX.Y.Z` (the `python-` prefix matters: tags

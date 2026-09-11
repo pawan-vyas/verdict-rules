@@ -20,6 +20,26 @@ See `docs/maintenance.md`'s "How this package is released and consumed"
 section for both release procedures, and each language's own
 `AGENTS.md` for what counts as a breaking change in that language.
 
+## python-v0.1.1 (2026-09-12)
+
+- **`RulesEngine.run_group()` now raises `KeyError` for an unknown
+  group**, matching `run_named()`. It previously returned a `RunResult`
+  with zero results and `passed=True`. That path had no valid use: a
+  group exists exactly when some rule declares it, so a lookup matching
+  nothing always means the group is unknown, never that it is
+  legitimately empty — and a misspelled group name silently passing is
+  the worst failure mode for an eligibility or access-control caller.
+  Released as a patch under the pre-1.0 carve-out documented in
+  `docs/maintenance.md`.
+- **Added `RulesEngine.rule_names` and `RulesEngine.group_names`.**
+  Read-only tuples of the registered names, so a caller who cannot know
+  in advance whether a name exists can check rather than catch.
+- Empty composites are unchanged and deliberately so: `AndRule([])`
+  still passes and `OrRule([])` still fails, being the identities of the
+  folds they perform. `docs/architecture.md` now states the distinction
+  as a design position — this package is permissive about emptiness and
+  strict about absence.
+
 ## python-v0.1.0 (2026-09-07)
 
 Initial public release.
