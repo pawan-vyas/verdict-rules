@@ -37,3 +37,18 @@ venv/
 # are not.
 .claude/settings.local.json
 *.local.json
+
+# SDK build output and local tool caches, for every language directory.
+# These live here rather than on each SDK's own branch: a branch whose
+# .gitignore lacks another language's rules will sweep that language's build
+# output into a commit the moment anyone runs `git add -A` with both checked
+# out. That has already happened once.
+js/node_modules/
+js/dist/
+js/*.tgz
+dart/.dart_tool/
+dart/.packages
+dart/pubspec.lock
+dart/build/
+csharp/**/bin/
+csharp/**/obj/
