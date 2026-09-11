@@ -16,20 +16,52 @@
 ## 1 · Package name
 
 `verdict` is unavailable on npm, as it is on every registry this package
-targets. The chosen name is **`@verdict-rules/core`** — scoped, so
-future extension packages are additive inside a namespace we control,
-and matching the PyPI distribution name (`verdict-rules`) so one name
-carries across registries.
+targets. The chosen name is **`verdict-rules`** — unscoped, and
+identical to the PyPI distribution name, so one name carries across
+registries in each one's own casing convention.
 
-npm is the only one of these registries with first-class, defensible
-namespacing, which is why the scoped form is worth the extra characters
-here and not elsewhere: everything under a scope we hold is ours, and
-nobody else can publish into it. NuGet's nearest equivalent is prefix
-reservation on application; pub.dev and PyPI have no protection at all
-today.
+npm convention is hyphens rather than underscores; `verdict_rules` is
+legal but vanishingly rare.
 
-The `@verdict-rules` organization needs creating before the first
-publish — see the issue's checklist.
+### Why unscoped, having considered a scope
+
+A scope (`@scope/name`) is the only genuinely *defensible* namespace
+among these registries — everything under a scope you hold is yours and
+nobody else can publish into it. That argued for a scoped name while a
+family of packages seemed likely.
+
+It no longer does, because **no family is planned**. Extensions ship as
+**subpath exports of this same package**, exactly as Python's ship as a
+submodule of its one distribution:
+
+```json
+{
+  "exports": {
+    ".":            "./dist/index.js",
+    "./extensions": "./dist/extensions/index.js"
+  }
+}
+```
+
+```ts
+import { RulesEngine }  from "verdict-rules";
+import { ThresholdRule } from "verdict-rules/extensions";
+```
+
+Purely additive — adding a subpath later breaks nothing — and Node
+blocks any path not listed in `exports`, so the public surface is
+exactly what is declared. This is *cleaner* than Python's equivalent:
+there the import path is the directory layout, whereas `exports` is an
+explicit map, so the subpath name is decoupled from the file layout
+entirely.
+
+If no second package is ever published, a scope protects nothing worth
+protecting. The residual risk — that `verdict-rules-anything` is
+squattable — is identical on PyPI and pub.dev, so this is the consistent
+position rather than a concession.
+
+(A secondary benefit: the `@verdict` scope turned out to be claimed
+already, so the scoped route would have needed a different token anyway.)
 
 ## 2 · Triage: publish path
 
