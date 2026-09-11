@@ -87,6 +87,19 @@ matters. Anything you'd be tempted to "remember" about this repo
 belongs in `.agents/memory/`, where the next agent — in any harness —
 can actually find it.
 
+**Public surfaces are not working surfaces.** Issues, pull request
+descriptions, commit messages, and every tracked doc are public and
+permanent, and they speak in the project's voice. They carry the task
+and the decision — never an assessment of anyone else's package
+(abandoned, unmaintained, a competitor, squatting a name), never
+comparison tables or download counts against a named third party, and
+never the narration of how the work went. State a decision as a fact:
+*"`verdict` is unavailable on npm; the chosen name is `@verdict/core`"*
+— no characterisation of whoever holds it. Research that supports a
+decision belongs in `scratch/` (gitignored), or on a local branch that
+is never pushed. See
+[`.agents/memory/public-surfaces-stay-professional.md`](.agents/memory/public-surfaces-stay-professional.md).
+
 **Don't create parallel planning docs.** In-flight work and next steps
 go in `HANDOFF.md` §3; anything longer-lived goes in `.agents/plans/`
 as a named plan. A second "notes" or "TODO" file at the repo root is
