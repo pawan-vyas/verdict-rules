@@ -1,3 +1,4 @@
+import { UnknownLookupError } from "./errors.js";
 import type { Context, RuleResult, RunResult } from "./result.js";
 import type { Rule } from "./rule.js";
 
@@ -57,12 +58,12 @@ export class RulesEngine {
   /**
    * Evaluate exactly one rule, looked up by name.
    *
-   * @throws {Error} if no rule has this name.
+   * @throws {UnknownLookupError} if no rule has this name.
    */
   async runNamed(name: string, context: Context): Promise<RuleResult> {
     const rule = this.#byName.get(name);
     if (rule === undefined) {
-      throw new Error(`No rule named '${name}' in this engine`);
+      throw new UnknownLookupError("rule", name);
     }
     return rule.evaluate(context);
   }
@@ -70,7 +71,7 @@ export class RulesEngine {
   /**
    * Evaluate every rule sharing a group label. Never short-circuits.
    *
-   * @throws {Error} if no rule carries this label.
+   * @throws {UnknownLookupError} if no rule carries this label.
    *
    * An unknown group throws rather than returning a vacuous pass, matching
    * {@link runNamed}. A group exists only because some rule declared it, so an
@@ -86,7 +87,7 @@ export class RulesEngine {
   async runGroup(group: string, context: Context): Promise<RunResult> {
     const rules = this.#byGroup.get(group);
     if (rules === undefined || rules.length === 0) {
-      throw new Error(`No rules in group '${group}' in this engine`);
+      throw new UnknownLookupError("group", group);
     }
     const results: RuleResult[] = [];
     for (const rule of rules) {

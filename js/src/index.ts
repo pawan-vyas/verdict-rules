@@ -19,6 +19,7 @@
  */
 
 export { RulesEngine } from "./engine.js";
+export { UnknownLookupError } from "./errors.js";
 export type { Context, RuleResult, RunResult } from "./result.js";
 export { AndRule, FunctionRule, OrRule } from "./rule.js";
 export type { Rule, RulePredicate } from "./rule.js";

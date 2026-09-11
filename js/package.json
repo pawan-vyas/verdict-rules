@@ -2,28 +2,58 @@
   "name": "verdict-rules",
   "version": "0.0.1",
   "description": "A small, zero-dependency, async-native rule-evaluation engine. Compose conditions into one explainable pass/fail verdict, with sequential evaluation and real short-circuiting as a guarantee.",
-  "keywords": ["rules-engine", "rule-evaluation", "eligibility", "policy", "decision"],
+  "keywords": [
+    "rules-engine",
+    "rule-evaluation",
+    "eligibility",
+    "policy",
+    "decision"
+  ],
   "license": "MIT",
-  "repository": { "type": "git", "url": "git+https://github.com/pawan-vyas/verdict-rules.git", "directory": "js" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pawan-vyas/verdict-rules.git",
+    "directory": "js"
+  },
   "bugs": "https://github.com/pawan-vyas/verdict-rules/issues",
   "homepage": "https://github.com/pawan-vyas/verdict-rules#readme",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
   },
-  "files": ["dist", "README.md", "LICENSE", "CHANGELOG.md"],
-  "engines": { "node": ">=18" },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "npm run build:types && npm run build:bundles",
+    "build:types": "tsc -p tsconfig.build.json",
+    "build:bundles": "node scripts/build.mjs",
     "test": "node --test test/*.test.js",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "typescript": "^5.6.0",
-    "@types/node": "^22.0.0"
-  }
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.24.0"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "unpkg": "./dist/verdict-rules.global.js",
+  "jsdelivr": "./dist/verdict-rules.global.js",
+  "browser": "./dist/verdict-rules.global.js",
+  "sideEffects": false
 }

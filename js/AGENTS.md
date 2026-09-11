@@ -27,6 +27,26 @@ JS/TS-specific rules, on top of the repo-root `AGENTS.md`. Read that first.
   `verdict-rules/extensions` subpath is additive rather than a restructure.
 - `strict`, plus `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`.
 
+## Distribution shape is effectively permanent
+
+The `exports` map and the files it points at cannot change freely once
+published: a consumer's `require()` or `<script src>` that worked at `0.0.1`
+has to keep working. Four formats ship from one source tree via
+`scripts/build.mjs` — ESM, CJS, an ES2019 IIFE global for a plain `<script>`
+tag, and a minified global for CDN URLs. `unpkg`/`jsdelivr`/`browser` fields
+point at the global build.
+
+`tsc` emits declarations only; esbuild owns every `.js` in `dist/`. Declaration
+maps are off because `src/` is not published — esbuild's JS maps embed
+`sourcesContent` and are self-contained, which those would not be.
+
+## Errors are typed, not string-matched
+
+JavaScript has no built-in lookup-error type, so the package exports
+`UnknownLookupError` with `kind` and `key` fields. Never throw a bare `Error`
+for something a caller might reasonably catch — that forces message matching,
+and rewording a message then becomes a breaking change.
+
 ## Before calling a change done
 
 ```

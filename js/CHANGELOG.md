@@ -17,7 +17,10 @@ its guarantees, with the tests that prove them, and nothing else yet.
 - Unknown rule names and unknown groups throw rather than returning a vacuous
   pass — emptiness folds to an identity, absence is an error.
 - `RulesEngine.ruleNames` / `groupNames` for checking before calling.
-- ESM only, Node 18+, zero runtime dependencies, types included.
+- `UnknownLookupError`, carrying `kind` and `key`, so an unknown lookup is
+  catchable by type rather than by matching message text.
+- Ships as ESM, CommonJS, and an ES2019 global bundle for a plain `<script>`
+  tag or a CDN URL. Node 18+, zero runtime dependencies, types included.
 
 Not yet included: the shared graduation fixture that every language must pass,
 and the documentation set. Those arrive before `0.1.0`.
