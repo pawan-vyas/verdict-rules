@@ -24,6 +24,13 @@ venv/
 # for the specific rule (only evals/evals.json is tracked, everything else
 # there is point-in-time, regenerable working output).
 
-# JS/TS + C# SDK session-resume notes — local planning material, not meant
-# to be committed until those SDKs are actually being built for real.
-/RESUME.md
+# Transient agent working material — logs, throwaway scripts, anything
+# that stops mattering when the session ends. Durable notes never land
+# here; they go in AGENTS.md / HANDOFF.md / .agents/ instead.
+scratch/
+
+# Harness config: the project-scope, shareable parts are committed
+# (they record this repo's toolchain), the personal/machine-local ones
+# are not.
+.claude/settings.local.json
+*.local.json

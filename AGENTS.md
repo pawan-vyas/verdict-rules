@@ -20,6 +20,96 @@ directories actually exist before assuming a language has an SDK yet.
 building with verdict, vendored back into consuming projects via
 `scripts/install.sh`.
 
+## Working notes stay in the repo
+
+> Every **durable** note — memory, standing rules, plans, specs,
+> decisions, tasks, discussion conclusions, session handoffs — lives
+> **inside this repo**, committed. **Never** write durable notes to
+> `~/.claude/`, a harness's own global memory store, the home
+> directory, or `/tmp`. Only genuinely transient logs and throwaway
+> scripts may live outside a tracked file, under `scratch/`
+> (gitignored).
+
+Where things go:
+
+| Kind | Home |
+| :-- | :-- |
+| Standing rules (this file) | `AGENTS.md`, plus each language's own (`python/AGENTS.md`) |
+| Session state — resume from here | `HANDOFF.md` |
+| Plans, specs, playbooks, resume notes | [`.agents/plans/`](.agents/plans/) |
+| Durable facts / confirmed preferences | [`.agents/memory/`](.agents/memory/) |
+| Vendored operations manuals an agent follows | [`.agents/skills/`](.agents/skills/), mirrored to `.claude/skills/` |
+| Published documentation, for human readers | `docs/`, and each language's own `docs/` |
+| Transient logs, throwaway scripts | `scratch/` (gitignored) |
+
+`.agents/` is the harness-neutral home for everything an agent
+produces that outlives a session — `memory/` for what is *already
+true*, `plans/` for what is *going to happen*. This is a deliberate
+repo-local override of the context-fence default (`docs/agent-memory/`):
+`docs/` here is published package documentation, and agent working
+material stays out of it. A genuinely new *kind* of durable agent
+material gets a new sibling under `.agents/` with its own `README.md`
+— not a subdirectory of whichever existing one roughly fits. See
+[`.agents/README.md`](.agents/README.md) for the full layout.
+
+**Start of session:** resume from [`HANDOFF.md`](HANDOFF.md) and honor
+its **§0.1 freshness & alignment protocol** before trusting §2–§3 — if
+the repo has moved since the handoff was sealed, reconcile first. The
+full operations spec (RESUME / SETUP / ADOPT / SWEEP / HANDOFF) is
+vendored locally at
+[`.agents/skills/context-fence/SKILL.md`](.agents/skills/context-fence/SKILL.md),
+mirrored to `.claude/skills/context-fence/` for Claude Code's native
+discovery. No installation or network needed — read it and follow the
+operation by name rather than improvising.
+
+**Harness plan files count as durable context.** When a harness has a
+plan mode, a scratch mode, or any equivalent that writes a working
+document somewhere of its own choosing, point it at
+[`.agents/plans/`](.agents/plans/) inside this repo. If its plan path
+isn't overridable, copy the file into `.agents/plans/` as soon as it
+has content and make every later edit to the in-repo copy — never
+leave the authoritative version in `~/.claude/plans/` or any other
+harness-private store.
+
+**Harness memory files count as durable context too.** The same rule,
+and it matters more, because a memory feature is designed to be
+invisible: it accumulates quietly and is read back automatically, so
+nothing ever *feels* wrong while every durable fact you learn is
+landing outside the repo. When a harness offers one, write the memory
+to [`.agents/memory/`](.agents/memory/) instead — one file per fact,
+committed. If the harness insists on maintaining its own store and the
+path isn't overridable, keep **only a pointer** there — a line saying
+the real memory lives in this repo, naming `AGENTS.md` and
+`.agents/memory/` — and never a copy of the fact itself. Two stores
+holding the same fact is worse than one holding a pointer: they drift,
+and the stale one is the one that gets read in the session where it
+matters. Anything you'd be tempted to "remember" about this repo
+belongs in `.agents/memory/`, where the next agent — in any harness —
+can actually find it.
+
+**Don't create parallel planning docs.** In-flight work and next steps
+go in `HANDOFF.md` §3; anything longer-lived goes in `.agents/plans/`
+as a named plan. A second "notes" or "TODO" file at the repo root is
+how context gets lost, not how it gets organized.
+
+## Asking the user
+
+When you have a question, a doubt, or a decision that is genuinely the
+user's to make, **ask through the harness's interactive question tool**
+— not as prose buried at the end of a long reply, and not by guessing
+and proceeding. If the harness has no such tool, ask in the
+conversation instead; the rule is that the question is put to the user
+explicitly, not the specific mechanism. Explain the context *upfront*:
+what you found, why it forces a choice, and what each option costs.
+Give a recommendation rather than an even-handed survey.
+
+Reserve **blocking** questions — stopping with nothing delivered until
+the user answers — for cases where proceeding under any assumption
+would be unsafe or would waste the work if wrong. Otherwise do
+everything that doesn't depend on the answer first, then ask. A
+routine judgment call with an obvious default isn't a question; make
+it, say you made it, and move on.
+
 ## Keep this repo standalone-portable
 
 This is load-bearing, not a style preference: **never introduce a
