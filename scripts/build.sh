@@ -6,7 +6,10 @@
 #                              every OTHER harness. Download+unzip this instead of cloning the whole
 #                              repo when all you need is to run the installer.
 # The repo itself remains the canonical install (marketplace or skills-dir clone); these are
-# conveniences, published as GitHub Release assets tagged to plugin.json's version.
+# conveniences, published as GitHub Release assets under whatever tag triggered the release
+# (today: python-vX.Y.Z); the asset filenames carry no version. plugin.json's own version is a
+# Claude Code marketplace signal for whether a vendored skill copy needs updating — it tracks the
+# skill's content, not any language's release, and the other harnesses' vendoring never reads it.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"

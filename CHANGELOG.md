@@ -10,10 +10,15 @@ entries are grouped by language-scoped tag (`python-vX.Y.Z` today;
 `js-vX.Y.Z`/`csharp-vX.Y.Z` once those languages ship), not one
 repo-wide version number.
 
+The AI-agent skill under `skills/verdict/` releases on its own cadence
+too, under a `skill-vX.Y.Z` tag tracking
+`.claude-plugin/plugin.json`'s version — it describes the guidance, not
+any language's API, so it is deliberately unrelated to every
+`<language>-vX.Y.Z` number here.
 
 See `docs/maintenance.md`'s "How this package is released and consumed"
-section for the release procedure and each language's own `AGENTS.md`
-for what counts as a breaking change in that language.
+section for both release procedures, and each language's own
+`AGENTS.md` for what counts as a breaking change in that language.
 
 ## python-v0.1.0 (2026-09-07)
 

@@ -79,12 +79,17 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v10.0.1
 
+      # Every release in this repo attaches the full set of skill artifacts, so scripts/get.sh —
+      # which pulls verdict-tools.zip from whatever GitHub calls the latest release — always finds
+      # one, whether the last release was a Python one or a skill one (see release-skill.yml).
       - name: Build skill-distribution artifacts
         run: |
+          set -euo pipefail
           chmod +x scripts/build.sh
           ./scripts/build.sh
           mkdir -p release-assets
-          cp dist/verdict-plugin.zip dist/verdict.skill dist/verdict-tools.zip release-assets/
+          # Whatever build.sh produced, rather than a hardcoded list that can drift from it.
+          cp dist/* release-assets/
 
       - name: Download Python build artifacts
         uses: actions/download-artifact@v4

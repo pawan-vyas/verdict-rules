@@ -1,0 +1,82 @@
+# Guards the one number Claude Code's marketplace uses to decide whether a user's vendored copy of
+# skills/verdict/ is stale: .claude-plugin/plugin.json's `version`. Nothing else reads it — the
+# library's own version lives in python/pyproject.toml and is deliberately independent, and
+# scripts/install.sh / scripts/get.sh vendor the skill for every other harness without consulting a
+# version at all. So a skill edit that ships without a bump is silent: marketplace users simply
+# never see the update.
+#
+# Deliberately NOT a check that plugin.json agrees with any language manifest. The two measure
+# different things and are expected to drift.
+#
+# Named to sit alongside test-python.yml / release-python.yml; it is language-agnostic, because the
+# skill is.
+name: Check skill version
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "skills/verdict/**"
+      - ".claude-plugin/**"
+      - ".github/workflows/check-skill-version.yml"
+  pull_request:
+    paths:
+      - "skills/verdict/**"
+      - ".claude-plugin/**"
+      - ".github/workflows/check-skill-version.yml"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      MANIFEST: .claude-plugin/plugin.json
+      # Resolved once, here, rather than re-tested inside the script: for a PR the comparison point
+      # is the merge base, for a push it's whatever main pointed at before.
+      BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # the base commit must be present locally to diff against
+
+      - name: Check that the skill version was bumped
+        run: |
+          set -euo pipefail
+
+          # A branch creation, a force-push, or a manual dispatch leaves no usable base commit.
+          # Nothing to compare against is not a failure — say so and stop.
+          if [ -z "${BASE_SHA:-}" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ] \
+             || ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            echo "No usable base commit to compare against (base: '${BASE_SHA:-unset}') — skipping."
+            exit 0
+          fi
+
+          # The path filters above can fire for a reason that does not need a bump (this workflow
+          # file changing), and a push range can carry unrelated merges. Re-derive what actually
+          # changed rather than trusting the trigger.
+          # skills/verdict-workspace/ is eval working material and never ships — see build.sh.
+          changed="$(git diff --name-only "$BASE_SHA" HEAD -- \
+            'skills/verdict' ':(exclude)skills/verdict-workspace' '.claude-plugin')"
+
+          if [ -z "$changed" ]; then
+            echo "No shipped skill or plugin-manifest files changed in ${BASE_SHA}..HEAD — nothing to enforce."
+            exit 0
+          fi
+
+          echo "Skill-facing files changed:"
+          echo "$changed" | sed 's/^/  /'
+
+          current="$(jq -er '.version' "$MANIFEST")"
+
+          # A newly added manifest has no previous version to differ from.
+          if ! previous="$(git show "$BASE_SHA:$MANIFEST" 2>/dev/null | jq -er '.version')"; then
+            echo "$MANIFEST is new at this commit (version $current) — nothing to compare."
+            exit 0
+          fi
+
+          if [ "$current" = "$previous" ]; then
+            echo "::error file=$MANIFEST::Shipped skill content changed, but $MANIFEST's version is still $previous. Claude Code uses that version as its only signal that a vendored copy of skills/verdict/ is out of date, so shipping without a bump means marketplace users never receive this change. Bump it (independently of python/pyproject.toml — the two are unrelated)."
+            exit 1
+          fi
+
+          echo "Skill version bumped: $previous -> $current"

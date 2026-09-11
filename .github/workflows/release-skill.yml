@@ -1,0 +1,61 @@
+# Triggered by a skill-vX.Y.Z tag push. Ships the AI-agent skill on its own cadence, independently
+# of any language SDK — see docs/maintenance.md's "The skill's version is a separate number".
+#
+# Why this exists at all: scripts/get.sh (the curl-pipe install path) resolves whatever GitHub calls
+# the *latest* release and pulls verdict-tools.zip from it. Without this workflow the only thing
+# cutting a release is release-python.yml, so a skill-only change would sit unreleased until the
+# next Python version shipped — leaving get.sh users on a stale skill for a change that has nothing
+# to do with the library. Marketplace and clone users already track main directly and were never
+# affected; this closes the gap for the one path that isn't.
+#
+# Every release in this repo — this one and release-python.yml — attaches the full set of skill
+# artifacts, so "latest" always carries a usable verdict-tools.zip no matter which kind of release
+# happened to come last.
+name: Release (Skill)
+
+on:
+  push:
+    tags:
+      - "skill-v*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      MANIFEST: .claude-plugin/plugin.json
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          echo "version=${tag#skill-v}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify plugin.json version matches the tag
+        run: |
+          set -euo pipefail
+          declared="$(jq -er '.version' "$MANIFEST")"
+          if [ "$declared" != "${{ steps.version.outputs.version }}" ]; then
+            echo "::error file=$MANIFEST::Tag ${GITHUB_REF_NAME} declares version ${{ steps.version.outputs.version }}, but $MANIFEST says $declared. Fix the mismatch and re-tag before releasing."
+            exit 1
+          fi
+
+      - name: Build skill-distribution artifacts
+        run: |
+          set -euo pipefail
+          chmod +x scripts/build.sh
+          ./scripts/build.sh
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # Whatever build.sh produced, rather than a hardcoded list that can drift from it.
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "Skill v${{ steps.version.outputs.version }}" \
+            --generate-notes \
+            dist/*
