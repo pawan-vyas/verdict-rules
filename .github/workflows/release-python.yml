@@ -97,11 +97,43 @@ jobs:
           name: python-dist
           path: release-assets/
 
+      # The release body is this language's own CHANGELOG section, not GitHub's
+      # auto-generated commit list. The changelog is written by hand, in the same
+      # commit as the version bump, and says what changed and why — which is what
+      # someone opening the release page actually wants. --generate-notes produced
+      # a bare "Full Changelog" link.
+      - name: Extract release notes from CHANGELOG.md
+        id: notes
+        run: |
+          set -euo pipefail
+          version="${{ needs.build.outputs.version }}"
+          notes="$(awk -v hdr="## python-v$version" '
+            index($0, hdr) == 1 { found = 1; next }
+            /^## / { if (found) exit }
+            found { print }
+          ' CHANGELOG.md)"
+
+          # A missing section means the changelog entry was not written alongside
+          # the version bump, which docs/maintenance.md requires. Fail rather than
+          # publish a release with no notes.
+          if [ -z "$(printf '%s' "$notes" | tr -d '[:space:]')" ]; then
+            echo "::error file=CHANGELOG.md::No '## python-v$version' section found. Add the changelog entry in the same commit as the version bump, then re-tag."
+            exit 1
+          fi
+
+          {
+            echo "notes<<__RELEASE_NOTES__"
+            printf '%s\n' "$notes"
+            echo "**Full changelog**: https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}/CHANGELOG.md"
+            echo "__RELEASE_NOTES__"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
           gh release create "${GITHUB_REF_NAME}" \
             --title "Python v${{ needs.build.outputs.version }}" \
-            --generate-notes \
+            --notes "${{ steps.notes.outputs.notes }}" \
             release-assets/*

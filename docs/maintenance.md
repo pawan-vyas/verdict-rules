@@ -63,6 +63,15 @@ Release procedure, once a change is ready to ship:
    skill-distribution artifacts, and attaches all of it to a GitHub
    Release.
 
+Pushing the tag is the only manual step, and deliberately so — it is the
+point at which a human decides something is a release. Everything
+downstream of it is automated, including the GitHub Release itself.
+
+The release body is **this changelog's own section for that tag**, not
+an auto-generated commit list. That is why step 2 is not optional: a tag
+whose `## python-vX.Y.Z` section is missing fails the release rather than
+publishing one with empty notes.
+
 ### The skill's version is a separate number, on its own schedule
 
 `.claude-plugin/plugin.json`'s `version` is **not** part of the release

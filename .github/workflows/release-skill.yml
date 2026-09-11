@@ -49,6 +49,31 @@ jobs:
           chmod +x scripts/build.sh
           ./scripts/build.sh
 
+      # Same as release-python.yml: the body is the hand-written CHANGELOG
+      # section for this tag, not an auto-generated commit list.
+      - name: Extract release notes from CHANGELOG.md
+        id: notes
+        run: |
+          set -euo pipefail
+          version="${{ steps.version.outputs.version }}"
+          notes="$(awk -v hdr="## skill-v$version" '
+            index($0, hdr) == 1 { found = 1; next }
+            /^## / { if (found) exit }
+            found { print }
+          ' CHANGELOG.md)"
+
+          if [ -z "$(printf '%s' "$notes" | tr -d '[:space:]')" ]; then
+            echo "::error file=CHANGELOG.md::No '## skill-v$version' section found. Add the changelog entry in the same commit as the version bump, then re-tag."
+            exit 1
+          fi
+
+          {
+            echo "notes<<__RELEASE_NOTES__"
+            printf '%s\n' "$notes"
+            echo "**Full changelog**: https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}/CHANGELOG.md"
+            echo "__RELEASE_NOTES__"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -57,5 +82,5 @@ jobs:
           # Whatever build.sh produced, rather than a hardcoded list that can drift from it.
           gh release create "${GITHUB_REF_NAME}" \
             --title "Skill v${{ steps.version.outputs.version }}" \
-            --generate-notes \
+            --notes "${{ steps.notes.outputs.notes }}" \
             dist/*
