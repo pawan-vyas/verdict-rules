@@ -41,7 +41,7 @@ stateDiagram-v2
     state "📋 Clerical" as Clerical
     state "🔨 Minimal correct" as Minimal
     state "🏷️ Name claimed · 0.0.1" as Claimed
-    state "🧱 Hardened · 0.0.5" as Hardened
+    state "🧱 Hardened · 0.0.x" as Hardened
     state "⚖️ Proven · 0.1.0" as Proven
 
     Clerical --> Minimal: every naming and registry question answered in writing
@@ -82,13 +82,20 @@ stateDiagram-v2
 >    the execution-model guarantees, with short-circuit and
 >    vacuous-truth tests proving it. Correct but small — not a stub.
 > 3. **Claimed → Hardened**: the name is held. Everything after this is
->    normal iteration under a version nobody is expected to depend on.
+>    normal iteration under a version nobody is expected to depend on —
+>    `0.0.2`, `0.0.3`, as many as it takes. The point of staying in
+>    `0.0.x` is that the publishing pipeline is still unproven for that
+>    language, and a version number spent proving it is a version number
+>    nobody misses.
 > 4. **Hardened → Proven**: the shared graduation fixture passes, which
 >    is what makes "the same engine, in another language" a
 >    demonstrated claim rather than an asserted one.
 >
-> **Design note**: `0.0.1` is deliberately publishable rather than a
-> placeholder. A registry entry is permanent and public from the moment
+> **Design note**: the `0.0.x` numbers are not a fixed count. Spend as
+> many as the pipeline needs — several registries burn a version
+> permanently the moment it is published, so proving the workflow on
+> throwaway numbers is the cheap way to find out it is wrong. `0.0.1` is
+> deliberately publishable rather than a placeholder. A registry entry is permanent and public from the moment
 > it exists, so the first thing under a name should be honest code
 > somebody could actually use.
 
@@ -147,7 +154,7 @@ belongs in `.agents/scratch/`, not in the repo's public surfaces.
 - [ ] Trusted publishing configured immediately afterwards, so `0.0.1`
       is the only version ever published by hand
 
-## Stage 3 · Harden — `0.0.5`
+## Stage 3 · Harden — `0.0.x`
 
 - [ ] Test coverage expanded across every type and run mode
 - [ ] Language-level `README` and quickstart
@@ -174,6 +181,36 @@ belongs in `.agents/scratch/`, not in the repo's public surfaces.
       notes where the language diverges, extension recipes in its own
       idiom
 - [ ] A real install from the registry exercised end to end
+
+## Features land everywhere, or nowhere
+
+Once more than one language ships, **a capability is added to all of
+them or to none of them**. No language runs ahead.
+
+This is the rule that keeps "the same engine, in another language" true
+rather than aspirational. A feature present in one SDK and absent in
+three turns the shared design into a family resemblance, and every
+consumer then has to ask which language they are reading about before
+trusting any documentation.
+
+In practice:
+
+- **A new capability is a cross-language piece of work**, not a
+  single-language one. If it is not worth doing four times, that is
+  useful evidence about whether it is worth doing at all —
+  [`future_plan.md`](future_plan.md) already sets a high bar for
+  additions, and this raises it further on purpose.
+- **Behaviour changes are enforced mechanically**, not by memory: they
+  show up as changes to the shared fixture, and every language's suite
+  fails until it matches. A language cannot silently drift.
+- **Fixing a defect in the reference implementation is not "running
+  ahead."** Correcting behaviour is expected to propagate; languages
+  that have not shipped yet inherit it for free, because the fixture is
+  what they are built against.
+- **Versions stay independent.** Parity is a property proven by the
+  fixture, not encoded in matching version numbers. A language's version
+  describes its own history; `CHANGELOG.md` is where "this matches the
+  reference as of X" belongs, if it needs saying at all.
 
 ## What is shared and what is not
 

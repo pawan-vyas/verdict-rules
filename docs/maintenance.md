@@ -72,6 +72,23 @@ an auto-generated commit list. That is why step 2 is not optional: a tag
 whose `## python-vX.Y.Z` section is missing fails the release rather than
 publishing one with empty notes.
 
+### Ownership and namespaces across registries
+
+This package is published by an **individual** on every registry, and
+stays that way — no organization, no verified publisher, no team
+account. Each registry offers something org-shaped that looks like a
+prerequisite until you check what it buys, and in every case the answer
+is nothing we need: everything ships from **one package per language**,
+so there is no family of names to protect.
+
+One exception, which is not an organization: **NuGet ID prefix
+reservation for `VerdictRules.*` is worth applying for** once the base
+package exists. NuGet is the one registry where a plausible-looking
+`VerdictRules.Extensions` could be published by somebody else and read
+as ours. We will never publish that package — which is precisely why
+nobody else should be able to. The reservation is tied to the package
+owner, not to an organization.
+
 ### The skill's version is a separate number, on its own schedule
 
 `.claude-plugin/plugin.json`'s `version` is **not** part of the release
