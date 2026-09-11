@@ -30,9 +30,13 @@ guarantees that make short-circuiting actually mean something.
   - `run_named(name, context)` — exactly one rule, looked up by name.
     Raises `KeyError` if no rule has that name.
   - `run_group(group, context)` — every rule sharing a group label.
-    Also never short-circuits. An unknown group or one with no matching
-    rules returns a vacuous pass (an empty result set — same as
-    Python's own `all([])`).
+    Also never short-circuits. Raises `KeyError` if no rule carries
+    that label, exactly like `run_named`: a group exists only because
+    some rule declared it, so a lookup matching nothing is a typo or a
+    stale name, never a legitimately empty group.
+  - `rule_names` / `group_names` — read-only tuples of what is
+    registered, so a caller who cannot know in advance whether a name
+    exists can check rather than catch.
 - **`RuleResult(rule_name, passed, detail="", data=None)`** — the
   outcome of evaluating one rule. `data` is a fully opaque slot for a
   caller's own domain object (a computed status, a sub-result list) to

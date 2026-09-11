@@ -17,11 +17,27 @@ value came out right. See `testing-patterns.md`.
 ## Vacuous truth has a polarity, and it's easy to get backwards
 
 `AndRule([])` **passes** (nothing to fail on). `OrRule([])` **fails**
-(nothing to pass on). `RulesEngine.run_group()` on an unknown or empty
-group **passes** (an empty result set — same as Python's own
-`all([])`). These are not symmetric, and picking the wrong default for
-a custom rule shape (see Extension Recipe 2) is a real, easy mistake —
-decide it explicitly, don't assume.
+(nothing to pass on). These are not symmetric, and picking the wrong
+default for a custom rule shape (see Extension Recipe 2) is a real,
+easy mistake — decide it explicitly, don't assume.
+
+## Emptiness is not absence, and they get opposite treatment
+
+An **empty** composite folds to its identity, as above. An **absent**
+lookup raises: both `run_named("typo")` and `run_group("typo")` raise
+`KeyError`.
+
+The asymmetry is deliberate. An empty rule list is a set the caller
+handed over, and "nothing configured" is a legitimate state — Extension
+Recipe 4 depends on it. An unknown group is a question about something
+that does not exist; since a group exists only because some rule
+declared it, a lookup matching nothing can only be a mistake. Returning
+a vacuous pass there would mean a misspelled group name silently
+approves, which in an access-control or eligibility adapter is the worst
+possible failure.
+
+If a group may legitimately be absent, check `engine.group_names` rather
+than catching — that is what it is for.
 
 ## A `Rule`'s own `.name` and its `RuleResult.rule_name` are two different things
 

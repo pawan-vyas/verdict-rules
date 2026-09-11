@@ -16,9 +16,14 @@ missing exactly the thing that matters:
   value passes a weaker, boolean-only test and silently defeats the
   entire reason `AndRule`/`OrRule` short-circuit in the first place.
 - **Vacuous truth, explicitly**: `AndRule([])` passes, `OrRule([])`
-  fails, an unmatched `run_group()` passes. Each of these needs its own
-  dedicated test — "empty means pass" and "empty means fail" are both
-  defensible in isolation, and only one is correct per shape.
+  fails. Each needs its own dedicated test — "empty means pass" and
+  "empty means fail" are both defensible in isolation, and only one is
+  correct per shape.
+- **Absence, separately from emptiness**: `run_named()` and
+  `run_group()` both raise `KeyError` for a name or label nothing
+  registered. Test that they raise, not that they return something —
+  an unknown lookup returning a pass is the failure mode this
+  distinction exists to prevent.
 - **Non-short-circuiting run modes, proven not to short-circuit**:
   `run_all`/`run_group` should report *every* rule even after an
   earlier one has already failed — the direct mirror-image regression
