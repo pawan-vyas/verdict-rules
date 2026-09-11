@@ -1,0 +1,46 @@
+{
+  "vacuous_pass": {
+    "note": "Empty curriculum, no elective requirement. Proves AndRule([]) passes vacuously and a zero threshold is satisfiable by zero electives — the polarity that is easy to get backwards.",
+    "curriculum": { "elective_minimum": 0, "subjects": [] },
+    "student": {
+      "scores": {},
+      "cgpa": 9.0,
+      "cgpa_floor": 6.0,
+      "attendance_pct": 95,
+      "attendance_floor": 75
+    },
+    "expected": {
+      "passed": true,
+      "rules_evaluated": 4,
+      "failing_rule": null,
+      "failing_chain": [],
+      "run_all": { "evaluated": 0, "passed": true },
+      "groups": {
+        "core": { "evaluated": 0, "passed": true },
+        "elective": { "evaluated": 0, "passed": true }
+      }
+    }
+  },
+  "unsatisfiable_threshold": {
+    "note": "Empty curriculum but two electives required. Proves the opposite polarity: an at-least-N rule over an empty set fails when N > 0, and short-circuits after the second rule.",
+    "curriculum": { "elective_minimum": 2, "subjects": [] },
+    "student": {
+      "scores": {},
+      "cgpa": 9.0,
+      "cgpa_floor": 6.0,
+      "attendance_pct": 95,
+      "attendance_floor": 75
+    },
+    "expected": {
+      "passed": false,
+      "rules_evaluated": 2,
+      "failing_rule": "elective_requirement",
+      "failing_chain": ["elective_requirement"],
+      "run_all": { "evaluated": 0, "passed": true },
+      "groups": {
+        "core": { "evaluated": 0, "passed": true },
+        "elective": { "evaluated": 0, "passed": true }
+      }
+    }
+  }
+}

@@ -1,0 +1,425 @@
+{
+  "alice": {
+    "note": "Clean pass \u2014 every subject, every floor, comfortably.",
+    "scores": {
+      "MATH101": {
+        "written_pct": 55
+      },
+      "ENG101": {
+        "written_pct": 50
+      },
+      "WORKSHOP201": {
+        "written_pct": 50,
+        "practical_pct": 70
+      },
+      "FRENCH101": {
+        "written_pct": 45
+      },
+      "ELECTIVE_ART": {
+        "written_pct": 60
+      },
+      "ELECTIVE_MUSIC": {
+        "written_pct": 55
+      },
+      "ELECTIVE_CS": {
+        "written_pct": 65
+      }
+    },
+    "cgpa": 7.5,
+    "cgpa_floor": 6.0,
+    "attendance_pct": 90,
+    "attendance_floor": 75,
+    "expected": {
+      "passed": true,
+      "rules_evaluated": 4,
+      "failing_rule": null,
+      "failing_chain": [],
+      "run_all": {
+        "evaluated": 7,
+        "passed": true
+      },
+      "groups": {
+        "core": {
+          "evaluated": 4,
+          "passed": true
+        },
+        "elective": {
+          "evaluated": 3,
+          "passed": true
+        }
+      }
+    }
+  },
+  "bob": {
+    "note": "Fails a plain academic core subject (a bare FunctionRule failure).",
+    "scores": {
+      "MATH101": {
+        "written_pct": 55
+      },
+      "ENG101": {
+        "written_pct": 30
+      },
+      "WORKSHOP201": {
+        "written_pct": 50,
+        "practical_pct": 70
+      },
+      "FRENCH101": {
+        "written_pct": 45
+      },
+      "ELECTIVE_ART": {
+        "written_pct": 60
+      },
+      "ELECTIVE_MUSIC": {
+        "written_pct": 55
+      },
+      "ELECTIVE_CS": {
+        "written_pct": 65
+      }
+    },
+    "cgpa": 7.0,
+    "cgpa_floor": 6.0,
+    "attendance_pct": 85,
+    "attendance_floor": 75,
+    "expected": {
+      "passed": false,
+      "rules_evaluated": 1,
+      "failing_rule": "all_core_subjects_pass",
+      "failing_chain": [
+        "all_core_subjects_pass",
+        "ENG101"
+      ],
+      "run_all": {
+        "evaluated": 7,
+        "passed": false
+      },
+      "groups": {
+        "core": {
+          "evaluated": 4,
+          "passed": false
+        },
+        "elective": {
+          "evaluated": 3,
+          "passed": true
+        }
+      }
+    }
+  },
+  "carla": {
+    "note": "Every subject passes, but only 1 of 3 electives \u2014 AtLeastNRule failure.",
+    "scores": {
+      "MATH101": {
+        "written_pct": 55
+      },
+      "ENG101": {
+        "written_pct": 50
+      },
+      "WORKSHOP201": {
+        "written_pct": 50,
+        "practical_pct": 70
+      },
+      "FRENCH101": {
+        "written_pct": 45
+      },
+      "ELECTIVE_ART": {
+        "written_pct": 60
+      },
+      "ELECTIVE_MUSIC": {
+        "written_pct": 20
+      },
+      "ELECTIVE_CS": {
+        "written_pct": 25
+      }
+    },
+    "cgpa": 7.0,
+    "cgpa_floor": 6.0,
+    "attendance_pct": 85,
+    "attendance_floor": 75,
+    "expected": {
+      "passed": false,
+      "rules_evaluated": 2,
+      "failing_rule": "elective_requirement",
+      "failing_chain": [
+        "elective_requirement",
+        "ELECTIVE_MUSIC"
+      ],
+      "run_all": {
+        "evaluated": 7,
+        "passed": false
+      },
+      "groups": {
+        "core": {
+          "evaluated": 4,
+          "passed": true
+        },
+        "elective": {
+          "evaluated": 3,
+          "passed": false
+        }
+      }
+    }
+  },
+  "deepak": {
+    "note": "Vocational written score passes, practical score doesn't \u2014 AndRule's second branch fails specifically.",
+    "scores": {
+      "MATH101": {
+        "written_pct": 55
+      },
+      "ENG101": {
+        "written_pct": 50
+      },
+      "WORKSHOP201": {
+        "written_pct": 50,
+        "practical_pct": 45
+      },
+      "FRENCH101": {
+        "written_pct": 45
+      },
+      "ELECTIVE_ART": {
+        "written_pct": 60
+      },
+      "ELECTIVE_MUSIC": {
+        "written_pct": 55
+      },
+      "ELECTIVE_CS": {
+        "written_pct": 65
+      }
+    },
+    "cgpa": 7.0,
+    "cgpa_floor": 6.0,
+    "attendance_pct": 85,
+    "attendance_floor": 75,
+    "expected": {
+      "passed": false,
+      "rules_evaluated": 1,
+      "failing_rule": "all_core_subjects_pass",
+      "failing_chain": [
+        "all_core_subjects_pass",
+        "WORKSHOP201",
+        "WORKSHOP201:practical"
+      ],
+      "run_all": {
+        "evaluated": 7,
+        "passed": false
+      },
+      "groups": {
+        "core": {
+          "evaluated": 4,
+          "passed": false
+        },
+        "elective": {
+          "evaluated": 3,
+          "passed": true
+        }
+      }
+    }
+  },
+  "elena": {
+    "note": "Fails the language written paper but holds an exemption \u2014 OrRule's second branch is what actually passes her.",
+    "scores": {
+      "MATH101": {
+        "written_pct": 55
+      },
+      "ENG101": {
+        "written_pct": 50
+      },
+      "WORKSHOP201": {
+        "written_pct": 50,
+        "practical_pct": 70
+      },
+      "FRENCH101": {
+        "written_pct": 20,
+        "has_exemption": true
+      },
+      "ELECTIVE_ART": {
+        "written_pct": 60
+      },
+      "ELECTIVE_MUSIC": {
+        "written_pct": 55
+      },
+      "ELECTIVE_CS": {
+        "written_pct": 65
+      }
+    },
+    "cgpa": 7.0,
+    "cgpa_floor": 6.0,
+    "attendance_pct": 85,
+    "attendance_floor": 75,
+    "expected": {
+      "passed": true,
+      "rules_evaluated": 4,
+      "failing_rule": null,
+      "failing_chain": [],
+      "run_all": {
+        "evaluated": 7,
+        "passed": true
+      },
+      "groups": {
+        "core": {
+          "evaluated": 4,
+          "passed": true
+        },
+        "elective": {
+          "evaluated": 3,
+          "passed": true
+        }
+      }
+    }
+  },
+  "farhan": {
+    "note": "Every subject passes; fails the CGPA floor specifically.",
+    "scores": {
+      "MATH101": {
+        "written_pct": 55
+      },
+      "ENG101": {
+        "written_pct": 50
+      },
+      "WORKSHOP201": {
+        "written_pct": 50,
+        "practical_pct": 70
+      },
+      "FRENCH101": {
+        "written_pct": 45
+      },
+      "ELECTIVE_ART": {
+        "written_pct": 60
+      },
+      "ELECTIVE_MUSIC": {
+        "written_pct": 55
+      },
+      "ELECTIVE_CS": {
+        "written_pct": 65
+      }
+    },
+    "cgpa": 5.5,
+    "cgpa_floor": 6.0,
+    "attendance_pct": 85,
+    "attendance_floor": 75,
+    "expected": {
+      "passed": false,
+      "rules_evaluated": 3,
+      "failing_rule": "cgpa_met",
+      "failing_chain": [
+        "cgpa_met"
+      ],
+      "run_all": {
+        "evaluated": 7,
+        "passed": true
+      },
+      "groups": {
+        "core": {
+          "evaluated": 4,
+          "passed": true
+        },
+        "elective": {
+          "evaluated": 3,
+          "passed": true
+        }
+      }
+    }
+  },
+  "gita": {
+    "note": "Every subject and CGPA pass; fails attendance specifically.",
+    "scores": {
+      "MATH101": {
+        "written_pct": 55
+      },
+      "ENG101": {
+        "written_pct": 50
+      },
+      "WORKSHOP201": {
+        "written_pct": 50,
+        "practical_pct": 70
+      },
+      "FRENCH101": {
+        "written_pct": 45
+      },
+      "ELECTIVE_ART": {
+        "written_pct": 60
+      },
+      "ELECTIVE_MUSIC": {
+        "written_pct": 55
+      },
+      "ELECTIVE_CS": {
+        "written_pct": 65
+      }
+    },
+    "cgpa": 6.5,
+    "cgpa_floor": 6.0,
+    "attendance_pct": 60,
+    "attendance_floor": 75,
+    "expected": {
+      "passed": false,
+      "rules_evaluated": 4,
+      "failing_rule": "attendance_met",
+      "failing_chain": [
+        "attendance_met"
+      ],
+      "run_all": {
+        "evaluated": 7,
+        "passed": true
+      },
+      "groups": {
+        "core": {
+          "evaluated": 4,
+          "passed": true
+        },
+        "elective": {
+          "evaluated": 3,
+          "passed": true
+        }
+      }
+    }
+  },
+  "harish": {
+    "note": "Every score sits exactly on its threshold \u2014 subject scores, the elective count, CGPA, and attendance all at once \u2014 proving >= is inclusive throughout, not a strict >.",
+    "scores": {
+      "MATH101": {
+        "written_pct": 40
+      },
+      "ENG101": {
+        "written_pct": 40
+      },
+      "WORKSHOP201": {
+        "written_pct": 40,
+        "practical_pct": 60
+      },
+      "FRENCH101": {
+        "written_pct": 40
+      },
+      "ELECTIVE_ART": {
+        "written_pct": 40
+      },
+      "ELECTIVE_MUSIC": {
+        "written_pct": 40
+      },
+      "ELECTIVE_CS": {
+        "written_pct": 30
+      }
+    },
+    "cgpa": 6.0,
+    "cgpa_floor": 6.0,
+    "attendance_pct": 75,
+    "attendance_floor": 75,
+    "expected": {
+      "passed": true,
+      "rules_evaluated": 4,
+      "failing_rule": null,
+      "failing_chain": [],
+      "run_all": {
+        "evaluated": 7,
+        "passed": false
+      },
+      "groups": {
+        "core": {
+          "evaluated": 4,
+          "passed": true
+        },
+        "elective": {
+          "evaluated": 3,
+          "passed": false
+        }
+      }
+    }
+  }
+}

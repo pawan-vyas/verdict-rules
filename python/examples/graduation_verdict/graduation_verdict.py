@@ -20,6 +20,9 @@ from pathlib import Path
 from verdict import AndRule, FunctionRule, OrRule, Rule, RuleResult, RulesEngine
 
 _HERE = Path(__file__).parent
+# Fixture data lives at the repo root, shared by every language's own port of
+# this example — see fixtures/graduation_verdict/README.md for the contract.
+_FIXTURES = _HERE.parents[2] / "fixtures" / "graduation_verdict"
 
 
 @dataclass(frozen=True)
@@ -233,8 +236,8 @@ def build_graduation_check(
 
 
 async def _demo() -> None:
-    policies, elective_minimum = load_curriculum(_HERE / "policies.json")
-    students = load_students(_HERE / "students.json")
+    policies, elective_minimum = load_curriculum(_FIXTURES / "policies.json")
+    students = load_students(_FIXTURES / "students.json")
     engine, graduates = build_graduation_check(policies, elective_minimum)
 
     print("=== Graduation Requirement Verdict — Demo ===")

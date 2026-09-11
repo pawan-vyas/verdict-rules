@@ -45,8 +45,9 @@ invocation is required day to day.
 
 | File | What it is |
 |---|---|
-| `policies.json` | The curriculum — the elective-count threshold plus one row per subject, no code. |
-| `students.json` | 8 varied students, each carrying its own expected outcome. |
+| [`../../../fixtures/graduation_verdict/policies.json`](../../../fixtures/graduation_verdict/policies.json) | The curriculum — the elective-count threshold plus one row per subject, no code. **Shared across every language.** |
+| [`../../../fixtures/graduation_verdict/students.json`](../../../fixtures/graduation_verdict/students.json) | 8 varied students, each carrying its own expected outcome — including how many rules should run, which proves short-circuiting. **Shared.** |
+| [`../../../fixtures/graduation_verdict/edge_cases.json`](../../../fixtures/graduation_verdict/edge_cases.json) | Degenerate curricula proving vacuous-truth polarity. **Shared.** |
 | `graduation_verdict.py` | The real implementation, plus a runnable `__main__` demo. |
 | `test_graduation_verdict.py` | The curated-scenario suite — loads both JSON files, asserts generically. |
 | `oracle.py` | A second, `verdict`-free implementation, used as ground truth by the chaos suite. |

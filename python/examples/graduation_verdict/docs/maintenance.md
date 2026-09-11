@@ -13,7 +13,7 @@
 | Change a passing threshold | One field in `policies.json`. No Python touched. |
 | Add a subject of an existing type | One new object in `policies.json`. No Python touched. |
 | Add a subject of a genuinely new type | One new object in `policies.json`, **plus** one new branch in `rule_for_subject()` (`graduation_verdict.py`) — a real code change, since a new *kind* of pass condition is a new concept, not new data. |
-| Add a student scenario | One new entry in `students.json`, with its own `expected_passed`. No Python touched — `test_graduation_verdict.py` iterates every entry generically. |
+| Add a student scenario | One new entry in the shared `students.json`, with its own `expected` block (verdict, how many rules should run, the failing chain, run-mode and group counts). No Python touched — `test_graduation_verdict.py` iterates every entry generically. Observe the numbers from a passing run rather than hand-writing them; see [the fixture contract](../../../../fixtures/graduation_verdict/README.md). |
 | Change the elective requirement (e.g. 2-of-3 → 3-of-4) | `policies.json`'s top-level `elective_minimum` field. No Python touched. |
 | Test a new edge case across a wide random space, not just one hand-picked student | Nothing here at all — that's `test_chaos.py`; see [`testing.md`](testing.md#the-chaos-suite-differential-testing-against-an-independent-oracle). Raise `NUM_CASES` there if you want more coverage. |
 
