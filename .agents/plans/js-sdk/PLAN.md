@@ -16,14 +16,20 @@
 ## 1 · Package name
 
 `verdict` is unavailable on npm, as it is on every registry this package
-targets. The chosen name is **`@verdict/core`** — scoped, so future
-extension packages are additive inside a namespace we control. npm is
-the only one of these registries with first-class namespacing, which is
-why the scoped form is worth the extra characters here and not
-elsewhere.
+targets. The chosen name is **`@verdict-rules/core`** — scoped, so
+future extension packages are additive inside a namespace we control,
+and matching the PyPI distribution name (`verdict-rules`) so one name
+carries across registries.
 
-**Scope availability still needs confirming** before anything depends on
-it — see the issue's first checklist item.
+npm is the only one of these registries with first-class, defensible
+namespacing, which is why the scoped form is worth the extra characters
+here and not elsewhere: everything under a scope we hold is ours, and
+nobody else can publish into it. NuGet's nearest equivalent is prefix
+reservation on application; pub.dev and PyPI have no protection at all
+today.
+
+The `@verdict-rules` organization needs creating before the first
+publish — see the issue's checklist.
 
 ## 2 · Triage: publish path
 
