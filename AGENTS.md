@@ -200,8 +200,9 @@ each language's own `AGENTS.md` adds the syntax-specific detail on top:
   section. Every doc in this repo already does this; match it.
 - **Testing**: short-circuit behavior is proven with a call-counter or
   mutable-list side effect, never just the final boolean; vacuous-truth
-  cases (an empty rule list, an unknown group) get their own explicit
-  test, never an assumption. See each language's own testing doc (today:
+  cases (an empty rule list) and absence cases (an unknown rule name or
+  group, which raise rather than pass vacuously) each get their own
+  explicit test, never an assumption. See each language's own testing doc (today:
   [`docs/testing.md`](docs/testing.md)) for the full
   checklist, and
   [`python/examples/graduation_verdict/docs/testing.md`](python/examples/graduation_verdict/docs/testing.md)

@@ -321,6 +321,32 @@ for the full "where to make a change" guide this is one row of.
 
 ## Testing
 
+### Emptiness is not absence
+
+Two situations look alike and are deliberately handled in opposite ways.
+
+**Emptiness** is a set you were handed that happened to have nothing in
+it. `AndRule([])` passes and `OrRule([])` fails, because those are the
+identities of the folds they perform — the same answers Python's own
+`all([])` and `any([])` give. A caller who builds rules from
+configuration and gets none back has a legitimate, meaningful result:
+nothing to enforce. [`extension.md`](extension.md)'s Recipe 4 depends on
+exactly that.
+
+**Absence** is asking for something that does not exist.
+`run_named("typo")` and `run_group("typo")` both raise `KeyError`. A
+group exists only because some rule declared it, so a group lookup that
+matches nothing is never a legitimately empty group — it can only be a
+misspelling or a stale name. Returning a vacuous pass there would mean a
+typo silently approves, which in an access-control or eligibility
+adapter is the worst possible failure mode.
+
+The distinction is worth stating plainly because it is the one place
+this package is deliberately strict: it is permissive about arithmetic
+and strict about lookups. `RulesEngine.rule_names` and
+`RulesEngine.group_names` exist so a caller who genuinely cannot know
+whether a name exists can check rather than catch.
+
 Short-circuiting (both directions) and every vacuous-truth edge case
 above are the specific things worth proving, not just executing — see
 [`testing.md`](testing.md) for the full reasoning, the current

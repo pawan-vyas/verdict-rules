@@ -1,7 +1,10 @@
 {
   "vacuous_pass": {
-    "note": "Empty curriculum, no elective requirement. Proves AndRule([]) passes vacuously and a zero threshold is satisfiable by zero electives — the polarity that is easy to get backwards.",
-    "curriculum": { "elective_minimum": 0, "subjects": [] },
+    "note": "Empty curriculum, no elective requirement. Proves AndRule([]) passes vacuously and a zero threshold is satisfiable by zero electives \u2014 the polarity that is easy to get backwards. With no subjects, no group exists at all, so run_group must raise rather than report a vacuous pass.",
+    "curriculum": {
+      "elective_minimum": 0,
+      "subjects": []
+    },
     "student": {
       "scores": {},
       "cgpa": 9.0,
@@ -14,16 +17,26 @@
       "rules_evaluated": 4,
       "failing_rule": null,
       "failing_chain": [],
-      "run_all": { "evaluated": 0, "passed": true },
+      "run_all": {
+        "evaluated": 0,
+        "passed": true
+      },
       "groups": {
-        "core": { "evaluated": 0, "passed": true },
-        "elective": { "evaluated": 0, "passed": true }
+        "core": {
+          "unknown_group": true
+        },
+        "elective": {
+          "unknown_group": true
+        }
       }
     }
   },
   "unsatisfiable_threshold": {
-    "note": "Empty curriculum but two electives required. Proves the opposite polarity: an at-least-N rule over an empty set fails when N > 0, and short-circuits after the second rule.",
-    "curriculum": { "elective_minimum": 2, "subjects": [] },
+    "note": "Empty curriculum but two electives required. Proves the opposite polarity: an at-least-N rule over an empty set fails when N > 0, and short-circuits after the second rule. With no subjects, no group exists at all, so run_group must raise rather than report a vacuous pass.",
+    "curriculum": {
+      "elective_minimum": 2,
+      "subjects": []
+    },
     "student": {
       "scores": {},
       "cgpa": 9.0,
@@ -35,11 +48,20 @@
       "passed": false,
       "rules_evaluated": 2,
       "failing_rule": "elective_requirement",
-      "failing_chain": ["elective_requirement"],
-      "run_all": { "evaluated": 0, "passed": true },
+      "failing_chain": [
+        "elective_requirement"
+      ],
+      "run_all": {
+        "evaluated": 0,
+        "passed": true
+      },
       "groups": {
-        "core": { "evaluated": 0, "passed": true },
-        "elective": { "evaluated": 0, "passed": true }
+        "core": {
+          "unknown_group": true
+        },
+        "elective": {
+          "unknown_group": true
+        }
       }
     }
   }

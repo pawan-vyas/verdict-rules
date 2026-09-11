@@ -246,6 +246,12 @@ class TestVacuousTruthEdgeCases:
         assert run_all.passed == expected["run_all"]["passed"], case_name
 
         for group, exp in expected["groups"].items():
+            if exp.get("unknown_group"):
+                # No subject carries this label, so the group does not exist.
+                # Absence is an error; only emptiness folds to an identity.
+                with pytest.raises(KeyError):
+                    await engine.run_group(group, student)
+                continue
             group_result = await engine.run_group(group, student)
             assert len(group_result.results) == exp["evaluated"], f"{case_name}/{group}"
             assert group_result.passed == exp["passed"], f"{case_name}/{group}"

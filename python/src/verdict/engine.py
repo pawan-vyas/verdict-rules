@@ -86,10 +86,44 @@ class RulesEngine:
 
         Returns:
             A :class:`~verdict.result.RunResult` scoped to just this
-            group — ``passed`` is ``True`` (vacuously) if the group is
-            empty or doesn't exist, matching Python's own ``all([])``
-            semantics; ``results`` holds one entry per matching rule.
+            group — ``passed`` is ``True`` only if every rule in the
+            group passed; ``results`` holds one entry per matching rule.
+
+        Raises:
+            KeyError: No rule in this engine carries this group label.
+                A group exists only by virtue of a rule declaring it, so
+                an empty-but-real group is not representable — a lookup
+                that matches nothing is always a mistake (a typo, or a
+                stale group name), never a legitimately empty set. It is
+                reported the same way :meth:`run_named` reports an
+                unknown rule name, rather than silently returning a
+                vacuous pass. Use :attr:`group_names` to check first if
+                the group may legitimately be absent.
         """
-        rules = self._by_group.get(group, [])
+        rules = self._by_group.get(group)
+        if not rules:
+            raise KeyError(f"No rules in group {group!r} in this engine")
         results = [await rule.evaluate(context) for rule in rules]
         return RunResult(passed=all(r.passed for r in results), results=results)
+
+    @property
+    def rule_names(self) -> tuple[str, ...]:
+        """Every rule name registered on this engine, in registration order.
+
+        Returns:
+            The names accepted by :meth:`run_named`, so a caller that
+            cannot know in advance whether a rule exists can check
+            rather than catch.
+        """
+        return tuple(self._by_name)
+
+    @property
+    def group_names(self) -> tuple[str, ...]:
+        """Every group label carried by at least one rule on this engine.
+
+        Returns:
+            The labels accepted by :meth:`run_group`. A group is only
+            present because some rule declared it, so this is exactly
+            the set of lookups that will not raise.
+        """
+        return tuple(self._by_group)
