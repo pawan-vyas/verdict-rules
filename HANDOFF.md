@@ -1,11 +1,11 @@
 ---
 kind: session-handoff
 handoff_schema: 1
-updated_utc: 2026-09-11T16:06:58Z
-updated_local: 2026-09-11T21:36:58+05:30
-branch: chore/context-fence-docs-and-skill-release
-state_at_commit: 86b933c68fd77641c02765289b177432cf044333
-state_at_commit_short: 86b933c
+updated_utc: 2026-09-11T17:02:26Z
+updated_local: 2026-09-11T22:32:26+05:30
+branch: main
+state_at_commit: fcfb6370f6ace9babdf10aa014a4cf876a868d79
+state_at_commit_short: fcfb637
 # Freshness: run `git log --oneline "$(git log -1 --format=%H -- HANDOFF.md)"..HEAD`. Empty (+ clean
 # tree) = current. Non-empty = stale — reconcile per §0.1 before trusting §2–§3. (Comparing against
 # state_at_commit directly always shows the handoff commit itself as "drift" — see §0.1.)
@@ -24,9 +24,8 @@ state_at_commit_short: 86b933c
 You (the next agent) are continuing work on **verdict**. Read §1 for what it is, §2 for where we
 are, §3 for what to do next, §4 for known issues, §5 for how to verify.
 
-**Everything is committed**, on `chore/context-fence-docs-and-skill-release` — *not* on `main`, and
-*not* pushed. §3 step 1 is about resolving that; do it before anything else, because every other
-step assumes it.
+**Everything is committed, merged, and pushed.** `main` is at `fcfb637`, CI green. Nothing is in
+flight and no branch is outstanding.
 
 ## 0.1 · Freshness & alignment protocol (read before trusting §2–§3)
 
@@ -50,8 +49,8 @@ git status --short
   committing; (5) commit, so its parent is the recorded `state_at_commit` and the marker stays N-1.
   Reconciling **always** bumps the frontmatter and commits. Standing rules never go here.
 
-One extra check while this branch is unmerged: `git branch --show-current`. If you are on `main` and
-§3 step 1 is still open, the three commits below are not in your history at all.
+`git pull` before trusting any of this if you have been away — the formula above compares against
+your *local* HEAD, so an out-of-date clone reads "current" while `origin/main` has moved.
 
 ## 1 · What this project is (one paragraph)
 
@@ -75,7 +74,10 @@ follow either. Nothing a session needs lives outside the boundary.
 ## 2 · Where we are (this session's work)
 
 Starting point was `bf5e4e1` (release polish after `python-v0.1.0`, tagged 2026-09-07). Range
-**`bf5e4e1..86b933c`** — three commits, all on the unmerged branch:
+**`bf5e4e1..fcfb637`** — four commits, fast-forwarded onto `main` via PR #1 and pushed. `main`'s
+history stays linear (the repo allows only merge commits, so the PR was landed by fast-forward
+rather than taking a merge bubble for a branch already sitting on `main`'s HEAD; GitHub marked #1
+merged once the commits became reachable):
 
 - **`243d6b5` — docs standalone.** Several docs asserted as fact that specific named consumers run
   this code in production, and `CHANGELOG.md` described where the source originated. Neither
@@ -97,38 +99,40 @@ Starting point was `bf5e4e1` (release polish after `python-v0.1.0`, tagged 2026-
   `memory/`, `plans/`, and the existing `skills/`, each with a README. The gitignored root-level
   `RESUME.md` was rewritten to stand on its own and folded into
   `.agents/plans/polyglot-sdk-resume.md`.
+- **`fcfb637` — handoff.** This file, resealed against the three above; then reconciled again after
+  the merge, per §0.1.
 
 ## 3 · What to do next (prioritized)
 
-1. **Resolve the branch — nothing else is safe until this is done.** The work is committed but
-   unmerged and unpushed. Two options; the second is worth preferring this once, because two of the
-   new workflows have never executed (§4).
-   ```
-   # (a) straight to main, as this repo has historically been worked
-   git checkout main && git merge --ff-only chore/context-fence-docs-and-skill-release && git push
+**Nothing is pending.** The session's work is merged and green; there is no half-finished thread to
+pick up. If you are starting fresh, the useful entry points are:
 
-   # (b) via a PR, which actually exercises check-skill-version.yml
-   git push -u origin chore/context-fence-docs-and-skill-release
-   gh pr create --fill
+1. **Feature work is not in flight, and `docs/future_plan.md` is not a backlog** — it is an
+   explicitly exploratory thinking exercise. Don't treat any candidate there as decided; re-derive
+   its reasoning first.
+2. **If a second language is starting**, read
+   [`.agents/plans/polyglot-sdk-resume.md`](.agents/plans/polyglot-sdk-resume.md) first — especially
+   its "explicitly not decided yet" list (npm/NuGet name availability, `js/` vs `typescript/`,
+   `csharp/` vs `dotnet/`, per-language CI layout) — then `docs/architecture.md` and
+   `docs/extension.md` fresh, rather than that file's compressed summary of them.
+3. **If you change anything under `skills/verdict/`**, bump `.claude-plugin/plugin.json`'s version in
+   the same commit, or `check-skill-version.yml` will fail the push. That version is unrelated to
+   `python/pyproject.toml`'s — see §4 and `docs/maintenance.md`.
+4. **The first skill-only release will exercise `release-skill.yml` for the first time** (§4):
    ```
-2. **Watch `check-skill-version.yml` on that PR if you take (b).** It should run (commit `204d4e0`
-   adds the workflow, which matches its own path filter) and **pass via the skip path**, logging
-   `No shipped skill or plugin-manifest files changed` — nothing under `skills/verdict/` or
-   `.claude-plugin/` moved this session. A failure there is a real bug in the check, not in the PR.
-3. **No feature work is in flight.** `docs/future_plan.md` is an exploratory thinking exercise, not
-   a backlog — don't treat any candidate there as committed. If a second language is starting, read
-   [`.agents/plans/polyglot-sdk-resume.md`](.agents/plans/polyglot-sdk-resume.md) first, especially
-   its "explicitly not decided yet" list, then `docs/architecture.md` and `docs/extension.md` fresh
-   rather than that file's compressed summary of them.
+   # bump .claude-plugin/plugin.json, add a ## skill-vX.Y.Z CHANGELOG entry, commit, then:
+   git tag skill-vX.Y.Z && git push origin skill-vX.Y.Z
+   ```
 
 ## 4 · Known issues / blockers
 
-- **Two workflows have never run on real CI.** `check-skill-version.yml` and `release-skill.yml`
-  were written and their shell logic verified locally against throwaway repos (five scenarios for
-  the former including both must-fail cases and the no-base-commit edge; tag parsing and both
-  match/mismatch cases for the latter), but neither has executed on GitHub. `release-skill.yml` in
-  particular can only be exercised by actually cutting a `skill-vX.Y.Z` tag. Treat the first real
-  run of each as unproven.
+- **`release-skill.yml` has never run.** Its shell logic was verified locally (tag parsing, and
+  both the matching and mismatching `plugin.json` cases), but it can only execute on a real
+  `skill-vX.Y.Z` tag push, so treat its first run as unproven. By contrast
+  `check-skill-version.yml` **is** proven: it ran green on PR #1 and again on the push to `main`,
+  and on the PR it correctly resolved the merge base and took the skip path
+  (`No shipped skill or plugin-manifest files changed`) rather than passing by accident — the
+  enforcement path itself is still only locally verified.
 - **Load-bearing invariant, easy to break.** `scripts/get.sh` resolves whatever GitHub calls the
   *latest* release and pulls `verdict-tools.zip` from it. So **every** release workflow must attach
   the full skill artifact set — if one stops, a release of that kind becomes "latest" without a
@@ -148,7 +152,7 @@ cd python && uv sync && uv run pytest --cov=verdict --cov-report=term-missing
 ```
 
 Exactly what `.github/workflows/test-python.yml` runs, across a 3.10–3.14 matrix (the
-`requires-python` floor through newest stable). **547 tests pass** as of `86b933c`
+`requires-python` floor through newest stable). **547 tests pass** as of `fcfb637`, confirmed on CI across all five matrix versions
 (`python/tests/` plus `python/examples/graduation_verdict/`, the latter 523 of them). There is no
 separate lint or type gate configured.
 
