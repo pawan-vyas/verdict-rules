@@ -1,11 +1,11 @@
 ---
 kind: session-handoff
 handoff_schema: 1
-updated_utc: 2026-09-11T14:52:16Z
-updated_local: 2026-09-11T20:22:16+05:30
-branch: main
-state_at_commit: bf5e4e197803b06aa0a5f883bff4191b3f8aa89e
-state_at_commit_short: bf5e4e1
+updated_utc: 2026-09-11T16:06:58Z
+updated_local: 2026-09-11T21:36:58+05:30
+branch: chore/context-fence-docs-and-skill-release
+state_at_commit: 86b933c68fd77641c02765289b177432cf044333
+state_at_commit_short: 86b933c
 # Freshness: run `git log --oneline "$(git log -1 --format=%H -- HANDOFF.md)"..HEAD`. Empty (+ clean
 # tree) = current. Non-empty = stale — reconcile per §0.1 before trusting §2–§3. (Comparing against
 # state_at_commit directly always shows the handoff commit itself as "drift" — see §0.1.)
@@ -14,34 +14,28 @@ state_at_commit_short: bf5e4e1
 # verdict — session handoff / resume brief
 
 > The **migratable state container** for this project: session-to-session, not cross-session. It may
-> be freely rewritten when a new session/tool takes over (see §0.1). Standing rules live in
-> `AGENTS.md` (imported by `CLAUDE.md`), plus `python/AGENTS.md` for Python-specific ones. Verify
-> against the code; the source of truth for what's built is `docs/architecture.md` and the code
-> under `python/src/`.
+> be freely rewritten when a new session or tool takes over (see §0.1). Standing rules live in
+> `AGENTS.md` (imported by `CLAUDE.md`), plus `python/AGENTS.md` for Python-specific ones — never
+> here. Verify against the code; the source of truth for the design is `docs/architecture.md`, and
+> for what shipped, `CHANGELOG.md`.
 
 ## 0 · How to use this file
 
 You (the next agent) are continuing work on **verdict**. Read §1 for what it is, §2 for where we
-are, §3 for what to do next, §4 for known issues, §5 for how to verify. Everything is committed on
-`main`.
+are, §3 for what to do next, §4 for known issues, §5 for how to verify.
 
-**Keep every durable note in the repo** — standing rules in `AGENTS.md`, session state here,
-everything else an agent produces under `.agents/` (`memory/` for durable recall, `plans/` for
-multi-session specs and playbooks, `skills/` for the vendored manuals); committed, never in
-`~/.claude/`, home, or `/tmp`. Transient logs/scripts → `scratch/` (gitignored). Note the
-repo-local override: agent material lives under **`.agents/`**, not the context-fence default
-`docs/agent-memory/` — `docs/` here is published package documentation for human readers. See
-[`.agents/README.md`](.agents/README.md). Update this file at session end so the next one resumes
-from the repo alone.
+**Everything is committed**, on `chore/context-fence-docs-and-skill-release` — *not* on `main`, and
+*not* pushed. §3 step 1 is about resolving that; do it before anything else, because every other
+step assumes it.
 
 ## 0.1 · Freshness & alignment protocol (read before trusting §2–§3)
 
 The frontmatter is a staleness marker. `state_at_commit` is the HEAD this body describes; the commit
 that wrote this file is its child, so its own hash isn't self-recorded. **Don't diff against
 `state_at_commit` directly** — the range `state_at_commit..HEAD` always contains at least the handoff
-commit itself (the one that added this file), so it would read "stale by 1" the instant this file is
-written, even with zero drift. Diff against the commit that last touched `HANDOFF.md` instead — that
-range is empty exactly when nothing has happened since:
+commit itself, so it would read "stale by 1" the instant this file is written, even with zero drift.
+Diff against the commit that last touched `HANDOFF.md` instead; that range is empty exactly when
+nothing has happened since:
 
 ```
 git log --oneline "$(git log -1 --format=%H -- HANDOFF.md)"..HEAD
@@ -49,125 +43,103 @@ git status --short
 ```
 
 - **Empty log + clean tree** → current; proceed with §2–§3.
-- **Non-empty, or dirty tree** → the repo moved. Do NOT trust §2–§3 blindly. Reconcile — same
-  procedure whether you're mid-session (RESUME found drift) or migrating to a fresh session: (1) read
+- **Non-empty, or dirty tree** → the repo moved. Do NOT trust §2–§3 blindly. Reconcile: (1) read
   `git log -p "$(git log -1 --format=%H -- HANDOFF.md)"..HEAD` + `git diff` to see what actually
   happened; (2) sweep any external or uncommitted context back into the repo; (3) rewrite §2–§3 to
   reality; (4) update the frontmatter — new `updated_*` and `state_at_commit` = current HEAD *before*
-  committing; (5) commit (its parent = the recorded `state_at_commit`, keeping the marker N-1 again).
-  Reconciling **always** bumps the frontmatter and commits — don't leave a reconciled body sitting
-  next to a frontmatter that now understates what §2 describes; that's a worse state than the
-  staleness it was fixing. Standing rules never go here.
+  committing; (5) commit, so its parent is the recorded `state_at_commit` and the marker stays N-1.
+  Reconciling **always** bumps the frontmatter and commits. Standing rules never go here.
+
+One extra check while this branch is unmerged: `git branch --show-current`. If you are on `main` and
+§3 step 1 is still open, the three commits below are not in your history at all.
 
 ## 1 · What this project is (one paragraph)
 
 `verdict` is a small, zero-dependency, async-native rule-evaluation engine —
 `Rule`/`FunctionRule`/`AndRule`/`OrRule`/`RulesEngine`/`RuleResult`/`RunResult` — designed to exist
-in more than one language with identical execution-model guarantees (sequential, never concurrent,
-evaluation so short-circuiting is a real contract; vacuous-truth polarity decided explicitly per
-composite shape). The repo is polyglot in layout but **only Python ships today**: `python/` holds the
-package (`python/src/verdict/`), its tests, docs, and a fully tested example project; a second
-language would land as a new sibling top-level directory with its own `AGENTS.md`. Cross-language
-docs live in `docs/`, the AI-agent skill for building with verdict in `skills/verdict/` (vendored
-into consuming projects by `scripts/install.sh`), and the published site in `site/`. Source of truth
-for the design is [`docs/architecture.md`](docs/architecture.md); for what's released,
-[`CHANGELOG.md`](CHANGELOG.md).
+in more than one language with identical execution-model guarantees: sequential, never concurrent,
+evaluation so short-circuiting is a real contract rather than an optimization, and vacuous-truth
+polarity decided explicitly per composite shape. The repo is polyglot in layout but **only Python
+ships today**, under `python/` (package in `python/src/verdict/`, plus tests, docs, and a fully
+tested example project). A second language lands as a new sibling top-level directory with its own
+`AGENTS.md`. Cross-language docs are in `docs/`, the AI-agent skill in `skills/verdict/` (vendored
+into other projects by `scripts/install.sh`), the published site in `site/`, and agent working
+material in `.agents/`. Design source of truth: [`docs/architecture.md`](docs/architecture.md).
 
 ## 1b · External references (NOT part of this repo)
 
-**None.** As of this session the repo is fully self-contained: everything durable a session needs is
-committed inside the boundary. The two vendored skills (`mermaid-diagrams`, `context-fence`) are
-in-tree copies — no network, no plugin install, and no sibling checkout is required to follow either
-of them.
+**None.** The repo is fully self-contained: both vendored skills (`mermaid-diagrams`,
+`context-fence`) are in-tree copies, so no network, plugin install, or sibling checkout is needed to
+follow either. Nothing a session needs lives outside the boundary.
 
 ## 2 · Where we are (this session's work)
 
-Released and stable at `python-v0.1.0` (tagged 2026-09-07). The last commits before this session
-were release polish: PyPI/Python-versions/CI/license badges on the README, the `pip install
-verdict-rules` step in `skills/verdict/SKILL.md`, a favicon for the site, and the finalized
-changelog entry.
+Starting point was `bf5e4e1` (release polish after `python-v0.1.0`, tagged 2026-09-07). Range
+**`bf5e4e1..86b933c`** — three commits, all on the unmerged branch:
 
-**This session raised the context fence** (SETUP), which is the only change on top of `bf5e4e1`:
-
-- `AGENTS.md` — new "Working notes stay in the repo" section: the invariant, a "where things go"
-  table, the `.agents/` override, the start-of-session resume pointer, and two standing rules
-  carried over from a sibling personal repo's own `AGENTS.md` — **harness plan/scratch-mode files
-  count as durable context** (point the harness at `.agents/plans/`, or copy its file in and make
-  the in-repo copy authoritative) and **don't create parallel planning docs** (in-flight work lives
-  in this file's §3, longer-lived work in `.agents/plans/`). Nothing else in that file changed.
-- `.agents/skills/context-fence/` + `.claude/skills/context-fence/` — the context-fence operations
-  manual vendored to both discovery paths (`SKILL.md`, `references/handoff-template.md`,
-  `scripts/detect_state.sh`, `scripts/handoff_meta.sh`), matching how `mermaid-diagrams` is already
-  vendored. Both copies are tool-owned: safe to overwrite on any future SETUP run, don't hand-edit.
-- `.github/workflows/release-skill.yml` — **new release path.** A `skill-vX.Y.Z` tag verifies the
-  tag against `.claude-plugin/plugin.json`, runs `scripts/build.sh`, and cuts a GitHub Release. This
-  closes the last gap: `scripts/get.sh` resolves GitHub's *latest release* for `verdict-tools.zip`,
-  so before this a skill-only change had no way to reach curl-pipe users until some language
-  release happened to carry it. Both release workflows now attach the full `dist/*` set — also
-  de-hardcoded in `release-python.yml`, which previously named the three artifacts inline and could
-  drift from `build.sh`. Marketplace and clone installs read the repo and were never affected.
-- `.github/workflows/check-skill-version.yml` — **new gate.** Fails a PR or push to `main` that
-  changes shipped skill content without bumping `.claude-plugin/plugin.json`'s version, which is
-  Claude Code's only signal to a marketplace user that their vendored skill copy is stale. It
-  re-derives the changed paths from the base..HEAD range rather than trusting the path filter, and
-  excludes `skills/verdict-workspace/` (eval material, never ships). Logic verified locally against
-  five scenarios, including the two that must fail and the no-base-commit edge. `docs/maintenance.md`
-  documents the rule; the workflow header states plainly that it is *not* a check against any
-  language manifest.
-- `.agents/README.md`, `.agents/memory/README.md`, `.agents/plans/README.md` — `.agents/` is now the
-  single home for durable agent working material, with `memory/` and `plans/` as siblings of the
-  existing `skills/`. Each README says what belongs in it and what doesn't.
-- `.agents/plans/polyglot-sdk-resume.md` — the former root-level `RESUME.md`, folded in and
-  rewritten to stand on this repo's own terms, with every path it cites now resolving. `RESUME.md`
-  is deleted and its `/RESUME.md` line removed from `.gitignore`.
-- `.agents/memory/releases-are-language-scoped.md` and
-  `.agents/memory/skill-version-is-independent-of-sdk-versions.md` — the first two memory entries.
-- **Portability sweep across the published docs.** Several docs made factual claims about where
-  this package is deployed and where the code originated. Neither is something this repo should
-  claim — it stands alone, and it documents patterns rather than deployments. Rewritten in `docs/extension.md`, `docs/architecture.md`, `docs/maintenance.md`,
-  `docs/future_plan.md`, `python/docs/quickstart.md`, `python/docs/samples/1_README.md`,
-  `python/docs/samples/6_data-driven-rule-sets.md`, and `CHANGELOG.md`. The rate-limiting and
-  access-control *illustrations* stay — they're generic patterns, which `AGENTS.md` explicitly
-  allows — only the claims that they exist somewhere are gone.
-- **Stale-path fix**: `python/examples/graduation_verdict/README.md` (2×) and
-  `python/examples/graduation_verdict/docs/testing.md` (1×) told the reader to run their commands
-  from a directory that does not exist in this repo. Now `# From python/`, and both commands
-  verified to actually run from there.
-- `.gitignore` — added `scratch/`, `.claude/settings.local.json`, `*.local.json`.
-- `HANDOFF.md` — this file.
-
-No package source, tests, or published docs were touched.
+- **`243d6b5` — docs standalone.** Several docs asserted as fact that specific named consumers run
+  this code in production, and `CHANGELOG.md` described where the source originated. Neither
+  survives the package being read elsewhere. Rewritten across `docs/extension.md`,
+  `docs/architecture.md`, `docs/maintenance.md`, `docs/future_plan.md`, `python/docs/quickstart.md`,
+  and two sample docs, so each claim now stands on the design itself. The rate-limiting and
+  access-control *illustrations* stay — they're generic patterns. Also fixed three code samples that
+  told the reader to run commands from a directory that doesn't exist in this layout.
+- **`204d4e0` — skill versioning + release.** `.claude-plugin/plugin.json`'s version measures the
+  skill's content (it's Claude Code's marketplace signal that a vendored copy is stale);
+  `python/pyproject.toml`'s measures the library. They are meant to drift, and nothing should assert
+  they match. Two new workflows: `check-skill-version.yml` (fails a PR/push to `main` that changes
+  shipped skill content without bumping `plugin.json`) and `release-skill.yml` (`skill-vX.Y.Z` tag →
+  verify against `plugin.json` → build → release). Both release workflows now attach the full
+  `dist/*`, which is load-bearing — see §4.
+- **`86b933c` — context fence.** `AGENTS.md` gained a "Working notes stay in the repo" section
+  (where things go; harness plan *and* memory files count as durable context; no parallel planning
+  docs) and an "Asking the user" section. `.agents/` is now the home for agent working material:
+  `memory/`, `plans/`, and the existing `skills/`, each with a README. The gitignored root-level
+  `RESUME.md` was rewritten to stand on its own and folded into
+  `.agents/plans/polyglot-sdk-resume.md`.
 
 ## 3 · What to do next (prioritized)
 
-1. **Commit the fence** (it is the only uncommitted work):
+1. **Resolve the branch — nothing else is safe until this is done.** The work is committed but
+   unmerged and unpushed. Two options; the second is worth preferring this once, because two of the
+   new workflows have never executed (§4).
    ```
-   git add AGENTS.md .gitignore HANDOFF.md .agents .claude/skills/context-fence
-   git commit -m "Adopt the context-fence discipline for durable agent notes"
-   git push
+   # (a) straight to main, as this repo has historically been worked
+   git checkout main && git merge --ff-only chore/context-fence-docs-and-skill-release && git push
+
+   # (b) via a PR, which actually exercises check-skill-version.yml
+   git push -u origin chore/context-fence-docs-and-skill-release
+   gh pr create --fill
    ```
-2. **Verify nothing else regressed** before or after that commit — see §5.
-3. **No feature work is in flight.** `docs/future_plan.md` is explicitly an exploratory thinking
-   exercise, not a backlog — don't treat any candidate there as committed. If a second language is
-   being started, read `.agents/plans/polyglot-sdk-resume.md` first (especially its "explicitly not
-   decided yet" list), then `docs/architecture.md` and `docs/extension.md` fresh rather than that
-   file's compressed summary of them.
+2. **Watch `check-skill-version.yml` on that PR if you take (b).** It should run (commit `204d4e0`
+   adds the workflow, which matches its own path filter) and **pass via the skip path**, logging
+   `No shipped skill or plugin-manifest files changed` — nothing under `skills/verdict/` or
+   `.claude-plugin/` moved this session. A failure there is a real bug in the check, not in the PR.
+3. **No feature work is in flight.** `docs/future_plan.md` is an exploratory thinking exercise, not
+   a backlog — don't treat any candidate there as committed. If a second language is starting, read
+   [`.agents/plans/polyglot-sdk-resume.md`](.agents/plans/polyglot-sdk-resume.md) first, especially
+   its "explicitly not decided yet" list, then `docs/architecture.md` and `docs/extension.md` fresh
+   rather than that file's compressed summary of them.
 
 ## 4 · Known issues / blockers
 
-- **No defects open.** One was raised this session and withdrawn: that `plugin.json`'s version
-  isn't asserted against `python/pyproject.toml`. It shouldn't be — the two measure different
-  things and are meant to drift. Working that through surfaced the real (inverse) risk instead,
-  now closed by `.github/workflows/check-skill-version.yml`. Background in
-  [`.agents/memory/skill-version-is-independent-of-sdk-versions.md`](.agents/memory/skill-version-is-independent-of-sdk-versions.md).
-  The `scripts/get.sh` staleness window noted alongside it is also closed — see
-  `.github/workflows/release-skill.yml` in §2.
-- The other standing issue at the start of this session — a gitignored root-level `RESUME.md`,
-  outside version control and so absent from any clone — is resolved: rewritten to stand on this
-  repo's own terms and folded into `.agents/plans/polyglot-sdk-resume.md`.
-- **`.pytest_cache/` and `.venv/` are present in the working tree** but correctly gitignored — no
-  action needed, just don't be surprised by them.
-- CI is green on the release commit.
+- **Two workflows have never run on real CI.** `check-skill-version.yml` and `release-skill.yml`
+  were written and their shell logic verified locally against throwaway repos (five scenarios for
+  the former including both must-fail cases and the no-base-commit edge; tag parsing and both
+  match/mismatch cases for the latter), but neither has executed on GitHub. `release-skill.yml` in
+  particular can only be exercised by actually cutting a `skill-vX.Y.Z` tag. Treat the first real
+  run of each as unproven.
+- **Load-bearing invariant, easy to break.** `scripts/get.sh` resolves whatever GitHub calls the
+  *latest* release and pulls `verdict-tools.zip` from it. So **every** release workflow must attach
+  the full skill artifact set — if one stops, a release of that kind becomes "latest" without a
+  `verdict-tools.zip` and `get.sh` fails outright. Both workflows state this in their headers. Don't
+  "tidy" either one down to just its own artifacts.
+- **`.pytest_cache/` and `.venv/` are present in the working tree** but correctly gitignored, as are
+  `skills/verdict-workspace/{benchmarks,iteration-1}/` (regenerable eval output). No action needed.
+- No open defects in the package itself. One was raised this session and withdrawn — that
+  `plugin.json`'s version isn't asserted against `pyproject.toml`. It shouldn't be; see
+  [`.agents/memory/skill-version-is-independent-of-sdk-versions.md`](.agents/memory/skill-version-is-independent-of-sdk-versions.md),
+  written specifically to stop that conclusion being re-derived.
 
 ## 5 · Verify (gate / test commands)
 
@@ -175,44 +147,50 @@ No package source, tests, or published docs were touched.
 cd python && uv sync && uv run pytest --cov=verdict --cov-report=term-missing
 ```
 
-That's exactly what `.github/workflows/test-python.yml` runs, across a 3.10–3.14 matrix (the
-`requires-python` floor through the newest stable). There is no separate lint/type gate configured.
-**547 tests pass** as of this session (`python/tests/` plus
-`python/examples/graduation_verdict/`, the latter 523 of them).
+Exactly what `.github/workflows/test-python.yml` runs, across a 3.10–3.14 matrix (the
+`requires-python` floor through newest stable). **547 tests pass** as of `86b933c`
+(`python/tests/` plus `python/examples/graduation_verdict/`, the latter 523 of them). There is no
+separate lint or type gate configured.
 
-For doc changes, additionally validate every mermaid diagram you touched:
+For a doc change, additionally validate every mermaid diagram touched:
 
 ```
-node .claude/skills/mermaid-diagrams/scripts/validate_diagrams.js <file...>
+node .claude/skills/mermaid-diagrams/scripts/validate_diagrams.js --markdown <file.md>
+```
+
+For a change to the distribution scripts, confirm all three artifacts still build:
+
+```
+bash scripts/build.sh && ls dist/   # verdict-plugin.zip  verdict-tools.zip  verdict.skill
 ```
 
 ## 5b · Tooling / skills
 
-- **Python** ≥3.10 (floor set by `python/pyproject.toml`), managed with **`uv`**; `python/uv.lock` is
-  committed. Test deps: `pytest>=8.0`, `pytest-asyncio>=0.24`. The package itself has **zero runtime
-  dependencies** — adding one requires an explicit discussion first (see `AGENTS.md`).
-- **Node** is needed only for the mermaid diagram validator, not for the package.
-- **Vendored skills** (both mirrored to `.agents/skills/` and `.claude/skills/`):
+- **Python** ≥3.10 (floor in `python/pyproject.toml`), managed with **`uv`**; `python/uv.lock` is
+  committed. Test deps: `pytest>=8.0`, `pytest-asyncio>=0.24`. The package has **zero runtime
+  dependencies** — adding one requires an explicit discussion first, per `AGENTS.md`.
+- **Node** is needed only for the mermaid diagram validator, and **`jq`** only by the two CI
+  workflows (preinstalled on `ubuntu-latest`). Neither is needed to use or test the package.
+- **Vendored skills**, mirrored to both `.agents/skills/` and `.claude/skills/`:
   `mermaid-diagrams` (diagram standards + validator — mandatory for any diagram in this repo) and
-  `context-fence` (this discipline's own operations manual).
-- `skills/verdict/` is the *shipped* skill for consumers, and `skills/verdict-workspace/` is its
-  eval-loop working material — only `evals/evals.json` there is tracked.
+  `context-fence` (the operations manual this file is the exit seal of). Both are tool-owned:
+  refresh them wholesale, never hand-edit.
+- `skills/verdict/` is the *shipped* skill; `skills/verdict-workspace/` is its eval working
+  material, where only `evals/evals.json` is tracked.
 
 ## 6 · Key docs
 
-- [`AGENTS.md`](AGENTS.md) — standing rules for every agent; `CLAUDE.md` is just `@AGENTS.md`.
-  `python/AGENTS.md` adds the Python-specific layer.
-- [`docs/architecture.md`](docs/architecture.md) — the design source of truth (why sequential
-  evaluation, why `Rule` is structural, why `RuleResult.data` stays opaque).
+- [`AGENTS.md`](AGENTS.md) — standing rules for every agent (`CLAUDE.md` is just `@AGENTS.md`);
+  `python/AGENTS.md` adds the Python layer.
+- [`docs/architecture.md`](docs/architecture.md) — design source of truth: why evaluation is
+  sequential, why `Rule` is structural, why `RuleResult.data` stays opaque.
 - [`docs/extension.md`](docs/extension.md) — the five extension recipes; Recipe 3's
-  one-adapter-module boundary is the pattern consumers should be steered toward.
-- [`docs/maintenance.md`](docs/maintenance.md) — the two never-slip constraints and the release
-  procedure. [`docs/testing.md`](docs/testing.md) — the testing checklist.
+  one-adapter-module boundary is the pattern to steer consumers toward.
+- [`docs/maintenance.md`](docs/maintenance.md) — the two never-slip constraints, the language
+  release procedure, and the separate skill release procedure.
+  [`docs/testing.md`](docs/testing.md) — the testing checklist.
 - [`docs/future_plan.md`](docs/future_plan.md) — exploratory candidates, explicitly not a roadmap.
 - [`python/examples/graduation_verdict/`](python/examples/graduation_verdict/) — the worked example,
   including the oracle/differential chaos suite worth re-deriving in any future language.
-- [`.agents/README.md`](.agents/README.md) — the agent working-material layout (`memory/`, `plans/`,
-  `skills/`), and [`.agents/plans/polyglot-sdk-resume.md`](.agents/plans/polyglot-sdk-resume.md) —
-  where a second language would start.
-- [`.agents/skills/context-fence/SKILL.md`](.agents/skills/context-fence/SKILL.md) — the full
-  RESUME/SETUP/ADOPT/SWEEP/HANDOFF spec this file is the exit seal of.
+- [`.agents/README.md`](.agents/README.md) — the agent working-material layout, and
+  [`.agents/memory/`](.agents/memory/) — durable facts worth not re-deriving.
