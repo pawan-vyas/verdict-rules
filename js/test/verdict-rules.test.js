@@ -6,6 +6,7 @@ import {
   FunctionRule,
   OrRule,
   RulesEngine,
+  UnknownLookupError,
 } from "../dist/index.js";
 
 /**
@@ -144,9 +145,22 @@ describe("RulesEngine run modes", () => {
 });
 
 describe("emptiness is not absence", () => {
-  it("an unknown rule name throws", async () => {
+  it("an unknown rule name throws a typed error", async () => {
     const engine = new RulesEngine([counting("a", true, [], "g1")]);
-    await assert.rejects(() => engine.runNamed("nope", {}), /No rule named/);
+    await assert.rejects(
+      () => engine.runNamed("nope", {}),
+      (err) => {
+        // Catchable by type and inspectable by field, so a caller never has to
+        // match on message text. Python, C# and Dart all have a built-in type
+        // for this; JavaScript does not, so the package exports one.
+        assert.ok(err instanceof UnknownLookupError);
+        assert.equal(err.kind, "rule");
+        assert.equal(err.key, "nope");
+        assert.equal(err.name, "UnknownLookupError");
+        assert.ok(err instanceof Error);
+        return true;
+      },
+    );
   });
 
   it("an unknown group throws rather than passing vacuously", async () => {
@@ -156,7 +170,12 @@ describe("emptiness is not absence", () => {
     const engine = new RulesEngine([counting("a", true, [], "g1")]);
     await assert.rejects(
       () => engine.runGroup("no-such-group", {}),
-      /No rules in group/,
+      (err) => {
+        assert.ok(err instanceof UnknownLookupError);
+        assert.equal(err.kind, "group");
+        assert.equal(err.key, "no-such-group");
+        return true;
+      },
     );
   });
 

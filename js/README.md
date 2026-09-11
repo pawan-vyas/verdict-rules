@@ -62,6 +62,55 @@ differs between them rather than only the syntax.
 Most rules need no object literal either: `FunctionRule` wraps a plain async
 predicate.
 
+## Use it from a browser, with no build step
+
+Published as ESM, CommonJS, and a plain global bundle, so a vanilla page works
+without tooling:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/verdict-rules/dist/verdict-rules.global.min.js"></script>
+<script>
+  const rule = new VerdictRules.FunctionRule("ok", async () => ({
+    ruleName: "ok",
+    passed: true,
+  }));
+  new VerdictRules.AndRule("all", [rule]).evaluate({}).then((v) => console.log(v.passed));
+</script>
+```
+
+Or as a module, with no bundler:
+
+```html
+<script type="module">
+  import { AndRule } from "https://cdn.jsdelivr.net/npm/verdict-rules/+esm";
+</script>
+```
+
+`require("verdict-rules")` works too. The global build targets ES2019, so it
+runs in browsers that never learned private class fields.
+
+## Unknown lookups throw a typed error
+
+```ts
+import { UnknownLookupError } from "verdict-rules";
+
+try {
+  await engine.runGroup("cor", ctx);      // a typo
+} catch (err) {
+  if (err instanceof UnknownLookupError && err.kind === "group") {
+    // err.key === "cor"
+  }
+}
+```
+
+Python raises `KeyError` here, C# `KeyNotFoundException`, Dart `ArgumentError`.
+JavaScript has no built-in equivalent, and a bare `Error` would leave callers
+matching on message text — which breaks the moment a message is reworded. So
+the package exports its own.
+
+Reaching for it in a `catch` usually means the check belongs earlier:
+`ruleNames` and `groupNames` let you ask before calling.
+
 ## What it guarantees
 
 - **Sequential evaluation, never concurrent.** Composites use a plain `for`
