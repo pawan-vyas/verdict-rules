@@ -1,0 +1,20 @@
+name: verdict_rules
+description: >-
+  A small, zero-dependency, async-native rule-evaluation engine. Compose
+  conditions into one explainable pass/fail verdict, with sequential
+  evaluation and real short-circuiting as a guarantee, not an optimisation.
+version: 0.0.1
+repository: https://github.com/pawan-vyas/verdict-rules
+issue_tracker: https://github.com/pawan-vyas/verdict-rules/issues
+topics:
+  - rules-engine
+  - rule-evaluation
+  - eligibility
+  - policy
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dev_dependencies:
+  test: ^1.24.0
+  lints: ^5.0.0
