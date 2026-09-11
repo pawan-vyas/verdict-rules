@@ -67,12 +67,14 @@ jobs:
             exit 1
           fi
 
+          # Written to a file, never to a step output. A step output gets
+          # interpolated into a later step's shell, where the changelog's
+          # backticks become command substitution and every code span is
+          # silently eaten. --notes-file passes the bytes through untouched.
           {
-            echo "notes<<__RELEASE_NOTES__"
             printf '%s\n' "$notes"
             echo "**Full changelog**: https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}/CHANGELOG.md"
-            echo "__RELEASE_NOTES__"
-          } >> "$GITHUB_OUTPUT"
+          } > release-notes.md
 
       - name: Create GitHub Release
         env:
@@ -82,5 +84,5 @@ jobs:
           # Whatever build.sh produced, rather than a hardcoded list that can drift from it.
           gh release create "${GITHUB_REF_NAME}" \
             --title "Skill v${{ steps.version.outputs.version }}" \
-            --notes "${{ steps.notes.outputs.notes }}" \
+            --notes-file release-notes.md \
             dist/*
