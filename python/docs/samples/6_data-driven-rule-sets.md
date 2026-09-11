@@ -2,14 +2,13 @@
 # Sample: Data-Driven Rule Sets
 
 > **The question**: how do you avoid redeploying every time a business
-> rule changes? **Why it's the pattern this package is actually used for
-> in production**: this package's own real production consumers use
-> `verdict` this exact way for two independent, unrelated decisions —
-> rate-limit policy evaluation and access-control condition evaluation —
-> and both follow the identical shape: read whatever rows are currently
-> configured, build a fresh `Rule` object per row, combine them,
-> evaluate, discard. Nothing about the rule *set* is hard-coded; only the
-> *shape* each row turns into is.
+> rule changes? **Why this is the pattern this package is designed
+> for**: two entirely unrelated decisions — say rate-limit policy
+> evaluation and access-control condition evaluation — reduce to the
+> identical shape here: read whatever rows are currently configured,
+> build a fresh `Rule` object per row, combine them, evaluate, discard.
+> Nothing about the rule *set* is hard-coded; only the *shape* each row
+> turns into is.
 
 This sample is a brief, domain-neutral illustration of that same
 pattern — deliberately not a copy of either real implementation, just
@@ -194,8 +193,8 @@ async def evaluate_against_current_config(context: dict, *, combine: str) -> boo
 ## Related
 
 - [`../extension.md`](../../../docs/extension.md#recipe-4--build-rule-sets-from-stored-configuration-at-runtime) —
-  the general recipe this sample is a fuller version of; that doc also
-  describes the two real, unrelated, in-production consumers this
-  pattern actually backs.
+  the general recipe this sample is a fuller version of, including how
+  two unrelated domains share one engine without coupling to each
+  other.
 - [`dynamic-discounts.md`](2_dynamic-discounts.md) — a smaller, single-`AndRule`
   instance of the same idea.

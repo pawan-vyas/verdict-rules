@@ -36,8 +36,8 @@ async def cart_meets_minimum(context: dict) -> RuleResult:
 rule = FunctionRule("cart_meets_minimum", cart_meets_minimum)
 ```
 
-No new class, no new file needed for this shape of rule — it's the
-majority of real rules in every real production use of this package.
+No new class, no new file needed for this shape of rule — it's what
+the large majority of rules should end up being.
 
 ## Recipe 2 — a genuinely new rule shape
 
@@ -139,13 +139,12 @@ graph TB
 
 ## Recipe 3 — keep your own domain out of `verdict`, in one adapter module
 
-The single most important extension pattern, and one this package's
-own real production consumers already follow: build **one** module
+The single most important extension pattern: build **one** module
 that translates your domain's own vocabulary into `Rule` objects and
 back out of `RuleResult.data`, and never let that vocabulary leak into
 verdict itself or scatter across multiple call sites.
 
-- **A rate-limiting adapter** — the *only* place that codebase's
+- **A rate-limiting adapter** — the *only* place your codebase's
   rate-limiting logic imports `verdict` directly. It builds one
   `FunctionRule` per configured rate-limit window, combines them under
   an `AndRule`, and packages its own rate-limit status object as each
@@ -154,9 +153,8 @@ verdict itself or scatter across multiple call sites.
 - **A second, independent adapter in that same codebase** — for an
   entirely unrelated domain (category/group-based access control),
   reusing the identical engine with **zero changes to `verdict`
-  itself**. This is the concrete proof the pattern scales to more than
-  one domain per codebase: two adapters, same package, no coupling
-  between them.
+  itself**. This is how the pattern scales past one domain per
+  codebase: two adapters, same package, no coupling between them.
 
 ```mermaid
 graph TB
@@ -201,10 +199,10 @@ graph TB
 >    never reads or constrains its shape, so the adapter can stash
 >    whatever domain object it wants there and unpack it on the way back
 >    to your own domain logic.
-> 4. **This is exactly the shape both of this package's real
->    production adapters already use** — a rate-limiting adapter and an
->    access-control adapter, two living, in-production instances of
->    this same diagram in the codebase this package was built for.
+> 4. **The same shape repeats per domain, without interacting** — a
+>    rate-limiting adapter and an access-control adapter in one
+>    codebase are two independent instances of this diagram, sharing
+>    the engine and nothing else.
 
 Why this matters: the moment domain vocabulary (a rate-limit window, a
 grant row, a discount code) leaks into a `Rule` implementation that isn't
@@ -239,9 +237,8 @@ An empty `load_rule_configs()` produces an empty `AndRule`, which
 vacuously passes — "nothing configured" and "nothing to enforce" fall
 out of the same rule, no special-casing needed at the call site. See
 [`python/docs/samples/6_data-driven-rule-sets.md`](../python/docs/samples/6_data-driven-rule-sets.md)
-for a fuller worked version of this, grounded in how this package is
-actually used in production for both rate-limit windows and
-access-control conditions.
+for a fuller worked version of this, worked through for both
+rate-limit windows and access-control conditions.
 
 ## Recipe 5 — nest composites arbitrarily
 

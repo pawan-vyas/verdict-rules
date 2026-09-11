@@ -112,8 +112,7 @@ hand-writing one `FunctionRule` per case — see
 [`extension.md`](../../docs/extension.md#recipe-4--build-rule-sets-from-stored-configuration-at-runtime)
 for the recipe and
 [`samples/6_data-driven-rule-sets.md`](samples/6_data-driven-rule-sets.md)
-for a fuller worked version grounded in how this package is actually
-used in production.
+for a fuller worked version of the same pattern.
 
 ## Related docs
 

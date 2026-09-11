@@ -144,22 +144,21 @@ sequential timing — it would need to be opt-in (a `concurrent=True` flag
 or a separate method), with the ordering-safety tradeoff spelled out
 plainly in whichever doc introduces it.
 
-It does *not* yet clear the second question: neither of this package's
-two real production consumers currently evaluates an I/O-heavy rule set
-through `run_all`/`run_group` — the rate-limiting adapter uses `AndRule`
-(where sequential evaluation is correctness-critical, not just a
-default), and the access-control adapter's condition rows are cheap,
-in-memory comparisons, not I/O. This is a structural observation from
-reading the code, not a demonstrated pain point.
-**Trigger condition for revisiting**: a real consumer's rule set grows
-large and I/O-bound enough that `run_all`/`run_group` latency shows up
-in an actual profile — not before.
+It does *not* yet clear the second question. The rule shapes this
+package is built around don't obviously want it: a rate-limiting-style
+adapter reaches for `AndRule`, where sequential evaluation is
+correctness-critical rather than merely the default, and
+access-control-style condition rows are cheap, in-memory comparisons
+rather than I/O. Concurrency would buy nothing in either.
+**Trigger condition for revisiting**: a rule set grows large and
+I/O-bound enough that `run_all`/`run_group` latency shows up in an
+actual profile — not before.
 
 ## Two smaller, better-grounded candidates
 
-Unlike the two sections above, these emerged from a real, repeated
-pattern rather than a hypothetical — worth naming even though neither
-is urgent enough to build without a specific trigger:
+Unlike the two sections above, these follow directly from the shape of
+the API rather than from a hypothetical — worth naming even though
+neither is urgent enough to build without a specific trigger:
 
 - **Read-only introspection on `RulesEngine`** (e.g. `rule_names`,
   `group_names`, or simple iteration) — `_by_name`/`_by_group` already

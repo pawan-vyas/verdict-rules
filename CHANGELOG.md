@@ -8,17 +8,17 @@ This repo is polyglot (only Python ships today), and each language
 releases independently on its own cadence to its own registry — so
 entries are grouped by language-scoped tag (`python-vX.Y.Z` today;
 `js-vX.Y.Z`/`csharp-vX.Y.Z` once those languages ship), not one
-repo-wide version number. See `docs/maintenance.md`'s "How this package
-is released and consumed" section for the release procedure and each
-language's own `AGENTS.md` for what counts as a breaking change in that
-language.
+repo-wide version number.
+
+
+See `docs/maintenance.md`'s "How this package is released and consumed"
+section for the release procedure and each language's own `AGENTS.md`
+for what counts as a breaking change in that language.
 
 ## python-v0.1.0 (2026-09-07)
 
 Initial public release.
 
-- Initial extraction from a private monorepo into this standalone,
-  publicly-published repository.
 - Core engine: `Rule` (structural `Protocol`), `FunctionRule`,
   `AndRule`, `OrRule`, `RulesEngine`, `RuleResult`, `RunResult`.
   Sequential (never concurrent) evaluation, real short-circuiting,

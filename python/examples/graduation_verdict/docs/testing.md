@@ -170,7 +170,7 @@ graph LR
 ## Running the tests
 
 ```bash
-# From libraries/python/verdict/
+# From python/
 uv run pytest examples/graduation_verdict/
 ```
 

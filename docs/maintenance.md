@@ -67,7 +67,7 @@ Two things stay true independent of the release step:
 A consumer can still choose to vendor this package via an editable
 local path instead of a normal PyPI dependency (e.g. inside their own
 monorepo, before it's ready to depend on a public release). That
-reintroduces the old risk this section used to describe: no version pin
+carries a sharper version of the same risk: no version pin at all
 between a change here and that consumer's next process restart, so the
 same test-suite-plus-grep discipline above matters even more in that
 setup, not less.
@@ -77,7 +77,7 @@ setup, not less.
 | I want to... | Touch this file |
 |---|---|
 | Add a new concrete `Rule` shape (a new composite, a weighted combinator) | `python/src/verdict/rule.py` — or a new module if it doesn't naturally fit alongside `FunctionRule`/`AndRule`/`OrRule`; export it from `python/src/verdict/__init__.py`'s `__all__` either way |
-| Change what `RuleResult`/`RunResult` carries | `python/src/verdict/result.py` — both are frozen dataclasses, so adding a *required* field breaks every construction site in `rule.py` and `engine.py`, and in both real consumers (see checklist below) |
+| Change what `RuleResult`/`RunResult` carries | `python/src/verdict/result.py` — both are frozen dataclasses, so adding a *required* field breaks every construction site in `rule.py` and `engine.py`, and in every consumer's own adapter (see checklist below) |
 | Add a new `RulesEngine` run mode (a new selection axis beyond "by name"/"by group") | `python/src/verdict/engine.py` — needs its own index built in `__init__`, the same way `_by_name`/`_by_group` already are |
 | Change the `Rule` `Protocol` itself (its required attributes/method signature) | `python/src/verdict/rule.py` — the highest-blast-radius change this package can make; every existing `Rule` implementation anywhere (including in consumers) must still satisfy the new shape |
 | Update *why* something is built this way | `architecture.md` (this directory) |
@@ -137,7 +137,7 @@ graph TB
     %% 6: a result-shape change is a blast-radius change
     %% 7: a Protocol change is a blast-radius change
     %% 8: every blast-radius change goes through the checklist first
-    %% 9: the checklist means grepping and re-testing both real adapters
+    %% 9: the checklist means grepping and re-testing every consumer's adapter
     linkStyle 0 stroke:#C9B3FF,stroke-width:2px
     linkStyle 1 stroke:#C9B3FF,stroke-width:2px
     linkStyle 2 stroke:#C9B3FF,stroke-width:2px

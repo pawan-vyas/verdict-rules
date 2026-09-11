@@ -12,7 +12,7 @@
 ## Run it
 
 ```bash
-# From libraries/python/verdict/
+# From python/
 uv run python examples/graduation_verdict/graduation_verdict.py
 ```
 
@@ -23,7 +23,7 @@ every record.
 ## Test it
 
 ```bash
-# From libraries/python/verdict/
+# From python/
 uv run pytest examples/graduation_verdict/
 ```
 

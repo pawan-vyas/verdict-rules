@@ -16,7 +16,7 @@
 | [`shipping-fee-waiver.md`](3_shipping-fee-waiver.md) | Does this order ship free? | `OrRule`'s short-circuit — ordering independent qualifying paths cheapest-first |
 | [`loyalty-tier-promotion.md`](4_loyalty-tier-promotion.md) | Should this customer be promoted to the next tier? | `RulesEngine.run_all()` over a composite, for a progress/checklist UI, not just one boolean |
 | [`content-moderation-routing.md`](5_content-moderation-routing.md) | Auto-publish, queue for review, or auto-reject? | `run_group()` — partitioning one engine's rules into named groups |
-| [`data-driven-rule-sets.md`](6_data-driven-rule-sets.md) | How do we avoid redeploying every time a business rule changes? | Building `Rule` objects from stored configuration at runtime, evaluated by one shared engine — the pattern this package is actually used for in production |
+| [`data-driven-rule-sets.md`](6_data-driven-rule-sets.md) | How do we avoid redeploying every time a business rule changes? | Building `Rule` objects from stored configuration at runtime, evaluated by one shared engine — the pattern this package is designed for |
 | [`graduation-requirement-verdict.md`](7_graduation-requirement-verdict.md) | Does this student qualify to graduate? | The full breadth at once — heterogeneous `Rule` shapes, a custom `Rule` type, all three run modes. Backed by a real, tested project in [`examples/graduation_verdict/`](../../examples/graduation_verdict/README.md), not just this markdown page |
 
 Each of samples 1-6 is deliberately small enough to read start-to-finish

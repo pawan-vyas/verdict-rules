@@ -85,7 +85,7 @@ graph LR
 >    [`python/docs/samples/`](../python/docs/samples/1_README.md)** —
 >    generic domains (discounts, fee waivers, tier promotions,
 >    moderation routing) plus the data-driven pattern this package is
->    actually used for in production.
+>    designed for.
 
 ## Design philosophy
 
@@ -343,4 +343,4 @@ coverage, and what a new contribution's own tests need to add.
 - [`../python/docs/samples/`](../python/docs/samples/1_README.md) —
   worked, domain-flavored examples of where a rule engine like this
   earns its keep, including the data-driven pattern this package is
-  actually used for in production.
+  designed for.
