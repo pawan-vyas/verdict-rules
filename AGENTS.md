@@ -27,8 +27,8 @@ building with verdict, vendored back into consuming projects via
 > **inside this repo**, committed. **Never** write durable notes to
 > `~/.claude/`, a harness's own global memory store, the home
 > directory, or `/tmp`. Only genuinely transient logs and throwaway
-> scripts may live outside a tracked file, under `scratch/`
-> (gitignored).
+> scripts may live outside a tracked file, under
+> [`.agents/scratch/`](.agents/scratch/) (gitignored).
 
 Where things go:
 
@@ -40,7 +40,7 @@ Where things go:
 | Durable facts / confirmed preferences | [`.agents/memory/`](.agents/memory/) |
 | Vendored operations manuals an agent follows | [`.agents/skills/`](.agents/skills/), mirrored to `.claude/skills/` |
 | Published documentation, for human readers | `docs/`, and each language's own `docs/` |
-| Transient logs, throwaway scripts | `scratch/` (gitignored) |
+| Throwaway docs, logs, scripts, research notes | [`.agents/scratch/`](.agents/scratch/) (gitignored) |
 
 `.agents/` is the harness-neutral home for everything an agent
 produces that outlives a session — `memory/` for what is *already
@@ -96,9 +96,21 @@ comparison tables or download counts against a named third party, and
 never the narration of how the work went. State a decision as a fact:
 *"`verdict` is unavailable on npm; the chosen name is `@verdict/core`"*
 — no characterisation of whoever holds it. Research that supports a
-decision belongs in `scratch/` (gitignored), or on a local branch that
-is never pushed. See
+decision belongs in `.agents/scratch/` (gitignored), or on a local
+branch that is never pushed. See
 [`.agents/memory/public-surfaces-stay-professional.md`](.agents/memory/public-surfaces-stay-professional.md).
+
+**Throwaway material goes in `.agents/scratch/`, not a harness temp
+dir.** Every harness offers somewhere of its own to put working files —
+a session scratchpad, `/tmp`, a hidden cache. Use
+[`.agents/scratch/`](.agents/scratch/) instead, for the same reason
+plans and memory are overridden to `.agents/`: one known location, next
+to the repo it concerns, readable by the user in their own editor and
+by the next agent regardless of harness. It is **gitignored**, so
+nothing there is committed — that is the point. Research notes, logs,
+generated reports, scratch scripts, anything that stops mattering once
+it has been read. If something there turns out to be durable, promote
+it to `.agents/memory/` or `.agents/plans/` rather than leaving it.
 
 **Don't create parallel planning docs.** In-flight work and next steps
 go in `HANDOFF.md` §3; anything longer-lived goes in `.agents/plans/`

@@ -24,10 +24,13 @@ venv/
 # for the specific rule (only evals/evals.json is tracked, everything else
 # there is point-in-time, regenerable working output).
 
-# Transient agent working material — logs, throwaway scripts, anything
-# that stops mattering when the session ends. Durable notes never land
-# here; they go in AGENTS.md / HANDOFF.md / .agents/ instead.
-scratch/
+# Transient agent working material — throwaway docs, logs, scripts,
+# research notes, anything that stops mattering once it has been read.
+# Kept inside .agents/ so every agent writes it to one known place
+# instead of a harness-specific temp dir, but untracked because it is
+# working material, not part of the repo. Durable notes never land
+# here; they go in AGENTS.md / HANDOFF.md / .agents/memory/ / .agents/plans/.
+.agents/scratch/
 
 # Harness config: the project-scope, shareable parts are committed
 # (they record this repo's toolchain), the personal/machine-local ones

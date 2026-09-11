@@ -30,5 +30,5 @@ blockquote framing every doc in this repo uses.
   history, [`CHANGELOG.md`](../../CHANGELOG.md), or the docs under
   [`docs/`](../../docs/). Memory is for what those don't say.
 - **Anything transient** — a scratch log, a one-off script, a note
-  that stops mattering when this session ends. Those go in `scratch/`
-  (gitignored) or `/tmp`.
+  that stops mattering when this session ends. Those go in
+  [`../scratch/`](../scratch/) (gitignored).

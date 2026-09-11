@@ -16,6 +16,7 @@
 | [`memory/`](memory/) | Durable agent recall — facts, confirmed preferences, hard-won conclusions an agent will need again | Indefinite, until it stops being true |
 | [`plans/`](plans/) | Multi-session plans, specs, playbooks, and design work in progress | Until the plan is executed or abandoned |
 | [`skills/`](skills/) | Vendored operations manuals an agent follows (`mermaid-diagrams`, `context-fence`), mirrored to `.claude/skills/` | Tool-owned — refreshed wholesale, never hand-edited |
+| [`scratch/`](scratch/) | Throwaway working material — research notes, logs, generated reports, scratch scripts | **Gitignored.** Until it has been read |
 
 Add a sibling directory here when a genuinely new *kind* of durable
 agent material appears — not a subdirectory of one that already
@@ -31,7 +32,7 @@ belongs in it and what doesn't, and a row in the table above.
 - **Published documentation** → [`docs/`](../docs/) and each
   language's own `docs/`. Those are written for human readers of the
   package; this directory is not.
-- **Anything transient** → `scratch/` (gitignored) or `/tmp`. If it
+- **Anything transient** → [`scratch/`](scratch/) (gitignored). If it
   stops mattering when the session ends, it does not belong here.
 
 Everything under `.agents/` is committed, like every other durable note

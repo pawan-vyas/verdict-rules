@@ -28,7 +28,7 @@ no characterisation of whoever holds the name.
 
 ## Where the research goes instead
 
-`scratch/` (gitignored). If it is worth not losing, commit it to a
+`.agents/scratch/` (gitignored). If it is worth not losing, commit it to a
 **local-only branch that is never pushed**. It is genuinely useful
 material — the point is that it is *ours*, not published.
 

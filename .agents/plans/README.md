@@ -37,4 +37,4 @@ plans directory nobody trusts.
   standalone-portable") — a plan committed here is bound by that rule
   like every other file. Generalize a consumer's vocabulary out before
   a plan lands here.
-- **Transient working notes** → `scratch/` (gitignored) or `/tmp`.
+- **Transient working notes** → `.agents/scratch/` (gitignored).
