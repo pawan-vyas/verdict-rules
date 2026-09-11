@@ -20,6 +20,30 @@ See `docs/maintenance.md`'s "How this package is released and consumed"
 section for both release procedures, and each language's own
 `AGENTS.md` for what counts as a breaking change in that language.
 
+## skill-v0.1.1 (2026-09-12)
+
+The AI-agent skill under `skills/verdict/`, which versions independently
+of any language SDK — see `docs/maintenance.md`.
+
+- **Corrected the account of unknown-group behaviour**, which
+  `python-v0.1.1` changed. Three reference files stated the old
+  behaviour: `core-concepts.md` as API reference,
+  `gotchas.md` as a named pitfall, and `testing-patterns.md` as
+  something to write a test for. An agent following any of them would
+  have produced code expecting a vacuous pass where a `KeyError` is now
+  raised.
+- **Added the emptiness-versus-absence distinction** to `gotchas.md` as
+  its own section, since it is the reasoning behind the change rather
+  than a detail of it: an empty composite folds to its identity because
+  the caller handed over a set, while an unknown lookup raises because a
+  group exists only when some rule declares it. `testing-patterns.md`
+  now asks for both to be tested separately.
+- **Documented `RulesEngine.rule_names` and `group_names`** in
+  `core-concepts.md`, without which an agent has no way to know that
+  checking before calling is an option.
+
+No change to `SKILL.md` itself or to the workflow it describes.
+
 ## python-v0.1.1 (2026-09-12)
 
 - **`RulesEngine.run_group()` now raises `KeyError` for an unknown
