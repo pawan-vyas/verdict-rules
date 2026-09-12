@@ -10,7 +10,10 @@ JS/TS-specific rules, on top of the repo-root `AGENTS.md`. Read that first.
   — so this is the one mistake here that passes its own tests.
 - **Vacuous truth.** `AndRule([])` passes, `OrRule([])` fails.
 - **Emptiness is not absence.** Empty composites fold to their identity;
-  unknown rule names and unknown groups throw.
+  unknown rule names and unknown groups throw from `runNamed`/`runGroup`, and
+  return `undefined` from `tryRunNamed`/`tryRunGroup`. The `try` forms are the
+  **primitives** — the throwing ones are assertions on top, so there is one
+  lookup path rather than two that can drift.
 - **`RuleResult.data`** holds only what actually ran. Never padded, never
   flattened into the parent's level.
 

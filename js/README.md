@@ -137,8 +137,21 @@ JavaScript has no built-in equivalent, and a bare `Error` would leave callers
 matching on message text — which breaks the moment a message is reworded. So
 the package exports its own.
 
-Reaching for it in a `catch` usually means the check belongs earlier:
-`ruleNames` and `groupNames` let you ask before calling.
+Reaching for it in a `catch` usually means the check belongs earlier —
+`tryRunNamed` and `tryRunGroup` ask in a single call, returning `undefined`
+instead of throwing:
+
+```ts
+const result = await engine.tryRunGroup("beta_checks", ctx);
+const allowed = result?.passed ?? true;   // absent means "no constraint here"
+```
+
+`undefined` means **absent, never failed** — a rule that exists and fails still
+returns a `RuleResult` with `passed: false`. The engine does not pick a
+fallback because it cannot: absence means "no constraint applies" to one
+consumer and "the configuration is broken" to another. Prefer the throwing
+forms by default; reach for these when your own domain has an answer for
+absence.
 
 ## What it guarantees
 
