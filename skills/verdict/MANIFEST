@@ -35,8 +35,8 @@ bundled	docs/architecture.md	docs/architecture.md
 bundled	docs/extension.md	docs/extension.md
 
 fetch	docs/testing.md	docs/testing.md
-fetch	python/docs/quickstart.md	python/quickstart.md
-fetch	python/docs/samples/	python/samples/
+fetch	python/packages/verdict-rules/docs/quickstart.md	python/quickstart.md
+fetch	python/packages/verdict-rules/docs/samples/	python/samples/
 fetch	python/examples/graduation_verdict/README.md	python/example/README.md
 fetch	python/examples/graduation_verdict/docs/architecture.md	python/example/architecture.md
 fetch	python/examples/graduation_verdict/docs/testing.md	python/example/testing.md

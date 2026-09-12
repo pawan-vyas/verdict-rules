@@ -192,7 +192,7 @@ async def evaluate_against_current_config(context: dict, *, combine: str) -> boo
 
 ## Related
 
-- [`../extension.md`](../../../docs/extension.md#recipe-4--build-rule-sets-from-stored-configuration-at-runtime) —
+- [`../extension.md`](../../../../../docs/extension.md#recipe-4--build-rule-sets-from-stored-configuration-at-runtime) —
   the general recipe this sample is a fuller version of, including how
   two unrelated domains share one engine without coupling to each
   other.

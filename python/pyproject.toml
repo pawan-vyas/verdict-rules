@@ -1,57 +1,22 @@
-[project]
-name = "verdict-rules"
-version = "0.2.1"
-description = "A small, zero-dependency, async-native rule-evaluation engine for Python."
-readme = "README.md"
-authors = [
-    { name = "Pawan Vyas", email = "pawan.vyas.self@gmail.com" }
-]
-# SPDX expression, not a file reference -- LICENSE lives at the repo root
-# (it covers the whole polyglot repo, not just this Python package), and a
-# plain SPDX string needs no file to be bundled into the sdist to be valid.
-license = "MIT"
-requires-python = ">=3.10"
-dependencies = []
-keywords = [
-    "rules-engine",
-    "rule-evaluation",
-    "eligibility",
-    "policy-evaluation",
-    "decision-engine",
-    "async",
-]
-classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Intended Audience :: Developers",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
-    "Typing :: Typed",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-]
+# Workspace root for this repository's Python packages.
+#
+# Deliberately not a package itself — it has no [project] table, so it declares
+# a workspace without being a member of one. `verdict-rules` lives under
+# packages/ like any other distribution would, so adding a second is a new
+# directory and nothing existing moves.
+#
+# That matters more than it looks: the package root and the language directory
+# used to be the same path, which reads unambiguously only while there is
+# exactly one distribution. See docs/maintenance.md.
+#
+# This root exists now rather than later because examples/ lives outside any
+# package and still has to import one. `uv run pytest` here resolves the
+# workspace and collects both.
+[tool.uv.workspace]
+members = ["packages/*"]
 
-[project.urls]
-Homepage = "https://github.com/pawan-vyas/verdict-rules"
-Repository = "https://github.com/pawan-vyas/verdict-rules"
-Issues = "https://github.com/pawan-vyas/verdict-rules/issues"
-Changelog = "https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.1/python/CHANGELOG.md"
-
-[build-system]
-requires = ["uv_build>=0.11.14,<0.13.0"]
-build-backend = "uv_build"
-
-[tool.uv.build-backend]
-# The distribution name is "verdict-rules" (PyPI's own "verdict" name is
-# already taken by an unrelated package), but the import name stays plain
-# "verdict" -- the same distribution-name/import-name split as
-# beautifulsoup4 -> bs4. Without this, uv_build looks for
-# src/verdict_rules/ (the normalized project name) instead of src/verdict/.
-module-name = "verdict"
+[tool.uv.sources]
+verdict-rules = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -59,6 +24,7 @@ dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.24",
     "pytest-cov>=6.0",
+    "verdict-rules",
 ]
 
 [tool.pytest.ini_options]

@@ -24,7 +24,7 @@ on:
         required: true
         type: string
       changelog-path:
-        description: 'Path to this package own changelog, e.g. python/CHANGELOG.md'
+        description: 'Path to this package''s own changelog, e.g. python/packages/verdict-rules/CHANGELOG.md'
         required: true
         type: string
       artifact-name:

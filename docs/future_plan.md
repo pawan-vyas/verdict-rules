@@ -164,8 +164,8 @@ neither is urgent enough to build without a specific trigger:
   `group_names`, or simple iteration) — `_by_name`/`_by_group` already
   hold exactly this data privately; nothing needs to be computed, only
   exposed. The recurring gap this would close showed up organically
-  while writing [`samples/5_content-moderation-routing.md`](../python/docs/samples/5_content-moderation-routing.md)
-  and [`samples/6_data-driven-rule-sets.md`](../python/docs/samples/6_data-driven-rule-sets.md)'s
+  while writing [`samples/5_content-moderation-routing.md`](../python/packages/verdict-rules/docs/samples/5_content-moderation-routing.md)
+  and [`samples/6_data-driven-rule-sets.md`](../python/packages/verdict-rules/docs/samples/6_data-driven-rule-sets.md)'s
   own "naive way" sections: an admin/audit screen that wants to list
   "every currently-active rule" has no way to ask an engine that today
   short of reaching into its private attributes. Real subtlety is mild
@@ -174,8 +174,8 @@ neither is urgent enough to build without a specific trigger:
 - **A shared, tested helper for walking a `RuleResult`/`RunResult` tree**
   into a plain, JSON-able structure — every sample in this doc set that
   needs a "why did/didn't this pass" breakdown
-  ([`samples/2_dynamic-discounts.md`](../python/docs/samples/2_dynamic-discounts.md),
-  [`samples/4_loyalty-tier-promotion.md`](../python/docs/samples/4_loyalty-tier-promotion.md))
+  ([`samples/2_dynamic-discounts.md`](../python/packages/verdict-rules/docs/samples/2_dynamic-discounts.md),
+  [`samples/4_loyalty-tier-promotion.md`](../python/packages/verdict-rules/docs/samples/4_loyalty-tier-promotion.md))
   manually destructures `result.results[0].data`, and the
   rate-limiting adapter mentioned above does the identical thing in
   production (`[r.data for r in combined.data]`). The real subtlety:

@@ -54,7 +54,7 @@ Release procedure, once a change is ready to ship:
    a breaking change and takes `MINOR`, however unlikely that dependency
    seems.
 2. Add a `## [X.Y.Z] - YYYY-MM-DD` entry to
-   [`../python/CHANGELOG.md`](../python/CHANGELOG.md), in the same commit
+   [`../python/CHANGELOG.md`](../python/packages/verdict-rules/CHANGELOG.md), in the same commit
    as the version bump — never backfilled later. The release body is built
    from it, and a missing section fails the release rather than publishing
    empty notes.
@@ -128,31 +128,55 @@ still resolving `verdict-tools.zip` with a real payload inside it.
 2. **Provenance is present** where the registry offers it — see below. Its
    absence is silent, which is exactly why it is worth looking at.
 
-### A changelog lives beside its own manifest
+### A package is a directory under `packages/`, and its changelog lives there
 
-Not at the repository root, and not at the language directory's root if the
-manifest sits deeper. That is where packaging tools look for it, and it gives
-each release track exactly one writer — so two releases can never contend for
-one file, however many languages ship.
+A language directory holds *distributions*, rather than being one. Adding a
+second package is therefore a new directory and nothing existing moves —
+manifest, README, changelog, source and tests all travel together inside it.
 
-For Python that is `python/CHANGELOG.md`, because `pyproject.toml` and
-`README.md` are both at `python/`. For C# it will be beside the `.csproj`,
-which sits at `csharp/src/VerdictRules/` rather than at `csharp/`.
+```
+python/
+  pyproject.toml            workspace root — declares members, is not a package
+  AGENTS.md                 language-level: conventions for writing Python here
+  examples/                 language-level: worked examples, may use any package
+  packages/
+    verdict-rules/          a distribution
+      pyproject.toml
+      README.md
+      CHANGELOG.md
+      docs/
+      src/verdict/
+      tests/
+```
 
-**One ambiguity worth naming**, since it is invisible today: `python/` is
-currently *both* the language directory *and* the `verdict-rules` distribution
-root, because there is exactly one Python distribution. A second one — say a
-`verdict-rules-concurrent` — would separate those meanings, and the answer is
-to restructure so each distribution has its own root (`python/packages/<dist>/`
-or similar), moving its manifest, README, `src/` and changelog together. The
-rule does not change; only the layout does.
+The shape follows each ecosystem's own convention for a multi-package
+repository, rather than one shape imposed on all of them:
 
-That restructure is safe to defer precisely because shipped links are
-version-pinned (below): tags are immutable, so every already-published link
-keeps resolving after the files move. Under `main`-pinning it would have broken
-every published version at once.
+| | Convention | Members live in |
+| :-- | :-- | :-- |
+| **Python** | uv workspace | `packages/*`, declared in a root `pyproject.toml` |
+| **npm** | npm workspaces | `packages/*`, declared in a root `package.json` |
+| **.NET** | solution layout | `src/<Project>/` — already the shape C# had |
+| **Dart** | pub workspace | `packages/*` |
 
-### Links in shipped content are pinned to a version, never to `main`
+**Two operational consequences of the Python workspace**, both easy to get
+wrong:
+
+- `uv build` at the workspace root does *not* build the package. The root has
+  no `[project]`, so a bare `uv build` tries to build the root itself and emits
+  a garbage `packages-0.0.0` artifact rather than failing cleanly. The release
+  workflow uses `uv build --package verdict-rules`.
+- Build output lands in the **workspace root's** `dist/`, not the member's,
+  which is why the workflow still uploads `python/dist/`.
+
+**Dart is the one place the layout is adopted without the tooling.** Pub
+workspaces require an SDK floor of `^3.6.0`, and the Dart SDK targets
+`>=3.0.0`. Raising the floor to gain shared resolution across a single package
+would cost reach for no benefit, so the directory layout is adopted now and a
+root `pubspec.yaml` is added when a second package actually exists — itself an
+additive change.
+
+### Links in shipped content are pinned to a version, never to `main`### Links in shipped content are pinned to a version, never to `main`
 
 A README bundled into a package is rendered on **every version's** registry
 page, permanently. A link in it pointing at `main` therefore shows someone
@@ -526,7 +550,7 @@ here (short-circuiting, vacuous truth).
 ## Related docs
 
 - [`../README.md`](../README.md) — the narrative front door.
-- [`../python/docs/quickstart.md`](../python/docs/quickstart.md) — core
+- [`../python/docs/quickstart.md`](../python/packages/verdict-rules/docs/quickstart.md) — core
   concepts and the one worked example.
 - [`architecture.md`](architecture.md) — type structure, execution
   model, and the reasoning behind each design choice.
@@ -534,7 +558,7 @@ here (short-circuiting, vacuous truth).
   a consumer's own code, without changing anything here.
 - [`testing.md`](testing.md) — the full testing checklist and current
   suite coverage.
-- [`../python/docs/samples/`](../python/docs/samples/1_README.md) —
+- [`../python/docs/samples/`](../python/packages/verdict-rules/docs/samples/1_README.md) —
   worked, domain-flavored examples of where a rule engine like this
   earns its keep.
 - [`future_plan.md`](future_plan.md) — exploratory, not-yet-decided
