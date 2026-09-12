@@ -141,6 +141,24 @@ matters:
   its only purpose. So does the distinction between `None` and
   `passed=False` — collapsing them makes a typo indistinguishable from
   a legitimate rejection.
+- **A fallback must be proven not to fire when it shouldn't.** Testing
+  `try_run_group` only against an *absent* group looks complete and
+  isn't: the dangerous direction is a *present* group wrongly returning
+  `None`, because a caller writing `or True` would then approve
+  something that actually failed. Test the whole matrix —
+
+  | group state | `or True` | `or False` | strict |
+  | :-- | :-- | :-- | :-- |
+  | present, passing | `True` | `True` | `passed=True` |
+  | **present, failing** | **`False`** | **`False`** | `passed=False` |
+  | absent | `True` | `False` | raises |
+
+  — because the middle row is the one that matters and the one a
+  single-case test omits. `test_fallback_matrix` covers it. The general
+  lesson generalises past this API: an assertion written against only
+  the branch you're thinking about often reduces to a tautology, and a
+  green test proves nothing until you've watched it fail for the right
+  reason.
 - **`run_all`/`run_group` never short-circuit — prove the opposite of
   the point above.** `test_does_not_short_circuit_unlike_and_rule`
   asserts every rule's name shows up in `results`, even after an

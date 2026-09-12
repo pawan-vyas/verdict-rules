@@ -213,6 +213,30 @@ class TestTryLookups:
             assert strict.passed is default_true
             assert strict.passed is default_false
 
+    async def test_results_are_always_truthy(self) -> None:
+        """Load-bearing for the ``x or default`` idiom the docs mention.
+
+        Python's ``or`` fires on any falsy value, not only ``None``. These
+        types are plain dataclasses with no ``__bool__`` or ``__len__``, so
+        every instance is truthy and ``or`` reaches its default only on an
+        actual absence. Adding ``__len__`` to :class:`RunResult` later would
+        make an empty-results instance falsy and silently break that — so the
+        property is pinned here rather than left as an accident.
+        """
+        engine = RulesEngine([_fail("f", group="failing")])
+
+        failing = await engine.try_run_group("failing", {})
+        assert failing is not None
+        assert failing.passed is False
+        assert bool(failing) is True, "a failing RunResult must still be truthy"
+
+        empty = await engine.run_all({})
+        assert bool(empty) is True, "a zero-result RunResult must still be truthy"
+
+        rule_result = await engine.try_run_named("f", {})
+        assert rule_result is not None and rule_result.passed is False
+        assert bool(rule_result) is True, "a failing RuleResult must still be truthy"
+
     async def test_skipping_counts_only_what_exists(self) -> None:
         """The fourth shape: absence contributes nothing either way."""
         engine = RulesEngine([_fail("f", group="failing")])

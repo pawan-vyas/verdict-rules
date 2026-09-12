@@ -46,6 +46,27 @@ The engine does not pick a fallback because it cannot — absence means "no
 constraint applies" to one consumer and "the configuration is broken" to
 another. Extension Recipe 6 works through the four real shapes.
 
+## Prefer `if x is not None` over `x or default` in Python
+
+Other languages write this with a null-coalescing operator — `?? true` in
+TypeScript, C# and Dart — which fires **only** on null. Python's `or` fires on
+any *falsy* value, so it is a weaker guard doing a different job that happens
+to coincide here.
+
+It works today because `RuleResult` and `RunResult` are plain dataclasses with
+no `__bool__` or `__len__`, so every instance is truthy and `or` reaches its
+default only on a real absence. That is a property of the library, not of the
+pattern — a `__len__` added to `RunResult` later would make a zero-result
+instance falsy, and `or` would start firing on a legitimate result. The test
+suite pins the truthiness for exactly that reason.
+
+Write the explicit form and the question does not arise:
+
+```python
+result = await engine.try_run_group(group, context)
+allowed = result.passed if result is not None else True
+```
+
 ## A `Rule`'s own `.name` and its `RuleResult.rule_name` are two different things
 
 `FunctionRule(name, predicate)` sets `.name` on the `Rule` object

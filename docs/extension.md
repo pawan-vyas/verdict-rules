@@ -444,6 +444,18 @@ being enforced, and nothing will tell you.
 If you only need to enumerate what exists, `engine.rule_names` and
 `engine.group_names` report exactly the lookups that will not raise.
 
+### The fallback only applies to absence
+
+Worth stating plainly, because it is what makes these idioms safe to
+write: `try_run_group(...) or True` does **not** mean "sometimes True".
+A group that exists always reports its real verdict, and the fallback is
+reached only when nothing matched. So a failing group is still a failure
+under every one of the four shapes above — the default cannot mask it.
+
+If you are testing code that uses one of these, assert that too: the
+case worth covering is a *present, failing* group, not the absent one
+everybody thinks of first. See [`testing.md`](testing.md).
+
 ## What you never need to do
 
 - Register a new rule shape anywhere in this package.

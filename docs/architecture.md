@@ -383,7 +383,14 @@ this takes in practice.
 
 The `try_` forms are the **primitives**; `run_named` and `run_group` are
 two-line assertions on top of them, so there is one lookup path rather
-than two implementations that could drift. `RulesEngine.rule_names` and
+than two implementations that could drift.
+
+The invariant that makes a caller's fallback safe to write: **a lookup
+that matches always reports its real verdict.** A failing group returns a
+failing `RunResult`, never `None`, so no choice of default can mask it.
+The fallback is reached only on absence — which is why code written as
+`… if result is not None else True` means "pass when absent", not
+"pass when convenient". `RulesEngine.rule_names` and
 `group_names` report exactly the lookups that will not raise, for
 enumerating an engine rather than probing one name.
 
