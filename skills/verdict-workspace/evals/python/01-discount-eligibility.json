@@ -1,0 +1,15 @@
+{
+  "eval_name": "discount-eligibility",
+  "prompt": "I need to add a feature to our checkout flow that decides whether a cart qualifies for a promotional discount. Marketing wants to configure three things that can each change independently: a minimum cart value, which regions are eligible, and whether it's the customer's first purchase. They also want customer support to be able to see exactly which condition failed when someone asks why they didn't get the discount. Can you help me build this?",
+  "expected_output": "A solution using verdict's Rule/AndRule/RulesEngine primitives (or a clear justification if not), with per-condition diagnostics available (e.g. via run_all()), not just a single boolean.",
+  "files": [
+    "files/pyproject.toml"
+  ],
+  "expectations": [
+    "Each of the three conditions (minimum cart value, eligible region, first purchase) is represented as its own independent, named check",
+    "A per-condition breakdown is available for the customer-support 'why not' use case, not just a single boolean",
+    "Domain logic (cart/discount vocabulary) stays out of low-level rule-evaluation code, or the design explicitly separates the two concerns",
+    "A fast pass/fail path and a full-diagnostic path are both addressed as distinct needs, not conflated into one",
+    "Config values (minimum, regions) are treated as data that can change without a code edit, not hardcoded literals"
+  ]
+}

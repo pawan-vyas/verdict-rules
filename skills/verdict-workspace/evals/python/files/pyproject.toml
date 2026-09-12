@@ -1,0 +1,21 @@
+# A minimal, deliberately ordinary project manifest.
+#
+# It exists so an eval run has something to answer the skill's first step with
+# — "read the target project's own manifest to determine the language" is not
+# testable in an empty directory, and an agent that has to guess the language
+# is not being asked the question the skill actually poses.
+#
+# The pinned verdict-rules version is load-bearing too: the skill says to fetch
+# deeper documentation at the version a project actually has, never from the
+# default branch, and that instruction is unexercisable without a version here.
+[project]
+name = "storefront-api"
+version = "1.4.0"
+requires-python = ">=3.10"
+dependencies = [
+    "verdict-rules==0.2.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
