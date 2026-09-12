@@ -12,18 +12,17 @@
 # skill is.
 name: Check skill version
 
+# Runs on EVERY pull request, with no trigger-level path filter, so it can be
+# marked required in branch protection. A path-filtered workflow never starts on
+# an unrelated PR, so no check run is ever created and protection waits forever.
+#
+# No separate gate job is needed here: this workflow already re-derives what
+# actually changed and exits cleanly when nothing skill-facing did, so it always
+# reports a result of its own accord.
 on:
   push:
     branches: [main]
-    paths:
-      - "skills/verdict/**"
-      - ".claude-plugin/**"
-      - ".github/workflows/check-skill-version.yml"
   pull_request:
-    paths:
-      - "skills/verdict/**"
-      - ".claude-plugin/**"
-      - ".github/workflows/check-skill-version.yml"
   workflow_dispatch:
 
 jobs:

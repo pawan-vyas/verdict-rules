@@ -1,28 +1,79 @@
-# Named to leave room for test-js.yml/test-csharp.yml siblings once those languages ship — each
-# language's own workflow stays independently path-filtered, so adding a second language is a new
-# workflow file, never an edit to this one.
+# Runs on EVERY pull request, deliberately.
+#
+# The path filter used to sit on the trigger, which meant a PR touching no
+# python/** file never started this workflow — so GitHub never created a check
+# run for it. That is fine until the check is marked required in branch
+# protection, at which point protection waits forever for a result that will
+# never arrive and the pull request deadlocks at "Expected — waiting for status
+# to be reported".
+#
+# So the filter moved inward: the workflow always starts, a cheap job decides
+# whether there is anything to test, and a final gate job always reports. The
+# gate is the job to mark required.
+#
+# Named to leave room for test-js.yml/test-csharp.yml/test-dart.yml siblings —
+# each language's own workflow stays independent, so adding one is a new file
+# rather than an edit to this.
 name: Test (Python)
 
 on:
   push:
     branches: [main]
-    paths:
-      - "python/**"
-      - ".github/workflows/test-python.yml"
   pull_request:
-    paths:
-      - "python/**"
-      - ".github/workflows/test-python.yml"
   workflow_dispatch:
 
 jobs:
+  changes:
+    name: Did anything Python change?
+    runs-on: ubuntu-latest
+    outputs:
+      python: ${{ steps.filter.outputs.python }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # the base commit must be present to diff against
+
+      - name: Decide whether the suite needs to run
+        id: filter
+        env:
+          # Resolved once, here, rather than re-tested inside the script: for a
+          # pull request the comparison point is the merge base, for a push it
+          # is whatever main pointed at before.
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+
+          # A branch creation, a force-push or a manual dispatch leaves no
+          # usable base commit. Having nothing to compare against must mean
+          # "run the tests", never "skip them" — the failure has to be safe.
+          if [ -z "${BASE_SHA:-}" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ] \
+             || ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            echo "No usable base commit — running the suite rather than assuming it is unnecessary."
+            echo "python=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          changed="$(git diff --name-only "$BASE_SHA" HEAD -- 'python' '.github/workflows/test-python.yml')"
+          if [ -n "$changed" ]; then
+            echo "Python files changed:"
+            echo "$changed" | sed 's/^/  /'
+            echo "python=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No Python files changed in ${BASE_SHA}..HEAD."
+            echo "python=false" >> "$GITHUB_OUTPUT"
+          fi
+
   test:
+    name: pytest
+    needs: changes
+    if: needs.changes.outputs.python == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        # requires-python floor is 3.10 (see python/pyproject.toml) — the matrix covers that floor
-        # through the newest stable release, not just whatever the dev machine happens to run.
+        # requires-python floor is 3.10 (see python/pyproject.toml) — the matrix
+        # covers that floor through the newest stable release, not just whatever
+        # the dev machine happens to run.
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v7
@@ -42,3 +93,42 @@ jobs:
       - name: Run tests
         working-directory: python
         run: uv run --python ${{ matrix.python-version }} pytest --cov=verdict --cov-report=term-missing
+
+  # THE JOB TO MARK REQUIRED IN BRANCH PROTECTION.
+  #
+  # It runs unconditionally so a result always exists, and it must distinguish
+  # three upstream outcomes rather than two: success and skipped are both fine,
+  # failure and cancelled are not. A gate that merely runs `if: always()` with
+  # no body reports success even when the tests failed, which is strictly worse
+  # than having no gate at all — protection would be satisfied by a red build.
+  gate:
+    name: Python tests passed or were not needed
+    needs: [changes, test]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every upstream job must have succeeded or been skipped
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          set -euo pipefail
+          echo "Upstream results: $RESULTS"
+
+          # No results at all is absence, not emptiness: `needs` is non-empty,
+          # so an empty join means something failed to resolve rather than that
+          # every job was fine. Passing here would be a gate that approves when
+          # it has learned nothing, which is the failure it exists to prevent.
+          if [ -z "$(printf '%s' "$RESULTS" | tr -d '[:space:]')" ]; then
+            echo "::error::No upstream job results were reported. Refusing to pass a gate that learned nothing."
+            exit 1
+          fi
+
+          failed=0
+          for result in $RESULTS; do
+            case "$result" in
+              success|skipped) ;;
+              *) echo "::error::An upstream job finished as '$result'."; failed=1 ;;
+            esac
+          done
+          [ "$failed" -eq 0 ] || exit 1
+          echo "Gate satisfied."

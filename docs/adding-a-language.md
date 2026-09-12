@@ -158,12 +158,40 @@ belongs in `.agents/scratch/`, not in the repo's public surfaces.
 
 - [ ] Test coverage expanded across every type and run mode
 - [ ] Language-level `README` and quickstart
-- [ ] `test-<lang>.yml`, path-filtered, as a **new** workflow file
+- [ ] `test-<lang>.yml` as a **new** workflow file, following the gate pattern
+      below rather than filtering on the trigger
 - [ ] `release-<lang>.yml` on a `<lang>-v*` tag, publishing via trusted
       publishing
 - [ ] Release workflow attaches the full skill artifact set — see
       [`maintenance.md`](maintenance.md)
 - [ ] `CHANGELOG.md` entry under that language's own tag heading
+
+### A word on the test workflow's shape
+
+Do **not** put a `paths:` filter on the trigger. It looks right and quietly
+makes the check unusable: a workflow that never starts creates no check run, so
+branch protection waits forever for a result and the pull request deadlocks at
+"Expected — waiting for status to be reported".
+
+The filter goes inward instead. `test-python.yml` is the reference:
+
+1. A **`changes`** job diffs against the base and decides whether there is
+   anything to test. If it cannot determine a base commit it answers *yes* —
+   the uncertain case must run the suite, never skip it.
+2. The **real jobs** are conditional on that.
+3. A **`gate`** job with `if: always()` reports for the whole workflow. This is
+   the job to mark required.
+
+The gate is where this goes wrong, so it is worth stating what correct means:
+it must treat `success` and `skipped` as fine, and `failure` and `cancelled` as
+not. A gate that merely declares `if: always()` with no body reports success
+even when the tests failed — strictly worse than no gate, because protection is
+then satisfied by a red build. It must also fail when it receives *no* results
+at all, since `needs` is non-empty and an empty answer means something failed
+to resolve rather than that everything was fine.
+
+That last one is the same distinction the library itself draws: emptiness folds
+to an identity, absence is an error.
 
 ## Stage 4 · Prove — `0.1.0`
 
