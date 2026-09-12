@@ -52,6 +52,21 @@ exists, which is also the day the shared lockfile starts paying for itself.
 Until then, run every command from inside the package directory rather than
 from `dart/`.
 
+## This package ships full, real source — same category as Python
+
+Worth recording for the day this language has its own evals (see
+`csharp/AGENTS.md` for the full context): a Python eval was seen opening the
+installed package's own source to double-check a signature already fully
+documented in `agent-notes.md`, and it found nothing the doc didn't already
+say. Whether an agent does the same here is confounded by the same fact that
+made it cheap in Python — no `.pubignore` and no pubspec exclude entries in
+this package, so pub's own default applies: `lib/` is exactly what a
+consumer's pub cache holds, real and commented, never a compiled artifact.
+Dart has no compiled-distribution stage for libraries at all, so this is not
+a choice this package made — it's true of every package on pub.dev. Sits at
+the same end of the spectrum as Python; contrast `js/AGENTS.md` (bundled, not
+raw) and `csharp/AGENTS.md` (no local source at all).
+
 ## Conventions
 
 - `Rule` is an `abstract interface class` — implemented, never extended.
