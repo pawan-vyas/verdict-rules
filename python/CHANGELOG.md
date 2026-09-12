@@ -8,6 +8,25 @@ which keeps its own changelog beside its own manifest.
 
 Tagged `python-vX.Y.Z`.
 
+## [0.2.1] - 2026-09-12
+
+### Fixed
+
+- The **Changelog** link in this package's PyPI metadata pointed at a
+  repository-root `CHANGELOG.md` that no longer exists — each package now
+  keeps its history beside its own manifest. It points at
+  `python/CHANGELOG.md`.
+
+No code changed; the package itself is identical to `0.2.0`. It is a release
+rather than something left for the next one because PyPI metadata is immutable
+per version, so a link can only be corrected by publishing a new one, and
+nothing else was scheduled to carry it.
+
+Versions `0.1.0`, `0.1.1` and `0.2.0` keep the dead link permanently and
+cannot be corrected — yanking them would tell installers a release is broken
+in order to fix a documentation link. From this version the project page is
+right, which is what a reader lands on.
+
 ## [0.2.0] - 2026-09-12
 
 - **Added `RulesEngine.try_run_named()` and `try_run_group()`**, which
