@@ -1,9 +1,16 @@
 # Changelog
 
-Version provenance for the C# SDK. The repo-root `CHANGELOG.md` is the
-cross-language record.
+Release history for the `VerdictRules` NuGet package. Format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning follows
+[semantic versioning](https://semver.org/), scoped to this package — it
+releases independently of the other language SDKs.
 
-## 0.0.1
+NuGet surfaces release notes from `PackageReleaseNotes` metadata rather than
+from this file, so the csproj points here instead of carrying a copy.
+
+Tagged `csharp-vX.Y.Z`.
+
+## [0.0.1] - 2026-09-12
 
 First publish, claiming the name. Correct but minimal: the full type set and
 its guarantees, with the tests that prove them, and nothing else yet.
