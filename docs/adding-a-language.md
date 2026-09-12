@@ -216,9 +216,22 @@ to an identity, absence is an error.
 - [ ] An oracle/differential suite in the language's own idiom, with
       explicitly seeded generators so a failure reproduces from its seed
       alone
-- [ ] `skills/verdict/references/<lang>/` and the skill's
-      language-routing note, with `.claude-plugin/plugin.json` bumped in
-      the same commit
+- [ ] `skills/verdict/references/<lang>/agent-notes.md` — **one file**,
+      and the only hand-written skill content a language needs. Everything
+      about what verdict *is* comes from the repository's own documents,
+      which `scripts/build.sh` copies into the bundle from
+      `skills/verdict/MANIFEST`; a language restating them is how the
+      skill went stale twice. Keep it to what is specific to this SDK:
+      its idioms, its naming, the mistakes that show up in generated code
+      for this language, and the fetch recipe for the documents the
+      bundle does not carry.
+- [ ] Add this language's own documents to `skills/verdict/MANIFEST` —
+      quickstart, samples, worked example — in the `fetch` tier. The
+      `bundled` tier is language-agnostic and should not grow.
+- [ ] `.claude-plugin/plugin.json` bumped in the same commit, with a
+      `## skill-vX.Y.Z` changelog entry. **`SKILL.md` needs no edit** —
+      it routes to `references/<language>/` and names no language, so
+      adding one touches nothing another language's branch also touches
 - [ ] Documentation at the quality of the Python set: architecture
       notes where the language diverges, extension recipes in its own
       idiom

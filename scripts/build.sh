@@ -17,10 +17,54 @@ rm -rf dist && mkdir -p dist
 stage="$(mktemp -d)"
 trap 'rm -rf "$stage"' EXIT
 
+# Assemble the skill into the staging area, never in place.
+#
+# skills/verdict/ in git holds only hand-written content. The documents the
+# skill ships are copied here from the repository's own docs/, so there is one
+# copy of each fact and nothing to keep in sync. Doing it in staging rather
+# than in the source tree matters: all three artifacts below copy
+# skills/verdict/ wholesale, and build output living inside a source directory
+# is how unrelated files end up in a package (see .agents/incidents/002).
+skill_src="$stage/skill-src"
+mkdir -p "$skill_src"
+cp -r skills/verdict/. "$skill_src/"
+
+# The bundled tier, from MANIFEST. A trailing slash on both sides copies a
+# directory. Anything marked `fetch` is deliberately absent — SKILL.md explains
+# how it is pulled on demand, pinned to the consumer's installed version.
+bundled=0
+while IFS="$(printf '\t')" read -r tier src dst; do
+  case "$tier" in ''|'#'*) continue;; esac
+  [ "$tier" = "bundled" ] || continue
+  target="$skill_src/references/$dst"
+  mkdir -p "$(dirname "$target")"
+  if [ "${src%/}" != "$src" ]; then
+    mkdir -p "$target"
+    cp -r "$src". "$target"
+  else
+    cp "$src" "$target"
+  fi
+  bundled=$((bundled + 1))
+done < skills/verdict/MANIFEST
+
+[ "$bundled" -gt 0 ] || { echo "error: MANIFEST declared no bundled documents." >&2; exit 1; }
+
+# Validate the assembled bundle before packaging it: SKILL.md must not route
+# to anything the manifest omitted, and links between bundled documents must
+# resolve where the manifest put them. A script rather than an inline block —
+# shell nested inside a generated file is how .agents/incidents/005 happened.
+python3 scripts/check_skill_bundle.py "$skill_src" skills/verdict/MANIFEST
+
+echo "skill assembled: $bundled bundled document(s)"
+
 # 1) plugin package — top-level verdict/ so it extracts cleanly into a skills dir.
-# No commands/ dir exists for this skill (no session-state operations to invoke).
+# commands/ carries the one slash-command surface this skill has: fetching the
+# documents the bundle deliberately does not carry. Harnesses without commands
+# use the equivalent recipe in references/<language>/agent-notes.md.
 mkdir -p "$stage/plugin/verdict"
-cp -r .claude-plugin skills "$stage/plugin/verdict/"
+cp -r .claude-plugin "$stage/plugin/verdict/"
+mkdir -p "$stage/plugin/verdict/skills"
+cp -r "$skill_src" "$stage/plugin/verdict/skills/verdict"
 # the plugin package needs only plugin.json, not the marketplace manifest
 rm -f "$stage/plugin/verdict/.claude-plugin/marketplace.json"
 # the plugin package ships the skill only, not the eval-loop working material alongside it
@@ -29,7 +73,7 @@ rm -rf "$stage/plugin/verdict/skills/verdict-workspace"
 
 # 2) standalone .skill — just the skill directory.
 mkdir -p "$stage/skill"
-cp -r skills/verdict "$stage/skill/verdict"
+cp -r "$skill_src" "$stage/skill/verdict"
 ( cd "$stage/skill" && zip -r -q "$ROOT/dist/verdict.skill" verdict -x '*/.DS_Store' )
 
 # 3) standalone tools package — install.sh + harness-templates/ + skill/ (SKILL.md + references/,
@@ -42,8 +86,9 @@ mkdir -p "$stage/tools/verdict-tools/skill/references"
 cp scripts/install.sh "$stage/tools/verdict-tools/install.sh"
 chmod +x "$stage/tools/verdict-tools/install.sh"
 cp -r scripts/harness-templates "$stage/tools/verdict-tools/harness-templates"
-cp skills/verdict/SKILL.md "$stage/tools/verdict-tools/skill/SKILL.md"
-cp -r skills/verdict/references/. "$stage/tools/verdict-tools/skill/references/"
+cp "$skill_src/SKILL.md" "$stage/tools/verdict-tools/skill/SKILL.md"
+cp "$skill_src/MANIFEST" "$stage/tools/verdict-tools/skill/MANIFEST"
+cp -r "$skill_src/references/." "$stage/tools/verdict-tools/skill/references/"
 ( cd "$stage/tools" && zip -r -q "$ROOT/dist/verdict-tools.zip" verdict-tools -x '*/.DS_Store' )
 
 echo "built:"
