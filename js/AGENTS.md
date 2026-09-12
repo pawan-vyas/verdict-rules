@@ -64,6 +64,22 @@ point at the global build.
 maps are off because `src/` is not published — esbuild's JS maps embed
 `sourcesContent` and are self-contained, which those would not be.
 
+`src/` not shipping matters for more than declaration maps: a Python skill
+eval was seen opening the installed package's own source to double-check a
+signature already fully documented in `agent-notes.md` — worth watching for
+whether an agent does the same here once this language has its own evals
+(full note on `csharp/AGENTS.md`). What such an agent would actually find is
+worth being precise about, since "the source ships too" is not quite true
+for this package: `files` in `package.json` excludes `src/` outright, so the
+original, per-file TypeScript with its own comments never reaches a
+consumer's `node_modules`. What *does* ship is `dist/index.js`/`index.cjs` —
+bundled by esbuild, not minified (only the two CDN/IIFE builds are) — plus
+the full `.d.ts` declarations. An agent checking "the real source" here
+would find a bundled, single-file artifact rather than this repository's own
+tree, and the `.d.ts` file alone is arguably a more targeted way to confirm
+an exact signature than either. Sits between Python/Dart (full original
+source, freely readable) and C# (no local source at all) on that spectrum.
+
 ## Errors are typed, not string-matched
 
 JavaScript has no built-in lookup-error type, so the package exports
