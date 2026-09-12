@@ -17,6 +17,9 @@ its guarantees, with the tests that prove them, and nothing else yet.
 
 - `IRule`, `FunctionRule`, `AndRule`, `OrRule`, `RulesEngine`, `RuleResult`,
   `RunResult`.
+- `RulePredicate`, a named delegate for `FunctionRule`'s predicate shape, so a
+  field, a stored variable, or a helper wrapping a predicate never has to
+  spell out the underlying `Func<...>` signature in full.
 - Sequential, never concurrent evaluation, so short-circuiting is a real
   contract rather than a best-effort optimisation.
 - Vacuous-truth polarity decided per composite: `AndRule([])` passes,
