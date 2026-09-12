@@ -10,7 +10,7 @@ namespace VerdictRules;
 /// </remarks>
 public sealed class FunctionRule : IRule
 {
-    private readonly Func<IReadOnlyDictionary<string, object?>, Task<RuleResult>> _predicate;
+    private readonly RulePredicate _predicate;
 
     /// <inheritdoc />
     public string Name { get; }
@@ -21,7 +21,7 @@ public sealed class FunctionRule : IRule
     /// <summary>Creates a rule from a predicate.</summary>
     public FunctionRule(
         string name,
-        Func<IReadOnlyDictionary<string, object?>, Task<RuleResult>> predicate,
+        RulePredicate predicate,
         string? group = null)
     {
         Name = name;

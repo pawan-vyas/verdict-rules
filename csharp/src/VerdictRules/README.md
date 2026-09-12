@@ -96,6 +96,16 @@ static Task<RuleResult> HasQuorum(IReadOnlyDictionary<string, object?> ctx) =>
 var rule = new FunctionRule("quorum", HasQuorum);
 ```
 
+`FunctionRule`'s predicate parameter is `RulePredicate`, a named delegate for
+`Func<IReadOnlyDictionary<string, object?>, Task<RuleResult>>` — spelled out
+once so a field, a stored variable, or a helper that wraps a predicate never
+has to repeat that signature. A lambda or method group converts to it exactly
+as shown above; nothing above changes. The one case worth knowing: an
+already-`Func<...>`-typed value does not implicitly convert to `RulePredicate`
+even with an identical signature, because C# delegate types are nominal once a
+value has one — wrap it explicitly (`new RulePredicate(existing)`) if that
+case comes up.
+
 What C# lacks is structural typing for a *multi-member* interface. An object
 that happens to carry `Name`, `Group` and `EvaluateAsync` is not thereby an
 `IRule` — a rule shape owning its own name and group must declare `: IRule`.
