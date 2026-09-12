@@ -36,8 +36,8 @@ fails when a doc is wrong, so this is the part that has to be deliberate.
 - [ ] `docs/maintenance.md`, language quickstarts, samples, `README.md`.
 - [ ] `skills/verdict/references/` updated, with `.claude-plugin/plugin.json`
       bumped in the same commit (CI enforces this).
-- [ ] `CHANGELOG.md` entry, written with the version bump rather than
-      backfilled.
+- [ ] A changelog entry in *that package's own* `CHANGELOG.md`, written
+      with the version bump rather than backfilled.
 
 **Verified, not assumed**
 

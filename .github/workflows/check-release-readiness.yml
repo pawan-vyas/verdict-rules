@@ -27,44 +27,8 @@ jobs:
       - name: Workflow shell blocks parse
         run: python3 scripts/check_workflow_shell.py
 
-      - name: Every manifest version has a matching changelog section
-        run: |
-          set -euo pipefail
-          failed=0
-
-          # A table, so adding a language is a row rather than another branch.
-          # Format: <label>|<tag prefix>|<command reading that manifest's version>
-          manifests=(
-            "Python|python-v|grep -m1 '^version = ' python/pyproject.toml | sed -E 's/version = \"(.*)\"/\1/'"
-            "Skill|skill-v|jq -er '.version' .claude-plugin/plugin.json"
-          )
-
-          for entry in "${manifests[@]}"; do
-            label="${entry%%|*}"; rest="${entry#*|}"
-            prefix="${rest%%|*}"; cmd="${rest#*|}"
-
-            version="$(eval "$cmd")"
-            if [ -z "$version" ]; then
-              echo "::error::Could not read a version for $label."
-              failed=1; continue
-            fi
-            tag="${prefix}${version}"
-
-            notes="$(awk -v hdr="## ${tag}" '
-              index($0, hdr) == 1 { found = 1; next }
-              /^## / { if (found) exit }
-              found { print }
-            ' CHANGELOG.md)"
-
-            if [ -z "$(printf '%s' "$notes" | tr -d '[:space:]')" ]; then
-              echo "::error file=CHANGELOG.md::$label is at $version but CHANGELOG.md has no '## ${tag}' section. Merging would publish and then fail the release — on PyPI and npm that is a version number spent, not a mistake you correct."
-              failed=1
-            else
-              echo "✓ $label $version -> '## ${tag}' found ($(printf '%s' "$notes" | wc -c | tr -d ' ') bytes of notes)"
-            fi
-          done
-
-          [ "$failed" -eq 0 ] || exit 1
+      - name: Every package's changelog matches its manifest, and is ordered
+        run: python3 scripts/check_changelogs.py
 
       - name: The skill artifacts build, and carry what get.sh needs
         run: |

@@ -6,8 +6,9 @@
 > repo-wide `vX.Y.Z` tag and there should never be one.
 
 Tags are `python-vX.Y.Z` today; `js-vX.Y.Z`/`csharp-vX.Y.Z` once those
-SDKs exist. `CHANGELOG.md` groups entries by that language-scoped tag
-for the same reason.
+SDKs exist. Each package keeps its own `CHANGELOG.md` beside its own
+manifest for the same reason — one writer per track, so two releases can
+never contend for one file.
 
 ## Why, so it doesn't get "simplified" later
 

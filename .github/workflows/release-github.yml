@@ -19,6 +19,14 @@ on:
         description: 'Release title, e.g. "Python v0.1.2"'
         required: true
         type: string
+      version:
+        description: 'The version being released, e.g. 0.1.2 — used to find its changelog section.'
+        required: true
+        type: string
+      changelog-path:
+        description: 'Path to this package own changelog, e.g. python/CHANGELOG.md'
+        required: true
+        type: string
       artifact-name:
         description: 'Name of an uploaded artifact to attach alongside the skill zips. Empty to attach only the skill zips.'
         required: false
@@ -43,30 +51,25 @@ jobs:
             exit 1
           fi
 
-      - name: Extract release notes from CHANGELOG.md
+      # Each package keeps its own changelog beside its own manifest, in its
+      # own ecosystem's format — pub.dev parses `## 1.2.3`, PyPI and npm
+      # follow Keep a Changelog, NuGet uses metadata rather than a file. The
+      # extractor matches a heading containing the version rather than one
+      # equal to a fixed shape, so no language needs a variant of this step.
+      - name: Extract release notes
         run: |
           set -euo pipefail
-          notes="$(awk -v hdr="## ${{ inputs.tag }}" '
-            index($0, hdr) == 1 { found = 1; next }
-            /^## / { if (found) exit }
-            found { print }
-          ' CHANGELOG.md)"
+          python3 scripts/changelog_section.py \
+            "${{ inputs.changelog-path }}" "${{ inputs.version }}" > notes.md
 
-          # A missing section means the changelog entry was not written
-          # alongside the version bump, which docs/maintenance.md requires.
-          # Fail rather than publish a release with no notes.
-          if [ -z "$(printf '%s' "$notes" | tr -d '[:space:]')" ]; then
-            echo "::error file=CHANGELOG.md::No '## ${{ inputs.tag }}' section found. Add the changelog entry in the same commit as the version bump."
-            exit 1
-          fi
-
-          # Written to a file, never to a step output. A step output is
-          # interpolated into a later step's shell, where the changelog's
+          # Written to a file, never a step output. A step output is
+          # interpolated into a later step's shell, where a changelog's
           # backticks become command substitution and every code span is
           # silently eaten. See .agents/incidents/001.
           {
-            printf '%s\n' "$notes"
-            echo "**Full changelog**: https://github.com/${GITHUB_REPOSITORY}/blob/${{ inputs.tag }}/CHANGELOG.md"
+            cat notes.md
+            echo
+            echo "**Full changelog**: https://github.com/${GITHUB_REPOSITORY}/blob/${{ inputs.tag }}/${{ inputs.changelog-path }}"
           } > release-notes.md
 
       - name: Build skill-distribution artifacts

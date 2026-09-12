@@ -42,8 +42,8 @@ different altitude, so a change that reaches one usually reaches all.
 8. **`skills/verdict/references/`** — an agent acting on a stale skill
    writes wrong code confidently. Bump `.claude-plugin/plugin.json` in
    the same commit or CI fails.
-9. **`CHANGELOG.md`** — the entry is written with the version bump,
-   never backfilled.
+9. **That package's own `CHANGELOG.md`**, beside its manifest — the entry
+   is written with the version bump, never backfilled.
 10. **`README.md`** — usually untouched, but check: it makes claims too.
 
 ## Checks worth running, since none of this is automatic

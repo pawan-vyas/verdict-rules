@@ -53,26 +53,12 @@ jobs:
           echo "tag=${tag}" >> "$GITHUB_OUTPUT"
 
       # Validated here, before anything is published, rather than where the
-      # notes are actually used. The release tail runs after the registry
-      # upload, so a missing section discovered there would mean a live version
-      # with no tag and no release — and neither PyPI nor npm lets you take one
-      # back. check-release-readiness.yml catches this on the pull request; this
-      # is the backstop for anything that reached main another way.
+      # notes are used. The release tail runs after the registry upload, so a
+      # missing section discovered there would mean a live version with no tag
+      # and no release — and neither PyPI nor npm lets you take one back.
       - name: The changelog section exists before anything is published
         if: steps.check.outputs.should-release == 'true'
-        run: |
-          set -euo pipefail
-          tag="${{ steps.check.outputs.tag }}"
-          notes="$(awk -v hdr="## ${tag}" '
-            index($0, hdr) == 1 { found = 1; next }
-            /^## / { if (found) exit }
-            found { print }
-          ' CHANGELOG.md)"
-          if [ -z "$(printf '%s' "$notes" | tr -d '[:space:]')" ]; then
-            echo "::error file=CHANGELOG.md::No '## ${tag}' section. Refusing to publish a version whose release would then fail."
-            exit 1
-          fi
-          echo "Changelog section for ${tag} present."
+        run: python3 scripts/changelog_section.py skills/verdict/CHANGELOG.md "${{ steps.check.outputs.version }}" > /dev/null
 
   verify:
     name: The skill builds into all three artifacts
@@ -102,4 +88,6 @@ jobs:
     uses: ./.github/workflows/release-github.yml
     with:
       tag: ${{ needs.detect.outputs.tag }}
+      version: ${{ needs.detect.outputs.version }}
+      changelog-path: skills/verdict/CHANGELOG.md
       title: Skill v${{ needs.detect.outputs.version }}
