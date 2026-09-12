@@ -65,10 +65,13 @@ predicate.
 ## Use it from a browser, with no build step
 
 Published as ESM, CommonJS, and a plain global bundle, so a vanilla page works
-without tooling:
+without tooling. **Always pinned, always with an integrity hash:**
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/verdict-rules/dist/verdict-rules.global.min.js"></script>
+<script
+  src="https://cdn.jsdelivr.net/npm/verdict-rules@0.0.1/dist/verdict-rules.global.min.js"
+  integrity="sha384-x/fYRkMxsgqXSrvhdixpsWsPx6LusOb0BpsMQ4sSljVqMQnB/GrTaLxiRsTyWsIq"
+  crossorigin="anonymous"></script>
 <script>
   const rule = new VerdictRules.FunctionRule("ok", async () => ({
     ruleName: "ok",
@@ -78,17 +81,32 @@ without tooling:
 </script>
 ```
 
-Pin the version in production — an unpinned CDN URL silently upgrades:
+Neither half of that is optional, and both failures are silent:
 
-```html
-<script src="https://cdn.jsdelivr.net/npm/verdict-rules@0.0.1/dist/verdict-rules.global.min.js"></script>
+- **Unpinned** (`/verdict-rules/` with no `@version`) means the next release
+  reaches every page using it, with nobody editing anything.
+- **No `integrity`** means the browser executes whatever the CDN returns, with
+  full access to the page — cookies, DOM, network. A `<script src>` from a CDN
+  is the one distribution path where a third party sits inside your runtime
+  trust boundary. The hash makes a compromised CDN able to break the page but
+  never to inject into it.
+
+The exact tag for any version is generated, not written by hand:
+
+```sh
+npm run sri            # ready-to-paste tags for every CDN
+npm run sri:verify     # assert each CDN serves exactly the published bytes
 ```
 
-Or as a module, with no bundler:
+It is also checked: `npm test` fails if any `<script>` tag in this
+documentation is unpinned or missing its hash.
+
+Or as a module, with no bundler — no SRI, because these transform on the fly
+and so have no stable bytes to hash:
 
 ```html
 <script type="module">
-  import { AndRule } from "https://cdn.jsdelivr.net/npm/verdict-rules/+esm";
+  import { AndRule } from "https://cdn.jsdelivr.net/npm/verdict-rules@0.0.1/+esm";
 </script>
 ```
 
@@ -97,7 +115,8 @@ runs in browsers that never learned private class fields.
 
 Nothing is published to a CDN separately: unpkg, jsDelivr and esm.sh all mirror
 npm automatically, so every one of them serves this package the moment it is on
-npm.
+npm. The same integrity hash is valid on all of them, because they all serve the
+tarball's bytes unchanged.
 
 ## Unknown lookups throw a typed error
 
