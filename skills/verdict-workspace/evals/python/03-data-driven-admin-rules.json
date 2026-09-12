@@ -1,0 +1,15 @@
+{
+  "eval_name": "data-driven-admin-rules",
+  "prompt": "We have a growing list of business rules that admins configure through a settings screen (things like category + group membership requirements for feature access). Right now it's a big if/elif function in Python and every time an admin wants a new rule combination, an engineer has to ship a code change. I want to make this configurable from a database table instead. Also, can you write tests to make sure this holds up as the rules grow much more varied? We've been burned by regressions before.",
+  "expected_output": "A solution building Rule objects from stored configuration data at runtime (not hardcoded), with tests that go beyond a few hand-picked fixtures if the response references verdict's own testing guidance (short-circuit proofs, vacuous-truth cases, or oracle/differential testing).",
+  "files": [
+    "files/pyproject.toml"
+  ],
+  "expectations": [
+    "Rules are built from external/stored configuration data at runtime, not hardcoded as Python literals",
+    "Dispatch on rule/condition type uses a table or polymorphism, not an if/elif ladder keyed on one discriminant",
+    "Adding a new rule *combination* (not a new type) is described as a pure data change requiring no code edit",
+    "The empty/no-rules-configured case is handled with an explicit, stated decision (not left as an accidental default)",
+    "Tests validate correctness across a wide or systematically-varied space of rule combinations, not just a handful of hand-picked fixtures (e.g. property-based testing, an oracle/differential-testing approach, or an equivalently broad technique)"
+  ]
+}

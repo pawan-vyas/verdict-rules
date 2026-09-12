@@ -1,0 +1,15 @@
+{
+  "eval_name": "shipping-fee-waiver",
+  "prompt": "We want to waive shipping fees for an order if ANY of these are true: the order total is above a threshold, the customer has an active premium membership, or they used a valid promo code. Checking the promo code requires calling an external validation service which is slow, so we want to avoid that call whenever possible. How should I structure this?",
+  "expected_output": "A solution using OrRule (or equivalent short-circuiting logic) with the expensive promo-code check ordered last, and an explanation of why that ordering matters.",
+  "files": [
+    "files/pyproject.toml"
+  ],
+  "expectations": [
+    "The three checks are combined with OR-like (any-one-passes) semantics",
+    "The expensive/slow promo-code check is explicitly ordered last, after the two cheap checks",
+    "The solution states or proves that the expensive check is skipped once an earlier check already passes",
+    "A test or explicit verification proves the skip actually happens (e.g. a call-counter), not just an assumption that ordering alone guarantees it",
+    "The explanation names *why* evaluation order matters (short-circuiting), not just that it happens to work"
+  ]
+}

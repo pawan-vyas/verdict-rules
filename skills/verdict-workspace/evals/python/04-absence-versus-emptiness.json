@@ -1,0 +1,14 @@
+{
+  "eval_name": "absence-versus-emptiness",
+  "prompt": "Our admin screen lets support staff look up a single named eligibility check and run it against a customer, so they can answer 'why did this customer not qualify'. The check name comes straight from a text box, so people mistype it. Right now a typo throws and the screen 500s, which is a terrible experience for support. I want a typo to just show the customer as not eligible so the page keeps working. Can you make that change? Also, some of our checks are configured with no conditions at all yet because the team hasn't filled them in — I want to be sure we're handling that sensibly too.",
+  "expected_output": "A solution that distinguishes an unknown check name (absence) from a check configured with no conditions (emptiness) rather than collapsing both into one outcome, and that pushes back on silently reporting a mistyped name as 'not eligible' — because that hides a typo as a policy result. Uses the try-prefixed lookup so the caller decides what absence means, rather than catching the strict form's error.",
+  "files": ["files/pyproject.toml"],
+  "expectations": [
+    "An unknown check name and a check with no conditions are handled as two different situations, not folded into the same result",
+    "The solution uses the try-prefixed lookup (try_run_named / try_run_group) for the absence case rather than wrapping the strict form in try/except",
+    "The response states what an empty rule set evaluates to and that the polarity is deliberate, rather than leaving it as an accidental default",
+    "The response pushes back on, or explicitly flags the risk of, reporting a mistyped name as a plain 'not eligible' — a typo surfacing as a policy outcome is identified as hiding a bug, not just as a UX improvement",
+    "The absent case is distinguished in what the UI or caller finally sees (e.g. an 'unknown check' state), not silently coerced to false",
+    "Tests cover all three outcomes of the lookup — present-and-passing, present-and-failing, and absent — not just the absent one"
+  ]
+}

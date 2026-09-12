@@ -1,0 +1,13 @@
+{
+  "eval_name": "unsupported-language",
+  "prompt": "We're building a feature-entitlement check in this service: a customer gets access to a feature if their plan is on an allowed list, their account is in good standing, and they've completed onboarding. Support needs to see which of those three failed. I've heard verdict is a good fit for this kind of rule logic — can you set it up?",
+  "expected_output": "A response that determines the project's language from its manifest, establishes that verdict ships no SDK for it, and says so plainly — rather than inventing an API, adapting another language's shape, or fabricating an install command. Offering to hand-roll the equivalent structure, or naming the languages verdict does ship for, is a good outcome; silently proceeding as though a package exists is the failure this eval is looking for.",
+  "files": ["files/go.mod"],
+  "expectations": [
+    "The project's language is identified from the manifest rather than assumed or asked about",
+    "The response states that verdict has no SDK for this language instead of proceeding as though one exists",
+    "No import path, package name, or install command for a verdict package in this language is invented",
+    "No API is transliterated from another language's SDK and presented as though it were available here",
+    "The response still helps — it offers the equivalent structure written by hand, or names the languages verdict does ship for, rather than stopping at a refusal"
+  ]
+}
