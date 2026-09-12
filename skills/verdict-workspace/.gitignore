@@ -1,6 +1,11 @@
 # Point-in-time working material from a skill-creator eval loop: subagent
 # solution outputs, timing, per-run grading, aggregate benchmarks, and viewer
-# feedback. Regenerable by re-running the eval loop against evals/evals.json,
-# which is the one file in this workspace that's actually committed.
+# feedback. Regenerable by re-running the loop against the assembled eval set.
 iteration-*/
 benchmarks/
+
+# Assembled by scripts/build_evals.py from evals/<target>/*.json, which are the
+# committed truth. Generated rather than written by hand so that adding a
+# language is a new directory rather than an edit to one shared file every
+# language branch would have to touch.
+evals/evals.json

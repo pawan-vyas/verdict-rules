@@ -284,11 +284,40 @@ quickstart and samples, the shared fixture if the change is behavioural,
 `skills/verdict/references/` with a `plugin.json` bump, that package's own
 `CHANGELOG.md`, and the `README.md`.
 
+A behavioural change usually also means the skill's evals no longer
+measure the current skill. If the change introduced a way to be *subtly*
+wrong — a new lookup that fails differently, a polarity, an ordering
+guarantee — it earns an eval under
+[`skills/verdict-workspace/evals/`](skills/verdict-workspace/evals/README.md),
+because an expectation is the only part of this repo that checks whether an
+agent reading the skill actually arrives at the right design. A green test
+suite says the library is right; it says nothing about the document that
+tells someone how to use it.
+
 Extend diagrams rather than only correcting their prose — a diagram
 describing the old shape is more misleading than stale text, because it
 reads as authoritative. Full reasoning and the worked example of this
 going wrong:
 [`.agents/memory/a-behaviour-change-is-a-documentation-change.md`](.agents/memory/a-behaviour-change-is-a-documentation-change.md).
+
+## Skill evals are per-target, and adding one is additive
+
+The eval harness reads a single assembled file, which is exactly the shape
+that would force every language branch to edit one shared document. So the
+committed truth is one JSON file per eval inside a directory named for what it
+targets — a language, or `cross-language/` for behaviour belonging to no single
+SDK — and `scripts/build_evals.py` assembles them. Ids are assigned by the
+assembler rather than written by hand, which is the part that makes a new
+target conflict-free.
+
+Adding a language's evals is therefore a **new directory**, and adding an eval
+is a **new file**. If you find yourself editing another target's eval to make
+room for yours, stop — that is the arrangement this exists to prevent.
+
+Every eval hands the agent a minimal project manifest, because the skill's
+first instruction is to establish the language by reading one. Without it the
+eval measures a guess rather than the instruction. See
+[`skills/verdict-workspace/evals/README.md`](skills/verdict-workspace/evals/README.md).
 
 ## Before treating a doc change as done
 
