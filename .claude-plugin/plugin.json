@@ -1,7 +1,7 @@
 {
   "name": "verdict",
   "displayName": "Verdict",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Build rule-based decision, eligibility, or policy-evaluation logic using the verdict rule-evaluation engine (Rule/FunctionRule/AndRule/OrRule/RulesEngine) instead of a hand-rolled conditional chain \u2014 an if/else-if ladder, a switch or match statement, or a chain of ternaries. Covers eligibility checks, discount and pricing rules, access conditions, content-moderation routing, qualification requirements, and testing rule-based logic (short-circuit proofs, vacuous-truth cases, oracle/differential testing). Polyglot design \u2014 only Python ships today.",
   "author": {
     "name": "Pawan Vyas"

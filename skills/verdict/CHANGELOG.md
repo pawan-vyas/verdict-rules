@@ -6,6 +6,16 @@ Release history for the verdict AI-agent skill. Format follows
 This versions **the guidance**, not any language's API, so it moves on its own
 cadence — see `docs/maintenance.md`. Tagged `skill-vX.Y.Z`.
 
+## [0.3.2] - 2026-09-13
+
+No guidance changed.
+
+- **`MANIFEST`'s fetch-tier source paths and the curl recipe in
+  `references/python/agent-notes.md`** now point at
+  `python/packages/verdict-rules/docs/...`, matching the Python
+  distribution-root restructure. Both previously pointed at
+  `python/docs/...`.
+
 ## [0.3.1] - 2026-09-13
 
 - **States plainly, for the first time, that a predicate's own exception
