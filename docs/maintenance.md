@@ -96,6 +96,50 @@ publish at all, NuGet exchanges a token for a one-hour key, and pub.dev
 drives its own reusable workflow from a tag pattern. There is no shared
 step there to factor out — only the tail after it.
 
+### Supply-chain integrity, per registry
+
+This package has **zero runtime dependencies**, so it cannot transmit a
+compromised dependency to anyone. That removes the most common supply-chain
+risk and none of the others: a published artifact could still be replaced,
+or published by something that is not our CI. Provenance is what makes that
+checkable by a consumer rather than merely asserted by us.
+
+What each registry actually provides, verified rather than assumed:
+
+| Registry | Mechanism | Automatic? | Verified |
+| :-- | :-- | :-- | :-- |
+| **PyPI** | PEP 740 attestations | ✅ with Trusted Publishing | **Yes — on our own `0.2.0`** |
+| **npm** | SLSA provenance attestations | ✅ with Trusted Publishing | Field present on packages that have it |
+| **NuGet** | Repository signature (`.signature.p7s`) | ✅ applied by nuget.org | Present in a downloaded `.nupkg` |
+| **pub.dev** | `archive_sha256` per version | ✅ published with the package | Exposed by the package API |
+
+**PyPI is already done and provable.** Our `0.2.0` release carries an
+attestation naming the publisher (`GitHub`), the repository, and the
+workflow file — fetchable at
+`pypi.org/integrity/verdict-rules/<version>/<file>/provenance`. Nothing was
+configured for it; it falls out of publishing over OIDC rather than with a
+token, which is a good reason to keep doing that.
+
+**npm needs nothing extra either**, but it needs the *right* setup: the
+`--provenance` flag is obsolete, and attestations are published
+automatically when the release runs under Trusted Publishing with
+`id-token: write`. A release workflow that used a long-lived token instead
+would silently produce no provenance.
+
+**NuGet signs every package itself.** A repository signature is applied by
+nuget.org on upload, so a consumer can verify the package came from
+nuget.org unmodified. *Author* signing is a separate thing requiring a
+code-signing certificate, and buys little for a package already
+repository-signed and published from CI — not worth pursuing.
+
+**pub.dev is the weakest of the four, and the gap is worth naming.** It
+publishes a `sha256` per version, which detects a modified archive but says
+nothing about *who produced it*. There is no attestation or signing
+mechanism to opt into. Automated publishing over OIDC is still worth using
+— it means no long-lived credential exists to steal — but a Dart consumer
+has no equivalent of `pypi attestation` or `npm audit signatures` to run.
+That is a property of the ecosystem, not something to design around.
+
 ### Ownership and namespaces across registries
 
 This package is published by an **individual** on every registry, and
