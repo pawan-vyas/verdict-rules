@@ -196,5 +196,5 @@ inputs, not to be part of it.
 - [`maintenance.md`](maintenance.md) — how to extend it.
 - [`testing.md`](testing.md) — how it's tested, and why it also serves
   as a regression net for `verdict` itself.
-- [`../../../docs/samples/7_graduation-requirement-verdict.md`](../../../docs/samples/7_graduation-requirement-verdict.md) —
+- [`../../../docs/samples/7_graduation-requirement-verdict.md`](../../../packages/verdict-rules/docs/samples/7_graduation-requirement-verdict.md) —
   the original framing question this project answers.

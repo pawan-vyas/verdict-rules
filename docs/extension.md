@@ -236,7 +236,7 @@ combined_rule = AndRule("combined", configured_rules)
 An empty `load_rule_configs()` produces an empty `AndRule`, which
 vacuously passes — "nothing configured" and "nothing to enforce" fall
 out of the same rule, no special-casing needed at the call site. See
-[`python/docs/samples/6_data-driven-rule-sets.md`](../python/docs/samples/6_data-driven-rule-sets.md)
+[`python/docs/samples/6_data-driven-rule-sets.md`](../python/packages/verdict-rules/docs/samples/6_data-driven-rule-sets.md)
 for a fuller worked version of this, worked through for both
 rate-limit windows and access-control conditions.
 
@@ -555,5 +555,5 @@ for all of them.
 - [`maintenance.md`](maintenance.md) — changing this package itself.
 - [`testing.md`](testing.md) — testing verdict itself, if a recipe here
   turns out to need a change on that side after all.
-- [`python/docs/samples/`](../python/docs/samples/1_README.md) — full
+- [`python/docs/samples/`](../python/packages/verdict-rules/docs/samples/1_README.md) — full
   worked examples using these recipes end-to-end.

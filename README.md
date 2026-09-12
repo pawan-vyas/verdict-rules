@@ -125,14 +125,14 @@ runnable code lives under that language's own directory.
 
 | Doc | For |
 |---|---|
-| [`python/README.md`](python/README.md) | Python quickstart — `pip install verdict-rules`, first rule |
-| [`python/docs/quickstart.md`](python/docs/quickstart.md) | Core concepts and a full worked example |
+| [`python/README.md`](python/packages/verdict-rules/README.md) | Python quickstart — `pip install verdict-rules`, first rule |
+| [`python/docs/quickstart.md`](python/packages/verdict-rules/docs/quickstart.md) | Core concepts and a full worked example |
 | [`docs/architecture.md`](docs/architecture.md) | Why it's shaped this way, in depth — type structure, the execution model |
 | [`docs/extension.md`](docs/extension.md) | Building on top of it from your own code, with no changes here |
 | [`docs/maintenance.md`](docs/maintenance.md) | Changing this package itself |
 | [`docs/testing.md`](docs/testing.md) | How the test suite is organized, and what a change needs to prove |
 | [`docs/future_plan.md`](docs/future_plan.md) | Exploratory feature candidates, and the test used to evaluate one |
-| [`python/docs/samples/`](python/docs/samples/1_README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
+| [`python/docs/samples/`](python/packages/verdict-rules/docs/samples/1_README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
 | [`python/examples/`](python/examples/README.md) | Full, tested mini-projects behind the more comprehensive samples — real code, real tests, real docs |
 | [`skills/verdict/SKILL.md`](skills/verdict/SKILL.md) | The AI-agent skill for building with Verdict |
 
@@ -150,6 +150,6 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) for how to set up a change and
 what it needs to prove before it's mergeable, and
 [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) for community standards.
 Licensed under [MIT](LICENSE). Each package keeps its own release history
-beside its own manifest — [`python/CHANGELOG.md`](python/CHANGELOG.md) and
+beside its own manifest — [`python/CHANGELOG.md`](python/packages/verdict-rules/CHANGELOG.md) and
 [`skills/verdict/CHANGELOG.md`](skills/verdict/CHANGELOG.md) today — because
 each releases independently under its own tag.

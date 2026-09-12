@@ -1,6 +1,6 @@
 # Guards the one number Claude Code's marketplace uses to decide whether a user's vendored copy of
 # skills/verdict/ is stale: .claude-plugin/plugin.json's `version`. Nothing else reads it — the
-# library's own version lives in python/pyproject.toml and is deliberately independent, and
+# library's own version lives in python/packages/verdict-rules/pyproject.toml and is deliberately independent, and
 # scripts/install.sh / scripts/get.sh vendor the skill for every other harness without consulting a
 # version at all. So a skill edit that ships without a bump is silent: marketplace users simply
 # never see the update.
@@ -85,7 +85,7 @@ jobs:
           fi
 
           if [ "$current" = "$previous" ]; then
-            echo "::error file=$MANIFEST::Shipped skill content changed, but $MANIFEST's version is still $previous. Claude Code uses that version as its only signal that a vendored copy of skills/verdict/ is out of date, so shipping without a bump means marketplace users never receive this change. Bump it (independently of python/pyproject.toml — the two are unrelated)."
+            echo "::error file=$MANIFEST::Shipped skill content changed, but $MANIFEST's version is still $previous. Claude Code uses that version as its only signal that a vendored copy of skills/verdict/ is out of date, so shipping without a bump means marketplace users never receive this change. Bump it (independently of python/packages/verdict-rules/pyproject.toml — the two are unrelated)."
             exit 1
           fi
 

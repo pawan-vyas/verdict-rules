@@ -150,5 +150,5 @@ async def route_submission(context: dict) -> str:
 - [`loyalty-tier-promotion.md`](4_loyalty-tier-promotion.md) — the
   `run_all()` counterpart, for a single engine's every rule rather than
   a named subset.
-- [`../architecture.md`](../../../docs/architecture.md#three-ways-to-run-rules-and-when-each-is-the-right-one) —
+- [`../architecture.md`](../../../../../docs/architecture.md#three-ways-to-run-rules-and-when-each-is-the-right-one) —
   the full comparison of all three `RulesEngine` run modes.

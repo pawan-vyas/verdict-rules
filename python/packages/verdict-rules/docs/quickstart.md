@@ -4,8 +4,8 @@
 > The five names you need, and one complete example using all of them.
 > See [`../README.md`](../README.md) for this package's own
 > pip-install/first-rule quickstart, the top-level
-> [`../../README.md`](../../README.md) for what Verdict is in narrative
-> form, and [`../../docs/architecture.md`](../../docs/architecture.md)
+> [`../../README.md`](../../../../README.md) for what Verdict is in narrative
+> form, and [`../../docs/architecture.md`](../../../../docs/architecture.md)
 > for the full design reasoning — this doc is just "how do I start."
 
 ## Core concepts
@@ -26,7 +26,7 @@
   `run_group` (every rule sharing a group label). An unknown name or
   label raises; `try_run_named`/`try_run_group` return `None` instead,
   for callers whose own domain has an answer for absence — see
-  [`extension.md`](../../docs/extension.md#recipe-6--decide-for-yourself-what-a-missing-rule-set-means).
+  [`extension.md`](../../../../docs/extension.md#recipe-6--decide-for-yourself-what-a-missing-rule-set-means).
 - **`RuleResult`** / **`RunResult`** — plain, immutable outcome types.
   `RuleResult.data` is a fully opaque slot for a caller's own domain
   object to ride through evaluation — Verdict never reads or depends on
@@ -112,18 +112,18 @@ sequenceDiagram
 Because rules are just objects, they're straightforward to build up at
 runtime from whatever configuration a caller already has, rather than
 hand-writing one `FunctionRule` per case — see
-[`extension.md`](../../docs/extension.md#recipe-4--build-rule-sets-from-stored-configuration-at-runtime)
+[`extension.md`](../../../../docs/extension.md#recipe-4--build-rule-sets-from-stored-configuration-at-runtime)
 for the recipe and
 [`samples/6_data-driven-rule-sets.md`](samples/6_data-driven-rule-sets.md)
 for a fuller worked version of the same pattern.
 
 ## Related docs
 
-- [`../../README.md`](../../README.md) — the narrative front door.
-- [`../../docs/architecture.md`](../../docs/architecture.md) — the full
+- [`../../README.md`](../../../../README.md) — the narrative front door.
+- [`../../docs/architecture.md`](../../../../docs/architecture.md) — the full
   design reasoning.
-- [`../../docs/extension.md`](../../docs/extension.md) — building on top
+- [`../../docs/extension.md`](../../../../docs/extension.md) — building on top
   of this package from your own code.
-- [`../../docs/testing.md`](../../docs/testing.md) — `uv sync && uv run
+- [`../../docs/testing.md`](../../../../docs/testing.md) — `uv sync && uv run
   pytest`, and what a test here actually needs to prove.
 - [`samples/`](samples/1_README.md) — more worked examples.

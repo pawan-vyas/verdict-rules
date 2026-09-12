@@ -11,7 +11,7 @@ model given this file as raw context.
 engine — the same `Rule`/`FunctionRule`/`AndRule`/`OrRule`/
 `RulesEngine`/`RuleResult`/`RunResult` design and execution-model
 guarantees, meant to exist in more than one language. **Only Python
-ships today** — see [`python/README.md`](python/README.md) and its own
+ships today** — see [`python/README.md`](python/packages/verdict-rules/README.md) and its own
 `python/AGENTS.md` for everything Python-specific. A second language
 lands as a new top-level directory alongside `python/`, with its own
 `AGENTS.md` for that language's own conventions — check which

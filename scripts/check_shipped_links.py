@@ -34,10 +34,10 @@ LINK = re.compile(
 SHIPPED = [
     (
         "Python",
-        ["python/README.md", "python/pyproject.toml"],
+        ["python/packages/verdict-rules/README.md", "python/packages/verdict-rules/pyproject.toml"],
         "python-v",
         lambda: re.search(
-            r'^version = "(.+?)"', Path("python/pyproject.toml").read_text(), re.M
+            r'^version = "(.+?)"', Path("python/packages/verdict-rules/pyproject.toml").read_text(), re.M
         ).group(1),
     ),
 ]
@@ -59,13 +59,27 @@ def main() -> int:
             original = text
 
             for match in LINK.finditer(original):
+                target = match.group("path")
+
+                # The path must exist in the tree about to be tagged, not only
+                # be pinned to the right tag. A link can carry the correct ref
+                # and still 404 because the file moved — which is exactly what
+                # happens when a package is restructured, and what a
+                # tag-only check would wave through.
+                if not Path(target).exists():
+                    problems.append(
+                        f"{name}: link points at '{target}', which does not exist. "
+                        f"The file moved, or the path is wrong."
+                    )
+                    continue
+
                 if match.group("ref") == expected:
                     continue
                 if fix:
                     continue  # handled by the substitution below
                 problems.append(
                     f"{name}: link pinned to '{match.group('ref')}', expected "
-                    f"'{expected}' — {match.group('path')}"
+                    f"'{expected}' — {target}"
                 )
 
             if fix:
