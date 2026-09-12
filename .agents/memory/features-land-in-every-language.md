@@ -21,6 +21,14 @@ for additions; this raises it deliberately.
 
 ## What it does *not* mean
 
+- **It does not reach language-idiomatic surface.** A `CancellationToken` in
+  C#, an `AbortSignal` in JS, a `Result<T, E>` in Rust — these express the same
+  engine the way each language expresses that kind of work. They are not
+  capabilities one SDK has and others lack. See
+  [`verdict-is-a-protocol-spec`](verdict-is-a-protocol-spec.md) for the
+  three-layer split, and the test: *would this change what the shared fixture
+  asserts?* If not, it is surface, and the language decides.
+
 - **Fixing a defect in the reference implementation is not running
   ahead.** Corrections are expected to propagate. Languages that have
   not shipped yet inherit them for free, because the shared fixture is

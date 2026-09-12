@@ -207,6 +207,10 @@ In practice:
   ahead."** Correcting behaviour is expected to propagate; languages
   that have not shipped yet inherit it for free, because the fixture is
   what they are built against.
+- **It does not reach idiomatic surface.** See the section above — a
+  `CancellationToken`, an `AbortSignal`, a `Result<T, E>` express the same
+  engine the way a language expresses that kind of work, and are not
+  capabilities one SDK has and the others lack.
 - **Versions stay independent.** Parity is a property proven by the
   fixture, not encoded in matching version numbers. A language's version
   describes its own history; `CHANGELOG.md` is where "this matches the
