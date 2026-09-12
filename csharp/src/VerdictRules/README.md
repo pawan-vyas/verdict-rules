@@ -73,6 +73,12 @@ Console.WriteLine(verdict.Detail); // 'score_ok' failed: 55 vs 60
   `null` means **absent, never failed** — a rule that exists and fails still
   returns a `RuleResult` with `Passed` false. These are the primitives; the
   throwing forms are assertions on top of them.
+
+  **The fallback only applies to absence.** A group that exists always reports
+  its real verdict, so `?? true` does not mean "sometimes true" — a failing group
+  is still a failure whatever default you choose. If you test code using this,
+  the case worth covering is a *present, failing* group rather than the absent
+  one everybody thinks of first.
 - **`RuleResult.Data` is opaque** — only what actually ran, never padded, never
   flattened.
 - **Zero runtime dependencies.**
