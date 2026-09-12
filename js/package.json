@@ -1,0 +1,19 @@
+{
+  "name": "@verdict-rules/workspace",
+  "private": true,
+  "description": "Workspace root for this repository's JavaScript/TypeScript distributions. Not published — see packages/ for what ships.",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "sri": "npm run sri --workspaces --if-present",
+    "sri:verify": "npm run sri:verify --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

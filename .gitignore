@@ -44,7 +44,7 @@ venv/
 # output into a commit the moment anyone runs `git add -A` with both checked
 # out. That has already happened once.
 js/node_modules/
-js/dist/
+js/packages/*/dist/
 js/*.tgz
 dart/.dart_tool/
 dart/.packages
