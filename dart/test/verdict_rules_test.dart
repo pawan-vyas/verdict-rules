@@ -204,14 +204,53 @@ void main() {
       expect(strict.results.length, lenient.results.length);
     });
 
-    test('the caller chooses the fallback', () async {
-      final engine = RulesEngine([counting('a', true, [], group: 'present')]);
-      final result = await engine.tryRunGroup('absent', {});
+    // The full matrix a caller faces: three states a lookup can be in, against
+    // the three things a caller can decide absence means. The interesting rows
+    // are the ones where the default must NOT fire — a fallback firing on a
+    // present-but-failing group turns a real rejection into a silent approval,
+    // which is the whole failure this API exists to let callers avoid.
+    //
+    //   group state       | ?? true | ?? false | strict
+    //   ------------------+---------+----------+---------------
+    //   present, passing  | true    | true     | passed = true
+    //   present, failing  | false   | false    | passed = false  <- must not fire
+    //   absent            | true    | false    | throws
+    for (final (group, defaultTrue, defaultFalse, strictThrows) in [
+      ('passing', true, true, false),
+      ('failing', false, false, false),
+      ('absent', true, false, true),
+    ]) {
+      test('fallback matrix: $group', () async {
+        final log = <String>[];
+        final engine = RulesEngine([
+          counting('p', true, log, group: 'passing'),
+          counting('f', false, log, group: 'failing'),
+        ]);
 
-      expect(result?.passed ?? true, isTrue); // absence means no constraint
-      expect(result?.passed ?? false, isFalse); // absence means misconfigured
-      expect([result].whereType<RunResult>(), isEmpty); // skip it
-      expect(() => engine.runGroup('absent', {}), throwsArgumentError);
+        final result = await engine.tryRunGroup(group, {});
+
+        expect(result?.passed ?? true, defaultTrue);
+        expect(result?.passed ?? false, defaultFalse);
+
+        if (strictThrows) {
+          expect(() => engine.runGroup(group, {}), throwsArgumentError);
+        } else {
+          final strict = await engine.runGroup(group, {});
+          expect(strict.passed, defaultTrue);
+          expect(strict.passed, defaultFalse);
+        }
+      });
+    }
+
+    test('skipping counts only what exists', () async {
+      final engine = RulesEngine([counting('f', false, [], group: 'failing')]);
+      final evaluated = [
+        await engine.tryRunGroup('failing', {}),
+        await engine.tryRunGroup('absent', {}),
+      ].whereType<RunResult>().toList();
+
+      expect(evaluated, hasLength(1), reason: 'absent contributes nothing');
+      expect(evaluated.single.passed, isFalse, reason: 'present reports honestly');
     });
   });
 
