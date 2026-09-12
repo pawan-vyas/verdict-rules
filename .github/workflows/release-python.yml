@@ -97,6 +97,18 @@ jobs:
           name: python-dist
           path: python/dist/
 
+  # This job must stay in THIS file. PyPI Trusted Publishing does not work
+  # with GitHub Actions reusable workflows at all — not a filename mismatch you
+  # could register around, a documented limitation with an open upstream issue.
+  # Moving the publish into release-github.yml would break authentication with
+  # an error that gives no hint why.
+  #
+  # It costs nothing: publishing is the one part of a release that is genuinely
+  # per-language. PyPI publishes over OIDC directly, npm cannot bootstrap a
+  # first publish at all, NuGet exchanges a token for a one-hour key, and
+  # pub.dev drives its own reusable workflow off a tag pattern. There is no
+  # shared step here to factor out — only the tail after it, which is what
+  # release-github.yml holds.
   publish-pypi:
     name: Publish to PyPI
     needs: [detect, build]
