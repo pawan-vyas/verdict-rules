@@ -6,6 +6,19 @@ Release history for the verdict AI-agent skill. Format follows
 This versions **the guidance**, not any language's API, so it moves on its own
 cadence — see `docs/maintenance.md`. Tagged `skill-vX.Y.Z`.
 
+## [0.3.1] - 2026-09-13
+
+- **States plainly, for the first time, that a predicate's own exception
+  is never caught** — unchanged behavior, newly documented. Added to
+  Step 2's list alongside sequential evaluation, vacuous-truth polarity,
+  emptiness-vs-absence, and result opacity — the same kind of fact that
+  produces silently-wrong code if assumed otherwise, since "engine" invites
+  the opposite assumption from what this package actually does.
+- **`extension.md` gains Recipe 7**, the wrapper that isolates one flaky
+  predicate's exception from the rest of a run without changing anything
+  about how the engine itself behaves — bundled automatically, no
+  MANIFEST change needed.
+
 ## [0.3.0] - 2026-09-12
 
 Re-architected so the skill carries the engine's own documentation rather

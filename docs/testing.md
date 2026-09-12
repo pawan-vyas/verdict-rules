@@ -181,6 +181,18 @@ matters:
   test specifically so a future change to that behavior (e.g. raising
   on a duplicate name instead) is a deliberate, visible decision, not
   an accidental regression nobody notices.
+- **A predicate's own exception is never caught, anywhere.** Easy to
+  break with good intentions — a well-meaning `try`/`except` added to
+  make the engine "more robust" would silently turn a real bug into a
+  wrong, quiet `RunResult` instead of a stack trace. Every entry point
+  has its own dedicated test:
+  `test_run_all_does_not_catch_a_predicate_s_exception` and
+  `test_run_group_does_not_catch_a_predicate_s_exception` in
+  `test_engine.py`, `test_and_rule_does_not_catch_a_sub_rule_s_exception`
+  and `test_or_rule_does_not_catch_a_sub_rule_s_exception` in
+  `test_rule.py`. Confirmed to actually bite: wrapping `run_all`'s loop
+  in a `try`/`except Exception: pass` makes the first of these fail with
+  "DID NOT RAISE," not a pass that happens to look right.
 
 ## Checklist for a new contribution
 

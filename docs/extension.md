@@ -456,6 +456,87 @@ If you are testing code that uses one of these, assert that too: the
 case worth covering is a *present, failing* group, not the absent one
 everybody thinks of first. See [`testing.md`](testing.md).
 
+## Recipe 7 — stop one flaky predicate from taking out the whole run
+
+State this one plainly, because it is the kind of fact a consumer has no
+way to arrive at except by being told: **nothing in this package catches
+an exception a predicate raises.** Not `AndRule`/`OrRule`, not
+`run_all`/`run_group`, not `run_named`. If a predicate's own code raises
+— an HTTP call to a promo-validation service timing out, a database
+lookup failing — that exception propagates straight out of whichever
+call you made, exactly as if you'd called the failing code yourself with
+nothing in between.
+
+This is worth a Recipe of its own, and not just a line in
+[`architecture.md`](architecture.md), because "rules *engine*" invites
+the opposite assumption. A consumer reaching for this package is not
+reading its source to find out what it does with a predicate's
+exception — verdict is something you install and call, not something
+you read line-by-line before trusting — so the natural guess is that an
+*engine* is the fault-tolerant layer, the thing that keeps a batch of
+twenty independent checks going even if one of them breaks. It isn't,
+deliberately, and the cost of that assumption being wrong is severe: one
+flaky external call takes out every other rule's diagnostics in the same
+`run_all`/`run_group`, not just its own.
+
+If that's not what you want, wrap the predicate:
+
+```python
+from verdict import FunctionRule, RuleResult
+
+def defensive(name: str, predicate) -> FunctionRule:
+    """Turn a predicate's own exception into a failing RuleResult,
+    instead of letting it propagate out of the run that contains it."""
+
+    async def wrapped(context: dict) -> RuleResult:
+        try:
+            return await predicate(context)
+        except Exception as exc:
+            return RuleResult(rule_name=name, passed=False, detail=str(exc))
+
+    return FunctionRule(name, wrapped)
+
+rule = defensive("promo_code_valid", check_promo_code_against_external_service)
+```
+
+Now a timeout in the promo-code check reports as `passed=False, detail="..."`
+— one entry in `RunResult.results`, same as any other failing rule — and
+every other rule in that `run_all`/`run_group` still runs and still
+reports.
+
+### Why the library does not catch this for you
+
+Because whether a flaky external check failing should count as "the
+condition failed" or should stop everything and surface the exception is
+a call only the rule's author can make, and the two answers are both
+right somewhere:
+
+- **A promo-code service timing out** probably should report as
+  "not valid" and let checkout continue — the customer just doesn't get
+  that discount this time.
+- **A database connection failing inside an access-control check**
+  probably should *not* quietly report "access denied" — that's a system
+  fault, not a policy decision, and swallowing it would misreport an
+  outage as a legitimate rejection.
+
+A default either way is wrong for one of those. Catching every exception
+unconditionally would also mean this package deciding it doesn't need to
+care whether what it just caught was a legitimate domain outcome or a
+genuine code bug — and those are not the same thing. A discount
+calculation that divides by a `quantity` of `0` is not "this rule
+failed," it's a bug in the predicate. Catch it unconditionally and it
+*becomes* "this rule failed" — a silent, wrong result sitting in a
+`RunResult` that looks exactly like every other legitimate rejection. Let
+it propagate and it's a stack trace pointing at the exact line that's
+wrong, in front of the developer who can fix it, the moment it happens.
+Silent-and-wrong beats loud-and-obvious for no one. That is the same
+failure mode
+[Recipe 6](#recipe-6--decide-for-yourself-what-a-missing-rule-set-means)
+already rejects a built-in fallback for: a library default that is right
+for some consumers is wrong, silently, for the rest — so the choice
+stays with whoever wrote the predicate, opted into per rule, not assumed
+for all of them.
+
 ## What you never need to do
 
 - Register a new rule shape anywhere in this package.
