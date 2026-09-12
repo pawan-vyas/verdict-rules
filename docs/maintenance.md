@@ -21,7 +21,7 @@ is checking it doesn't erode either one:
    that's a real design conversation (does it belong in this package at
    all, or in a consumer's own adapter?), not a routine dependency bump.
 2. **No knowledge of any specific domain.** Nothing under a language's
-   own package source (today: `python/src/verdict/`) should ever import
+   own package source (today: `python/packages/verdict-rules/src/verdict/`) should ever import
    or reference rate limiting, access grants,
    discounts, or any other consumer's vocabulary. Domain-specific logic
    belongs in the *consumer's own* adapter module — see
@@ -404,13 +404,13 @@ not published.
 
 | I want to... | Touch this file |
 |---|---|
-| Add a new concrete `Rule` shape (a new composite, a weighted combinator) | `python/src/verdict/rule.py` — or a new module if it doesn't naturally fit alongside `FunctionRule`/`AndRule`/`OrRule`; export it from `python/src/verdict/__init__.py`'s `__all__` either way |
-| Change what `RuleResult`/`RunResult` carries | `python/src/verdict/result.py` — both are frozen dataclasses, so adding a *required* field breaks every construction site in `rule.py` and `engine.py`, and in every consumer's own adapter (see checklist below) |
-| Add a new `RulesEngine` run mode (a new selection axis beyond "by name"/"by group") | `python/src/verdict/engine.py` — needs its own index built in `__init__`, the same way `_by_name`/`_by_group` already are |
-| Change the `Rule` `Protocol` itself (its required attributes/method signature) | `python/src/verdict/rule.py` — the highest-blast-radius change this package can make; every existing `Rule` implementation anywhere (including in consumers) must still satisfy the new shape |
+| Add a new concrete `Rule` shape (a new composite, a weighted combinator) | `python/packages/verdict-rules/src/verdict/rule.py` — or a new module if it doesn't naturally fit alongside `FunctionRule`/`AndRule`/`OrRule`; export it from `python/packages/verdict-rules/src/verdict/__init__.py`'s `__all__` either way |
+| Change what `RuleResult`/`RunResult` carries | `python/packages/verdict-rules/src/verdict/result.py` — both are frozen dataclasses, so adding a *required* field breaks every construction site in `rule.py` and `engine.py`, and in every consumer's own adapter (see checklist below) |
+| Add a new `RulesEngine` run mode (a new selection axis beyond "by name"/"by group") | `python/packages/verdict-rules/src/verdict/engine.py` — needs its own index built in `__init__`, the same way `_by_name`/`_by_group` already are |
+| Change the `Rule` `Protocol` itself (its required attributes/method signature) | `python/packages/verdict-rules/src/verdict/rule.py` — the highest-blast-radius change this package can make; every existing `Rule` implementation anywhere (including in consumers) must still satisfy the new shape |
 | Update *why* something is built this way | `architecture.md` (this directory) |
-| Update the quickstart's concepts/example | `python/docs/quickstart.md` |
-| Update the narrative front door | the root `README.md` — a distinct doc from `python/docs/quickstart.md`, not a copy of it |
+| Update the quickstart's concepts/example | `python/packages/verdict-rules/docs/quickstart.md` |
+| Update the narrative front door | the root `README.md` — a distinct doc from `python/packages/verdict-rules/docs/quickstart.md`, not a copy of it |
 
 ```mermaid
 graph TB
@@ -550,7 +550,7 @@ here (short-circuiting, vacuous truth).
 ## Related docs
 
 - [`../README.md`](../README.md) — the narrative front door.
-- [`../python/docs/quickstart.md`](../python/packages/verdict-rules/docs/quickstart.md) — core
+- [`../python/packages/verdict-rules/docs/quickstart.md`](../python/packages/verdict-rules/docs/quickstart.md) — core
   concepts and the one worked example.
 - [`architecture.md`](architecture.md) — type structure, execution
   model, and the reasoning behind each design choice.
@@ -558,7 +558,7 @@ here (short-circuiting, vacuous truth).
   a consumer's own code, without changing anything here.
 - [`testing.md`](testing.md) — the full testing checklist and current
   suite coverage.
-- [`../python/docs/samples/`](../python/packages/verdict-rules/docs/samples/1_README.md) —
+- [`../python/packages/verdict-rules/docs/samples/`](../python/packages/verdict-rules/docs/samples/1_README.md) —
   worked, domain-flavored examples of where a rule engine like this
   earns its keep.
 - [`future_plan.md`](future_plan.md) — exploratory, not-yet-decided

@@ -49,7 +49,7 @@ different altitude, so a change that reaches one usually reaches all.
 ## Checks worth running, since none of this is automatic
 
 ```
-grep -rn '<the old API or behaviour>' docs/ python/docs/ skills/ README.md
+grep -rn '<the old API or behaviour>' docs/ python/packages/*/docs/ skills/ README.md
 ```
 
 Then: every relative link and anchor still resolves, and every mermaid
