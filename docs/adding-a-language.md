@@ -246,6 +246,16 @@ to an identity, absence is an error.
       `## skill-vX.Y.Z` changelog entry. **`SKILL.md` needs no edit** —
       it routes to `references/<language>/` and names no language, so
       adding one touches nothing another language's branch also touches
+- [ ] `skills/verdict-workspace/evals/<lang>/` — this language's own
+      evals, as a **new directory**: one JSON file per eval plus a
+      minimal project manifest under `files/`, which is what lets an
+      agent answer the skill's first instruction by reading rather than
+      guessing. `scripts/build_evals.py` discovers the directory with no
+      edit, and ids are assigned there rather than written by hand, so
+      adding a language never renumbers another's. Port the Python
+      scenarios and add whatever this language gets wrong that the
+      others do not — `asyncio.gather` has an equivalent everywhere, and
+      each one is a different name
 - [ ] Documentation at the quality of the Python set: architecture
       notes where the language diverges, extension recipes in its own
       idiom
