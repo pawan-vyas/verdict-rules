@@ -20,7 +20,7 @@ on:
         required: true
         type: string
       version:
-        description: 'The version being released, e.g. 0.1.2 — used to find its changelog section.'
+        description: 'The version being released, e.g. 0.1.2 -- used to find its changelog section.'
         required: true
         type: string
       changelog-path:
