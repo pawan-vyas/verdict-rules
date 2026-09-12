@@ -6,6 +6,14 @@ Release history for the verdict AI-agent skill. Format follows
 This versions **the guidance**, not any language's API, so it moves on its own
 cadence — see `docs/maintenance.md`. Tagged `skill-vX.Y.Z`.
 
+## [0.3.4] - 2026-09-13
+
+No guidance changed.
+
+- **`.claude-plugin/marketplace.json`'s own `description` corrected to
+  plain ASCII** — the same em-dash the 0.3.3 fix missed, sitting in a
+  second file that duplicates part of `plugin.json`'s own description.
+
 ## [0.3.3] - 2026-09-13
 
 No guidance changed.
