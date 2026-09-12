@@ -149,5 +149,7 @@ uv run pytest
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for how to set up a change and
 what it needs to prove before it's mergeable, and
 [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) for community standards.
-Licensed under [MIT](LICENSE). See [`CHANGELOG.md`](CHANGELOG.md) for
-release history, grouped by language-scoped tag.
+Licensed under [MIT](LICENSE). Each package keeps its own release history
+beside its own manifest — [`python/CHANGELOG.md`](python/CHANGELOG.md) and
+[`skills/verdict/CHANGELOG.md`](skills/verdict/CHANGELOG.md) today — because
+each releases independently under its own tag.

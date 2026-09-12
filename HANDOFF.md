@@ -17,7 +17,7 @@ state_at_commit_short: fcfb637
 > be freely rewritten when a new session or tool takes over (see §0.1). Standing rules live in
 > `AGENTS.md` (imported by `CLAUDE.md`), plus `python/AGENTS.md` for Python-specific ones — never
 > here. Verify against the code; the source of truth for the design is `docs/architecture.md`, and
-> for what shipped, `CHANGELOG.md`.
+> for what shipped, each package's own `CHANGELOG.md`.
 
 ## 0 · How to use this file
 

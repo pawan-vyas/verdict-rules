@@ -178,7 +178,15 @@ belongs in `.agents/scratch/`, not in the repo's public surfaces.
       Query the **version-specific** endpoint, not the package summary: the
       summary is usually CDN-cached and lags a publish by minutes, so
       asserting against it fails good releases.
-- [ ] `CHANGELOG.md` entry under that language's own tag heading
+- [ ] A `CHANGELOG.md` **beside that package's own manifest** — next to
+      `pyproject.toml`, `package.json`, the `.csproj`, `pubspec.yaml — not at
+      the repo root and not at the language directory root if the manifest
+      sits deeper. That is what the packaging tools bundle, and it gives the
+      track exactly one writer so two releases can never contend for one file.
+      **Research that ecosystem's own convention** rather than copying
+      Python's: pub.dev parses the file and documents `## 1.2.3`, PyPI and npm
+      parse nothing and follow Keep a Changelog, and NuGet has no changelog
+      file at all — it uses a `PackageReleaseNotes` metadata string
 
 ### A word on the test workflow's shape
 
@@ -268,8 +276,8 @@ In practice:
   capabilities one SDK has and the others lack.
 - **Versions stay independent.** Parity is a property proven by the
   fixture, not encoded in matching version numbers. A language's version
-  describes its own history; `CHANGELOG.md` is where "this matches the
-  reference as of X" belongs, if it needs saying at all.
+  describes its own history; that package's own `CHANGELOG.md` is where
+  "this matches the reference as of X" belongs, if it needs saying at all.
 
 ## What is shared and what is not
 

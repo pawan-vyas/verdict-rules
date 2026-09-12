@@ -27,7 +27,7 @@ blockquote framing every doc in this repo uses.
 - **Session state** → [`HANDOFF.md`](../../HANDOFF.md), which is
   rewritten each session and carries its own staleness marker.
 - **Anything already recorded by the repo itself** — the code, the git
-  history, [`CHANGELOG.md`](../../CHANGELOG.md), or the docs under
+  history, a package's own `CHANGELOG.md`, or the docs under
   [`docs/`](../../docs/). Memory is for what those don't say.
 - **Anything transient** — a scratch log, a one-off script, a note
   that stops mattering when this session ends. Those go in

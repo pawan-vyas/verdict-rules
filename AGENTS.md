@@ -180,6 +180,36 @@ documentation to consult on request:
    access grants, discounts, or any other consumer's vocabulary — that
    logic belongs in a consumer's own adapter module, never here.
 
+## Adding a variant is a new file, never an edit to a shared one
+
+The repo-structure form of the dispatch rule below. **If adding the Nth thing
+means editing a file the other N−1 share, the structure is wrong** — restructure
+so the Nth is a new file, directory or row, and nothing existing moves. This
+matters more here than in most repos, because several languages are developed
+on separate branches at once: a shared file is a conflict multiplied by the
+number of languages in flight.
+
+Already applied to test workflows, release workflows, PR templates, skill
+routing, skill reference content, and per-package changelogs. The test before
+adding anything: *what does the fifth one cost?* Full reasoning in
+[`.agents/memory/adding-a-variant-is-a-new-file.md`](.agents/memory/adding-a-variant-is-a-new-file.md).
+
+A shared file every variant *reads* is fine. A shared file each variant must
+*write to* is the problem.
+
+## Research an ecosystem before deciding its idiom
+
+Each SDK first-classes its own language's conventions, and a convention is a
+**fact about that ecosystem**, discoverable from its own documentation — never
+inferred from whichever language you know best. Read the registry's or
+language's own docs, and record what they say with a citation.
+
+The cost of not doing this is imposing one ecosystem's convention on four and
+calling it consistency. See
+[`.agents/memory/research-the-ecosystem-before-deciding-its-idiom.md`](.agents/memory/research-the-ecosystem-before-deciding-its-idiom.md)
+for the worked example, where one of four registries turned out not to use the
+mechanism being designed at all.
+
 ## Cross-language coding & doc conventions
 
 These apply regardless of which language directory you're working in;
@@ -242,8 +272,8 @@ sits there. Sweep outward from the code every time: source docstrings,
 this enable a recipe, or invalidate one?), `docs/testing.md` (it names
 specific tests by name), `docs/maintenance.md`, each language's
 quickstart and samples, the shared fixture if the change is behavioural,
-`skills/verdict/references/` with a `plugin.json` bump, `CHANGELOG.md`,
-and the `README.md`.
+`skills/verdict/references/` with a `plugin.json` bump, that package's own
+`CHANGELOG.md`, and the `README.md`.
 
 Extend diagrams rather than only correcting their prose — a diagram
 describing the old shape is more misleading than stale text, because it
