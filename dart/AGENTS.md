@@ -15,6 +15,11 @@ this file only adds what is particular to this language.
   `runNamed`/`runGroup`, and return null from `tryRunNamed`/`tryRunGroup`.
   The `try` forms are the **primitives** — the throwing ones are assertions on
   top, so there is one lookup path rather than two that can drift.
+
+  A lookup that **matches** always reports its real verdict, so a caller's
+  fallback can never mask a failure. When testing code that uses one, cover the
+  *present but failing* case — testing only the absent one looks complete and
+  misses the direction where a bug is silent.
 - **`RuleResult.data`** holds only what actually ran. Never padded to the full
   sub-rule list, never flattened into the parent's level.
 
