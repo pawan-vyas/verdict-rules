@@ -1,0 +1,104 @@
+# The part of a release that is identical for every language, factored out so
+# adding a language is a thin caller rather than another full copy of this.
+#
+# Everything language-specific — building, testing, publishing to a registry —
+# stays in the caller, because it genuinely differs. What is common is the tail:
+# the tag, the changelog section, the skill artifacts, and the GitHub release.
+#
+# Called by release-<lang>.yml. Not triggerable on its own.
+name: Release (GitHub)
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: 'Tag to create and release, e.g. python-v0.1.2'
+        required: true
+        type: string
+      title:
+        description: 'Release title, e.g. "Python v0.1.2"'
+        required: true
+        type: string
+      artifact-name:
+        description: 'Name of an uploaded artifact to attach alongside the skill zips. Empty to attach only the skill zips.'
+        required: false
+        default: ''
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # to create the tag and the release
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # tags, so an existing one can be detected
+
+      - name: Refuse to release a tag that already exists
+        run: |
+          set -euo pipefail
+          if git rev-parse -q --verify "refs/tags/${{ inputs.tag }}" >/dev/null; then
+            echo "::error::Tag ${{ inputs.tag }} already exists. A release is being attempted for a version that has already shipped."
+            exit 1
+          fi
+
+      - name: Extract release notes from CHANGELOG.md
+        run: |
+          set -euo pipefail
+          notes="$(awk -v hdr="## ${{ inputs.tag }}" '
+            index($0, hdr) == 1 { found = 1; next }
+            /^## / { if (found) exit }
+            found { print }
+          ' CHANGELOG.md)"
+
+          # A missing section means the changelog entry was not written
+          # alongside the version bump, which docs/maintenance.md requires.
+          # Fail rather than publish a release with no notes.
+          if [ -z "$(printf '%s' "$notes" | tr -d '[:space:]')" ]; then
+            echo "::error file=CHANGELOG.md::No '## ${{ inputs.tag }}' section found. Add the changelog entry in the same commit as the version bump."
+            exit 1
+          fi
+
+          # Written to a file, never to a step output. A step output is
+          # interpolated into a later step's shell, where the changelog's
+          # backticks become command substitution and every code span is
+          # silently eaten. See .agents/incidents/001.
+          {
+            printf '%s\n' "$notes"
+            echo "**Full changelog**: https://github.com/${GITHUB_REPOSITORY}/blob/${{ inputs.tag }}/CHANGELOG.md"
+          } > release-notes.md
+
+      - name: Build skill-distribution artifacts
+        run: |
+          set -euo pipefail
+          chmod +x scripts/build.sh
+          ./scripts/build.sh
+          mkdir -p release-assets
+          # Whatever build.sh produced, rather than a list that can drift from it.
+          cp dist/* release-assets/
+
+      - name: Download the language's own build artifacts
+        if: inputs.artifact-name != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: release-assets/
+
+      - name: Create the tag
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ inputs.tag }}" -m "${{ inputs.title }}"
+          git push origin "${{ inputs.tag }}"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create "${{ inputs.tag }}" \
+            --title "${{ inputs.title }}" \
+            --notes-file release-notes.md \
+            release-assets/*

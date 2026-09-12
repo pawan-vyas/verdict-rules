@@ -1,88 +1,83 @@
-# Triggered by a skill-vX.Y.Z tag push. Ships the AI-agent skill on its own cadence, independently
-# of any language SDK — see docs/maintenance.md's "The skill's version is a separate number".
+# Releases the AI-agent skill when its version changes on main.
 #
-# Why this exists at all: scripts/get.sh (the curl-pipe install path) resolves whatever GitHub calls
-# the *latest* release and pulls verdict-tools.zip from it. Without this workflow the only thing
-# cutting a release is release-python.yml, so a skill-only change would sit unreleased until the
-# next Python version shipped — leaving get.sh users on a stale skill for a change that has nothing
-# to do with the library. Marketplace and clone users already track main directly and were never
-# affected; this closes the gap for the one path that isn't.
+# The skill versions independently of every language SDK — it measures the
+# guidance under skills/verdict/, not any library's API. See docs/maintenance.md.
 #
-# Every release in this repo — this one and release-python.yml — attaches the full set of skill
-# artifacts, so "latest" always carries a usable verdict-tools.zip no matter which kind of release
-# happened to come last.
+# Same shape as release-python.yml: a version bump on main is the trigger, and
+# the release job only runs once everything before it has passed. There is no
+# test suite for the skill itself, so the gate here is check-skill-version.yml
+# having already required the bump that got us here.
 name: Release (Skill)
 
 on:
   push:
-    tags:
-      - "skill-v*"
+    branches: [main]
+    paths:
+      - "skills/verdict/**"
+      - ".claude-plugin/**"
+      - ".github/workflows/release-skill.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: release-skill
+  cancel-in-progress: false
 
 jobs:
-  release:
+  detect:
+    name: Is there a new skill version to release?
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    env:
-      MANIFEST: .claude-plugin/plugin.json
+    outputs:
+      should-release: ${{ steps.check.outputs.should-release }}
+      version: ${{ steps.check.outputs.version }}
+      tag: ${{ steps.check.outputs.tag }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
-      - name: Extract version from tag
-        id: version
-        run: |
-          tag="${GITHUB_REF_NAME}"
-          echo "version=${tag#skill-v}" >> "$GITHUB_OUTPUT"
-
-      - name: Verify plugin.json version matches the tag
+      - name: Compare plugin.json's version against existing tags
+        id: check
         run: |
           set -euo pipefail
-          declared="$(jq -er '.version' "$MANIFEST")"
-          if [ "$declared" != "${{ steps.version.outputs.version }}" ]; then
-            echo "::error file=$MANIFEST::Tag ${GITHUB_REF_NAME} declares version ${{ steps.version.outputs.version }}, but $MANIFEST says $declared. Fix the mismatch and re-tag before releasing."
-            exit 1
-          fi
+          version="$(jq -er '.version' .claude-plugin/plugin.json)"
+          tag="skill-v${version}"
 
-      - name: Build skill-distribution artifacts
+          if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+            echo "Version ${version} is already released as ${tag}. Nothing to do."
+            echo "should-release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Version ${version} has no ${tag} tag yet — releasing."
+            echo "should-release=true" >> "$GITHUB_OUTPUT"
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+
+  verify:
+    name: The skill builds into all three artifacts
+    needs: detect
+    if: needs.detect.outputs.should-release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build and check every expected artifact exists
         run: |
           set -euo pipefail
           chmod +x scripts/build.sh
           ./scripts/build.sh
+          for f in verdict-plugin.zip verdict.skill verdict-tools.zip; do
+            [ -s "dist/$f" ] || { echo "::error::build.sh did not produce dist/$f"; exit 1; }
+          done
+          # get.sh resolves the latest release and pulls this one, so a release
+          # missing it breaks the curl-pipe installer outright.
+          unzip -l dist/verdict-tools.zip | grep -q 'skill/SKILL.md' \
+            || { echo "::error::verdict-tools.zip has no skill payload"; exit 1; }
 
-      # Same as release-python.yml: the body is the hand-written CHANGELOG
-      # section for this tag, not an auto-generated commit list.
-      - name: Extract release notes from CHANGELOG.md
-        id: notes
-        run: |
-          set -euo pipefail
-          version="${{ steps.version.outputs.version }}"
-          notes="$(awk -v hdr="## skill-v$version" '
-            index($0, hdr) == 1 { found = 1; next }
-            /^## / { if (found) exit }
-            found { print }
-          ' CHANGELOG.md)"
-
-          if [ -z "$(printf '%s' "$notes" | tr -d '[:space:]')" ]; then
-            echo "::error file=CHANGELOG.md::No '## skill-v$version' section found. Add the changelog entry in the same commit as the version bump, then re-tag."
-            exit 1
-          fi
-
-          # Written to a file, never to a step output. A step output gets
-          # interpolated into a later step's shell, where the changelog's
-          # backticks become command substitution and every code span is
-          # silently eaten. --notes-file passes the bytes through untouched.
-          {
-            printf '%s\n' "$notes"
-            echo "**Full changelog**: https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}/CHANGELOG.md"
-          } > release-notes.md
-
-      - name: Create GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          # Whatever build.sh produced, rather than a hardcoded list that can drift from it.
-          gh release create "${GITHUB_REF_NAME}" \
-            --title "Skill v${{ steps.version.outputs.version }}" \
-            --notes-file release-notes.md \
-            dist/*
+  release:
+    name: Tag and publish the GitHub release
+    needs: [detect, verify]
+    permissions:
+      contents: write
+    uses: ./.github/workflows/release-github.yml
+    with:
+      tag: ${{ needs.detect.outputs.tag }}
+      title: Skill v${{ needs.detect.outputs.version }}

@@ -54,23 +54,37 @@ Release procedure, once a change is ready to ship:
    a breaking change and takes `MINOR`, however unlikely that dependency
    seems.
 2. Add a `## python-vX.Y.Z` entry to the repo-root `CHANGELOG.md`, in
-   the same commit as the version bump — never backfilled later.
-3. Commit, then tag `python-vX.Y.Z` (the `python-` prefix matters: tags
-   are scoped per language, since each one releases independently to
-   its own registry — see `CHANGELOG.md`'s own intro).
-4. Push the tag. CI's `release-python.yml` does everything else: builds
-   the sdist/wheel, publishes to PyPI via Trusted Publishing, builds the
-   skill-distribution artifacts, and attaches all of it to a GitHub
-   Release.
+   the same commit as the version bump — never backfilled later. The
+   release body is built from it, and a missing section fails the
+   release rather than publishing empty notes.
+3. **Merge to `main`. That is the whole release.**
 
-Pushing the tag is the only manual step, and deliberately so — it is the
-point at which a human decides something is a release. Everything
-downstream of it is automated, including the GitHub Release itself.
+`release-python.yml` notices the version has no matching tag, runs the
+full test matrix, builds, publishes to PyPI via Trusted Publishing, then
+tags and cuts the GitHub release — in that order, each step gated on the
+one before it.
 
-The release body is **this changelog's own section for that tag**, not
-an auto-generated commit list. That is why step 2 is not optional: a tag
-whose `## python-vX.Y.Z` section is missing fails the release rather than
-publishing one with empty notes.
+### Nothing is tagged or published by hand
+
+Merging the version bump is the decision to release; there is no
+separate tag step. That is not only convenience. A hand-pushed tag can
+point at any commit, including one whose tests never ran — and since
+publishing is irreversible on every registry this repo targets, an
+untested release is a version number burned. Making the test matrix a
+dependency of the publish job removes that possibility rather than
+relying on discipline.
+
+The ordering matters and is enforced by job dependencies: **test →
+build → publish → tag → release**. The tag is created *after* a
+successful publish, so a tag existing means that version really shipped.
+Re-running is safe: the detect job compares the manifest version against
+existing tags and does nothing if one already matches, so merging to
+`main` repeatedly cannot double-release.
+
+The parts of a release that are identical for every language — the
+changelog section, the skill artifacts, the tag, the GitHub release —
+live in `release-github.yml`, a reusable workflow the per-language ones
+call. Adding a language is a thin caller, not another copy.
 
 ### Ownership and namespaces across registries
 
