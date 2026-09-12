@@ -128,6 +128,30 @@ still resolving `verdict-tools.zip` with a real payload inside it.
 2. **Provenance is present** where the registry offers it — see below. Its
    absence is silent, which is exactly why it is worth looking at.
 
+### A changelog lives beside its own manifest
+
+Not at the repository root, and not at the language directory's root if the
+manifest sits deeper. That is where packaging tools look for it, and it gives
+each release track exactly one writer — so two releases can never contend for
+one file, however many languages ship.
+
+For Python that is `python/CHANGELOG.md`, because `pyproject.toml` and
+`README.md` are both at `python/`. For C# it will be beside the `.csproj`,
+which sits at `csharp/src/VerdictRules/` rather than at `csharp/`.
+
+**One ambiguity worth naming**, since it is invisible today: `python/` is
+currently *both* the language directory *and* the `verdict-rules` distribution
+root, because there is exactly one Python distribution. A second one — say a
+`verdict-rules-concurrent` — would separate those meanings, and the answer is
+to restructure so each distribution has its own root (`python/packages/<dist>/`
+or similar), moving its manifest, README, `src/` and changelog together. The
+rule does not change; only the layout does.
+
+That restructure is safe to defer precisely because shipped links are
+version-pinned (below): tags are immutable, so every already-published link
+keeps resolving after the files move. Under `main`-pinning it would have broken
+every published version at once.
+
 ### Links in shipped content are pinned to a version, never to `main`
 
 A README bundled into a package is rendered on **every version's** registry
