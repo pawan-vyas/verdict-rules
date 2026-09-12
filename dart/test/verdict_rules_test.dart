@@ -158,6 +158,63 @@ void main() {
     });
   });
 
+  group('Try lookups', () {
+    // These exist because the engine cannot know what an absent group means.
+    // For one consumer it is "no constraint applies, pass"; for another "skip
+    // and do not count it"; for a third "the configuration is wrong, fail".
+    // A library default would be right for one and wrong for the rest.
+
+    test('returns the result when present', () async {
+      final log = <String>[];
+      final engine = RulesEngine([
+        counting('a', true, log, group: 'g1'),
+        counting('b', false, log, group: 'g1'),
+      ]);
+
+      final group = await engine.tryRunGroup('g1', {});
+      expect(group, isNotNull);
+      expect(group!.results.map((r) => r.ruleName), ['a', 'b']);
+      expect(group.passed, isFalse);
+
+      expect((await engine.tryRunNamed('a', {}))?.ruleName, 'a');
+    });
+
+    test('returns null when absent', () async {
+      final engine = RulesEngine([counting('a', true, [], group: 'g1')]);
+      expect(await engine.tryRunGroup('no-such-group', {}), isNull);
+      expect(await engine.tryRunNamed('nope', {}), isNull);
+    });
+
+    test('null means absent, never failed', () async {
+      // Collapsing the two would make a typo indistinguishable from a
+      // legitimate rejection.
+      final engine = RulesEngine([counting('present', false, [])]);
+      expect((await engine.tryRunNamed('present', {}))?.passed, isFalse);
+      expect(await engine.tryRunNamed('absent', {}), isNull);
+    });
+
+    test('the strict forms are the try forms plus an assertion', () async {
+      // Asserting the relationship keeps the two from drifting: one lookup
+      // path, and the strict form adds only the throw.
+      final engine = RulesEngine([counting('a', true, [], group: 'g1')]);
+      final strict = await engine.runGroup('g1', {});
+      final lenient = await engine.tryRunGroup('g1', {});
+      expect(lenient, isNotNull);
+      expect(strict.passed, lenient!.passed);
+      expect(strict.results.length, lenient.results.length);
+    });
+
+    test('the caller chooses the fallback', () async {
+      final engine = RulesEngine([counting('a', true, [], group: 'present')]);
+      final result = await engine.tryRunGroup('absent', {});
+
+      expect(result?.passed ?? true, isTrue); // absence means no constraint
+      expect(result?.passed ?? false, isFalse); // absence means misconfigured
+      expect([result].whereType<RunResult>(), isEmpty); // skip it
+      expect(() => engine.runGroup('absent', {}), throwsArgumentError);
+    });
+  });
+
   group('Introspection', () {
     test('reports exactly what the lookups accept', () async {
       final engine = RulesEngine([
