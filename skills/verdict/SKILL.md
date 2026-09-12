@@ -53,6 +53,16 @@ passes its own tests while being silently incorrect:
 - **Result payloads are opaque.** Verdict never reads a result's `data`,
   and a composite's own results carry only what actually ran — never
   padded, never flattened into the parent.
+- **A predicate's own exception is never caught.** It propagates out of
+  whichever call is running, same as calling that code directly with
+  nothing in between — an "engine" invites the opposite assumption, so
+  say this plainly rather than let a consumer discover it in production
+  when one flaky check takes the rest of a rule set's diagnostics with
+  it. If a task needs one predicate's failure isolated from the others,
+  that is a wrapper the caller opts into per rule (`extension.md`,
+  Recipe 7) — never a blanket default, since the same catch-everything
+  behavior would also turn a genuine bug into a silent, wrong "this rule
+  failed" instead of a stack trace pointing at it.
 
 ## Step 3 — read what the task needs
 
@@ -63,7 +73,7 @@ repository ships, so it cannot drift from the implementation.
 | Read | When |
 | :-- | :-- |
 | `references/docs/architecture.md` | Understanding *why* it is shaped this way — the type structure, the execution model, and which run mode a caller needs. |
-| `references/docs/extension.md` | Building anything *with* verdict — wrapping a predicate, a new rule shape, the one-adapter-module boundary, rules from stored configuration, choosing what an absent lookup should mean. |
+| `references/docs/extension.md` | Building anything *with* verdict — wrapping a predicate, a new rule shape, the one-adapter-module boundary, rules from stored configuration, choosing what an absent lookup should mean, isolating one flaky predicate from the rest of a run. |
 | `references/<language>/agent-notes.md` | Always, first. Short and language-specific. |
 
 Prefer a section over a document. These files carry headings and
