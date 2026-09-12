@@ -153,6 +153,12 @@ consumer and "the configuration is broken" to another. Prefer the throwing
 forms by default; reach for these when your own domain has an answer for
 absence.
 
+**The fallback only applies to absence.** A group that exists always reports
+its real verdict, so `?? true` does not mean "sometimes true" — a failing group
+is still a failure whatever default you choose. If you test code using this,
+the case worth covering is a *present, failing* group rather than the absent
+one everybody thinks of first.
+
 ## What it guarantees
 
 - **Sequential evaluation, never concurrent.** Composites use a plain `for`
