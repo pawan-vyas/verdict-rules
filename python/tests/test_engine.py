@@ -164,24 +164,70 @@ class TestTryLookups:
         assert strict.passed == lenient.passed
         assert len(strict.results) == len(lenient.results)
 
-    async def test_the_caller_chooses_the_fallback(self) -> None:
-        """Each of the four real shapes an absent group can mean."""
-        engine = RulesEngine([_pass("a", group="present")])
+    # The full matrix a caller faces: three states a lookup can be in, against
+    # the three things a caller can decide absence means. Written as a table
+    # because the interesting rows are the ones where the default must NOT
+    # fire — a fallback that fires on a present-but-failing group would turn a
+    # real rejection into a silent approval, which is the whole failure this
+    # API exists to let callers avoid.
+    #
+    #   group state        | `or True`  | `or False` | strict
+    #   -------------------+------------+------------+---------
+    #   present, passing   | True       | True       | passed=True
+    #   present, failing   | False      | False      | passed=False   <- default must not fire
+    #   absent             | True       | False      | raises
+    @pytest.mark.parametrize(
+        ("group", "default_true", "default_false", "strict_raises"),
+        [
+            ("passing", True, True, False),
+            ("failing", False, False, False),
+            ("absent", True, False, True),
+        ],
+    )
+    async def test_fallback_matrix(
+        self,
+        group: str,
+        default_true: bool,
+        default_false: bool,
+        strict_raises: bool,
+    ) -> None:
+        engine = RulesEngine([
+            _pass("p", group="passing"),
+            _fail("f", group="failing"),
+        ])
 
-        # 1. absent means "no constraint here" — treat as passing
-        result = await engine.try_run_group("absent", {})
-        assert (result.passed if result is not None else True) is True
+        result = await engine.try_run_group(group, {})
 
-        # 2. absent means "the config is wrong" — fail
-        assert (result.passed if result is not None else False) is False
+        # Decision 1: absence means "no constraint applies here".
+        assert (result.passed if result is not None else True) is default_true
 
-        # 3. absent means "skip, do not count it"
-        evaluated = [r for r in [result] if r is not None]
-        assert evaluated == []
+        # Decision 2: absence means "the configuration is wrong".
+        assert (result.passed if result is not None else False) is default_false
 
-        # 4. absent is genuinely unexpected — the strict form says so
-        with pytest.raises(KeyError):
-            await engine.run_group("absent", {})
+        # Decision 3: absence was never expected — the strict form says so.
+        if strict_raises:
+            with pytest.raises(KeyError):
+                await engine.run_group(group, {})
+        else:
+            strict = await engine.run_group(group, {})
+            assert strict.passed is default_true
+            assert strict.passed is default_false
+
+    async def test_skipping_counts_only_what_exists(self) -> None:
+        """The fourth shape: absence contributes nothing either way."""
+        engine = RulesEngine([_fail("f", group="failing")])
+
+        evaluated = [
+            r
+            for r in [
+                await engine.try_run_group("failing", {}),
+                await engine.try_run_group("absent", {}),
+            ]
+            if r is not None
+        ]
+
+        assert len(evaluated) == 1, "an absent group contributes nothing"
+        assert evaluated[0].passed is False, "a present one still reports honestly"
 
 
 class TestIntrospection:
