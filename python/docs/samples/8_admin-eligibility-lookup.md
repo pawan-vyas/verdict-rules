@@ -13,31 +13,42 @@
 
 ## The naive way (and why it breaks down)
 
-The obvious first implementation calls `run_named` directly and catches
-whatever comes back:
+Before reaching for a rule engine at all, the obvious first
+implementation is a plain dict of configured checks and a lookup
+function — no `verdict` in sight yet:
 
 ```python
-async def check_eligibility(engine, check_name: str, customer: dict) -> bool:
+ELIGIBILITY_CHECKS = {
+    "gold_tier": [("spend", 1000)],
+    "beta_feature": [],  # not filled in yet
+}
+
+
+async def check_eligibility(check_name: str, customer: dict) -> bool:
     try:
-        result = await engine.run_named(check_name, customer)
-        return result.passed
+        conditions = ELIGIBILITY_CHECKS[check_name]
     except KeyError:
         return False  # "not eligible" either way
+
+    return all(customer.get(field) == expected for field, expected in conditions)
 ```
 
-This stops the page from 500ing on a typo, which is real progress — but:
+This looks complete, and it stops the page from 500ing on a typo, which
+is real progress — but:
 
 - **A typo and a genuine rejection now render identically.** The support
   agent asked "why didn't this customer qualify," and for a mistyped
   check name, the honest answer is "you typed the wrong name," not "the
   customer failed a real condition." Collapsing the two into one `False`
   answers a different question than the one that was asked.
-- **A check with no conditions configured yet passes silently.** An
-  `AndRule` built from zero sub-rules vacuously passes — the correct fold
-  identity, and exactly right for a data-driven rule set where "nothing
-  configured" should mean "nothing to enforce." On this screen it means
-  something else: a check the team is still building would show as
-  "eligible," indistinguishable from a real, considered pass.
+- **A check with no conditions configured yet passes silently, and this
+  bug is already here, not something a rule engine introduces.**
+  `all()` over an empty iterable is `True` — Python's own vacuous truth,
+  the same identity `AndRule([])` will turn out to have — so
+  `check_eligibility("beta_feature", ...)` above returns `True` right
+  now, today, before `verdict` enters the picture at all. A check the
+  team is still building shows as "eligible," indistinguishable from a
+  real, considered pass.
 - **Two different problems, one bug report.** The first support ticket
   about either of these looks identical from the outside — "the checker
   said eligible/not eligible and that was wrong" — and nothing about the
@@ -46,10 +57,14 @@ This stops the page from 500ing on a typo, which is real progress — but:
 
 ## The verdict way
 
-Two decisions, made once, deliberately, rather than left to whatever the
-engine happens to do by default: an unknown check name uses
-`try_run_named` and gets its own status, and a check with zero configured
-conditions is detected and given a *different* status — neither one ever
+Both bugs above already existed before `verdict` was involved — a rule
+engine doesn't introduce the "typo collapses into a rejection" or
+"empty means pass" problems, it just gives them names and a documented,
+deliberate answer instead of an accidental one. Two decisions, made once,
+rather than left to whatever the engine happens to do by default: an
+unknown check name uses `try_run_named` and gets its own status, and a
+check with zero configured conditions is detected and given a *different*
+status — neither one ever
 renders as a real `eligible`/`not_eligible` verdict.
 
 ```mermaid
