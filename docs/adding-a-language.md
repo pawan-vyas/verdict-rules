@@ -157,7 +157,13 @@ belongs in `.agents/scratch/`, not in the repo's public surfaces.
 ## Stage 3 · Harden — `0.0.x`
 
 - [ ] Test coverage expanded across every type and run mode
-- [ ] Language-level `README` and quickstart
+- [ ] Language-level `README` and quickstart. **Every GitHub link in a
+      bundled README must be pinned to that release's tag, not to `main`** —
+      it is rendered on every version's registry page forever, so a
+      `main`-pinned link shows an old version's reader documentation for APIs
+      they do not have. Add the package to the table in
+      `scripts/check_shipped_links.py`, which enforces this and rewrites them
+      with `--fix`
 - [ ] `test-<lang>.yml` as a **new** workflow file, following the gate pattern
       below rather than filtering on the trigger
 - [ ] `release-<lang>.yml` on a `<lang>-v*` tag, publishing via trusted

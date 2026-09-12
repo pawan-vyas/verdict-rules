@@ -30,6 +30,9 @@ jobs:
       - name: Every package's changelog matches its manifest, and is ordered
         run: python3 scripts/check_changelogs.py
 
+      - name: Shipped links are pinned to the released version
+        run: python3 scripts/check_shipped_links.py
+
       - name: The skill artifacts build, and carry what get.sh needs
         run: |
           set -euo pipefail

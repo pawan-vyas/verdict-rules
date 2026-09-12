@@ -39,7 +39,7 @@ classifiers = [
 Homepage = "https://github.com/pawan-vyas/verdict-rules"
 Repository = "https://github.com/pawan-vyas/verdict-rules"
 Issues = "https://github.com/pawan-vyas/verdict-rules/issues"
-Changelog = "https://github.com/pawan-vyas/verdict-rules/blob/main/python/CHANGELOG.md"
+Changelog = "https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.1/python/CHANGELOG.md"
 
 [build-system]
 requires = ["uv_build>=0.11.14,<0.13.0"]
