@@ -232,14 +232,52 @@ describe("try lookups", () => {
     assert.equal(strict.results.length, lenient.results.length);
   });
 
-  it("the caller chooses the fallback", async () => {
-    const engine = new RulesEngine([counting("a", true, [], "present")]);
-    const result = await engine.tryRunGroup("absent", {});
+  // The full matrix a caller faces: three states a lookup can be in, against
+  // the three things a caller can decide absence means. The interesting rows
+  // are the ones where the default must NOT fire — a fallback firing on a
+  // present-but-failing group turns a real rejection into a silent approval,
+  // which is the whole failure this API exists to let callers avoid.
+  //
+  //   group state       | ?? true | ?? false | strict
+  //   ------------------+---------+----------+--------------
+  //   present, passing  | true    | true     | passed: true
+  //   present, failing  | false   | false    | passed: false   <- must not fire
+  //   absent            | true    | false    | throws
+  for (const [group, defaultTrue, defaultFalse, strictThrows] of [
+    ["passing", true, true, false],
+    ["failing", false, false, false],
+    ["absent", true, false, true],
+  ]) {
+    it(`fallback matrix: ${group}`, async () => {
+      const engine = new RulesEngine([
+        counting("p", true, [], "passing"),
+        counting("f", false, [], "failing"),
+      ]);
 
-    assert.equal(result?.passed ?? true, true);      // absent means pass
-    assert.equal(result?.passed ?? false, false);    // absent means fail
-    assert.deepEqual([result].filter((r) => r !== undefined), []); // skip
-    await assert.rejects(() => engine.runGroup("absent", {}));     // unexpected
+      const result = await engine.tryRunGroup(group, {});
+
+      assert.equal(result?.passed ?? true, defaultTrue);
+      assert.equal(result?.passed ?? false, defaultFalse);
+
+      if (strictThrows) {
+        await assert.rejects(() => engine.runGroup(group, {}));
+      } else {
+        const strict = await engine.runGroup(group, {});
+        assert.equal(strict.passed, defaultTrue);
+        assert.equal(strict.passed, defaultFalse);
+      }
+    });
+  }
+
+  it("skipping counts only what exists", async () => {
+    const engine = new RulesEngine([counting("f", false, [], "failing")]);
+    const evaluated = [
+      await engine.tryRunGroup("failing", {}),
+      await engine.tryRunGroup("absent", {}),
+    ].filter((r) => r !== undefined);
+
+    assert.equal(evaluated.length, 1, "an absent group contributes nothing");
+    assert.equal(evaluated[0].passed, false, "a present one reports honestly");
   });
 });
 
