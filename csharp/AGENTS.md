@@ -10,7 +10,11 @@ C#-specific rules, on top of the repo-root `AGENTS.md`. Read that first.
   — so this is the one mistake here that passes its own tests.
 - **Vacuous truth.** `AndRule([])` passes, `OrRule([])` fails.
 - **Emptiness is not absence.** Empty composites fold to their identity;
-  unknown rule names and unknown groups throw `KeyNotFoundException`.
+  unknown rule names and unknown groups throw `KeyNotFoundException` from
+  `RunNamedAsync`/`RunGroupAsync`, and return `null` from
+  `TryRunNamedAsync`/`TryRunGroupAsync`. The `Try` forms are the
+  **primitives** — the throwing ones are assertions on top, so there is one
+  lookup path rather than two that can drift.
 - **`RuleResult.Data`** holds only what actually ran. Never padded, never
   flattened into the parent's level.
 

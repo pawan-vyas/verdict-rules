@@ -220,6 +220,85 @@ public class EmptinessIsNotAbsenceTests
     }
 }
 
+/// <summary>
+/// The non-throwing primitives, and that the strict forms sit on top of them.
+/// These exist because the engine cannot know what an absent group means: for
+/// one consumer it is "no constraint applies", for another "the configuration
+/// is broken". A library default would be right for one and wrong for the rest.
+/// </summary>
+public class TryLookupTests
+{
+    [Fact]
+    public async Task ReturnsTheResultWhenPresent()
+    {
+        var log = new List<string>();
+        var engine = new RulesEngine(new IRule[]
+        {
+            Rules.Counting("a", true, log, "g1"),
+            Rules.Counting("b", false, log, "g1"),
+        });
+
+        var group = await engine.TryRunGroupAsync("g1", Rules.Empty);
+        Assert.NotNull(group);
+        Assert.Equal(new[] { "a", "b" }, group!.Results.Select(r => r.RuleName));
+        Assert.False(group.Passed);
+
+        var named = await engine.TryRunNamedAsync("a", Rules.Empty);
+        Assert.NotNull(named);
+        Assert.Equal("a", named!.RuleName);
+    }
+
+    [Fact]
+    public async Task ReturnsNullWhenAbsent()
+    {
+        var engine = new RulesEngine(new IRule[] { Rules.Counting("a", true, new List<string>(), "g1") });
+        Assert.Null(await engine.TryRunGroupAsync("no-such-group", Rules.Empty));
+        Assert.Null(await engine.TryRunNamedAsync("nope", Rules.Empty));
+    }
+
+    [Fact]
+    public async Task NullMeansAbsentNeverFailed()
+    {
+        // Collapsing the two would make a typo indistinguishable from a
+        // legitimate rejection.
+        var engine = new RulesEngine(new IRule[] { Rules.Counting("present", false, new List<string>()) });
+
+        var failed = await engine.TryRunNamedAsync("present", Rules.Empty);
+        Assert.NotNull(failed);
+        Assert.False(failed!.Passed);
+
+        Assert.Null(await engine.TryRunNamedAsync("absent", Rules.Empty));
+    }
+
+    [Fact]
+    public async Task StrictFormsAreTheTryFormsPlusAnAssertion()
+    {
+        // Asserting the relationship keeps the two from drifting: one lookup
+        // path, and the strict form adds only the throw.
+        var engine = new RulesEngine(new IRule[] { Rules.Counting("a", true, new List<string>(), "g1") });
+
+        var strict = await engine.RunGroupAsync("g1", Rules.Empty);
+        var lenient = await engine.TryRunGroupAsync("g1", Rules.Empty);
+
+        Assert.NotNull(lenient);
+        Assert.Equal(strict.Passed, lenient!.Passed);
+        Assert.Equal(strict.Results.Count, lenient.Results.Count);
+    }
+
+    [Fact]
+    public async Task TheCallerChoosesTheFallback()
+    {
+        var engine = new RulesEngine(new IRule[] { Rules.Counting("a", true, new List<string>(), "present") });
+        var result = await engine.TryRunGroupAsync("absent", Rules.Empty);
+
+        Assert.True(result?.Passed ?? true);    // absence means no constraint
+        Assert.False(result?.Passed ?? false);  // absence means misconfigured
+        Assert.Empty(new[] { result }.Where(r => r is not null)); // skip it
+        await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => engine.RunGroupAsync("absent", Rules.Empty));   // unexpected
+    }
+}
+
 public class IntrospectionTests
 {
     [Fact]

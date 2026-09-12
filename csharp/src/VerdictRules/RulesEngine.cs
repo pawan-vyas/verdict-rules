@@ -65,42 +65,83 @@ public sealed class RulesEngine
         return new RunResult(results.TrueForAll(r => r.Passed), results);
     }
 
-    /// <summary>Evaluates exactly one rule, looked up by name.</summary>
-    /// <exception cref="KeyNotFoundException">No rule has this name.</exception>
-    public Task<RuleResult> RunNamedAsync(string name, IReadOnlyDictionary<string, object?> context)
+    /// <summary>
+    /// Evaluates one rule by name, or returns <c>null</c> if no such rule exists.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This is the primitive; <see cref="RunNamedAsync"/> is a two-line
+    /// assertion on top of it. The distinction matters when absence is an
+    /// expected, legitimate state rather than a mistake — a rule set that
+    /// varies per tenant, an optional group behind a feature flag, a name
+    /// carried in configuration a given deployment has not adopted yet.
+    /// </para>
+    /// <para>
+    /// In those cases the caller decides what absence means, because the
+    /// engine cannot: for one consumer a missing rule means "nothing to
+    /// enforce, pass", for another "skip this and do not count it", for a
+    /// third "the configuration is wrong, fail loudly". A single library
+    /// default would be right for one of them and wrong for the rest.
+    /// </para>
+    /// <para>
+    /// <c>null</c> means <i>absent</i>, never <i>failed</i> — a rule that
+    /// exists and fails still returns a <see cref="RuleResult"/> with
+    /// <see cref="RuleResult.Passed"/> false.
+    /// </para>
+    /// </remarks>
+    public async Task<RuleResult?> TryRunNamedAsync(string name, IReadOnlyDictionary<string, object?> context)
     {
         if (!_byName.TryGetValue(name, out var rule))
+        {
+            return null;
+        }
+
+        return await rule.EvaluateAsync(context).ConfigureAwait(false);
+    }
+
+    /// <summary>Evaluates exactly one rule, looked up by name.</summary>
+    /// <remarks>
+    /// The strict form, and the one to reach for by default: if a name is not
+    /// expected to be absent, an absent name is a bug worth hearing about
+    /// immediately. Use <see cref="TryRunNamedAsync"/> when absence is a state
+    /// your own domain has an answer for.
+    /// </remarks>
+    /// <exception cref="KeyNotFoundException">No rule has this name.</exception>
+    public async Task<RuleResult> RunNamedAsync(string name, IReadOnlyDictionary<string, object?> context)
+    {
+        var result = await TryRunNamedAsync(name, context).ConfigureAwait(false);
+        if (result is null)
         {
             throw new KeyNotFoundException($"No rule named '{name}' in this engine");
         }
 
-        return rule.EvaluateAsync(context);
+        return result;
     }
 
     /// <summary>
-    /// Evaluates every rule sharing a group label. Never short-circuits.
+    /// Evaluates a group, or returns <c>null</c> if no such group exists.
     /// </summary>
-    /// <exception cref="KeyNotFoundException">No rule carries this label.</exception>
     /// <remarks>
     /// <para>
-    /// An unknown group throws rather than returning a vacuous pass, matching
-    /// <see cref="RunNamedAsync"/>. A group exists only because some rule
-    /// declared it, so an empty-but-real group is not representable and a
-    /// lookup matching nothing can only be a typo or a stale name. Returning a
-    /// pass there would mean a misspelled group silently approves.
+    /// This is the primitive; <see cref="RunGroupAsync"/> is a two-line
+    /// assertion on top of it. See <see cref="TryRunNamedAsync"/> for when
+    /// reaching for it is right — the short version is that the engine cannot
+    /// know whether an absent group means "no constraint applies here" or "the
+    /// configuration is broken", and only the caller can.
     /// </para>
     /// <para>
-    /// This is the one place the package is strict. Emptiness — a set you were
-    /// handed that happened to be empty — still folds to its identity; absence
-    /// is an error. Use <see cref="GroupNames"/> to check first if a group may
-    /// legitimately be absent.
+    /// <c>null</c> means <i>absent</i>, never <i>vacuously passed</i>. A group
+    /// exists only because some rule declared it, so an empty-but-real group is
+    /// not representable, and a lookup matching nothing can only be a typo or a
+    /// stale name. Returning a passing <see cref="RunResult"/> here would mean
+    /// a misspelled group silently approves.
     /// </para>
     /// </remarks>
-    public async Task<RunResult> RunGroupAsync(string group, IReadOnlyDictionary<string, object?> context)
+    public async Task<RunResult?> TryRunGroupAsync(string group, IReadOnlyDictionary<string, object?> context)
     {
         if (!_byGroup.TryGetValue(group, out var rules) || rules.Count == 0)
         {
-            throw new KeyNotFoundException($"No rules in group '{group}' in this engine");
+            return null;
         }
 
         var results = new List<RuleResult>();
@@ -110,5 +151,26 @@ public sealed class RulesEngine
         }
 
         return new RunResult(results.TrueForAll(r => r.Passed), results);
+    }
+
+    /// <summary>
+    /// Evaluates every rule sharing a group label. Never short-circuits.
+    /// </summary>
+    /// <remarks>
+    /// The strict form, and the one to reach for by default. Use
+    /// <see cref="TryRunGroupAsync"/> when absence is a state your own domain
+    /// has an answer for. This is the one place the package is strict:
+    /// emptiness folds to an identity, absence is an error.
+    /// </remarks>
+    /// <exception cref="KeyNotFoundException">No rule carries this label.</exception>
+    public async Task<RunResult> RunGroupAsync(string group, IReadOnlyDictionary<string, object?> context)
+    {
+        var result = await TryRunGroupAsync(group, context).ConfigureAwait(false);
+        if (result is null)
+        {
+            throw new KeyNotFoundException($"No rules in group '{group}' in this engine");
+        }
+
+        return result;
     }
 }

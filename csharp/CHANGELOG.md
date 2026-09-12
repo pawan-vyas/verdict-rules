@@ -16,7 +16,10 @@ its guarantees, with the tests that prove them, and nothing else yet.
   `OrRule([])` fails.
 - Unknown rule names and unknown groups throw `KeyNotFoundException` rather
   than returning a vacuous pass.
-- `RulesEngine.RuleNames` / `GroupNames` for checking before calling.
+- `RulesEngine.TryRunNamedAsync` / `TryRunGroupAsync`, returning `null` rather
+  than throwing when nothing matches — the primitives the throwing forms are
+  built on. `null` means absent, never failed.
+- `RulesEngine.RuleNames` / `GroupNames` for enumerating an engine.
 - `net8.0` and `netstandard2.1`, trimmable, AOT-compatible, zero runtime
   dependencies.
 - `[DebuggerDisplay]` and a debugger type proxy so a nested result tree is

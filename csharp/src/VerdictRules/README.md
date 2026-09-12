@@ -60,8 +60,19 @@ Console.WriteLine(verdict.Detail); // 'score_ok' failed: 55 vs 60
   unknown rule name or group throws `KeyNotFoundException`. A group exists only
   because some rule declared it, so a lookup matching nothing can only be a
   mistake — and a misspelled group silently approving is the worst failure an
-  eligibility check can have. Use `RuleNames` / `GroupNames` to check rather
-  than catch.
+  eligibility check can have.
+
+  When absence *is* expected, `TryRunNamedAsync`/`TryRunGroupAsync` return
+  `null` instead of throwing:
+
+  ```csharp
+  var result = await engine.TryRunGroupAsync("beta_checks", ctx);
+  var allowed = result?.Passed ?? true;   // absent means "no constraint here"
+  ```
+
+  `null` means **absent, never failed** — a rule that exists and fails still
+  returns a `RuleResult` with `Passed` false. These are the primitives; the
+  throwing forms are assertions on top of them.
 - **`RuleResult.Data` is opaque** — only what actually ran, never padded, never
   flattened.
 - **Zero runtime dependencies.**
