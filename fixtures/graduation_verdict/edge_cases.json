@@ -1,6 +1,6 @@
 {
   "vacuous_pass": {
-    "note": "Empty curriculum, no elective requirement. Proves AndRule([]) passes vacuously and a zero threshold is satisfiable by zero electives \u2014 the polarity that is easy to get backwards. With no subjects, no group exists at all, so run_group must raise rather than report a vacuous pass.",
+    "note": "Empty curriculum, no elective requirement. Proves AndRule([]) passes vacuously and a zero threshold is satisfiable by zero electives -- the polarity that is easy to get backwards. With no subjects, no group exists at all, so run_group must raise rather than report a vacuous pass.",
     "curriculum": {
       "elective_minimum": 0,
       "subjects": []

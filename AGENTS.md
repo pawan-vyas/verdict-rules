@@ -244,6 +244,20 @@ each language's own `AGENTS.md` adds the syntax-specific detail on top:
   code as it stands today; it never points at a ticket number, a
   project-tracker link, or "see task NNNN," which means nothing outside
   whatever system generated it and rots the moment that system does.
+- **No em-dash (or other non-ASCII typographic punctuation) inside a
+  data or config value** — a JSON field, a YAML value a tool parses or
+  displays (a workflow input's `description:`, a manifest field),
+  anything meant for machine consumption rather than a human reading
+  source. Use a plain ASCII double-hyphen (`--`) instead. This is the
+  same shape as the mermaid-diagram skill's own emoji rule: fine, even
+  expected, in prose docs and code comments (that's this whole repo's
+  house style) — but not in a value another tool parses. Python's own
+  `json.dump` with its default `ensure_ascii=True` would otherwise
+  escape one to `—`, which is not a bug (every conformant parser
+  decodes it identically to the raw character) but is genuinely opaque
+  to someone reading raw JSON who doesn't recognize the escape. A plain
+  ASCII value sidesteps that entirely, and sidesteps trusting every
+  consumer's own JSON/YAML library to round-trip Unicode identically.
 - **Every doc opens with a blockquote framing** right under its title —
   a one-paragraph "what this covers, why it exists" statement in `>`
   form, for the same immediate visual emphasis, before the first `##`
