@@ -123,15 +123,24 @@ matters:
   classes exist (see
   [`architecture.md`](architecture.md#execution-model-sequential-not-concurrent)).
 - **Vacuous truth has a polarity, and it's easy to get backwards.**
-  `AndRule([])` passes, `OrRule([])` fails, `RulesEngine.run_group()`
-  on an unknown group passes (an empty result set, same as `all([])` in
-  plain Python). Every one of these has a dedicated test today
-  (`test_empty_rule_list_vacuously_passes`,
-  `test_empty_rule_list_vacuously_fails`,
-  `test_unknown_group_vacuously_passes`) precisely because "empty means
-  pass" and "empty means fail" are both defensible in isolation and
-  only one is correct per class — a new composite or run mode needs the
-  same explicit test, not an assumption.
+  `AndRule([])` passes, `OrRule([])` fails. Both have a dedicated test
+  today (`test_empty_rule_list_vacuously_passes`,
+  `test_empty_rule_list_vacuously_fails`) precisely because "empty means
+  pass" and "empty means fail" are both defensible in isolation and only
+  one is correct per class — a new composite or run mode needs the same
+  explicit test, not an assumption.
+- **Absence is not emptiness, and gets the opposite treatment.** An
+  unknown rule name or group label is a *lookup that matched nothing*,
+  not an empty set: a group exists only because some rule declared it,
+  so nothing matching can only be a typo or a stale name.
+  `run_named`/`run_group` raise (`test_unknown_group_raises`,
+  `test_unknown_group_throws`), while `try_run_named`/`try_run_group`
+  return `None` for the same lookup (`TestTryLookups`). **Both halves
+  need testing**: an unknown lookup returning a *pass* is the failure
+  this distinction prevents, and a `try_` form that raised would defeat
+  its only purpose. So does the distinction between `None` and
+  `passed=False` — collapsing them makes a typo indistinguishable from
+  a legitimate rejection.
 - **`run_all`/`run_group` never short-circuit — prove the opposite of
   the point above.** `test_does_not_short_circuit_unlike_and_rule`
   asserts every rule's name shows up in `results`, even after an

@@ -20,6 +20,47 @@ See `docs/maintenance.md`'s "How this package is released and consumed"
 section for both release procedures, and each language's own
 `AGENTS.md` for what counts as a breaking change in that language.
 
+## skill-v0.2.0 (2026-09-12)
+
+- Documents `try_run_named`/`try_run_group` in `core-concepts.md`, and
+  the framing that matters: they are the primitives, and the raising
+  forms are assertions on top.
+- `gotchas.md` now warns against reaching for the `try_` forms to avoid
+  thinking about absence, which is the way they will be misused.
+- `testing-patterns.md` asks for both halves to be tested, and for
+  `None` to be distinguished from `passed=False`.
+
+## python-v0.2.0 (2026-09-12)
+
+- **Added `RulesEngine.try_run_named()` and `try_run_group()`**, which
+  return `None` instead of raising when nothing matches. `None` means
+  *absent*, never *failed* — a rule that exists and fails is still a
+  `RuleResult` with `passed=False`.
+
+  These exist because `0.1.1` made unknown lookups raise, and while that
+  is the right default it is not right for every caller. Absence is a
+  legitimate, expected state in several real situations — a rule set
+  that varies per tenant, an optional group behind a feature flag, a
+  name in configuration a deployment has not adopted yet — and what it
+  should *mean* differs per consumer. The engine cannot know whether an
+  absent group means "no constraint applies" or "the configuration is
+  broken", so it hands the decision back rather than guessing.
+
+- **`run_named()` and `run_group()` are unchanged in behaviour**, and are
+  now implemented as two-line assertions on top of the `try_` forms.
+  There is one lookup path rather than two implementations that could
+  drift. Prefer them by default: a `KeyError` in development is a typo
+  found in seconds, whereas the same typo behind
+  `try_run_group(...) or default_pass` is a rule set that silently
+  stopped being enforced.
+
+- `docs/extension.md` gains **Recipe 6**, working through the four real
+  shapes absence takes and why a library default would be wrong for
+  three of them.
+
+- The shared fixture now pins both halves for both lookups, so no
+  language port can ship the strict form without the lenient one.
+
 ## skill-v0.1.1 (2026-09-12)
 
 The AI-agent skill under `skills/verdict/`, which versions independently

@@ -245,16 +245,24 @@ class TestVacuousTruthEdgeCases:
         assert len(run_all.results) == expected["run_all"]["evaluated"], case_name
         assert run_all.passed == expected["run_all"]["passed"], case_name
 
-        for group, exp in expected["groups"].items():
-            if exp.get("unknown_group"):
-                # No subject carries this label, so the group does not exist.
-                # Absence is an error; only emptiness folds to an identity.
-                with pytest.raises(KeyError):
-                    await engine.run_group(group, student)
-                continue
-            group_result = await engine.run_group(group, student)
-            assert len(group_result.results) == exp["evaluated"], f"{case_name}/{group}"
-            assert group_result.passed == exp["passed"], f"{case_name}/{group}"
+        # Absence is reported two ways, and both are part of the contract:
+        # the strict form raises, the try_ form returns None. A port that
+        # shipped one without the other would fail here.
+        lookups = expected["lookups"]
+
+        group = lookups["unknown_group"]["name"]
+        if lookups["unknown_group"]["run_group_raises"]:
+            with pytest.raises(KeyError):
+                await engine.run_group(group, student)
+        if lookups["unknown_group"]["try_run_group_returns_null"]:
+            assert await engine.try_run_group(group, student) is None, case_name
+
+        rule = lookups["unknown_rule"]["name"]
+        if lookups["unknown_rule"]["run_named_raises"]:
+            with pytest.raises(KeyError):
+                await engine.run_named(rule, student)
+        if lookups["unknown_rule"]["try_run_named_returns_null"]:
+            assert await engine.try_run_named(rule, student) is None, case_name
 
 
 class TestBuildOnceApplyManyTimes:

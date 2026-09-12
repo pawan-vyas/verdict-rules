@@ -85,11 +85,23 @@ deliberate.
   `OrRule([])` fails. A port that raises here breaks the
   build-rules-from-configuration pattern, where "no rules configured"
   legitimately means "nothing to enforce".
-- **Unknown lookups raise.** With no subjects there is no `core` group,
-  so `run_group("core")` must raise rather than report zero results and
-  a vacuous pass — a group exists only because a rule declared it, so a
-  lookup matching nothing can only be a typo or a stale name. The
-  fixture records this as `{"unknown_group": true}`.
+- **Unknown lookups signal absence — two ways, both required.** With no
+  subjects there is no `core` group, so `run_group("core")` must raise
+  rather than report zero results and a vacuous pass. `try_run_group`
+  must return null for the same lookup. Both are pinned, for rules as
+  well as groups, so a port cannot ship the strict form without the
+  lenient one or the reverse:
+
+  ```json
+  "lookups": {
+    "unknown_group": { "run_group_raises": true, "try_run_group_returns_null": true },
+    "unknown_rule":  { "run_named_raises": true, "try_run_named_returns_null": true }
+  }
+  ```
+
+  Null means *absent*, never *vacuously passed* — a group exists only
+  because a rule declared it, so a lookup matching nothing can only be a
+  typo or a stale name.
 
 A port that treats these the same — permissive for both, or strict for
 both — is wrong in one direction or the other.

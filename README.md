@@ -24,70 +24,81 @@ verdict, and run that verdict against whatever facts a caller hands it
 a permission, or a discount. It only knows how to ask a rule "did you
 pass?" and combine the answers honestly.
 
+```python
+from verdict import AndRule, FunctionRule, RuleResult
+
+async def under_limit(ctx):
+    return RuleResult("under_limit", ctx["used"] < ctx["quota"])
+
+async def in_good_standing(ctx):
+    return RuleResult("in_good_standing", ctx["strikes"] == 0)
+
+allowed = AndRule("allowed", [
+    FunctionRule("under_limit", under_limit),
+    FunctionRule("in_good_standing", in_good_standing),
+])
+
+verdict = await allowed.evaluate({"used": 3, "quota": 10, "strikes": 1})
+verdict.passed   # False
+verdict.detail   # "'in_good_standing' failed"
+```
+
+That is the whole library in one screen. What it buys you is not the
+composition — you could write that yourself in an afternoon — but the
+guarantee underneath it:
+
 ```mermaid
 graph LR
     Ctx[/"📥 context<br/>(plain dict)"/]
-    RuleA{"✅ Rule: under_limit"}
-    RuleB{"✅ Rule: in_good_standing"}
-    Combine{"🔀 AndRule<br/>(short-circuits)"}
-    Engine[["⚙️ RulesEngine"]]
-    Out("📤 RuleResult")
+    Comp{"🔀 AndRule"}
+    R1("✅ under_limit<br/>passed")
+    R2("❌ in_good_standing<br/>failed")
+    R3("⏭️ any_later_rule<br/>never evaluated")
+    Out("📤 RuleResult<br/>passed=False")
 
-    %% Link 0: context -> RuleA
-    Ctx -->|"[1]<br/>reads facts"| RuleA
-    %% Link 1: context -> RuleB
-    Ctx -->|"[2]<br/>reads facts"| RuleB
-    %% Link 2: RuleA -> Combine
-    RuleA -->|"[3]<br/>passed=True"| Combine
-    %% Link 3: RuleB -> Combine
-    RuleB -->|"[4]<br/>passed=True"| Combine
-    %% Link 4: Combine -> Engine
-    Combine -->|"[5]<br/>one composite rule"| Engine
-    %% Link 5: Engine -> Out
-    Engine -->|"[6]<br/>run_all / run_named / run_group"| Out
+    %% Link 0: context -> AndRule
+    Ctx -->|"[1]<br/>facts in"| Comp
+    %% Link 1: AndRule -> R1
+    Comp -->|"[2]<br/>evaluates"| R1
+    %% Link 2: AndRule -> R2
+    Comp -->|"[3]<br/>evaluates"| R2
+    %% Link 3: AndRule -> R3
+    Comp -.->|"[4]<br/>stops here<br/>(never starts)"| R3
+    %% Link 4: R2 -> Out
+    R2 -->|"[5]<br/>verdict, with the reason"| Out
 
     style Ctx fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
-    style RuleA fill:#B47EFF,stroke:#9654E8,stroke-width:2px,color:#000
-    style RuleB fill:#B47EFF,stroke:#9654E8,stroke-width:2px,color:#000
-    style Combine fill:#B47EFF,stroke:#9654E8,stroke-width:3px,color:#000
-    style Engine fill:#FFB84D,stroke:#E69500,stroke-width:3px,color:#000
+    style Comp fill:#B47EFF,stroke:#9654E8,stroke-width:3px,color:#000
+    style R1 fill:#8CE99A,stroke:#2F9E44,stroke-width:2px,color:#000
+    style R2 fill:#FF6B6B,stroke:#C92A2A,stroke-width:2px,color:#000
+    style R3 fill:#D0D0D0,stroke:#909090,stroke-width:2px,color:#000
     style Out fill:#51CF66,stroke:#37B24D,stroke-width:2px,color:#000
 
     %% Link Index:
-    %% 0: context -> Rule A (reads facts)
-    %% 1: context -> Rule B (reads facts)
-    %% 2: Rule A -> AndRule (sub-result)
-    %% 3: Rule B -> AndRule (sub-result)
-    %% 4: AndRule -> RulesEngine (as one named/grouped rule)
-    %% 5: RulesEngine -> RuleResult/RunResult (the answer)
+    %% 0: facts enter as a plain dict
+    %% 1: the first sub-rule is evaluated and passes
+    %% 2: the second is evaluated and fails
+    %% 3: everything after it is never started at all
+    %% 4: the verdict carries which rule failed and why
     linkStyle 0 stroke:#E0E0E0,stroke-width:2px
-    linkStyle 1 stroke:#E0E0E0,stroke-width:2px
-    linkStyle 2 stroke:#C9B3FF,stroke-width:2px
-    linkStyle 3 stroke:#C9B3FF,stroke-width:2px
-    linkStyle 4 stroke:#C9B3FF,stroke-width:3px
-    linkStyle 5 stroke:#FFCB7A,stroke-width:3px
+    linkStyle 1 stroke:#A9E8B5,stroke-width:2px
+    linkStyle 2 stroke:#FF9999,stroke-width:3px
+    linkStyle 3 stroke:#B0B0B0,stroke-width:2px,stroke-dasharray:3 3
+    linkStyle 4 stroke:#69DB7C,stroke-width:3px
 ```
 
-> **Reading the Diagram**:
-> 1. **Facts flow in as a plain `dict`** — Verdict never defines or
->    inspects that shape; the caller and its own rules agree on it
->    privately.
-> 2. **Each rule answers one question about those facts** — a `Rule` is
->    just anything with `name`/`group`/`evaluate()`; `FunctionRule` wraps
->    a plain predicate, the common case.
-> 3. **`AndRule`/`OrRule` combine rules into one verdict**, short-
->    circuiting the moment the outcome can no longer change — a failing
->    `AndRule` never evaluates a sub-rule that comes after the first
->    failure.
-> 4. **`RulesEngine` is what a caller actually holds onto** — it runs
->    named/grouped rules (or everything) against a context and hands
->    back a plain, immutable result: a fresh answer every call, never a
->    cached or mutated one.
+> **Short-circuiting is a contract here, not an optimisation.** Rules are
+> evaluated **sequentially, never concurrently**, so work after a decided
+> outcome doesn't merely get discarded — it never starts. That matters
+> the moment a rule does something: calls an API, takes a lock, writes an
+> audit row. A library that evaluated all three concurrently would return
+> the same `False` and be silently wrong.
 >
-> Nothing in this picture knows what the facts *mean* — that's the
-> point. See [`python/docs/samples/`](python/docs/samples/1_README.md)
-> for the same shape answering a rate-limit check, an access grant, or a
-> discount question, with zero changes to Verdict itself.
+> The rest follows from it. Facts are a plain `dict` Verdict never
+> inspects. A `Rule` is anything with `name`, `group` and
+> `evaluate()` — no base class, no registration. `RulesEngine` is the
+> diagnostic counterpart, for when you want every rule's answer rather
+> than the fastest one.
 
 ## Why it's shaped this way
 

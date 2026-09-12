@@ -21,12 +21,16 @@
         "evaluated": 0,
         "passed": true
       },
-      "groups": {
-        "core": {
-          "unknown_group": true
+      "lookups": {
+        "unknown_group": {
+          "name": "core",
+          "run_group_raises": true,
+          "try_run_group_returns_null": true
         },
-        "elective": {
-          "unknown_group": true
+        "unknown_rule": {
+          "name": "MATH101",
+          "run_named_raises": true,
+          "try_run_named_returns_null": true
         }
       }
     }
@@ -55,12 +59,16 @@
         "evaluated": 0,
         "passed": true
       },
-      "groups": {
-        "core": {
-          "unknown_group": true
+      "lookups": {
+        "unknown_group": {
+          "name": "core",
+          "run_group_raises": true,
+          "try_run_group_returns_null": true
         },
-        "elective": {
-          "unknown_group": true
+        "unknown_rule": {
+          "name": "MATH101",
+          "run_named_raises": true,
+          "try_run_named_returns_null": true
         }
       }
     }
