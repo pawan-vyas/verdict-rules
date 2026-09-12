@@ -8,12 +8,18 @@
 # The pinned verdict-rules version is load-bearing too: the skill says to fetch
 # deeper documentation at the version a project actually has, never from the
 # default branch, and that instruction is unexercisable without a version here.
+#
+# Keep this at a version that is ACTUALLY published and ACTUALLY tagged
+# (python-vX.Y.Z) — check both PyPI and the git tag before bumping it. A
+# changelog entry for a version that never went through the real release
+# workflow is not evidence it exists; pinning one here silently breaks the
+# fetch-at-the-installed-version instruction this fixture exists to test.
 [project]
 name = "storefront-api"
 version = "1.4.0"
 requires-python = ">=3.10"
 dependencies = [
-    "verdict-rules==0.2.1",
+    "verdict-rules==0.2.0",
 ]
 
 [build-system]
