@@ -58,6 +58,17 @@ SourceLink and `.snupkg` symbols are enabled so a consumer stepping into the
 package lands on real source. Both must be set *before* a version ships —
 released versions cannot be made debuggable retroactively.
 
+## Layout
+
+`csharp/src/<Project>/` is the .NET convention for a repository that may hold
+more than one project, and it is already what this uses — so a second package
+is a new directory under `src/` and nothing existing moves. Each project's
+manifest, README and changelog live together inside it.
+
+NuGet has no changelog-file concept: release notes come from the
+`PackageReleaseNotes` metadata property, which points at `CHANGELOG.md` rather
+than duplicating it.
+
 ## Before calling a change done
 
 ```

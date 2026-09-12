@@ -22,6 +22,10 @@
     <PackageProjectUrl>https://github.com/pawan-vyas/verdict-rules</PackageProjectUrl>
     <RepositoryUrl>https://github.com/pawan-vyas/verdict-rules</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+    <!-- NuGet surfaces release notes from metadata rather than from a file, so
+         this points at the changelog instead of duplicating it. A copy here
+         would drift the moment either side changed. -->
+    <PackageReleaseNotes>https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.0.1/csharp/src/VerdictRules/CHANGELOG.md</PackageReleaseNotes>
   </PropertyGroup>
 
   <!-- A consumer stepping into this package should land on real source, not a
