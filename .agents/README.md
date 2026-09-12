@@ -17,6 +17,7 @@
 | [`plans/`](plans/) | Multi-session plans, specs, playbooks, and design work in progress | Until the plan is executed or abandoned |
 | [`skills/`](skills/) | Vendored operations manuals an agent follows (`mermaid-diagrams`, `context-fence`), mirrored to `.claude/skills/` | Tool-owned — refreshed wholesale, never hand-edited |
 | [`scratch/`](scratch/) | Throwaway working material — research notes, logs, generated reports, scratch scripts | **Gitignored.** Until it has been read |
+| [`incidents/`](incidents/) | Mistakes worth not repeating: what failed silently, why the setup allowed it, what prevents a repeat | Indefinite |
 
 Add a sibling directory here when a genuinely new *kind* of durable
 agent material appears — not a subdirectory of one that already

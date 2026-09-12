@@ -41,6 +41,7 @@ Where things go:
 | Vendored operations manuals an agent follows | [`.agents/skills/`](.agents/skills/), mirrored to `.claude/skills/` |
 | Published documentation, for human readers | `docs/`, and each language's own `docs/` |
 | Throwaway docs, logs, scripts, research notes | [`.agents/scratch/`](.agents/scratch/) (gitignored) |
+| Mistakes worth not repeating | [`.agents/incidents/`](.agents/incidents/) |
 
 `.agents/` is the harness-neutral home for everything an agent
 produces that outlives a session — `memory/` for what is *already
@@ -111,6 +112,15 @@ nothing there is committed — that is the point. Research notes, logs,
 generated reports, scratch scripts, anything that stops mattering once
 it has been read. If something there turns out to be durable, promote
 it to `.agents/memory/` or `.agents/plans/` rather than leaving it.
+
+**Write an incident when something fails silently or structurally.**
+[`.agents/incidents/`](.agents/incidents/) records mistakes so the next person
+or agent does not rediscover them — not a blame log and not a changelog. A
+mistake earns a file when it failed while everything looked green, when the
+setup made it easy so care alone will not prevent a repeat, or when it cost a
+force-push or a republish. Read the index there before doing anything
+irreversible: publishing, force-pushing, or editing a release. Each entry ends
+with what prevents a repeat, which is the part that makes it worth writing.
 
 **Don't create parallel planning docs.** In-flight work and next steps
 go in `HANDOFF.md` §3; anything longer-lived goes in `.agents/plans/`
