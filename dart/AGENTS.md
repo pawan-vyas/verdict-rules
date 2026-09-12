@@ -34,6 +34,24 @@ object carrying `name`, `group` and `evaluate` is not thereby a `Rule`, where
 Python's `Protocol` and TypeScript's structural interfaces would accept it.
 That narrow difference is the honest statement.
 
+## Layout
+
+`dart/` holds *distributions* rather than being one: the published package is
+`packages/verdict_rules/`, with its pubspec, README, changelog, `lib/`, `test/`
+and `example/` together. A second package is a new sibling directory under
+`packages/` and nothing existing moves.
+
+**There is deliberately no root `pubspec.yaml` yet.** Pub workspaces are the
+matching convention, but they require an SDK floor of `^3.6.0`, and this
+package targets `>=3.0.0` to stay reachable. Raising the floor to gain shared
+resolution across a single package would cost reach and buy nothing. The
+directory layout is adopted now — it is the part that makes a second package
+additive — and the workspace root is added the day a second package actually
+exists, which is also the day the shared lockfile starts paying for itself.
+
+Until then, run every command from inside the package directory rather than
+from `dart/`.
+
 ## Conventions
 
 - `Rule` is an `abstract interface class` — implemented, never extended.
@@ -50,7 +68,7 @@ That narrow difference is the honest statement.
 ## Before calling a change done
 
 ```
-cd dart && dart analyze && dart test
+cd dart/packages/verdict_rules && dart analyze && dart test
 ```
 
 `dart analyze` must report no issues — `analysis_options.yaml` enables
