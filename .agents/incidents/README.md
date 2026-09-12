@@ -47,3 +47,4 @@ note; an incident with one is an improvement.
 | [002](002-build-output-committed-across-branches.md) | 436 build artefacts committed across two branches | Root-level `.gitignore` |
 | [003](003-pushed-mid-rebase.md) | Pushed while a rebase was unresolved | Verify state before pushing |
 | [004](004-research-published-to-public-surfaces.md) | Competitive research written into public issues and PRs | Standing rule + memory |
+| [005](005-valid-yaml-invalid-shell.md) | A release workflow shipped with an unterminated quote | `bash -n` over every `run:` block |
