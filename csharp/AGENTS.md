@@ -109,6 +109,29 @@ recorded here as an open question with its implications stated, to be decided
 and finalized before this package's `0.0.1` actually publishes to NuGet — not
 before this branch's PR opens.
 
+## Worth watching once evals exist here: no local source to peek at
+
+A Python skill eval was observed opening the installed package's own `.py`
+source to double-check an exact signature, despite that signature already
+being fully documented in `agent-notes.md`'s "API, in one screen" section.
+Checked afterward: nothing in the final code diverged from what was already
+documented — the read added nothing, only cost tokens.
+
+Whether that is a genuine trust gap (the agent does not believe a doc's
+stated signature over ground truth) or just an artifact of Python installing
+real, readable `.py` source one `Read` call away is unresolved by a
+Python-only observation — the low cost of checking is itself a confound.
+NuGet ships a compiled DLL, not source; the only path to real source is
+SourceLink fetching from GitHub through a debugger, a materially
+higher-friction, network-dependent act, not a local file read. A C# eval
+reaching for that anyway would be real evidence of a trust gap rather than
+convenience; not reaching for it would settle nothing either way, since it
+stays consistent with "just convenient when free." Worth watching once this
+language's own evals exist (see `docs/adding-a-language.md` Stage 4) — not
+something to guard against. Restricting an agent from reading its own public
+source, for a benefit this hard to define, would cost real flexibility for
+no clear correctness gain.
+
 ## Before calling a change done
 
 ```
