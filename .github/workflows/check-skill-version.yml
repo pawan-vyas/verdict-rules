@@ -27,6 +27,10 @@ on:
 
 jobs:
   check:
+    # This name is what branch protection lists as a required check, and what
+    # a reader sees on a pull request — so it says what passing means, not just
+    # which job ran. Without it GitHub falls back to the job id, "check".
+    name: Skill version bumped or not needed
     runs-on: ubuntu-latest
     env:
       MANIFEST: .claude-plugin/plugin.json
