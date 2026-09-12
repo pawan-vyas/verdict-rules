@@ -6,7 +6,7 @@
 # tests had passed. Publishing is irreversible on every registry we target, so
 # a release that has not been tested is a version number burned.
 #
-# Now: bump python/pyproject.toml, add the changelog entry, merge. This detects
+# Now: bump python/packages/verdict-rules/pyproject.toml, add the changelog entry, merge. It detects
 # the new version, runs the full matrix, publishes, and only then tags. Each
 # job needs the one before it, so nothing reaches PyPI unless every supported
 # Python version passed first.
@@ -41,11 +41,11 @@ jobs:
         id: check
         run: |
           set -euo pipefail
-          version="$(grep -m1 '^version = ' python/pyproject.toml | sed -E 's/version = "(.*)"/\1/')"
+          version="$(grep -m1 '^version = ' python/packages/verdict-rules/pyproject.toml | sed -E 's/version = "(.*)"/\1/')"
           tag="python-v${version}"
 
           if [ -z "$version" ]; then
-            echo "::error file=python/pyproject.toml::Could not read a version."
+            echo "::error file=python/packages/verdict-rules/pyproject.toml::Could not read a version."
             exit 1
           fi
 
@@ -65,7 +65,7 @@ jobs:
       # and no release — and neither PyPI nor npm lets you take one back.
       - name: The changelog section exists before anything is published
         if: steps.check.outputs.should-release == 'true'
-        run: python3 scripts/changelog_section.py python/CHANGELOG.md "${{ steps.check.outputs.version }}" > /dev/null
+        run: python3 scripts/changelog_section.py python/packages/verdict-rules/CHANGELOG.md "${{ steps.check.outputs.version }}" > /dev/null
 
   test:
     name: Full suite before anything is published
@@ -96,9 +96,14 @@ jobs:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.0.1
 
+      # --package is required, not optional. python/ is a workspace root with
+      # no [project] of its own, so a bare `uv build` there tries to build the
+      # root as a package and emits a garbage `packages-0.0.0` artifact instead
+      # of failing cleanly. Naming the member is what makes this correct — and
+      # is also right in principle, since each package releases independently.
       - name: Build
         working-directory: python
-        run: uv build
+        run: uv build --package verdict-rules
 
       - uses: actions/upload-artifact@v4
         with:
@@ -142,7 +147,7 @@ jobs:
     with:
       tag: ${{ needs.detect.outputs.tag }}
       version: ${{ needs.detect.outputs.version }}
-      changelog-path: python/CHANGELOG.md
+      changelog-path: python/packages/verdict-rules/CHANGELOG.md
       title: Python v${{ needs.detect.outputs.version }}
       artifact-name: python-dist
 

@@ -128,8 +128,18 @@ belongs in `.agents/scratch/`, not in the repo's public surfaces.
 
 ## Stage 1 · Minimal correct
 
-- [ ] Directory scaffolded with the language's manifest and its own
-      `AGENTS.md`, mirroring `python/AGENTS.md`'s role
+- [ ] **`<lang>/packages/<distribution>/`** scaffolded, holding that package's
+      manifest, README, changelog, source and tests. The language directory
+      holds distributions rather than being one, so adding a second package is
+      a new directory and nothing existing moves. Use that ecosystem's own
+      multi-package convention — uv and npm workspaces both use `packages/*`,
+      .NET uses `src/<Project>/`. Language-level material (`AGENTS.md`, shared
+      examples) stays at the language root
+- [ ] Workspace *tooling* adopted only where it earns its place now. Python's
+      root exists because `examples/` sits outside any package and still has to
+      import one; Dart's is deferred because pub workspaces would raise its SDK
+      floor from 3.0 to 3.6 for no present gain. Adding a root later is itself
+      additive
 - [ ] All seven types: `Rule`, `FunctionRule`, `AndRule`, `OrRule`,
       `RulesEngine`, `RuleResult`, `RunResult`
 - [ ] **Sequential evaluation**, in a plain loop with `await` — never

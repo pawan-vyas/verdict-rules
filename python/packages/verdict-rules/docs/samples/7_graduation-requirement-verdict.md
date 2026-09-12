@@ -18,7 +18,7 @@
 
 This is the one sample in this set backed by a real, tested project
 rather than a markdown code block — see
-[`../../examples/graduation_verdict/`](../../examples/graduation_verdict/README.md)
+[`../../examples/graduation_verdict/`](../../../../examples/graduation_verdict/README.md)
 for the full architecture (both diagrams, the naive-way contrast this
 design replaces), the complete implementation, a runnable demo across
 8 varied students, and the test suite that doubles as an integration/
@@ -72,12 +72,12 @@ graph TB
 > built rules then go on to serve two separate purposes from the same
 > objects — a diagnostic engine for lookups and reports, and a fast
 > composite for the actual pass/fail decision — see
-> [`../../examples/graduation_verdict/docs/architecture.md`](../../examples/graduation_verdict/docs/architecture.md)
+> [`../../examples/graduation_verdict/docs/architecture.md`](../../../../examples/graduation_verdict/docs/architecture.md)
 > for that second diagram and the full reasoning behind it.
 
 ## Related
 
-- [`../../examples/graduation_verdict/`](../../examples/graduation_verdict/README.md) —
+- [`../../examples/graduation_verdict/`](../../../../examples/graduation_verdict/README.md) —
   the full project: architecture, implementation, tests, and a runnable
   demo across 8 varied students.
 - [`2_dynamic-discounts.md`](2_dynamic-discounts.md) — a smaller
@@ -86,10 +86,10 @@ graph TB
 - [`6_data-driven-rule-sets.md`](6_data-driven-rule-sets.md) — the
   simpler version of "build rules from stored config," with one
   uniform rule shape per row instead of three.
-- [`../extension.md`](../../../docs/extension.md#recipe-2--a-genuinely-new-rule-shape) —
+- [`../extension.md`](../../../../../docs/extension.md#recipe-2--a-genuinely-new-rule-shape) —
   the `ThresholdRule`/`AtLeastNRule` recipe this sample's elective
   requirement is a real instance of.
-- [`../architecture.md`](../../../docs/architecture.md#three-ways-to-run-rules-and-when-each-is-the-right-one) —
+- [`../architecture.md`](../../../../../docs/architecture.md#three-ways-to-run-rules-and-when-each-is-the-right-one) —
   the general reasoning behind reaching for `run_named`/`run_group`/
   `run_all` vs. a bare composite, applied here to three concrete
   callers at once.

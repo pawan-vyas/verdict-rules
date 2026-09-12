@@ -158,7 +158,7 @@ async def promotion_checklist(customer_context: dict):
 This is the one case where reaching for a bare `AndRule` and reaching
 for the engine's `run_all()` produce genuinely different, both-correct
 answers depending on what the caller actually needs — see
-[`../architecture.md`](../../../docs/architecture.md#three-ways-to-run-rules-and-when-each-is-the-right-one)
+[`../architecture.md`](../../../../../docs/architecture.md#three-ways-to-run-rules-and-when-each-is-the-right-one)
 for the general rule of thumb.
 
 ## Related

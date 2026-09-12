@@ -71,7 +71,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # requires-python floor is 3.10 (see python/pyproject.toml) — the matrix
+        # requires-python floor is 3.10 (see python/packages/verdict-rules/pyproject.toml) — the matrix
         # covers that floor through the newest stable release, not just whatever
         # the dev machine happens to run.
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]

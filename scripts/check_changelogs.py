@@ -28,8 +28,8 @@ from pathlib import Path
 PACKAGES = [
     (
         "Python",
-        "python/pyproject.toml",
-        "python/CHANGELOG.md",
+        "python/packages/verdict-rules/pyproject.toml",
+        "python/packages/verdict-rules/CHANGELOG.md",
         lambda p: re.search(r'^version = "(.+?)"', p.read_text(), re.M).group(1),
     ),
     (

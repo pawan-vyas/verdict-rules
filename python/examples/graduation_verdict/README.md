@@ -6,7 +6,7 @@
 > breadth of `verdict` at once: heterogeneous `Rule` shapes built from
 > external policy data, a custom `Rule` type, and all three
 > `RulesEngine` run modes serving three different real callers. See
-> [`docs/samples/7_graduation-requirement-verdict.md`](../../docs/samples/7_graduation-requirement-verdict.md)
+> [`docs/samples/7_graduation-requirement-verdict.md`](../../packages/verdict-rules/docs/samples/7_graduation-requirement-verdict.md)
 > for the original framing question this project answers.
 
 ## Run it

@@ -3,7 +3,7 @@
 
 > Full, tested mini-projects behind verdict's more comprehensive
 > samples — real code with its own test suite and docs, not just
-> markdown snippets. See [`../docs/samples/`](../docs/samples/1_README.md)
+> markdown snippets. See [`../docs/samples/`](../packages/verdict-rules/docs/samples/1_README.md)
 > for the smaller, doc-only samples; a project lands here instead of
 > there when a sample outgrows a markdown code block and earns its own
 > regression tests.

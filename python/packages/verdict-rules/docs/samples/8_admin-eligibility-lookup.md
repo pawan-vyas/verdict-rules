@@ -254,7 +254,7 @@ being merged for convenience.
 
 ## Related
 
-- [`../extension.md`](../../../docs/extension.md#recipe-6--decide-for-yourself-what-a-missing-rule-set-means) —
+- [`../extension.md`](../../../../../docs/extension.md#recipe-6--decide-for-yourself-what-a-missing-rule-set-means) —
   the general absence-vs-emptiness guidance this sample is one concrete
   instance of.
 - [`data-driven-rule-sets.md`](6_data-driven-rule-sets.md) — building the
