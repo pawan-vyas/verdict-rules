@@ -22,6 +22,22 @@ JS/TS-specific rules, on top of the repo-root `AGENTS.md`. Read that first.
 - **`RuleResult.data`** holds only what actually ran. Never padded, never
   flattened into the parent's level.
 
+## Layout
+
+`js/` is a **workspace root, not a package** — its `package.json` is private,
+carries no `version`, and exists only to declare `workspaces: ["packages/*"]`
+and fan scripts out across them. Everything published lives in
+`packages/<name>/`, with its manifest, README, changelog, sources and tests
+together in that one directory.
+
+A second distribution is therefore a new directory under `packages/`, matched
+by the existing glob — nothing at the root is edited to add one. npm keeps a
+single `package-lock.json` at the workspace root covering every workspace, so
+that file stays here and never inside a package.
+
+Run scripts from the root (`npm test` fans out to every workspace) or scope one
+with `npm test -w verdict-rules`.
+
 ## Conventions
 
 - `Rule` stays a **structural `interface`**, never an abstract class. The point
@@ -59,6 +75,12 @@ and rewording a message then becomes a breaking change.
 
 ```
 cd js && npm run typecheck && npm run build && npm test
+```
+
+Each of those fans out across every workspace. To scope one package:
+
+```
+npm run build -w verdict-rules
 ```
 
 ## Tests prove behaviour, not just booleans
