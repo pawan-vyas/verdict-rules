@@ -253,4 +253,4 @@ else
   note "No --harness given — vendored the skill only (.agents/skills/verdict/ and .claude/skills/verdict/), no harness-specific pointer files written. Pass --harness=<name[,name...]|all> to also wire native rules files for a specific harness."
 fi
 
-note "Done. The vendored skill (.agents/skills/verdict/ and .claude/skills/verdict/) carries the full skill locally (no installation required to follow it); per-harness pointers wire up richer native surfaces where one exists."
+note "Done. The vendored skill (.agents/skills/verdict/ and .claude/skills/verdict/) carries the workflow, the execution-model guarantees and the extension recipes locally — enough to write correct verdict code with no network. Deeper material (the testing guide, quickstart, samples and worked example) is pulled on demand at the version a project has installed; see the skill's own SKILL.md. Per-harness pointers wire up richer native surfaces where one exists."

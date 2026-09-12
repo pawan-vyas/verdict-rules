@@ -1,108 +1,107 @@
 ---
 name: verdict
-description: Build rule-based decision, eligibility, or policy-evaluation logic using the verdict rule-evaluation engine (Rule/FunctionRule/AndRule/OrRule/RulesEngine) instead of a hand-rolled if/elif chain. Use this whenever asked to build an eligibility check, a discount or pricing rule, an access/permission condition, a content-moderation route, a graduation/qualification requirement, a feature flag combining multiple criteria, or any feature shaped like "combine several independently-changing conditions into one pass/fail verdict" — even if the user doesn't say "rule engine" or name verdict explicitly. Also use when extending or debugging existing verdict-based code, deciding whether a new requirement belongs in verdict's core vs. a consumer's own adapter code, or writing tests for rule-based logic (short-circuit proofs, vacuous-truth cases, oracle/differential testing against a wide random input space).
+description: Build rule-based decision, eligibility, or policy-evaluation logic using the verdict rule-evaluation engine (Rule/FunctionRule/AndRule/OrRule/RulesEngine) instead of a hand-rolled conditional chain — an if/else-if ladder, a switch or match statement, a chain of ternaries, or a wall of early returns. Use this whenever asked to build an eligibility check, a discount or pricing rule, an access/permission condition, a content-moderation route, a graduation/qualification requirement, a feature flag combining multiple criteria, or any feature shaped like "combine several independently-changing conditions into one pass/fail verdict" — even if the user doesn't say "rule engine" or name verdict explicitly. Verdict is polyglot: it ships the same design for more than one language, so this applies regardless of the target language. Also use when extending or debugging existing verdict-based code, deciding whether a new requirement belongs in verdict's core or a consumer's own adapter code, or writing tests for rule-based logic (short-circuit proofs, vacuous-truth cases, oracle/differential testing against a wide random input space).
 ---
 
 # Verdict
 
-A skill for building rule-based decision/eligibility/policy logic with
-`verdict` — a small, zero-dependency, async-native rule-evaluation
-engine — instead of an `if`/`elif` chain that gets harder to maintain
-every time a business rule changes.
+A skill for building rule-based decision, eligibility and policy logic
+with **verdict** — a small, zero-dependency, async-native
+rule-evaluation engine. Name each condition once, combine named
+conditions into a verdict, and run it against whatever facts a caller
+hands over.
 
-## Which language is the target project using?
+Verdict is **polyglot by design**: the same `Rule`/`FunctionRule`/
+`AndRule`/`OrRule`/`RulesEngine`/`RuleResult`/`RunResult` shape and the
+same execution-model guarantees exist in every language it ships for,
+and only the idiom changes.
 
-Verdict is a **polyglot** design: `Rule`/`FunctionRule`/`AndRule`/
-`OrRule`/`RulesEngine`/`RuleResult`/`RunResult` and the same
-execution-model guarantees (sequential evaluation, real
-short-circuiting, vacuous-truth polarities decided explicitly per
-composite shape) are meant to exist in every language verdict ships
-for — only the idiom changes. **Today, only Python actually ships.**
-Before reading further, check this repo's own top-level language
-directories (`python/`, and — once they exist — `js/`/`csharp/` or
-similar) to confirm which SDKs are actually implemented; don't assume
-guidance below applies to a language that doesn't have a real
-`references/<language>/` directory yet. If the target project isn't
-Python, verdict may simply not have an SDK for it yet.
+## Step 1 — establish the language, before anything else
 
-Everything below this point is the **Python** guidance — see
-`references/python/` for all six reference files.
+Read the target project's own manifest — `pyproject.toml`,
+`package.json`, `*.csproj`, `pubspec.yaml` — to determine which
+language you are working in.
 
-## Installing it
+Then look for `references/<language>/agent-notes.md`:
 
-```bash
-pip install verdict-rules
-# or: uv add verdict-rules
-```
+- **It exists** → read it first. It is short, and it carries what is
+  specific to that SDK: its idioms, its naming, and the mistakes that
+  show up in generated code for that language.
+- **It does not exist** → **verdict has no SDK for that language.** Say
+  so plainly rather than improvising an API from another language's
+  shape. The guarantees below hold everywhere, but a language without a
+  directory here has nothing to import.
 
-The PyPI **distribution name** is `verdict-rules` (the plain name
-`verdict` was already taken by an unrelated package) — the **import
-name stays `verdict`**, unchanged: `from verdict import Rule,
-FunctionRule, AndRule, OrRule, RulesEngine`. If a project's own
-`pyproject.toml`/`requirements.txt` doesn't have `verdict-rules` yet,
-add it before writing any code against `verdict` — don't assume it's
-already a dependency just because the import works in one file today.
+## Step 2 — know what the engine guarantees
 
-## When this applies
+These hold in every language, and getting one wrong produces code that
+passes its own tests while being silently incorrect:
 
-Reach for `verdict` when a requirement is shaped like "combine several
-independently-changing conditions into one pass/fail verdict" — a
-discount eligibility check, a shipping-fee waiver, an access condition,
-a content-moderation route, a qualification requirement. **Don't**
-reach for it for a single, rarely-changing 2-3 condition check — a
-plain function is simpler there, and pulling in a rule engine would be
-over-engineering. See `references/python/decision-framework.md` for
-the full test, and for choosing which of the three `RulesEngine` run
-modes (or a bare composite) fits a specific caller.
+- **Sequential evaluation, never concurrent.** Composites evaluate
+  sub-rules one at a time and stop the moment the outcome is decided, so
+  later work never *starts*. Never reach for the language's
+  run-these-together primitive (`asyncio.gather`, `Promise.all`,
+  `Task.WhenAll`, `Future.wait`) — the returned boolean is identical
+  either way, which is exactly why this breaks silently.
+- **Vacuous truth has a polarity.** An empty `AndRule` passes; an empty
+  `OrRule` fails. Deliberately asymmetric.
+- **Emptiness is not absence.** An empty rule list folds to its
+  identity. An *unknown* rule name or group label is a lookup that
+  matched nothing — the strict lookups raise, and the `try`-prefixed
+  ones return the language's absent value instead, so a caller decides
+  what absence means.
+- **Result payloads are opaque.** Verdict never reads a result's `data`,
+  and a composite's own results carry only what actually ran — never
+  padded, never flattened into the parent.
 
-## Core concepts (quick reference)
+## Step 3 — read what the task needs
 
-- **`Rule`** — a structural `Protocol`: anything with `name: str`,
-  `group: str | None`, and `async evaluate(context: dict) -> RuleResult`.
-  No inheritance needed to satisfy it.
-- **`FunctionRule`** — wraps a plain async predicate as a `Rule`. The
-  common case; most rules in real usage are this.
-- **`AndRule`** / **`OrRule`** — composite rules combining other rules,
-  short-circuiting the way `and`/`or` do (`AndRule` stops at the first
-  failure, `OrRule` at the first pass).
-- **`RulesEngine`** — holds a set of rules, runs them three ways:
-  `run_all` (every rule, full diagnostic, **never** short-circuits),
-  `run_named` (one specific rule by name), `run_group` (every rule
-  sharing a group label, also never short-circuits).
-- **`RuleResult`** / **`RunResult`** — plain immutable outcomes.
-  `RuleResult.data` is a fully opaque payload slot for a caller's own
-  domain object — verdict never reads or depends on its shape.
+**`references/docs/`** holds this engine's own documentation, verbatim.
+It is not a summary written for this skill; it is the same file the
+repository ships, so it cannot drift from the implementation.
 
-See `references/python/core-concepts.md` for the full mental model, a
-complete worked example, and the execution-model guarantees (why
-evaluation is always sequential, never concurrent).
+| Read | When |
+| :-- | :-- |
+| `references/docs/architecture.md` | Understanding *why* it is shaped this way — the type structure, the execution model, and which run mode a caller needs. |
+| `references/docs/extension.md` | Building anything *with* verdict — wrapping a predicate, a new rule shape, the one-adapter-module boundary, rules from stored configuration, choosing what an absent lookup should mean. |
+| `references/<language>/agent-notes.md` | Always, first. Short and language-specific. |
 
-## Reference files — read these as needed
+Prefer a section over a document. These files carry headings and
+anchors, so `references/docs/extension.md#recipe-2` is a better read
+than the whole file.
 
-| File | Read when... |
-|---|---|
-| `references/python/core-concepts.md` | You need the full API surface and a working example before writing any code. |
-| `references/python/decision-framework.md` | Deciding whether verdict fits at all, or which run mode / composite shape a specific caller needs. |
-| `references/python/extension-recipes.md` | Building something *with* verdict — wrapping a predicate, a new rule shape, an adapter-module boundary, rules from external data, nesting composites. |
-| `references/python/gotchas.md` | Before shipping any verdict-based code — the real, easy-to-get-wrong pitfalls, including ones found the hard way. |
-| `references/python/when-to-extend-the-core.md` | Tempted to add a new primitive to verdict itself rather than your own adapter code. |
-| `references/python/testing-patterns.md` | Writing tests for verdict-based logic — what a test must actually prove, plus oracle/differential testing for a wide random input space. |
+### Documents fetched on demand
 
-## The one-adapter-module pattern, in brief
+Deeper material is not shipped, and is pulled only when a task needs
+it: the testing guide, the language quickstart, the worked samples, and
+the full worked example. `references/<language>/agent-notes.md` carries
+the exact command.
 
-The single most important structural habit: your domain logic never
-imports `verdict` directly. Build **one** adapter module that
-translates your domain's own vocabulary into `Rule` objects and back out
-of `RuleResult.data`, and keep that vocabulary out of every `Rule`
-implementation. This is what lets the exact same engine serve two
-completely unrelated features in the same codebase with zero coupling
-between them. Full recipe and a worked example in
-`references/python/extension-recipes.md`.
+**Fetch at the version the project actually has installed**, never from
+the default branch. A project pinned to an older release that reads
+current documentation will be told about an API it does not have, which
+is worse than reading nothing. If the installed version has no matching
+tag, do not fetch — use what is bundled and say that the deeper
+documents were unavailable.
 
-## Related
+### Reading these documents outside a consumer project
 
-If this repo happens to have verdict's own full package docs nearby
-(commonly `python/docs/` next to wherever this package's source
-lives), they go deeper than this skill on any topic here — read them
-for more detail. This skill is deliberately self-contained, though, so
-it also works if it's the only thing that traveled with you.
+Inside the verdict repository itself, `references/docs/` is not
+populated — the repository's own `docs/` directory holds the same
+files, and is authoritative there.
+
+Reference documents keep their original repository-relative links. A
+link that does not resolve locally resolves against the source
+repository at the pinned version:
+`https://github.com/pawan-vyas/verdict-rules/blob/<tag>/<path>`.
+
+## Where the harder examples live
+
+`fixtures/graduation_verdict/` in the repository is the cross-language
+parity fixture: one curriculum, eight students, and the exact expected
+outcomes every language port must reproduce — including how many rules
+should have been evaluated, which is short-circuiting stated as data
+rather than prose. It is a contributor artifact and is not routed here,
+but it is worth reading directly if you want a worked example of
+testing rule-based logic, or of writing a genuinely custom rule shape
+for a real scenario.
