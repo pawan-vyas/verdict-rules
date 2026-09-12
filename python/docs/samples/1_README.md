@@ -18,10 +18,12 @@
 | [`content-moderation-routing.md`](5_content-moderation-routing.md) | Auto-publish, queue for review, or auto-reject? | `run_group()` — partitioning one engine's rules into named groups |
 | [`data-driven-rule-sets.md`](6_data-driven-rule-sets.md) | How do we avoid redeploying every time a business rule changes? | Building `Rule` objects from stored configuration at runtime, evaluated by one shared engine — the pattern this package is designed for |
 | [`graduation-requirement-verdict.md`](7_graduation-requirement-verdict.md) | Does this student qualify to graduate? | The full breadth at once — heterogeneous `Rule` shapes, a custom `Rule` type, all three run modes. Backed by a real, tested project in [`examples/graduation_verdict/`](../../examples/graduation_verdict/README.md), not just this markdown page |
+| [`admin-eligibility-lookup.md`](8_admin-eligibility-lookup.md) | Why did this specific customer not qualify, when the check name is user-typed? | `try_run_named` for an unknown check name, distinguished from a check with zero conditions configured yet — two absence-shaped situations kept apart from each other and from a genuine verdict |
 
-Each of samples 1-6 is deliberately small enough to read start-to-finish
-in a couple of minutes; sample 7 is the exception — see its own doc for
-why. For the underlying concepts these lean on, see
+Each of samples 1-6 and 8 is deliberately small enough to read
+start-to-finish in a couple of minutes; sample 7 is the exception, both
+in length and in coming right before the shorter sample after it — see
+its own doc for why. For the underlying concepts these lean on, see
 [`../quickstart.md`](../quickstart.md), [`../architecture.md`](../../../docs/architecture.md)
 (why it's shaped this way), and [`../extension.md`](../../../docs/extension.md)
 (the recipes these samples are instances of).
