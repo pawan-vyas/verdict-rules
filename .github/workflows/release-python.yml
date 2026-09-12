@@ -79,7 +79,7 @@ jobs:
             echo "::error file=CHANGELOG.md::No '## ${tag}' section. Refusing to publish a version whose release would then fail."
             exit 1
           fi
-          echo "Changelog section for ${tag} present.
+          echo "Changelog section for ${tag} present."
 
   test:
     name: Full suite before anything is published

@@ -24,6 +24,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Workflow shell blocks parse
+        run: python3 scripts/check_workflow_shell.py
+
       - name: Every manifest version has a matching changelog section
         run: |
           set -euo pipefail
