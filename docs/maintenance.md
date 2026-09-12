@@ -96,6 +96,36 @@ publish at all, NuGet exchanges a token for a one-hour key, and pub.dev
 drives its own reusable workflow from a tag pattern. There is no shared
 step there to factor out — only the tail after it.
 
+### Verifying a release, and when
+
+Checks are worth having at the earliest point they can possibly run, because
+the tail of a release is too late to learn anything: the registry upload
+happens before the tag and the GitHub release, and no registry this repo
+targets lets you take a version back.
+
+So the checks are spread across three moments rather than gathered into one:
+
+**Before merging** — `check-release-readiness.yml`, on every pull request.
+Every manifest version has a matching `CHANGELOG.md` section, and
+`scripts/build.sh` produces all three skill artifacts with an intact payload.
+A missing changelog section fails here, while the change is still a proposal.
+
+**Before publishing** — the `detect` job re-checks the changelog section, so
+anything that reached `main` another way still cannot publish. Without it, a
+missing section would be discovered *after* the registry upload, leaving a live
+version with no tag and no release.
+
+**After publishing** — the release job verifies what is deterministic: the
+notes rendered with their code spans intact (a regression guard for
+`.agents/incidents/001`), every expected asset attached, and `scripts/get.sh`
+still resolving `verdict-tools.zip` with a real payload inside it.
+
+**By hand, once propagation settles** — two things a job should not wait on:
+
+1. The version is live and **installable** from the registry.
+2. **Provenance is present** where the registry offers it — see below. Its
+   absence is silent, which is exactly why it is worth looking at.
+
 ### Supply-chain integrity, per registry
 
 This package has **zero runtime dependencies**, so it cannot transmit a
