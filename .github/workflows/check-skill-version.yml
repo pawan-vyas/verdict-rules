@@ -57,9 +57,16 @@ jobs:
           # The path filters above can fire for a reason that does not need a bump (this workflow
           # file changing), and a push range can carry unrelated merges. Re-derive what actually
           # changed rather than trusting the trigger.
-          # skills/verdict-workspace/ is eval working material and never ships — see build.sh.
+          # skills/verdict-workspace/ is eval working material and never ships — see
+          # build.sh. skills/verdict/CHANGELOG.md is release metadata rather than
+          # guidance that goes stale in a vendored copy, and every real release bumps
+          # plugin.json anyway — which this still matches — so excluding it removes
+          # noise without weakening the check.
           changed="$(git diff --name-only "$BASE_SHA" HEAD -- \
-            'skills/verdict' ':(exclude)skills/verdict-workspace' '.claude-plugin')"
+            'skills/verdict' \
+            ':(exclude)skills/verdict-workspace' \
+            ':(exclude)skills/verdict/CHANGELOG.md' \
+            '.claude-plugin')"
 
           if [ -z "$changed" ]; then
             echo "No shipped skill or plugin-manifest files changed in ${BASE_SHA}..HEAD — nothing to enforce."
