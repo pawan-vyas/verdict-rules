@@ -6,6 +6,15 @@ Release history for the verdict AI-agent skill. Format follows
 This versions **the guidance**, not any language's API, so it moves on its own
 cadence — see `docs/maintenance.md`. Tagged `skill-vX.Y.Z`.
 
+## [0.3.3] - 2026-09-13
+
+No guidance changed.
+
+- **`description` field corrected to plain ASCII** — it carried a
+  JSON-escaped em-dash (`—`) in two places. Every conformant parser
+  reads it identically either way; corrected for readability of the raw
+  file, not for behavior.
+
 ## [0.3.2] - 2026-09-13
 
 No guidance changed.
