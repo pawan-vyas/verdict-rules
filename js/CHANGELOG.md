@@ -16,7 +16,10 @@ its guarantees, with the tests that prove them, and nothing else yet.
   `OrRule([])` fails.
 - Unknown rule names and unknown groups throw rather than returning a vacuous
   pass — emptiness folds to an identity, absence is an error.
-- `RulesEngine.ruleNames` / `groupNames` for checking before calling.
+- `RulesEngine.tryRunNamed` / `tryRunGroup`, returning `undefined` rather than
+  throwing when nothing matches — the primitives the throwing forms are built
+  on. `undefined` means absent, never failed.
+- `RulesEngine.ruleNames` / `groupNames` for enumerating an engine.
 - `UnknownLookupError`, carrying `kind` and `key`, so an unknown lookup is
   catchable by type rather than by matching message text.
 - Ships as ESM, CommonJS, and an ES2019 global bundle for a plain `<script>`

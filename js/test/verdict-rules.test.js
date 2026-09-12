@@ -190,6 +190,59 @@ describe("emptiness is not absence", () => {
   });
 });
 
+describe("try lookups", () => {
+  // These exist because the engine cannot know what an absent group means.
+  // For one consumer it is "no constraint applies, pass"; for another "skip
+  // and do not count it"; for a third "the configuration is wrong, fail".
+  // A library default would be right for one and wrong for the rest.
+
+  it("returns the result when present", async () => {
+    const engine = new RulesEngine([
+      counting("a", true, [], "g1"),
+      counting("b", false, [], "g1"),
+    ]);
+    const result = await engine.tryRunGroup("g1", {});
+    assert.deepEqual(result.results.map((r) => r.ruleName), ["a", "b"]);
+    assert.equal(result.passed, false);
+    assert.equal((await engine.tryRunNamed("a", {})).ruleName, "a");
+  });
+
+  it("returns undefined when absent", async () => {
+    const engine = new RulesEngine([counting("a", true, [], "g1")]);
+    assert.equal(await engine.tryRunGroup("no-such-group", {}), undefined);
+    assert.equal(await engine.tryRunNamed("nope", {}), undefined);
+  });
+
+  it("undefined means absent, never failed", async () => {
+    // Collapsing the two would make a typo indistinguishable from a
+    // legitimate rejection.
+    const engine = new RulesEngine([counting("present", false, [])]);
+    const failed = await engine.tryRunNamed("present", {});
+    assert.equal(failed.passed, false);
+    assert.equal(await engine.tryRunNamed("absent", {}), undefined);
+  });
+
+  it("the strict forms are the try forms plus an assertion", async () => {
+    // Asserting the relationship keeps the two from drifting: one lookup
+    // path, and the strict form adds only the throw.
+    const engine = new RulesEngine([counting("a", true, [], "g1")]);
+    const strict = await engine.runGroup("g1", {});
+    const lenient = await engine.tryRunGroup("g1", {});
+    assert.equal(strict.passed, lenient.passed);
+    assert.equal(strict.results.length, lenient.results.length);
+  });
+
+  it("the caller chooses the fallback", async () => {
+    const engine = new RulesEngine([counting("a", true, [], "present")]);
+    const result = await engine.tryRunGroup("absent", {});
+
+    assert.equal(result?.passed ?? true, true);      // absent means pass
+    assert.equal(result?.passed ?? false, false);    // absent means fail
+    assert.deepEqual([result].filter((r) => r !== undefined), []); // skip
+    await assert.rejects(() => engine.runGroup("absent", {}));     // unexpected
+  });
+});
+
 describe("introspection", () => {
   it("reports exactly what the lookups accept", async () => {
     const engine = new RulesEngine([
