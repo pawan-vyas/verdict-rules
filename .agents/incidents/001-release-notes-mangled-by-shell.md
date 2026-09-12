@@ -48,11 +48,30 @@ interpolation of untrusted-shaped text is the general form.
 Write the notes to a file in the generating step and pass `--notes-file`, so
 the bytes reach `gh` untouched. Applied to both release workflows.
 
+## Recurrence, 2026-09-12 — same cause, different tool
+
+It happened again, outside a workflow. A pull request body was passed to
+`gh pr create --body "…"` as a double-quoted shell string containing markdown.
+The backticks around `` `## 1.2.3` `` and `` `v` `` were read as command
+substitution, and the published description rendered as *"documents , optionally
+-prefixed"*.
+
+The lesson had been written as a workflow rule, so it did not transfer. The
+actual rule is broader: **any shell string carrying authored text is a hazard,
+whatever the tool.** `gh` has `--body-file`, `gh release` has `--notes-file`,
+and a workflow has a file path — all three exist for this reason.
+
 ## What prevents a repeat
 
-Never interpolate multi-line or user-authored text into a shell command in a
-workflow — write a file and pass a path. Both workflows carry a comment saying
-why, because the code looks harmless.
+- **Never interpolate authored text into a shell string.** Write a file and
+  pass its path: `--body-file`, `--notes-file`, or a redirect. This applies to
+  workflow `run:` blocks, `gh` invocations, and anything else that takes prose
+  on a command line.
+- **Markdown is authored text.** A changelog entry, a release note, a PR body,
+  an issue body — all of them routinely contain backticks, and backticks in a
+  double-quoted shell string are executed.
+- The failure is silent both times: the command succeeds, and only the rendered
+  output is wrong.
 
 Verified by running the same changelog through both paths locally: the
 interpolated one yields an empty line, the file yields the correct text.
