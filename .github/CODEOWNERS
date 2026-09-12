@@ -1,0 +1,13 @@
+# Every path in this repository requires review from the owner.
+#
+# Paired with branch protection's "require review from Code Owners", this makes
+# the requirement specific rather than generic: a pull request needs *this*
+# approval, not merely any collaborator's. Today that distinction is moot —
+# there is one collaborator — but it is the setting that stays correct if that
+# ever changes, and it is cheaper to establish now than to remember later.
+#
+# Note that GitHub does not let an author approve their own pull request, so
+# the owner's own PRs are merged using the admin bypass rather than by
+# self-approving. That is expected, not a misconfiguration.
+
+* @pawan-vyas
