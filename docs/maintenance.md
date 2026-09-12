@@ -53,10 +53,11 @@ Release procedure, once a change is ready to ship:
    declares it. Anything a caller could legitimately have depended on is
    a breaking change and takes `MINOR`, however unlikely that dependency
    seems.
-2. Add a `## python-vX.Y.Z` entry to the repo-root `CHANGELOG.md`, in
-   the same commit as the version bump — never backfilled later. The
-   release body is built from it, and a missing section fails the
-   release rather than publishing empty notes.
+2. Add a `## [X.Y.Z] - YYYY-MM-DD` entry to
+   [`../python/CHANGELOG.md`](../python/CHANGELOG.md), in the same commit
+   as the version bump — never backfilled later. The release body is built
+   from it, and a missing section fails the release rather than publishing
+   empty notes.
 3. **Merge to `main`. That is the whole release.**
 
 `release-python.yml` notices the version has no matching tag, runs the
@@ -106,8 +107,9 @@ targets lets you take a version back.
 So the checks are spread across three moments rather than gathered into one:
 
 **Before merging** — `check-release-readiness.yml`, on every pull request.
-Every manifest version has a matching `CHANGELOG.md` section, and
-`scripts/build.sh` produces all three skill artifacts with an intact payload.
+Every manifest version has a matching section in *its own* changelog, each
+changelog is ordered newest-first, and `scripts/build.sh` produces all three
+skill artifacts with an intact payload.
 A missing changelog section fails here, while the change is still a proposal.
 
 **Before publishing** — the `detect` job re-checks the changelog section, so
@@ -215,7 +217,8 @@ language procedure above, on its own tag prefix:
 
 1. Bump `.claude-plugin/plugin.json`'s `version` in the same commit as
    the skill change itself (the check above requires this anyway).
-2. Add a `## skill-vX.Y.Z` entry to `CHANGELOG.md`.
+2. Add a `## [X.Y.Z] - YYYY-MM-DD` entry to
+   `skills/verdict/CHANGELOG.md`.
 3. Commit, then tag `skill-vX.Y.Z` and push the tag.
    `release-skill.yml` verifies the tag matches `plugin.json`, runs
    `scripts/build.sh`, and attaches the artifacts to a GitHub Release.

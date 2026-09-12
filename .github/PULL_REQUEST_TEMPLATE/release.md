@@ -10,9 +10,10 @@ version number permanently; NuGet and pub.dev never delete. So the checks that
 matter are the ones that happen before this merges.
 
 - [ ] Version bumped in that language's own manifest.
-- [ ] `CHANGELOG.md` has a `## <lang>-vX.Y.Z` section, written in this PR.
-      **CI enforces this** — a missing section fails `Release readiness`
-      rather than publishing and then failing the release.
+- [ ] That package's own `CHANGELOG.md` — beside its manifest — has a
+      section for the new version, written in this PR. **CI enforces this**:
+      a missing section fails `Release readiness` rather than publishing and
+      then failing the release.
 - [ ] The version is genuinely new (no existing tag) — the release workflow
       checks this too, and does nothing if it finds one.
 - [ ] Semver: a breaking change takes `MINOR` pre-1.0. The one carve-out for
