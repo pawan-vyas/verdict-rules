@@ -86,6 +86,16 @@ changelog section, the skill artifacts, the tag, the GitHub release —
 live in `release-github.yml`, a reusable workflow the per-language ones
 call. Adding a language is a thin caller, not another copy.
 
+**Publishing itself deliberately stays in each language's own workflow**,
+and must. PyPI Trusted Publishing does not work with reusable workflows —
+a documented limitation, not a configuration problem — so moving the
+publish step would break authentication outright. That constraint costs
+nothing, because publishing is the one genuinely per-language part of a
+release: PyPI publishes over OIDC directly, npm cannot bootstrap a first
+publish at all, NuGet exchanges a token for a one-hour key, and pub.dev
+drives its own reusable workflow from a tag pattern. There is no shared
+step there to factor out — only the tail after it.
+
 ### Ownership and namespaces across registries
 
 This package is published by an **individual** on every registry, and
