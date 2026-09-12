@@ -29,6 +29,21 @@ missing exactly the thing that matters:
   fails still returns a `RuleResult`, and only a rule that does not
   exist returns `None`. Collapsing the two makes a typo
   indistinguishable from a legitimate rejection.
+- **Test the fallback matrix, not just the absent case.** If your code
+  writes `(await engine.try_run_group(g, ctx)) or default`, the
+  dangerous case is not absence — it is a *present* group wrongly
+  returning `None`, which makes that default fire and approve something
+  that actually failed. Assert all three states against your chosen
+  default:
+
+  | group state | `or True` | `or False` |
+  | :-- | :-- | :-- |
+  | present, passing | `True` | `True` |
+  | **present, failing** | **`False`** | **`False`** |
+  | absent | `True` | `False` |
+
+  The middle row is the one a single-case test omits, and the only one
+  where a bug is silent.
 - **Non-short-circuiting run modes, proven not to short-circuit**:
   `run_all`/`run_group` should report *every* rule even after an
   earlier one has already failed — the direct mirror-image regression

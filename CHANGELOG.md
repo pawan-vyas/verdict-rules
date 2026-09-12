@@ -30,6 +30,20 @@ section for both release procedures, and each language's own
 - `testing-patterns.md` asks for both halves to be tested, and for
   `None` to be distinguished from `passed=False`.
 
+## skill-v0.2.1 (2026-09-12)
+
+- **`testing-patterns.md` now asks for the whole fallback matrix**, not
+  just the absent case. Testing `try_run_group` only against a missing
+  group looks complete and is not: the dangerous case is a *present*
+  group wrongly returning `None`, which makes a caller's default fire
+  and approve something that actually failed.
+- **`gotchas.md` gains the Python-specific `or` footgun.** Other
+  languages write this with `??`, which fires only on null; Python's
+  `or` fires on any falsy value. It works here only because the result
+  types are always truthy — a property of this library rather than of
+  the pattern — so the explicit `if x is not None` form is what the
+  skill now recommends.
+
 ## python-v0.2.0 (2026-09-12)
 
 - **Added `RulesEngine.try_run_named()` and `try_run_group()`**, which
