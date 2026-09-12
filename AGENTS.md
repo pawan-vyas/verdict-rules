@@ -164,7 +164,8 @@ into its own repo, or vendored into any other project with zero
 rewriting. Concretely:
 
 - No relative links reaching outside this repo's own tree (e.g.
-  `../../some_other_project/...`) in any doc under `python/docs/`,
+  `../../some_other_project/...`) in any doc under a language's own
+  `packages/*/docs/` (e.g. `python/packages/verdict-rules/docs/`),
   `python/examples/`, or `skills/`.
 - No naming a specific consumer's package, module, or internal
   vocabulary in prose, code comments, or examples — describe a pattern

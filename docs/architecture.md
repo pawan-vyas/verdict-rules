@@ -4,7 +4,7 @@
 > General-purpose, standalone documentation for this package on its own
 > terms — no framing around any particular consumer's domain. See the
 > top-level [`README.md`](../README.md) for the narrative overview and
-> [`python/docs/quickstart.md`](../python/packages/verdict-rules/docs/quickstart.md) for the
+> [`python/packages/verdict-rules/docs/quickstart.md`](../python/packages/verdict-rules/docs/quickstart.md) for the
 > core concepts and one worked example; this doc covers *why* the
 > package is shaped the way it is and the behavior a caller can rely on
 > that isn't obvious from the API surface alone. The design described
@@ -69,7 +69,7 @@ graph LR
 > **Reading the Doc Set**:
 > 1. **`README.md` is the entry point** — the narrative overview of what
 >    this package is and why, with no code.
-> 2. **[`python/docs/quickstart.md`](../python/packages/verdict-rules/docs/quickstart.md) makes
+> 2. **[`python/packages/verdict-rules/docs/quickstart.md`](../python/packages/verdict-rules/docs/quickstart.md) makes
 >    it concrete** — the five core names and one complete, runnable
 >    example, in whichever language you're using (Python today).
 > 3. **This doc (`architecture.md`) is the "why"** — type structure, the
@@ -82,7 +82,7 @@ graph LR
 >    building something on top of it, without changing anything here,
 >    goes to [`extension.md`](extension.md).
 > 5. **`extension.md`'s recipes have full worked instances in
->    [`python/docs/samples/`](../python/packages/verdict-rules/docs/samples/1_README.md)** —
+>    [`python/packages/verdict-rules/docs/samples/`](../python/packages/verdict-rules/docs/samples/1_README.md)** —
 >    generic domains (discounts, fee waivers, tier promotions,
 >    moderation routing) plus the data-driven pattern this package is
 >    designed for.
@@ -402,7 +402,7 @@ coverage, and what a new contribution's own tests need to add.
 ## Related docs
 
 - [`../README.md`](../README.md) — the narrative front door.
-- [`../python/docs/quickstart.md`](../python/packages/verdict-rules/docs/quickstart.md) — core
+- [`../python/packages/verdict-rules/docs/quickstart.md`](../python/packages/verdict-rules/docs/quickstart.md) — core
   concepts and the one worked example, in Python (today's only shipped
   language).
 - [`maintenance.md`](maintenance.md) — changing this package itself:
@@ -413,7 +413,7 @@ coverage, and what a new contribution's own tests need to add.
   new composite shape, the one-adapter-module pattern, and nesting.
 - [`testing.md`](testing.md) — how this package's own test suite is
   organized, what a change needs to prove, and current coverage.
-- [`../python/docs/samples/`](../python/packages/verdict-rules/docs/samples/1_README.md) —
+- [`../python/packages/verdict-rules/docs/samples/`](../python/packages/verdict-rules/docs/samples/1_README.md) —
   worked, domain-flavored examples of where a rule engine like this
   earns its keep, including the data-driven pattern this package is
   designed for.

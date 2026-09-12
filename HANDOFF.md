@@ -59,7 +59,8 @@ your *local* HEAD, so an out-of-date clone reads "current" while `origin/main` h
 in more than one language with identical execution-model guarantees: sequential, never concurrent,
 evaluation so short-circuiting is a real contract rather than an optimization, and vacuous-truth
 polarity decided explicitly per composite shape. The repo is polyglot in layout but **only Python
-ships today**, under `python/` (package in `python/src/verdict/`, plus tests, docs, and a fully
+ships today**, under `python/` (a workspace root; the package itself is in
+`python/packages/verdict-rules/`, with its own `src/verdict/`, tests, and docs, plus a fully
 tested example project). A second language lands as a new sibling top-level directory with its own
 `AGENTS.md`. Cross-language docs are in `docs/`, the AI-agent skill in `skills/verdict/` (vendored
 into other projects by `scripts/install.sh`), the published site in `site/`, and agent working

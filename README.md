@@ -126,13 +126,13 @@ runnable code lives under that language's own directory.
 | Doc | For |
 |---|---|
 | [`python/README.md`](python/packages/verdict-rules/README.md) | Python quickstart — `pip install verdict-rules`, first rule |
-| [`python/docs/quickstart.md`](python/packages/verdict-rules/docs/quickstart.md) | Core concepts and a full worked example |
+| [`python/packages/verdict-rules/docs/quickstart.md`](python/packages/verdict-rules/docs/quickstart.md) | Core concepts and a full worked example |
 | [`docs/architecture.md`](docs/architecture.md) | Why it's shaped this way, in depth — type structure, the execution model |
 | [`docs/extension.md`](docs/extension.md) | Building on top of it from your own code, with no changes here |
 | [`docs/maintenance.md`](docs/maintenance.md) | Changing this package itself |
 | [`docs/testing.md`](docs/testing.md) | How the test suite is organized, and what a change needs to prove |
 | [`docs/future_plan.md`](docs/future_plan.md) | Exploratory feature candidates, and the test used to evaluate one |
-| [`python/docs/samples/`](python/packages/verdict-rules/docs/samples/1_README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
+| [`python/packages/verdict-rules/docs/samples/`](python/packages/verdict-rules/docs/samples/1_README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
 | [`python/examples/`](python/examples/README.md) | Full, tested mini-projects behind the more comprehensive samples — real code, real tests, real docs |
 | [`skills/verdict/SKILL.md`](skills/verdict/SKILL.md) | The AI-agent skill for building with Verdict |
 
