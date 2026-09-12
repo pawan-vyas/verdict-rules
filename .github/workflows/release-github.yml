@@ -102,3 +102,65 @@ jobs:
             --title "${{ inputs.title }}" \
             --notes-file release-notes.md \
             release-assets/*
+
+      # Everything below verifies what was just published rather than trusting
+      # that publishing succeeded. Only the deterministic checks live here — a
+      # registry needs time to serve a new version, so "is it installable" and
+      # "does it carry provenance" are a documented post-flight step in
+      # docs/maintenance.md instead of a flaky job.
+      - name: Verify the release notes survived the shell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          published="$(gh release view "${{ inputs.tag }}" --json body -q .body)"
+
+          # Regression guard for .agents/incidents/001: notes were once passed
+          # through a step output, so bash read the changelog's backticks as
+          # command substitution and every code span published empty. The
+          # release succeeded and simply read as though words were missing.
+          expected="$(grep -c '`' release-notes.md || true)"
+          actual="$(printf '%s' "$published" | grep -c '`' || true)"
+          echo "Backticks — source: $expected, published: $actual"
+          if [ "$expected" -gt 0 ] && [ "$actual" -eq 0 ]; then
+            echo "::error::Release notes published with every code span stripped. See .agents/incidents/001."
+            exit 1
+          fi
+          if [ -z "$(printf '%s' "$published" | tr -d '[:space:]')" ]; then
+            echo "::error::Release notes published empty."
+            exit 1
+          fi
+
+      - name: Verify every expected asset is attached
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          attached="$(gh release view "${{ inputs.tag }}" --json assets -q '.assets[].name' | sort)"
+          echo "Attached:"; echo "$attached" | sed 's/^/  /'
+          for expected in verdict-plugin.zip verdict-tools.zip verdict.skill; do
+            echo "$attached" | grep -qx "$expected" || {
+              echo "::error::$expected is missing from the release."; exit 1; }
+          done
+
+      - name: Verify scripts/get.sh can still resolve the skill
+        run: |
+          set -euo pipefail
+          # get.sh pulls verdict-tools.zip from whatever GitHub calls the latest
+          # release. If a release of either kind omits it, the curl-pipe
+          # installer breaks outright — so this is checked after every one.
+          url="$(curl -fsSL "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest" \
+            | grep '"browser_download_url"' \
+            | grep 'verdict-tools\.zip' \
+            | sed -E 's/.*"browser_download_url": *"([^"]+)".*/\1/' \
+            | head -n1)"
+          if [ -z "$url" ]; then
+            echo "::error::The latest release has no verdict-tools.zip — scripts/get.sh is broken."
+            exit 1
+          fi
+          echo "get.sh would resolve: $url"
+          curl -fsSL "$url" -o /tmp/vt.zip
+          unzip -l /tmp/vt.zip | grep -q 'skill/SKILL.md' || {
+            echo "::error::verdict-tools.zip carries no skill payload."; exit 1; }
+          echo "Payload verified."
+

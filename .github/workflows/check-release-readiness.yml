@@ -1,0 +1,84 @@
+# Everything about a release that can be known BEFORE merging, checked on every
+# pull request.
+#
+# The point is ordering. A release publishes to a registry and only then tags
+# and writes the GitHub release, so anything discovered in that tail is
+# discovered too late: PyPI cannot be unpublished, and npm burns a version
+# number permanently. A check that runs here costs nothing and fails while the
+# change is still a proposal.
+#
+# Runs on every PR with no trigger-level path filter so it always reports and
+# can be marked required — see test-python.yml for why that matters.
+name: Release readiness
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Release readiness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Every manifest version has a matching changelog section
+        run: |
+          set -euo pipefail
+          failed=0
+
+          # A table, so adding a language is a row rather than another branch.
+          # Format: <label>|<tag prefix>|<command reading that manifest's version>
+          manifests=(
+            "Python|python-v|grep -m1 '^version = ' python/pyproject.toml | sed -E 's/version = \"(.*)\"/\1/'"
+            "Skill|skill-v|jq -er '.version' .claude-plugin/plugin.json"
+          )
+
+          for entry in "${manifests[@]}"; do
+            label="${entry%%|*}"; rest="${entry#*|}"
+            prefix="${rest%%|*}"; cmd="${rest#*|}"
+
+            version="$(eval "$cmd")"
+            if [ -z "$version" ]; then
+              echo "::error::Could not read a version for $label."
+              failed=1; continue
+            fi
+            tag="${prefix}${version}"
+
+            notes="$(awk -v hdr="## ${tag}" '
+              index($0, hdr) == 1 { found = 1; next }
+              /^## / { if (found) exit }
+              found { print }
+            ' CHANGELOG.md)"
+
+            if [ -z "$(printf '%s' "$notes" | tr -d '[:space:]')" ]; then
+              echo "::error file=CHANGELOG.md::$label is at $version but CHANGELOG.md has no '## ${tag}' section. Merging would publish and then fail the release — on PyPI and npm that is a version number spent, not a mistake you correct."
+              failed=1
+            else
+              echo "✓ $label $version -> '## ${tag}' found ($(printf '%s' "$notes" | wc -c | tr -d ' ') bytes of notes)"
+            fi
+          done
+
+          [ "$failed" -eq 0 ] || exit 1
+
+      - name: The skill artifacts build, and carry what get.sh needs
+        run: |
+          set -euo pipefail
+          chmod +x scripts/build.sh
+          ./scripts/build.sh
+
+          for f in verdict-plugin.zip verdict.skill verdict-tools.zip; do
+            [ -s "dist/$f" ] || { echo "::error::build.sh did not produce dist/$f"; exit 1; }
+            echo "✓ dist/$f"
+          done
+
+          # scripts/get.sh pulls verdict-tools.zip from the latest release and
+          # runs the installer inside it. An empty or malformed payload breaks
+          # the curl-pipe install path, which nothing else would notice.
+          unzip -l dist/verdict-tools.zip | grep -q 'skill/SKILL.md' \
+            || { echo "::error::verdict-tools.zip carries no skill payload."; exit 1; }
+          unzip -l dist/verdict-tools.zip | grep -q 'install.sh' \
+            || { echo "::error::verdict-tools.zip carries no installer."; exit 1; }
+          echo "✓ verdict-tools.zip payload intact"
