@@ -85,8 +85,9 @@ VERSION=$(python -c "import importlib.metadata as m; print(m.version('verdict-ru
 TAG="python-v${VERSION}"
 BASE="https://raw.githubusercontent.com/pawan-vyas/verdict-rules/${TAG}"
 
-curl -fsSL "${BASE}/docs/testing.md"           -o references/docs/testing.md
-curl -fsSL "${BASE}/python/docs/quickstart.md" -o references/python/quickstart.md
+curl -fsSL "${BASE}/docs/testing.md" -o references/docs/testing.md
+curl -fsSL "${BASE}/python/packages/verdict-rules/docs/quickstart.md" \
+     -o references/python/quickstart.md
 ```
 
 The manifest at `MANIFEST` lists every fetchable document with its

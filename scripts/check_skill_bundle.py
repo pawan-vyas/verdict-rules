@@ -25,19 +25,26 @@ from pathlib import Path
 
 LINK = re.compile(r"\]\(([^)#\s]+)")
 SKILL_REF = re.compile(r"references/[A-Za-z0-9_./-]+\.md")
+# A documented fetch command, e.g.  curl ... "${BASE}/docs/testing.md" ...
+FETCH_URL = re.compile(r"\$\{BASE\}/([A-Za-z0-9_./-]+)")
 
 
-def bundled_destinations(manifest: Path) -> set[str]:
-    """Destination paths, relative to references/, that the bundle contains."""
-    destinations: set[str] = set()
+def manifest_rows(manifest: Path, tier: str) -> list[tuple[str, str]]:
+    """(source, destination) pairs declared for one tier."""
+    rows: list[tuple[str, str]] = []
     for line in manifest.read_text().splitlines():
         if not line.strip() or line.lstrip().startswith("#"):
             continue
         parts = line.split("\t")
-        if len(parts) != 3 or parts[0].strip() != "bundled":
+        if len(parts) != 3 or parts[0].strip() != tier:
             continue
-        destinations.add(parts[2].strip())
-    return destinations
+        rows.append((parts[1].strip(), parts[2].strip()))
+    return rows
+
+
+def bundled_destinations(manifest: Path) -> set[str]:
+    """Destination paths, relative to references/, that the bundle contains."""
+    return {dest for _, dest in manifest_rows(manifest, "bundled")}
 
 
 def check(skill_dir: Path, manifest: Path) -> list[str]:
@@ -64,6 +71,23 @@ def check(skill_dir: Path, manifest: Path) -> list[str]:
                     f"{doc.relative_to(references)}: link to '{target}' is a bundled "
                     f"document but does not resolve — check its destination in the manifest"
                 )
+
+    # 3 — every documented fetch URL names a path the manifest actually declares.
+    #
+    # These commands are the one place a repository path is written out by hand
+    # in shipped content, and they fail at the worst possible moment: not here,
+    # not in CI, but months later inside a consumer's project, against a tag
+    # whose layout moved. A 404 there is silent — the agent simply proceeds
+    # without the document it was told to read.
+    fetch_sources = {src for src, _ in manifest_rows(manifest, "fetch")}
+    for doc in sorted(skill_dir.rglob("*.md")):
+        for path in sorted(set(FETCH_URL.findall(doc.read_text()))):
+            if any(path == src or path.startswith(src) for src in fetch_sources):
+                continue
+            failures.append(
+                f"{doc.relative_to(skill_dir)}: fetches '{path}', which is not a "
+                f"fetch source in the manifest — the path moved, or the manifest did"
+            )
 
     return failures
 
