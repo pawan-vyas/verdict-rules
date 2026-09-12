@@ -34,9 +34,14 @@ guarantees that make short-circuiting actually mean something.
     that label, exactly like `run_named`: a group exists only because
     some rule declared it, so a lookup matching nothing is a typo or a
     stale name, never a legitimately empty group.
+  - `try_run_named(name, context)` / `try_run_group(group, context)` —
+    the same lookups, returning `None` instead of raising when nothing
+    matches. **These are the primitives**; the two above are two-line
+    assertions on top of them. `None` means *absent*, never *failed* — a
+    rule that exists and fails is still a `RuleResult` with
+    `passed=False`.
   - `rule_names` / `group_names` — read-only tuples of what is
-    registered, so a caller who cannot know in advance whether a name
-    exists can check rather than catch.
+    registered, for enumerating an engine.
 - **`RuleResult(rule_name, passed, detail="", data=None)`** — the
   outcome of evaluating one rule. `data` is a fully opaque slot for a
   caller's own domain object (a computed status, a sub-result list) to

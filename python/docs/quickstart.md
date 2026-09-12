@@ -23,7 +23,10 @@
 - **`RulesEngine`** — holds a set of rules and runs them three ways:
   `run_all` (every rule, full diagnostic picture — deliberately does
   **not** short-circuit), `run_named` (one specific rule by name),
-  `run_group` (every rule sharing a group label).
+  `run_group` (every rule sharing a group label). An unknown name or
+  label raises; `try_run_named`/`try_run_group` return `None` instead,
+  for callers whose own domain has an answer for absence — see
+  [`extension.md`](../../docs/extension.md#recipe-6--decide-for-yourself-what-a-missing-rule-set-means).
 - **`RuleResult`** / **`RunResult`** — plain, immutable outcome types.
   `RuleResult.data` is a fully opaque slot for a caller's own domain
   object to ride through evaluation — Verdict never reads or depends on

@@ -137,6 +137,10 @@ classDiagram
         +run_all(context: dict) RunResult
         +run_named(name: str, context: dict) RuleResult
         +run_group(group: str, context: dict) RunResult
+        +try_run_named(name: str, context: dict) RuleResult|None
+        +try_run_group(group: str, context: dict) RunResult|None
+        +rule_names tuple~str~
+        +group_names tuple~str~
     }
     class RuleResult {
         +rule_name: str
@@ -255,33 +259,45 @@ graph TB
     Need{"🔀 What do you need?"}
     UseComposite("✅ AndRule / OrRule<br/>.evaluate()")
     UseRunAll("✅ RulesEngine<br/>.run_all()")
-    UseRunNamed("✅ RulesEngine<br/>.run_named()")
-    UseRunGroup("✅ RulesEngine<br/>.run_group()")
+    ByKey["🔑 Looked up by name or group label"]
+    Absent{"❓ Can that key<br/>legitimately be absent?"}
+    UseStrict("✅ run_named() / run_group()<br/>raises on a miss")
+    UseTry("✅ try_run_named() / try_run_group()<br/>returns None on a miss")
 
     %% Link 0: Need -> UseComposite
     Need -->|"[1]<br/>fastest possible verdict"| UseComposite
     %% Link 1: Need -> UseRunAll
     Need -->|"[2]<br/>full diagnostic picture"| UseRunAll
-    %% Link 2: Need -> UseRunNamed
-    Need -->|"[3]<br/>already know which rule"| UseRunNamed
-    %% Link 3: Need -> UseRunGroup
-    Need -->|"[4]<br/>a named subset, not everything"| UseRunGroup
+    %% Link 2: Need -> ByKey
+    Need -->|"[3]<br/>one rule, or a named subset"| ByKey
+    %% Link 3: ByKey -> Absent
+    ByKey -->|"[4]<br/>then one more question"| Absent
+    %% Link 4: Absent -> UseStrict
+    Absent -->|"[5]<br/>No — a miss is a bug"| UseStrict
+    %% Link 5: Absent -> UseTry
+    Absent -->|"[6]<br/>Yes — my domain decides"| UseTry
 
     style Need fill:#B47EFF,stroke:#9654E8,stroke-width:2px,color:#000
+    style Absent fill:#B47EFF,stroke:#9654E8,stroke-width:2px,color:#000
+    style ByKey fill:#D0D0D0,stroke:#909090,stroke-width:2px,color:#000
     style UseComposite fill:#51CF66,stroke:#37B24D,stroke-width:2px,color:#000
     style UseRunAll fill:#51CF66,stroke:#37B24D,stroke-width:2px,color:#000
-    style UseRunNamed fill:#51CF66,stroke:#37B24D,stroke-width:2px,color:#000
-    style UseRunGroup fill:#51CF66,stroke:#37B24D,stroke-width:2px,color:#000
+    style UseStrict fill:#51CF66,stroke:#37B24D,stroke-width:2px,color:#000
+    style UseTry fill:#FFD43B,stroke:#F08C00,stroke-width:2px,color:#000
 
     %% Link Index:
     %% 0: a fast yes/no reaches for a composite's own evaluate()
     %% 1: a full per-rule breakdown reaches for run_all()
-    %% 2: a single already-known rule reaches for run_named()
-    %% 3: a named subset of a larger rule set reaches for run_group()
+    %% 2: anything looked up by key goes through one more decision
+    %% 3: that decision is about absence, not about which run mode
+    %% 4: absence is a bug -> the strict form, which says so immediately
+    %% 5: absence is expected -> the try_ form, and the caller decides
     linkStyle 0 stroke:#C9B3FF,stroke-width:2px
     linkStyle 1 stroke:#C9B3FF,stroke-width:2px
     linkStyle 2 stroke:#C9B3FF,stroke-width:2px
-    linkStyle 3 stroke:#C9B3FF,stroke-width:2px
+    linkStyle 3 stroke:#E0E0E0,stroke-width:2px
+    linkStyle 4 stroke:#C9B3FF,stroke-width:3px
+    linkStyle 5 stroke:#FFE066,stroke-width:3px
 ```
 
 The engine's own methods deliberately never short-circuit — that's what
@@ -294,6 +310,13 @@ actually needs — they compose together fine (an engine can hold an
 `AndRule` as one of its named rules, evaluated as a single unit via
 `run_named()`, its own sub-rule detail still available in that one
 result's `data`).
+
+The second decision in that diagram is deliberately separate from the
+first. *Which run mode* and *what should happen on a miss* are different
+questions, and collapsing them is how the API would have ended up with a
+flag on every method. Whether a key can legitimately be absent is a fact
+about the **caller's own data**, not about the engine, so it is answered
+by choosing a method rather than by configuring one.
 
 ## Extensibility
 
@@ -343,9 +366,26 @@ adapter is the worst possible failure mode.
 
 The distinction is worth stating plainly because it is the one place
 this package is deliberately strict: it is permissive about arithmetic
-and strict about lookups. `RulesEngine.rule_names` and
-`RulesEngine.group_names` exist so a caller who genuinely cannot know
-whether a name exists can check rather than catch.
+and strict about lookups.
+
+**Strict by default, not by force.** `try_run_named` and `try_run_group`
+return `None` instead of raising, for callers whose own domain has an
+answer for absence — a per-tenant rule set, an optional group behind a
+flag, a name in configuration a deployment has not adopted yet. `None`
+means *absent*, never *vacuously passed*; a rule that exists and fails is
+still a `RuleResult` with `passed=False`.
+
+The engine refuses to pick a fallback because it cannot: absence means
+"no constraint applies" to one consumer and "the configuration is broken"
+to another, and a single default would be wrong for one of them.
+[`extension.md`](extension.md)'s Recipe 6 works through the four shapes
+this takes in practice.
+
+The `try_` forms are the **primitives**; `run_named` and `run_group` are
+two-line assertions on top of them, so there is one lookup path rather
+than two implementations that could drift. `RulesEngine.rule_names` and
+`group_names` report exactly the lookups that will not raise, for
+enumerating an engine rather than probing one name.
 
 Short-circuiting (both directions) and every vacuous-truth edge case
 above are the specific things worth proving, not just executing — see

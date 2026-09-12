@@ -232,12 +232,39 @@ improvising diagram conventions from scratch, and validate every new or
 edited diagram with its bundled `scripts/validate_diagrams.js` before
 calling a doc change done.
 
+## Before treating a behaviour change as done
+
+Changing what the library does is the small half. The larger half is
+that other files now describe something untrue, and **nothing fails when
+they do** — the tests pass and CI stays green while the wrong answer
+sits there. Sweep outward from the code every time: source docstrings,
+`docs/architecture.md` **and its diagrams**, `docs/extension.md` (does
+this enable a recipe, or invalidate one?), `docs/testing.md` (it names
+specific tests by name), `docs/maintenance.md`, each language's
+quickstart and samples, the shared fixture if the change is behavioural,
+`skills/verdict/references/` with a `plugin.json` bump, `CHANGELOG.md`,
+and the `README.md`.
+
+Extend diagrams rather than only correcting their prose — a diagram
+describing the old shape is more misleading than stale text, because it
+reads as authoritative. Full reasoning and the worked example of this
+going wrong:
+[`.agents/memory/a-behaviour-change-is-a-documentation-change.md`](.agents/memory/a-behaviour-change-is-a-documentation-change.md).
+
 ## Before treating a doc change as done
 
 - Every relative link and anchor fragment you touched actually
   resolves — don't assume a path or a heading slug, check it.
 - Every mermaid diagram you touched or added passes the validator
   referenced above.
-- Every code sample you write in a doc actually runs — verify it
-  against the real installed package, don't just eyeball it for
-  plausibility.
+- Every code sample you write in a doc actually runs — **execute it**
+  against the real installed package in a scratch file, don't eyeball it
+  for plausibility. A sample that looks right and is subtly wrong is
+  worse than no sample, because a reader trusts it and then debugs their
+  own code for the mismatch.
+- The bar scales with position: a document's **first or headline example
+  must run verbatim**, imports and all, since that is the one people
+  paste. Later examples may assume the setup established above them —
+  repeating boilerplate at every snippet makes an advanced doc
+  unreadable — but everything after that implied preamble must still be
+  correct as written.

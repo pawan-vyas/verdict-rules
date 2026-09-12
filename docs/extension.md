@@ -310,6 +310,140 @@ graph TB
 call — since a composite rule is structurally indistinguishable from a
 plain one from the outside.
 
+## Recipe 6 — decide for yourself what a missing rule set means
+
+`run_named` and `run_group` raise `KeyError` when nothing matches. That is
+the right default: a group exists only because some rule declared it, so a
+lookup matching nothing can only be a typo or a stale name, and returning a
+passing `RunResult` there would mean a misspelled group silently approves.
+
+But *sometimes absence is expected*, and then the strict form is the wrong
+tool. `try_run_named` and `try_run_group` return `None` instead:
+
+```python
+result = await engine.try_run_group("beta_checks", context)
+```
+
+**`None` means absent, never failed.** A rule that exists and fails is still
+a `RuleResult` with `passed=False`. Collapsing the two would make a typo
+indistinguishable from a legitimate rejection.
+
+### Why the library does not pick a fallback for you
+
+Because the right answer differs per consumer, and the engine has no way to
+tell which case it is in:
+
+| Situation | What absence should mean |
+| :-- | :-- |
+| **Per-tenant rule sets.** One config, many deployments; not every tenant has every group | Pass — no constraint applies here |
+| **Optional checks behind a flag.** `beta_checks` exists only where the feature is on | Skip — do not count it either way |
+| **Version skew.** A group added in a later release; older deployments lack it | Log and pass, until the rollout completes |
+| **Renamed group, stale config.** The old label lingers somewhere | **Fail loudly** — this is the bug the strict form exists to catch |
+
+Four situations, four different answers, and a library default would be
+wrong for three of them. So the choice is handed back:
+
+```mermaid
+graph LR
+    Lookup[/"🔑 try_run_group(label, ctx)"/]
+    Present("📦 RunResult<br/>the group ran")
+    Absent{"❓ None — no such group"}
+    Pass("✅ Treat as passing")
+    Fail("⛔ Treat as failing")
+    Skip("⏭️ Contribute nothing")
+    Raise("💥 Use run_group() instead")
+
+    %% Link 0: Lookup -> Present
+    Lookup -->|"[1]<br/>label exists"| Present
+    %% Link 1: Lookup -> Absent
+    Lookup -->|"[2]<br/>label does not exist"| Absent
+    %% Link 2: Absent -> Pass
+    Absent -->|"[3]<br/>per-tenant rule sets:<br/>no constraint here"| Pass
+    %% Link 3: Absent -> Fail
+    Absent -->|"[4]<br/>renamed group,<br/>stale config"| Fail
+    %% Link 4: Absent -> Skip
+    Absent -->|"[5]<br/>optional checks<br/>behind a flag"| Skip
+    %% Link 5: Absent -> Raise
+    Absent -->|"[6]<br/>it was never<br/>meant to be absent"| Raise
+
+    style Lookup fill:#FFD43B,stroke:#F08C00,stroke-width:2px,color:#000
+    style Absent fill:#B47EFF,stroke:#9654E8,stroke-width:2px,color:#000
+    style Present fill:#51CF66,stroke:#37B24D,stroke-width:2px,color:#000
+    style Pass fill:#8CE99A,stroke:#2F9E44,stroke-width:2px,color:#000
+    style Fail fill:#FF6B6B,stroke:#C92A2A,stroke-width:2px,color:#000
+    style Skip fill:#D0D0D0,stroke:#909090,stroke-width:2px,color:#000
+    style Raise fill:#FF8787,stroke:#E64545,stroke-width:2px,color:#000
+
+    %% Link Index:
+    %% 0: the label exists, so you get a RunResult like any other
+    %% 1: the label does not exist, so you get None
+    %% 2: absence means no constraint applies
+    %% 3: absence means the configuration is wrong
+    %% 4: absence means skip, counting neither way
+    %% 5: absence was never expected — the strict form says so immediately
+    linkStyle 0 stroke:#A9E8B5,stroke-width:3px
+    linkStyle 1 stroke:#C9B3FF,stroke-width:3px
+    linkStyle 2 stroke:#A9E8B5,stroke-width:2px
+    linkStyle 3 stroke:#FF9999,stroke-width:2px
+    linkStyle 4 stroke:#D0D0D0,stroke-width:2px
+    linkStyle 5 stroke:#FF9999,stroke-width:2px
+```
+
+> **Reading the branches**: the top path is ordinary — the label exists
+> and you get a `RunResult` like any other call. Everything below it is
+> one `None`, four possible meanings, and **only the caller knows which**.
+> That is the entire reason this method exists rather than a parameter
+> telling the engine what to do.
+>
+> **Design note**: the fourth branch is not a fallback at all. If a label
+> was never meant to be absent, reaching for `try_run_group` and
+> defaulting is how a rule set silently stops being enforced — use the
+> strict form and hear about it.
+
+
+
+```python
+# 1. Absence means "no constraint applies"
+result = await engine.try_run_group(group, context)
+allowed = result.passed if result is not None else True
+
+# 2. Absence means "the configuration is wrong"
+allowed = result.passed if result is not None else False
+
+# 3. Absence means "skip it" — contributes nothing either way
+checks = [r for r in (result,) if r is not None]
+
+# 4. Absence is genuinely unexpected — say so immediately
+result = await engine.run_group(group, context)  # raises
+```
+
+### `try_run_group` is the primitive, not the convenience
+
+Worth knowing because it explains why the two can never disagree:
+
+```python
+async def run_group(self, group, context):
+    result = await self.try_run_group(group, context)
+    if result is None:
+        raise KeyError(...)
+    return result
+```
+
+There is one lookup path. The strict form is a two-line assertion on top of
+the lenient one, rather than a second implementation that could drift from
+it.
+
+### Prefer the strict form by default
+
+Reach for `try_*` when your own domain has an answer for absence — not to
+avoid thinking about it. A `KeyError` from `run_group` in development is a
+typo found in seconds; the same typo behind
+`try_run_group(...) or default_pass` is a rule set that silently stopped
+being enforced, and nothing will tell you.
+
+If you only need to enumerate what exists, `engine.rule_names` and
+`engine.group_names` report exactly the lookups that will not raise.
+
 ## What you never need to do
 
 - Register a new rule shape anywhere in this package.

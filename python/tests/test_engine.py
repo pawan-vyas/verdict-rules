@@ -101,6 +101,89 @@ class TestRunGroup:
         assert (await OrRule("none", []).evaluate({})).passed is False
 
 
+class TestTryLookups:
+    """The non-throwing primitives, and that the strict ones sit on top.
+
+    These exist because the engine cannot know what an absent group means.
+    For one consumer it is "no constraint applies, pass"; for another "skip
+    and do not count it"; for a third "the configuration is wrong, fail".
+    A library default would be right for one of them and wrong for the rest,
+    so the caller is handed the distinction rather than a guess.
+    """
+
+    async def test_try_run_group_returns_the_result_when_present(self) -> None:
+        engine = RulesEngine([_pass("a", group="g1"), _fail("b", group="g1")])
+        result = await engine.try_run_group("g1", {})
+        assert result is not None
+        assert [r.rule_name for r in result.results] == ["a", "b"]
+        assert result.passed is False
+
+    async def test_try_run_group_returns_none_when_absent(self) -> None:
+        engine = RulesEngine([_pass("a", group="g1")])
+        assert await engine.try_run_group("no-such-group", {}) is None
+
+    async def test_try_run_named_returns_the_result_when_present(self) -> None:
+        engine = RulesEngine([_pass("a")])
+        result = await engine.try_run_named("a", {})
+        assert result is not None
+        assert result.rule_name == "a"
+
+    async def test_try_run_named_returns_none_when_absent(self) -> None:
+        engine = RulesEngine([_pass("a")])
+        assert await engine.try_run_named("nope", {}) is None
+
+    async def test_none_means_absent_never_failed(self) -> None:
+        """The distinction the return type is carrying.
+
+        A rule that exists and fails is a RuleResult with passed=False.
+        Only a rule that does not exist is None. Collapsing the two would
+        make a typo indistinguishable from a legitimate failure.
+        """
+        engine = RulesEngine([_fail("present", group="g1")])
+
+        failed = await engine.try_run_named("present", {})
+        assert failed is not None and failed.passed is False
+
+        absent = await engine.try_run_named("absent", {})
+        assert absent is None
+
+    async def test_strict_forms_are_the_try_forms_plus_an_assertion(self) -> None:
+        """run_* is a wrapper, not a parallel implementation.
+
+        Asserting it here keeps the two from drifting: there is one lookup
+        path, and the strict form adds only the raise.
+        """
+        engine = RulesEngine([_pass("a", group="g1")])
+
+        assert (await engine.run_named("a", {})).rule_name == (
+            (await engine.try_run_named("a", {})).rule_name  # type: ignore[union-attr]
+        )
+        strict = await engine.run_group("g1", {})
+        lenient = await engine.try_run_group("g1", {})
+        assert lenient is not None
+        assert strict.passed == lenient.passed
+        assert len(strict.results) == len(lenient.results)
+
+    async def test_the_caller_chooses_the_fallback(self) -> None:
+        """Each of the four real shapes an absent group can mean."""
+        engine = RulesEngine([_pass("a", group="present")])
+
+        # 1. absent means "no constraint here" — treat as passing
+        result = await engine.try_run_group("absent", {})
+        assert (result.passed if result is not None else True) is True
+
+        # 2. absent means "the config is wrong" — fail
+        assert (result.passed if result is not None else False) is False
+
+        # 3. absent means "skip, do not count it"
+        evaluated = [r for r in [result] if r is not None]
+        assert evaluated == []
+
+        # 4. absent is genuinely unexpected — the strict form says so
+        with pytest.raises(KeyError):
+            await engine.run_group("absent", {})
+
+
 class TestIntrospection:
     """rule_names/group_names let a caller check instead of catching."""
 

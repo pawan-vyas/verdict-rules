@@ -36,8 +36,15 @@ a vacuous pass there would mean a misspelled group name silently
 approves, which in an access-control or eligibility adapter is the worst
 possible failure.
 
-If a group may legitimately be absent, check `engine.group_names` rather
-than catching — that is what it is for.
+If a group may legitimately be absent, use `try_run_group`, which returns
+`None` instead of raising. Do **not** reach for it to avoid thinking about
+absence: a `KeyError` in development is a typo found in seconds, whereas
+the same typo behind `try_run_group(...) or default_pass` is a rule set
+that silently stopped being enforced.
+
+The engine does not pick a fallback because it cannot — absence means "no
+constraint applies" to one consumer and "the configuration is broken" to
+another. Extension Recipe 6 works through the four real shapes.
 
 ## A `Rule`'s own `.name` and its `RuleResult.rule_name` are two different things
 

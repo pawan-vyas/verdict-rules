@@ -40,6 +40,7 @@ rules can be built from whatever data already exists by then.
 | A full diagnostic picture — every rule's own pass/fail, for a status page, an audit trail, or a "why not" screen | `RulesEngine.run_all()` — deliberately never short-circuits |
 | One specific, already-known rule, independent of any others | `RulesEngine.run_named()` |
 | A named subset of a larger rule collection, without pulling in unrelated rules registered on the same engine | `RulesEngine.run_group()` — also never short-circuits |
+| Any of the above, where the name or label may legitimately not exist | `RulesEngine.try_run_named()` / `try_run_group()` — returns `None` rather than raising, so your domain decides what absence means |
 
 These aren't mutually exclusive — an engine can hold a composite
 (`AndRule`/`OrRule`) as one of its own named/grouped rules, and the

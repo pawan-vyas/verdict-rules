@@ -21,9 +21,14 @@ missing exactly the thing that matters:
   correct per shape.
 - **Absence, separately from emptiness**: `run_named()` and
   `run_group()` both raise `KeyError` for a name or label nothing
-  registered. Test that they raise, not that they return something —
-  an unknown lookup returning a pass is the failure mode this
-  distinction exists to prevent.
+  registered, while `try_run_named()`/`try_run_group()` return `None`
+  for the same lookup. Test both halves — an unknown lookup returning a
+  *pass* is the failure mode this distinction exists to prevent, and a
+  `try_` form that raised would defeat its only purpose.
+- **`None` is not `passed=False`**: assert that a rule which exists and
+  fails still returns a `RuleResult`, and only a rule that does not
+  exist returns `None`. Collapsing the two makes a typo
+  indistinguishable from a legitimate rejection.
 - **Non-short-circuiting run modes, proven not to short-circuit**:
   `run_all`/`run_group` should report *every* rule even after an
   earlier one has already failed — the direct mirror-image regression
