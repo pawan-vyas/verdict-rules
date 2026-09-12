@@ -43,7 +43,7 @@ note; an incident with one is an improvement.
 
 | # | Incident | Prevention |
 | :-- | :-- | :-- |
-| [001](001-release-notes-mangled-by-shell.md) | Release notes published with every code span empty | `--notes-file` |
+| [001](001-release-notes-mangled-by-shell.md) | Release notes published with every code span empty — **recurred in a `gh pr create --body` string** | Never interpolate authored text into a shell string; pass a file |
 | [002](002-build-output-committed-across-branches.md) | 436 build artefacts committed across two branches | Root-level `.gitignore` |
 | [003](003-pushed-mid-rebase.md) | Pushed while a rebase was unresolved | Verify state before pushing |
 | [004](004-research-published-to-public-surfaces.md) | Competitive research written into public issues and PRs | Standing rule + memory |

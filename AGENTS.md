@@ -88,6 +88,15 @@ matters. Anything you'd be tempted to "remember" about this repo
 belongs in `.agents/memory/`, where the next agent — in any harness —
 can actually find it.
 
+**Never pass authored text through a shell string.** A changelog entry, a
+release note, a pull request or issue body — all routinely contain backticks,
+and backticks inside a double-quoted shell string are executed, not printed.
+Write the text to a file and pass its path: `gh pr create --body-file`,
+`gh release create --notes-file`, or a redirect in a workflow. The failure is
+silent — the command succeeds and only the rendered output is wrong. This has
+happened twice; see
+[`.agents/incidents/001-release-notes-mangled-by-shell.md`](.agents/incidents/001-release-notes-mangled-by-shell.md).
+
 **Public surfaces are not working surfaces.** Issues, pull request
 descriptions, commit messages, and every tracked doc are public and
 permanent, and they speak in the project's voice. They carry the task
