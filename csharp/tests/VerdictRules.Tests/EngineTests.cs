@@ -285,17 +285,67 @@ public class TryLookupTests
         Assert.Equal(strict.Results.Count, lenient.Results.Count);
     }
 
-    [Fact]
-    public async Task TheCallerChoosesTheFallback()
+    /// <summary>
+    /// The full matrix a caller faces: three states a lookup can be in,
+    /// against the three things a caller can decide absence means.
+    /// </summary>
+    /// <remarks>
+    /// The interesting rows are the ones where the default must <i>not</i>
+    /// fire. A fallback firing on a present-but-failing group turns a real
+    /// rejection into a silent approval, which is the whole failure this API
+    /// exists to let callers avoid.
+    /// <code>
+    ///   group state       | ?? true | ?? false | strict
+    ///   ------------------+---------+----------+---------------
+    ///   present, passing  | true    | true     | Passed = true
+    ///   present, failing  | false   | false    | Passed = false   &lt;- must not fire
+    ///   absent            | true    | false    | throws
+    /// </code>
+    /// </remarks>
+    [Theory]
+    [InlineData("passing", true, true, false)]
+    [InlineData("failing", false, false, false)]
+    [InlineData("absent", true, false, true)]
+    public async Task FallbackMatrix(string group, bool defaultTrue, bool defaultFalse, bool strictThrows)
     {
-        var engine = new RulesEngine(new IRule[] { Rules.Counting("a", true, new List<string>(), "present") });
-        var result = await engine.TryRunGroupAsync("absent", Rules.Empty);
+        var log = new List<string>();
+        var engine = new RulesEngine(new IRule[]
+        {
+            Rules.Counting("p", true, log, "passing"),
+            Rules.Counting("f", false, log, "failing"),
+        });
 
-        Assert.True(result?.Passed ?? true);    // absence means no constraint
-        Assert.False(result?.Passed ?? false);  // absence means misconfigured
-        Assert.Empty(new[] { result }.Where(r => r is not null)); // skip it
-        await Assert.ThrowsAsync<KeyNotFoundException>(
-            () => engine.RunGroupAsync("absent", Rules.Empty));   // unexpected
+        var result = await engine.TryRunGroupAsync(group, Rules.Empty);
+
+        Assert.Equal(defaultTrue, result?.Passed ?? true);
+        Assert.Equal(defaultFalse, result?.Passed ?? false);
+
+        if (strictThrows)
+        {
+            await Assert.ThrowsAsync<KeyNotFoundException>(
+                () => engine.RunGroupAsync(group, Rules.Empty));
+        }
+        else
+        {
+            var strict = await engine.RunGroupAsync(group, Rules.Empty);
+            Assert.Equal(defaultTrue, strict.Passed);
+            Assert.Equal(defaultFalse, strict.Passed);
+        }
+    }
+
+    [Fact]
+    public async Task SkippingCountsOnlyWhatExists()
+    {
+        var engine = new RulesEngine(new IRule[] { Rules.Counting("f", false, new List<string>(), "failing") });
+
+        var evaluated = new[]
+        {
+            await engine.TryRunGroupAsync("failing", Rules.Empty),
+            await engine.TryRunGroupAsync("absent", Rules.Empty),
+        }.Where(r => r is not null).ToList();
+
+        Assert.Single(evaluated);
+        Assert.False(evaluated[0]!.Passed);
     }
 }
 
