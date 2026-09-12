@@ -78,6 +78,12 @@ without tooling:
 </script>
 ```
 
+Pin the version in production — an unpinned CDN URL silently upgrades:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/verdict-rules@0.0.1/dist/verdict-rules.global.min.js"></script>
+```
+
 Or as a module, with no bundler:
 
 ```html
@@ -88,6 +94,10 @@ Or as a module, with no bundler:
 
 `require("verdict-rules")` works too. The global build targets ES2019, so it
 runs in browsers that never learned private class fields.
+
+Nothing is published to a CDN separately: unpkg, jsDelivr and esm.sh all mirror
+npm automatically, so every one of them serves this package the moment it is on
+npm.
 
 ## Unknown lookups throw a typed error
 

@@ -63,6 +63,47 @@ position rather than a concession.
 (A secondary benefit: the `@verdict` scope turned out to be claimed
 already, so the scoped route would have needed a different token anyway.)
 
+## 1b · CDN distribution
+
+**Publishing to npm is publishing to a CDN.** The major JS CDNs are
+pull-through mirrors of the npm registry — nothing is uploaded to them, and no
+separate account or step exists. Verified by probing an arbitrary package:
+
+| CDN | Automatic from npm? | Reads |
+| :-- | :-- | :-- |
+| **unpkg** | ✅ instant | `unpkg` field, else `main` |
+| **jsDelivr** | ✅ instant | `jsdelivr` field, else `main`. Also serves `/+esm` |
+| **esm.sh** | ✅ instant | transforms on the fly |
+| **Cloudflare cdnjs** | ❌ **curated** | see below |
+
+So the "architecture" for CDN support is entirely the `package.json` fields,
+which are already set: `unpkg`, `jsdelivr` and `browser` all point at the
+ES2019 global build, with `exports`, `main` and `module` behind them. A CDN we
+have never heard of will work, because it reads the same fields. There is
+nothing further to build.
+
+### Cloudflare cdnjs is the one exception
+
+cdnjs is a **curated** CDN: a probe for a well-known package returned 404
+because nothing is served until a library is accepted. Getting in is one
+pull request to [`cdnjs/packages`](https://github.com/cdnjs/packages) adding a
+small JSON file describing the library and its npm source.
+
+After it merges, everything is automatic — cdnjs picks up new npm versions by
+itself and handles minification, compression and **SRI hash generation**. So it
+is one-time work with no ongoing cost, worth doing at some point, and not a
+blocker for anything.
+
+### Worth doing once published
+
+- [ ] Record the real CDN URLs in the README, with a pinned version rather than
+      a floating tag — an unpinned CDN URL silently upgrades a consumer.
+- [ ] Generate **SRI hashes** for the global build and document them. A
+      `<script>` tag from a CDN without `integrity=` is trusting the CDN
+      completely, and this is the one distribution path where that matters.
+      cdnjs does this automatically; unpkg and jsDelivr do not.
+- [ ] Submit to cdnjs — one JSON PR, any time after the npm publish.
+
 ## 2 · Triage: publish path
 
 Trusted Publishing via OIDC, mirroring what `release-python.yml`
