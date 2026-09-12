@@ -7,7 +7,7 @@
     {
       "name": "verdict",
       "source": ".",
-      "description": "Build rule-based decision, eligibility, or policy-evaluation logic using the verdict rule-evaluation engine (Rule/FunctionRule/AndRule/OrRule/RulesEngine) instead of a hand-rolled if/elif chain. Polyglot design — only Python ships today."
+      "description": "Build rule-based decision, eligibility, or policy-evaluation logic using the verdict rule-evaluation engine (Rule/FunctionRule/AndRule/OrRule/RulesEngine) instead of a hand-rolled if/elif chain. Polyglot design -- only Python ships today."
     }
   ]
 }
