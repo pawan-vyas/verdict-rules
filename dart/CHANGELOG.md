@@ -17,7 +17,10 @@ and its guarantees, with the tests that prove them, and nothing else yet.
   `OrRule([])` fails.
 - Unknown rule names and unknown groups throw rather than returning a
   vacuous pass — emptiness folds to an identity, absence is an error.
-- `RulesEngine.ruleNames` / `groupNames` for checking before calling.
+- `RulesEngine.tryRunNamed` / `tryRunGroup`, returning null rather than
+  throwing when nothing matches — the primitives the throwing forms are built
+  on. Null means absent, never failed.
+- `RulesEngine.ruleNames` / `groupNames` for enumerating an engine.
 - Zero runtime dependencies.
 
 Not yet included: the shared graduation fixture that every language must

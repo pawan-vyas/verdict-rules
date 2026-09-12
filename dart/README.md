@@ -59,7 +59,19 @@ Future<void> main() async {
   unknown rule name or group **throws**. A group exists only because some rule
   declared it, so a lookup matching nothing can only be a mistake — and a
   misspelled group silently approving is the worst failure an eligibility check
-  can have. Use `ruleNames` / `groupNames` to check rather than catch.
+  can have.
+
+  When absence *is* expected, `tryRunNamed`/`tryRunGroup` return null instead
+  of throwing:
+
+  ```dart
+  final result = await engine.tryRunGroup('beta_checks', ctx);
+  final allowed = result?.passed ?? true; // absent means "no constraint here"
+  ```
+
+  Null means **absent, never failed** — a rule that exists and fails still
+  returns a `RuleResult` with `passed` false. These are the primitives; the
+  throwing forms are assertions on top of them.
 - **`RuleResult.data` is opaque** — only what actually ran, never padded, never
   flattened.
 - **Zero runtime dependencies.**
