@@ -46,9 +46,8 @@ venv/
 js/node_modules/
 js/dist/
 js/*.tgz
-dart/.dart_tool/
-dart/.packages
-dart/pubspec.lock
-dart/build/
+dart/packages/*/.dart_tool/
+dart/packages/*/.packages
+dart/packages/*/build/
 csharp/**/bin/
 csharp/**/obj/
