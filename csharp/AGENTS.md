@@ -69,6 +69,46 @@ NuGet has no changelog-file concept: release notes come from the
 `PackageReleaseNotes` metadata property, which points at `CHANGELOG.md` rather
 than duplicating it.
 
+## Open question: how far back should target frameworks reach — decide before `0.0.1` ships
+
+`VerdictRules.csproj` currently multi-targets `net8.0;netstandard2.1`. That
+pair is a deliberate combination, not an oversight, but it also makes a
+decision by omission: **`netstandard2.1` is not implemented by .NET
+Framework** at all — the highest .NET Standard version .NET Framework 4.x ever
+implements is `2.0`. A consumer still on .NET Framework cannot reference this
+package as it stands today, silently, with no error until they try.
+
+What's actually at stake, researched rather than assumed:
+
+- **Reaching .NET Framework is a `netstandard2.0` question, not a `net48`
+  one.** The idiomatic way a library reaches .NET Framework is by adding
+  `netstandard2.0` to the `TargetFrameworks` list — not an explicit `net48`
+  TFM, which would need a Windows-only leg in CI and buys nothing a
+  netstandard build doesn't already cover for a library with no
+  Framework-only API dependency.
+- **The source has no netstandard2.1-only API usage today** — no
+  `IAsyncEnumerable`, `Span<T>`, `Memory<T>`, or `HashCode.Combine` anywhere in
+  `src/`. Adding `netstandard2.0` alongside the existing targets is, as of this
+  writing, very likely a zero-source-change addition to `TargetFrameworks`,
+  not a rewrite — but that needs re-verifying at decision time, not assumed
+  from this note.
+- **This machine's installed SDKs reach `net10.0`** (10.0.103, alongside
+  9.0.x and 8.0.x). Whether to also add explicit `net9.0`/`net10.0` TFMs — to
+  pick up newer AOT/trimming improvements per-runtime rather than relying on
+  `net8.0`'s — is a separate, independent decision from the .NET Framework
+  question above, and doesn't have to be resolved at the same time.
+- **Widening `TargetFrameworks` widens the CI test matrix and the
+  once-published, permanent surface** (see "Debuggability is part of the API
+  surface" above for why permanence is the operative word for this package) —
+  a target added at `0.0.1` can be dropped later as a breaking change; a target
+  never offered is free to add at any point. That asymmetry is itself an
+  argument for research now rather than defaulting either way.
+
+**Do not resolve this by editing `TargetFrameworks` unprompted.** It is
+recorded here as an open question with its implications stated, to be decided
+and finalized before this package's `0.0.1` actually publishes to NuGet — not
+before this branch's PR opens.
+
 ## Before calling a change done
 
 ```
