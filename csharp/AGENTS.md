@@ -1,0 +1,148 @@
+# AGENTS.md — C# SDK
+
+C#-specific rules, on top of the repo-root `AGENTS.md`. Read that first.
+
+## The guarantees, in C# terms
+
+- **Sequential evaluation.** `AndRule`/`OrRule` use a plain `foreach` with
+  `await`. **Never `Task.WhenAll`.** Short-circuiting only means something if
+  later work never *starts*, and the returned boolean is identical either way
+  — so this is the one mistake here that passes its own tests.
+- **Vacuous truth.** `AndRule([])` passes, `OrRule([])` fails.
+- **Emptiness is not absence.** Empty composites fold to their identity;
+  unknown rule names and unknown groups throw `KeyNotFoundException` from
+  `RunNamedAsync`/`RunGroupAsync`, and return `null` from
+  `TryRunNamedAsync`/`TryRunGroupAsync`. The `Try` forms are the
+  **primitives** — the throwing ones are assertions on top, so there is one
+  lookup path rather than two that can drift.
+
+  A lookup that **matches** always reports its real verdict, so a caller's
+  fallback can never mask a failure. When testing code that uses one, cover the
+  *present but failing* case — testing only the absent one looks complete and
+  misses the direction where a bug is silent.
+- **`RuleResult.Data`** holds only what actually ran. Never padded, never
+  flattened into the parent's level.
+
+## Conventions
+
+- `ConfigureAwait(false)` on every `await` in library code.
+- `Nullable` enabled, `TreatWarningsAsErrors` on. Warnings are build failures.
+- Targets `net8.0` and `netstandard2.1`; `IsTrimmable` and, on `net8.0`,
+  `IsAotCompatible`.
+- **Zero runtime dependencies.** `Microsoft.SourceLink.GitHub` is
+  `PrivateAssets="All"`, so it is a build-time reference and never flows to a
+  consumer.
+- XML documentation is generated; every public member carries it.
+
+## Be precise about structural typing
+
+Do not write that "C# has no structural typing." It does, for **delegates** —
+any method or lambda matching the predicate signature is a rule through
+`FunctionRule`, with nothing declared. A method group works directly.
+
+What C# lacks is structural typing for a **multi-member interface**: an object
+carrying `Name`, `Group` and `EvaluateAsync` is not thereby an `IRule`, where
+Python's `Protocol` and TypeScript's structural interfaces would accept it.
+That narrow difference is the honest statement, and it is why `FunctionRule`
+carries more weight in this SDK than in the others.
+
+## Debuggability is part of the API surface
+
+`RuleResult` and `RunResult` carry `[DebuggerDisplay]`, and `RunResult` a
+`[DebuggerTypeProxy]` that expands to the per-rule results. This is not
+decoration: a composite's `Data` is a nested list of sub-results, and stepping
+through a failing evaluation is how anyone diagnoses one. Keep them accurate
+when the shape changes, and keep `ToString()` agreeing with them.
+
+SourceLink and `.snupkg` symbols are enabled so a consumer stepping into the
+package lands on real source. Both must be set *before* a version ships —
+released versions cannot be made debuggable retroactively.
+
+## Layout
+
+`csharp/src/<Project>/` is the .NET convention for a repository that may hold
+more than one project, and it is already what this uses — so a second package
+is a new directory under `src/` and nothing existing moves. Each project's
+manifest, README and changelog live together inside it.
+
+NuGet has no changelog-file concept: release notes come from the
+`PackageReleaseNotes` metadata property, which points at `CHANGELOG.md` rather
+than duplicating it.
+
+## Open question: how far back should target frameworks reach — decide before `0.0.1` ships
+
+`VerdictRules.csproj` currently multi-targets `net8.0;netstandard2.1`. That
+pair is a deliberate combination, not an oversight, but it also makes a
+decision by omission: **`netstandard2.1` is not implemented by .NET
+Framework** at all — the highest .NET Standard version .NET Framework 4.x ever
+implements is `2.0`. A consumer still on .NET Framework cannot reference this
+package as it stands today, silently, with no error until they try.
+
+What's actually at stake, researched rather than assumed:
+
+- **Reaching .NET Framework is a `netstandard2.0` question, not a `net48`
+  one.** The idiomatic way a library reaches .NET Framework is by adding
+  `netstandard2.0` to the `TargetFrameworks` list — not an explicit `net48`
+  TFM, which would need a Windows-only leg in CI and buys nothing a
+  netstandard build doesn't already cover for a library with no
+  Framework-only API dependency.
+- **The source has no netstandard2.1-only API usage today** — no
+  `IAsyncEnumerable`, `Span<T>`, `Memory<T>`, or `HashCode.Combine` anywhere in
+  `src/`. Adding `netstandard2.0` alongside the existing targets is, as of this
+  writing, very likely a zero-source-change addition to `TargetFrameworks`,
+  not a rewrite — but that needs re-verifying at decision time, not assumed
+  from this note.
+- **This machine's installed SDKs reach `net10.0`** (10.0.103, alongside
+  9.0.x and 8.0.x). Whether to also add explicit `net9.0`/`net10.0` TFMs — to
+  pick up newer AOT/trimming improvements per-runtime rather than relying on
+  `net8.0`'s — is a separate, independent decision from the .NET Framework
+  question above, and doesn't have to be resolved at the same time.
+- **Widening `TargetFrameworks` widens the CI test matrix and the
+  once-published, permanent surface** (see "Debuggability is part of the API
+  surface" above for why permanence is the operative word for this package) —
+  a target added at `0.0.1` can be dropped later as a breaking change; a target
+  never offered is free to add at any point. That asymmetry is itself an
+  argument for research now rather than defaulting either way.
+
+**Do not resolve this by editing `TargetFrameworks` unprompted.** It is
+recorded here as an open question with its implications stated, to be decided
+and finalized before this package's `0.0.1` actually publishes to NuGet — not
+before this branch's PR opens.
+
+## Worth watching once evals exist here: no local source to peek at
+
+A Python skill eval was observed opening the installed package's own `.py`
+source to double-check an exact signature, despite that signature already
+being fully documented in `agent-notes.md`'s "API, in one screen" section.
+Checked afterward: nothing in the final code diverged from what was already
+documented — the read added nothing, only cost tokens.
+
+Whether that is a genuine trust gap (the agent does not believe a doc's
+stated signature over ground truth) or just an artifact of Python installing
+real, readable `.py` source one `Read` call away is unresolved by a
+Python-only observation — the low cost of checking is itself a confound.
+NuGet ships a compiled DLL, not source; the only path to real source is
+SourceLink fetching from GitHub through a debugger, a materially
+higher-friction, network-dependent act, not a local file read. A C# eval
+reaching for that anyway would be real evidence of a trust gap rather than
+convenience; not reaching for it would settle nothing either way, since it
+stays consistent with "just convenient when free." Worth watching once this
+language's own evals exist (see `docs/adding-a-language.md` Stage 4) — not
+something to guard against. Restricting an agent from reading its own public
+source, for a benefit this hard to define, would cost real flexibility for
+no clear correctness gain.
+
+## Before calling a change done
+
+```
+cd csharp && dotnet build -warnaserror && dotnet test
+```
+
+For a release, also `dotnet pack -c Release` and confirm both a `.nupkg` and a
+`.snupkg` are produced.
+
+## Tests prove behaviour, not just booleans
+
+Short-circuiting is proven with a call log, never the final boolean.
+Vacuous-truth polarities and unknown-lookup throws each get their own test.
+See the repo-root `docs/testing.md`.
