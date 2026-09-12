@@ -164,6 +164,20 @@ belongs in `.agents/scratch/`, not in the repo's public surfaces.
       publishing
 - [ ] Release workflow attaches the full skill artifact set — see
       [`maintenance.md`](maintenance.md)
+- [ ] **Publish over OIDC, never a stored token.** On PyPI and npm this is
+      what produces provenance at all — a workflow using a token uploads
+      successfully and silently carries none.
+- [ ] **A `verify-published` job**, in this language's own release workflow
+      rather than the shared tail, asserting the version is live and carries
+      whatever provenance that registry offers. The mechanism is per-registry
+      even though the question is not: PyPI exposes PEP 740 attestations, npm
+      reports `dist.attestations`, NuGet embeds a `.signature.p7s`, pub.dev
+      offers nothing comparable — say so explicitly there rather than leaving
+      the omission looking accidental.
+
+      Query the **version-specific** endpoint, not the package summary: the
+      summary is usually CDN-cached and lags a publish by minutes, so
+      asserting against it fails good releases.
 - [ ] `CHANGELOG.md` entry under that language's own tag heading
 
 ### A word on the test workflow's shape

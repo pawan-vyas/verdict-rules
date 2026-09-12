@@ -157,3 +157,64 @@ jobs:
       tag: ${{ needs.detect.outputs.tag }}
       title: Python v${{ needs.detect.outputs.version }}
       artifact-name: python-dist
+
+  # Confirms what PyPI is actually serving, rather than trusting that the upload
+  # step exiting zero means the right thing is there.
+  #
+  # This lives here rather than in release-github.yml because the mechanism is
+  # per-registry even though the question is not: PyPI exposes PEP 740
+  # attestations at an integrity endpoint, npm reports dist.attestations, NuGet
+  # embeds a .signature.p7s, and pub.dev offers nothing comparable. Same reason
+  # the publish step is not shared.
+  verify-published:
+    name: Verify what PyPI is serving
+    needs: [detect, release]
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.detect.outputs.version }}
+    steps:
+      - name: The version is live and resolvable
+        run: |
+          set -euo pipefail
+          url="https://pypi.org/pypi/verdict-rules/${VERSION}/json"
+
+          # Deliberately the version-specific endpoint, not /pypi/<pkg>/json.
+          # That summary is CDN-cached and lagged by minutes during the 0.2.0
+          # release, reporting the previous version while this one was already
+          # installable. Asserting against it would fail good releases.
+          code=000
+          for attempt in 1 2 3 4 5 6; do
+            code="$(curl -s -o version.json -w '%{http_code}' "$url")"
+            [ "$code" = "200" ] && break
+            echo "Attempt ${attempt}: HTTP ${code} — waiting for propagation"
+            sleep 20
+          done
+
+          if [ "$code" != "200" ]; then
+            echo "::error::PyPI is not serving ${VERSION} after ~2 minutes. The publish step reported success, so check the project page before assuming a false alarm."
+            exit 1
+          fi
+          echo "Serving $(jq -r '.info.version' version.json) with $(jq '.urls | length' version.json) file(s)"
+
+      - name: Every published file carries a PEP 740 attestation
+        run: |
+          set -euo pipefail
+
+          # Provenance is the one property that can disappear without any
+          # symptom. It exists because we publish over OIDC; a workflow rewritten
+          # to use a stored API token would upload successfully, pass every other
+          # check, and simply carry no attestation. Nothing else would notice,
+          # which is exactly why this is asserted rather than assumed.
+          failed=0
+          for file in $(jq -r '.urls[].filename' version.json); do
+            bundles="$(curl -s "https://pypi.org/integrity/verdict-rules/${VERSION}/${file}/provenance" \
+              | jq '(.attestation_bundles // []) | length' 2>/dev/null || echo 0)"
+            if [ "${bundles:-0}" -gt 0 ]; then
+              echo "OK ${file}: ${bundles} attestation bundle(s)"
+            else
+              echo "::error::${file} has no PEP 740 attestation. Publishing is no longer producing provenance — check that publish-pypi still runs under Trusted Publishing with id-token: write rather than a stored token."
+              failed=1
+            fi
+          done
+
+          [ "$failed" -eq 0 ] || exit 1
