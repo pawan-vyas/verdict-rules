@@ -65,6 +65,33 @@ The comment on the last rule is the whole fix, made visible: cost order
 is now a stated decision at the point it matters, not something the
 next person to edit this file has to reconstruct from scratch.
 
+Proving the skip, not just asserting it — a call-counting fake stands
+in for the real service:
+
+```python
+class FakePromoService:
+    def __init__(self):
+        self.calls = 0
+
+    async def validate(self, code):
+        self.calls += 1
+        return code == "SAVE10"
+
+
+promo_service = FakePromoService()
+order = {
+    "order_total": 120,
+    "free_shipping_threshold": 50,
+    "is_premium_member": False,
+    "promo_code": None,
+    "promo_code_service": promo_service,
+}
+
+result = await ships_free.evaluate(order)
+result.passed, promo_service.calls
+# (True, 0) — order_total alone already qualifies; the promo service is never called
+```
+
 ## Related
 
 - [`README.md`](README.md) —

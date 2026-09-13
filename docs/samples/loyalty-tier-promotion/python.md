@@ -80,6 +80,29 @@ answers depending on what the caller actually needs — see
 [`../../architecture/python.md`](../../architecture/python.md#three-ways-to-run-rules-concretely)
 for the general rule of thumb.
 
+A customer meeting three of the four criteria — the same case the
+spec's own diagram shows:
+
+```python
+customer = {
+    "trailing_12mo_spend": 6000,
+    "gold_spend_threshold": 5000,
+    "trailing_12mo_orders": 20,
+    "gold_order_threshold": 15,
+    "return_rate": 0.08,
+    "gold_max_return_rate": 0.05,
+    "account_status": "active",
+}
+
+checklist = await promotion_checklist(customer)
+checklist.passed
+# False — not promoted, the return rate is over the limit
+[(r.rule_name, r.passed) for r in checklist.results]
+# [('meets_spend_threshold', True), ('meets_order_count', True),
+#  ('return_rate_below_max', False), ('account_in_good_standing', True)]
+# all four report, not just the one that decided the outcome
+```
+
 ## Related
 
 - [`README.md`](README.md) —

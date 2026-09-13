@@ -86,6 +86,31 @@ async def why_not(cart: dict, campaign: dict) -> RulesEngine:
     # failed — this is what a "why not?" screen actually needs.
 ```
 
+Run against a qualifying cart, then one that fails on two conditions at
+once:
+
+```python
+cart = {"cart_total": 120, "region": "US", "is_first_purchase": True}
+campaign = {"promo_minimum": 100, "eligible_regions": {"US", "CA"}}
+
+await check_cart_fast(cart, campaign)
+# True
+
+result = await why_not(cart, campaign)
+result.passed
+# True — every condition passed
+
+bad_cart = {"cart_total": 50, "region": "MX", "is_first_purchase": True}
+await check_cart_fast(bad_cart, campaign)
+# False — stops at the first failure
+
+result = await why_not(bad_cart, campaign)
+result.passed
+# False
+[r.passed for r in result.results]
+# [False, False, True] — both failures visible, not just the first
+```
+
 Swapping the campaign's minimum from `100` to `75`, or adding `"MX"` to
 `eligible_regions`, is now a data change passed into either function —
 no edit to `cart_meets_minimum`/`is_eligible_region`/`is_first_purchase`,

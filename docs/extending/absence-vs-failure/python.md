@@ -6,7 +6,20 @@
 > Python code.
 
 ```python
-result = await engine.try_run_group("beta_checks", context)
+from verdict import FunctionRule, RuleResult, RulesEngine
+
+
+async def is_beta_tester(context: dict) -> RuleResult:
+    return RuleResult(rule_name="is_beta_tester", passed=context.get("beta_tester", False))
+
+
+engine = RulesEngine([FunctionRule("is_beta_tester", is_beta_tester, group="beta_checks")])
+
+result = await engine.try_run_group("beta_checks", {"beta_tester": True})
+# RunResult(passed=True, results=[RuleResult(rule_name='is_beta_tester', passed=True, ...)])
+
+await engine.try_run_group("no_such_group", {})
+# None — the group was never registered
 ```
 
 The four situations from the spec, as four different ways to consume

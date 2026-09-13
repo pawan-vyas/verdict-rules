@@ -64,6 +64,27 @@ async def route_submission(context: dict) -> str:
     return "auto_published" if publish_check.passed else "sent_to_review"
 ```
 
+All three routing outcomes, from the same engine:
+
+```python
+trusted_post = {
+    "text": "a perfectly reasonable long post about gardening",
+    "banned_terms": ["spam", "scam"],
+    "spam_score": 2,
+    "spam_threshold": 10,
+    "min_length": 20,
+    "author_post_count": 50,
+}
+await route_submission(trusted_post)
+# "auto_published" — clears the auto_reject group, then the auto_publish group
+
+await route_submission({**trusted_post, "author_post_count": 1})
+# "sent_to_review" — clears auto_reject, but the new-author signal fails auto_publish
+
+await route_submission({**trusted_post, "spam_score": 15})
+# "auto_rejected" — trips the auto_reject group; auto_publish is never even checked
+```
+
 ## Related
 
 - [`README.md`](README.md) —

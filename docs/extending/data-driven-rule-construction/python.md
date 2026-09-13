@@ -17,8 +17,24 @@ def make_rule(rule_config: dict) -> FunctionRule:
     return FunctionRule(rule_config["name"], predicate)
 
 
+def load_rule_configs() -> list[dict]:
+    """Stands in for a real config source for this example."""
+    return [
+        {"name": "is_manager", "field": "role", "expected": "manager"},
+        {"name": "in_headquarters", "field": "office", "expected": "HQ"},
+    ]
+
+
 configured_rules = [make_rule(cfg) for cfg in load_rule_configs()]
 combined_rule = AndRule("combined", configured_rules)
+```
+
+```python
+await combined_rule.evaluate({"role": "manager", "office": "HQ"})
+# RuleResult(passed=True, ...)
+
+await combined_rule.evaluate({"role": "manager", "office": "Remote"})
+# RuleResult(passed=False, ...) — in_headquarters fails
 ```
 
 An empty `load_rule_configs()` produces an empty `AndRule`, which

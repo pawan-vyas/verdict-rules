@@ -62,8 +62,12 @@ def _rule_for_row(row: ConfiguredRow) -> Rule:
 
 
 async def fetch_current_rows() -> list[ConfiguredRow]:
-    """Stand-in for a real DB read — the only I/O in this whole pattern."""
-    ...  # SELECT * FROM some_rule_table WHERE ...
+    """Stand-in for a real DB read — the only I/O in this whole pattern.
+    A real implementation queries storage instead of returning a literal."""
+    return [
+        ConfiguredRow(1, "category", "eq", "Manager"),
+        ConfiguredRow(2, "region", "in", {"US", "CA", "UK"}),
+    ]
 
 
 async def evaluate_against_current_config(context: dict, *, combine: str) -> bool:
@@ -81,6 +85,24 @@ async def evaluate_against_current_config(context: dict, *, combine: str) -> boo
     result = await combined.evaluate(context)
     return result.passed
 ```
+
+Against the two rows above — a category grant and a region grant, both
+required:
+
+```python
+await evaluate_against_current_config({"category": "Manager", "region": "US"}, combine="all")
+# True — matches both rows
+
+await evaluate_against_current_config({"category": "Manager", "region": "DE"}, combine="all")
+# False — row 2 fails; the DE region isn't in the configured set
+
+await evaluate_against_current_config({"category": "Manager", "region": "DE"}, combine="any")
+# True — combine="any" only needs one row to pass
+```
+
+Editing row 2's `value` to add `"DE"` — a data change, in whatever
+storage `fetch_current_rows` reads from — changes the second call's
+result with no edit to this function, `_rule_for_row`, or the combinator.
 
 ## Related
 

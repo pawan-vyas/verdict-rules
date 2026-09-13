@@ -6,7 +6,7 @@
 > Python code.
 
 ```python
-from verdict import Rule, RuleResult
+from verdict import FunctionRule, Rule, RuleResult
 
 
 class ThresholdRule:
@@ -40,6 +40,25 @@ existing piece of this package already knows how to run it, because
 nothing anywhere checks `isinstance(x, FunctionRule)` or similar; the
 `Rule` `Protocol` (`@runtime_checkable`) is the only contract that
 matters.
+
+The same case the spec's own diagram shows — 2 of 3 needed, the third
+sub-rule fails:
+
+```python
+async def rule_1(context): return RuleResult("rule_1", passed=True)
+async def rule_2(context): return RuleResult("rule_2", passed=True)
+async def rule_3(context): return RuleResult("rule_3", passed=False)
+
+at_least_two = ThresholdRule("at_least_two", [
+    FunctionRule("rule_1", rule_1),
+    FunctionRule("rule_2", rule_2),
+    FunctionRule("rule_3", rule_3),
+], minimum=2)
+
+result = await at_least_two.evaluate({})
+result.passed, result.detail
+# (True, '2 of 3 passed, needed 2')
+```
 
 ## Related
 
