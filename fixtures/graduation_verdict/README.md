@@ -6,7 +6,7 @@
 > that this is the same engine in another language, rather than
 > something that merely resembles it. A port is not at `0.1.0` until it
 > passes this. See
-> [`../../docs/adding-a-language.md`](../../docs/adding-a-language.md).
+> [`../../docs/maintenance/adding-a-language.md`](../../docs/maintenance/adding-a-language.md).
 
 ## Why this is shared and pinned
 
@@ -116,6 +116,24 @@ both — is wrong in one direction or the other.
 - **The oracle and chaos generators.** No two languages produce
   identical pseudo-random sequences from one seed, so each port writes
   its own, seeded and independently reproducible.
+
+## Extending the curriculum
+
+| You want to... | Touch this |
+| --- | --- |
+| Change a passing threshold | One field in `policies.json`. No implementation code touched, in any language. |
+| Add a subject of an existing type | One new object in `policies.json`. No implementation code touched. |
+| Add a student scenario | One new entry in `students.json`, with its own `expected` block (verdict, how many rules should run, the failing chain, run-mode and group counts). Observe the numbers from a passing implementation rather than hand-writing them — see "Regenerating" below. |
+| Change the elective requirement (e.g. 2-of-3 → 3-of-4) | `policies.json`'s top-level `elective_minimum` field. No implementation code touched. |
+
+**Adding a subject of a genuinely new *type*** — not just a new row of
+an existing type — is the one change that isn't data-only: it needs a
+new branch in whatever each language's own port calls its
+policy-to-rule factory function, since a new *kind* of pass condition is
+a new concept, not new data. See each language's own sample
+implementation (e.g.
+[`../../docs/samples/graduation-requirement-verdict/python.md`](../../docs/samples/graduation-requirement-verdict/python.md))
+for where that factory function lives.
 
 ## Regenerating
 

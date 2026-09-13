@@ -4,7 +4,7 @@
 > The canonical reference for how this package is tested, and what a
 > change must add to its own test suite before it's done. If you're
 > looking for *what to change where* for a given kind of change, see
-> [`maintenance.md`](maintenance.md) — this doc is specifically about
+> [`maintenance/`](maintenance/README.md) — this doc is specifically about
 > proving that change correct. The contracts and checklist below apply
 > to every language this package ever ships for; only Python ships
 > today, so every command and path below is Python's (`python/`).
@@ -121,7 +121,7 @@ matters:
   computes the correct `passed` value would pass a weaker,
   boolean-only test and silently defeat the entire reason these two
   classes exist (see
-  [`architecture.md`](architecture.md#execution-model-sequential-not-concurrent)).
+  [`architecture/README.md`](architecture/README.md#execution-model-sequential-not-concurrent)).
 - **Vacuous truth has a polarity, and it's easy to get backwards.**
   `AndRule([])` passes, `OrRule([])` fails. Both have a dedicated test
   today (`test_empty_rule_list_vacuously_passes`,
@@ -171,7 +171,7 @@ matters:
   `AndRule.data` holds exactly the sub-results that actually ran (not
   padded to the full list, not flattened into the caller's own
   `RunResult.results`) — the invariant
-  [`architecture.md`](architecture.md#type-structure) documents as
+  [`architecture/README.md`](architecture/README.md#type-structure) documents as
   "one entry per *top-level* rule, regardless of internal composition
   depth."
 - **Construction-time behavior that mirrors a plain dict.**
@@ -197,15 +197,15 @@ matters:
 ## Checklist for a new contribution
 
 | You added... | Your test must also prove |
-|---|---|
+| --- | --- |
 | A new concrete `Rule` shape (composite or otherwise) | Plain delegation to whatever it wraps, **plus**, if it's a composite: short-circuit behavior in both directions it can short-circuit on (if any), and its vacuous-input behavior (empty list, or whatever "nothing configured" means for this shape) |
 | A new `RulesEngine` run mode | That it evaluates the right subset, its own vacuous case (nothing matches the selector), and whether it short-circuits or not — state which, explicitly, the way `test_does_not_short_circuit_unlike_and_rule` does for `run_all` |
-| A change to `RuleResult`/`RunResult`'s shape | Every existing test in both files still passes unmodified (a required-field addition breaks every construction site — see [`maintenance.md`](maintenance.md#consumer-impact-checklist-for-a-shape-change)) plus a new assertion covering whatever the new field is for |
+| A change to `RuleResult`/`RunResult`'s shape | Every existing test in both files still passes unmodified (a required-field addition breaks every construction site — see [`maintenance/before-merging-checklists.md`](maintenance/before-merging-checklists.md#consumer-impact-checklist-for-a-shape-change)) plus a new assertion covering whatever the new field is for |
 | A change to `Rule`'s required attributes/signature | Re-run every real consumer's own test suite, not just this package's — see the consumer-impact checklist linked above |
 
 New tests live in whichever of `tests/test_rule.py`/`tests/test_engine.py`
 matches where the new code lives (per
-[`maintenance.md`](maintenance.md#where-to-make-a-change)), or a new
+[`maintenance/README.md`](maintenance/README.md#where-to-make-a-change)), or a new
 file named the same way if the new code lives in a new module.
 
 ## Running tests
@@ -222,14 +222,14 @@ package's test suite is as standalone as the package itself.
 
 ## Related docs
 
-- [`maintenance.md`](maintenance.md) — where a given kind of change
+- [`maintenance/`](maintenance/README.md) — where a given kind of change
   actually lives, and the consumer-impact checklist a shape change
   needs before merging.
-- [`architecture.md`](architecture.md) — the execution-model reasoning
+- [`architecture/README.md`](architecture/README.md) — the execution-model reasoning
   the short-circuit tests above are proving.
-- [`extension.md`](extension.md) — testing guidance for code you write
-  *using* verdict lives with your own project's conventions, not here;
-  this doc is specifically about testing verdict itself.
+- [`extending/`](extending/README.md) — testing guidance for code you
+  write *using* verdict lives with your own project's conventions, not
+  here; this doc is specifically about testing verdict itself.
 - [`../python/examples/graduation_verdict/docs/testing.md`](../python/examples/graduation_verdict/docs/testing.md) —
   the second testing layer described above, and why it plays a
   regression-net role this doc's own suite doesn't.
