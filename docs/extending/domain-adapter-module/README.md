@@ -1,13 +1,9 @@
 <!-- Title: Extending — Keep Your Own Domain Out Of Verdict -->
 # Extending verdict: keep your own domain out of it, in one adapter module
 
-> The single most important extension pattern — an architectural
-> boundary, not a rule shape, so the code below is illustrative rather
-> than a scenario the way the others here are. Each language's own file
-> in this directory — [`python.md`](python.md) today — shows a small,
-> generic worked instance; every sample in
-> [`../../samples/`](../../samples/README.md) is a concrete instance of
-> it in practice, at full scale.
+> An architectural boundary, not a rule shape — every sample in
+> [`../../samples/`](../../samples/README.md) is already a full-scale
+> instance of it in practice.
 
 Build **one** module that translates your domain's own vocabulary into
 `Rule` objects and back out of `RuleResult.data`, and never let that
@@ -33,7 +29,7 @@ graph TB
         Domain["⚙️ Your domain logic<br/>(discounts, grants, whatever)"]
         Adapter[["🔌 One adapter module"]]
     end
-    Verdict[("📦 verdict<br/>Rule / Engine / Result")]
+    Verdict(["📦 verdict<br/>Rule / Engine / Result"])
 
     %% Link 0: Domain -> Adapter
     Domain -->|"[1]<br/>your own vocabulary"| Adapter
@@ -44,7 +40,7 @@ graph TB
     %% Link 3: Adapter -> Domain
     Adapter -->|"[4]<br/>your own types, unpacked"| Domain
 
-    style Domain fill:#FFB84D,stroke:#E69500,stroke-width:2px,color:#000
+    style Domain fill:#4A9EFF,stroke:#2B7DE9,stroke-width:2px,color:#000
     style Adapter fill:#FFB84D,stroke:#E69500,stroke-width:3px,color:#000
     style Verdict fill:#96E6B3,stroke:#37B24D,stroke-width:2px,color:#000
 
@@ -53,7 +49,7 @@ graph TB
     %% 1: the adapter builds Rule objects, the only place verdict is imported
     %% 2: verdict hands back RuleResult, whose .data is an opaque payload
     %% 3: the adapter unpacks that payload back into your own domain types
-    linkStyle 0 stroke:#FFCB7A,stroke-width:2px
+    linkStyle 0 stroke:#8ECFFF,stroke-width:2px
     linkStyle 1 stroke:#FFCB7A,stroke-width:3px
     linkStyle 2 stroke:#7EDB8F,stroke-width:3px
     linkStyle 3 stroke:#FFCB7A,stroke-width:2px
@@ -97,3 +93,18 @@ could be added here with no engine-side changes at all.
 - [`../new-rule-shape/README.md`](../new-rule-shape/README.md) — the
   other place a domain-specific need becomes consumer code rather than
   a request against this package.
+
+---
+
+> **A note from the author**: I hold `verdict` to this same standard
+> for itself, not just as advice — this is what keeps a consumer from
+> being locked into `verdict` at all. If it ever needs replacing, the
+> adapter module is the only thing that changes; every call site
+> speaking your own domain's language stays exactly as it is.
+>
+> That's a preference, not a requirement this package imposes or
+> expects a skill-driven agent to enforce. Coupling your domain logic
+> straight to `Rule`/`RuleResult` throughout your codebase is a
+> legitimate choice too, if you don't want the indirection. Decide it
+> for your own code — this scenario documents the option, not a
+> mandate.
