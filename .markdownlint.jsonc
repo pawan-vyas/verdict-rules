@@ -1,0 +1,7 @@
+{
+  // This repo's prose intentionally exceeds the default 80-character wrap in
+  // long-form docs (AGENTS.md, .agents/memory/*, docs/**) -- line-length is
+  // a house-style choice, not a defect, so it's disabled repo-wide rather
+  // than suppressed file-by-file.
+  "MD013": false
+}
