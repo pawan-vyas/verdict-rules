@@ -39,7 +39,7 @@ is being built and what is decided. All research moved to `.agents/scratch/`
 
 ## What prevents a repeat
 
-- A standing rule in `AGENTS.md`, plus the full reasoning in
+- A standing rule in [`AGENTS.md`](../../AGENTS.md), plus the full reasoning in
   [`../memory/public-surfaces-stay-professional.md`](../memory/public-surfaces-stay-professional.md).
 - **The test before posting anything public**: would I be comfortable if the
   author of the package I just described read this? If not, cut it — the useful

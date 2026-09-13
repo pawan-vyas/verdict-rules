@@ -20,7 +20,7 @@ blockquote framing every doc in this repo uses.
 ## What does not belong here
 
 - **Standing rules** → [`AGENTS.md`](../../AGENTS.md), which every
-  harness reads natively and `CLAUDE.md` imports.
+  harness reads natively and [`CLAUDE.md`](../../CLAUDE.md) imports.
 - **Plans, specs, playbooks** → [`../plans/`](../plans/) — the sibling
   for work that's *going to happen*, as opposed to facts that are
   *already true*.

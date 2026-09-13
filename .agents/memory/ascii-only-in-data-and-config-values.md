@@ -14,8 +14,8 @@
 
 **Prose documentation, docstrings, and code comments**: em-dashes are
 fine, expected, this repo's own established house style — the same
-shape [`docs/adding-a-language.md`](../../docs/adding-a-language.md),
-this whole `AGENTS.md`, and every doc in `docs/` already use throughout.
+shape [`docs/maintenance/adding-a-language.md`](../../docs/maintenance/adding-a-language.md),
+this whole [`AGENTS.md`](../../AGENTS.md), and every doc in `docs/` already use throughout.
 No change there.
 
 **A JSON field, a YAML value a tool parses or displays** (a workflow

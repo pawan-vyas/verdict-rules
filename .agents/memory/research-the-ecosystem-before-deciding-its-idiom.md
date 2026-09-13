@@ -38,7 +38,7 @@ simpler than the version it replaced.
 Before deciding any per-language convention — naming, versioning, packaging
 layout, error types, documentation format — read **that ecosystem's own docs**,
 and record what they actually say in the language's plan or in
-`docs/adding-a-language.md`. Cite it, so the next person can check whether it
+[`docs/maintenance/adding-a-language.md`](../../docs/maintenance/adding-a-language.md). Cite it, so the next person can check whether it
 has changed rather than re-deriving it.
 
 Where a convention genuinely has no ecosystem answer, say so and pick a

@@ -21,12 +21,12 @@ boolean), vacuous-truth polarity is easy to get backwards (`AndRule([])`
 passes, `OrRule([])` fails — not obviously symmetric), and
 `RuleResult.data`'s "only what actually ran, never padded, never
 flattened" invariant is a real, non-obvious design decision (see
-[`architecture.md`](architecture.md#type-structure)). None of that is
+[`architecture/README.md`](architecture/README.md#type-structure)). None of that is
 true of most "convenience" additions someone might propose — most
 boolean combinators are one-line-obvious the moment you write them, and
-[`extension.md`](extension.md)'s whole existence is proof that writing
-one yourself, in your own code, costs nothing and risks nothing on this
-package's side.
+[`extending/`](extending/README.md)'s whole existence is proof that
+writing one yourself, in your own code, costs nothing and risks nothing
+on this package's side.
 
 So the question for any candidate below is genuinely two questions, not
 one:
@@ -37,15 +37,15 @@ graph TB
     Subtle{"⚠️ Real correctness subtlety<br/>worth centralizing?"}
     Demand{"📊 Repeated need across<br/>≥2 real consumers?"}
     Core("✅ Core package feature")
-    Recipe("📖 A documented Recipe<br/>in extension.md")
+    Scenario("📖 A documented scenario<br/>in extending/")
     Watch("👀 Note it, don't build it")
 
     %% Link 0: Idea -> Subtle
     Idea -->|"[1]<br/>first question"| Subtle
     %% Link 1: Subtle -> Demand
     Subtle -->|"[2]<br/>yes"| Demand
-    %% Link 2: Subtle -> Recipe
-    Subtle -->|"[3]<br/>no"| Recipe
+    %% Link 2: Subtle -> Scenario
+    Subtle -->|"[3]<br/>no"| Scenario
     %% Link 3: Demand -> Core
     Demand -->|"[4]<br/>yes"| Core
     %% Link 4: Demand -> Watch
@@ -55,12 +55,12 @@ graph TB
     style Subtle fill:#B47EFF,stroke:#9654E8,stroke-width:2px,color:#000
     style Demand fill:#B47EFF,stroke:#9654E8,stroke-width:2px,color:#000
     style Core fill:#51CF66,stroke:#37B24D,stroke-width:2px,color:#000
-    style Recipe fill:#FFB84D,stroke:#E69500,stroke-width:2px,color:#000
+    style Scenario fill:#FFB84D,stroke:#E69500,stroke-width:2px,color:#000
     style Watch fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
 
     %% Link Index:
     %% 0: every idea starts by asking whether it has real subtlety
-    %% 1-2: no subtlety means it's already a trivial Recipe-2-style exercise
+    %% 1-2: no subtlety means it's already a trivial new-rule-shape-style exercise
     %% 3-4: real subtlety plus repeated demand clears the bar for core
     %% 4: real subtlety but no demonstrated demand yet means watch, don't build ahead of need
     linkStyle 0 stroke:#C9B3FF,stroke-width:2px
@@ -73,12 +73,13 @@ graph TB
 > **Reading the Diagram**: a "yes" to *both* questions is what
 > `AndRule`/`OrRule` themselves would answer if proposed today. Anything
 > answering "no" to the first question isn't a rejected idea, exactly —
-> it's already-solved by [`extension.md`](extension.md)'s Recipe 2, at
+> it's already-solved by
+> [`extending/new-rule-shape/`](extending/new-rule-shape/README.md), at
 > zero cost and zero risk to this package. Anything answering "yes" to
 > the first but "not yet" to the second is a real, watched idea without
 > a real, demonstrated need yet — building it now would be speculating
 > ahead of actual usage, which is exactly the packaged-domain-knowledge
-> mistake [`architecture.md`](architecture.md) already argues against
+> mistake [`architecture/README.md`](architecture/README.md) already argues against
 > in a different form.
 
 ## Considered and rejected: XOR, NOT, and "at-least-N" combinators
@@ -95,7 +96,7 @@ instead of instinct:
   have. Its vacuous case (`XorRule([])`) is arguably `False` — zero is
   an even count — but that's a one-line decision, not a subtle one.
   **No real subtlety → doesn't clear the bar.** It's already exactly
-  what [`extension.md`](extension.md#recipe-2--a-genuinely-new-rule-shape)'s
+  what [`extending/new-rule-shape/`](extending/new-rule-shape/README.md)'s
   `ThresholdRule` example demonstrates (a threshold of exactly 1, with
   an "and not more than 1" check added) — a five-minute exercise in a
   consumer's own code, today, with zero changes here.
@@ -105,12 +106,13 @@ instead of instinct:
   `AndRule`/`OrRule` (Boolean AND+OR+NOT is a complete basis; XOR is
   derived from them) doesn't matter here — the bar isn't "is this a
   fundamental logical operator," it's "does centralizing this prevent a
-  real mistake." It doesn't. **Same verdict as XOR: a Recipe, not a
-  core feature.**
+  real mistake." It doesn't. **Same verdict as XOR: an extending
+  scenario, not a core feature.**
 - **"At-least-N-of-M"** is the general form of both of the above, and is
-  *literally* `extension.md`'s own worked example already. Proposing it
-  for core would mean duplicating a recipe this doc set already
-  demonstrates costs nothing to write yourself.
+  *literally*
+  [`extending/new-rule-shape/`'s own worked example](extending/new-rule-shape/README.md)
+  already. Proposing it for core would mean duplicating a scenario this
+  doc set already demonstrates costs nothing to write yourself.
 
 None of these are wrong ideas — they're evidence the test above works:
 it correctly filters out additions that feel like natural extensions of
@@ -122,15 +124,17 @@ justified those two living in this package in the first place.
 `RulesEngine.run_all()` and `run_group()` already never short-circuit —
 that's their entire point (a full diagnostic picture, not the fastest
 path to a boolean; see
-[`architecture.md`](architecture.md#three-ways-to-run-rules-and-when-each-is-the-right-one)).
+[`architecture/README.md`](architecture/README.md#three-ways-to-run-rules-and-when-each-is-the-right-one)).
 Unlike `AndRule`/`OrRule`, where sequential evaluation is load-bearing
 *because* of short-circuiting, nothing about these two methods' current
 contract actually requires evaluating rules one at a time — `engine.py`
 does today (`[await rule.evaluate(context) for rule in self._rules]`),
 but that's an implementation choice, not something either method's own
 docstring promises. For a rule set where each rule is I/O-bound (a DB
-read, an external check — exactly the shape `data-driven-rule-sets.md`
-and `shipping-fee-waiver.md`'s samples both use), running them
+read, an external check — exactly the shape
+[`data-driven-rule-sets`](samples/data-driven-rule-sets/README.md) and
+[`shipping-fee-waiver`](samples/shipping-fee-waiver/README.md)'s
+samples both use), running them
 concurrently via `asyncio.gather` while still returning results in the
 original order is a real latency win sitting on the table.
 
@@ -164,8 +168,8 @@ neither is urgent enough to build without a specific trigger:
   `group_names`, or simple iteration) — `_by_name`/`_by_group` already
   hold exactly this data privately; nothing needs to be computed, only
   exposed. The recurring gap this would close showed up organically
-  while writing [`samples/5_content-moderation-routing.md`](../python/packages/verdict-rules/docs/samples/5_content-moderation-routing.md)
-  and [`samples/6_data-driven-rule-sets.md`](../python/packages/verdict-rules/docs/samples/6_data-driven-rule-sets.md)'s
+  while writing [`samples/content-moderation-routing/`](samples/content-moderation-routing/python.md)
+  and [`samples/data-driven-rule-sets/`](samples/data-driven-rule-sets/python.md)'s
   own "naive way" sections: an admin/audit screen that wants to list
   "every currently-active rule" has no way to ask an engine that today
   short of reaching into its private attributes. Real subtlety is mild
@@ -174,8 +178,8 @@ neither is urgent enough to build without a specific trigger:
 - **A shared, tested helper for walking a `RuleResult`/`RunResult` tree**
   into a plain, JSON-able structure — every sample in this doc set that
   needs a "why did/didn't this pass" breakdown
-  ([`samples/2_dynamic-discounts.md`](../python/packages/verdict-rules/docs/samples/2_dynamic-discounts.md),
-  [`samples/4_loyalty-tier-promotion.md`](../python/packages/verdict-rules/docs/samples/4_loyalty-tier-promotion.md))
+  ([`samples/dynamic-discounts/`](samples/dynamic-discounts/python.md),
+  [`samples/loyalty-tier-promotion/`](samples/loyalty-tier-promotion/python.md))
   manually destructures `result.results[0].data`, and the
   rate-limiting adapter mentioned above does the identical thing in
   production (`[r.data for r in combined.data]`). The real subtlety:
@@ -194,12 +198,14 @@ pattern is hand-written a third time, promote it" candidates, not
 ## Explicitly out of scope for this package
 
 - **A generic timeout/retry wrapper for a rule's predicate** — a real
-  need (an I/O-bound predicate, like `shipping-fee-waiver.md`'s
-  external promo-code check, can hang), but it's exactly a
-  Recipe-2-shaped exercise (wrap `asyncio.wait_for` around `evaluate()`,
+  need (an I/O-bound predicate, like
+  [`shipping-fee-waiver`](samples/shipping-fee-waiver/README.md)'s
+  external promo-code check, can hang), but it's exactly the shape of
+  exercise [`extending/new-rule-shape/`](extending/new-rule-shape/README.md)
+  already demonstrates (wrap `asyncio.wait_for` around `evaluate()`,
   decide fail-open vs. fail-closed) with no correctness subtlety this
   package would centralize better than a consumer's own code would.
-  Worth adding as a documented Recipe in [`extension.md`](extension.md)
+  Worth adding as a documented scenario in [`extending/`](extending/README.md)
   if it comes up again — not a core feature.
 - **A weighted/scored combinator** (rules contribute a numeric score,
   aggregated against a threshold rather than boolean pass/fail) — a
@@ -210,15 +216,15 @@ pattern is hand-written a third time, promote it" candidates, not
   local path dependency** — was an open question as of this section's
   original writing; superseded by events. This package now *is* a
   standalone, publicly-published repo distributing to PyPI as
-  `verdict-rules` — see the repo-root `README.md` and
-  [`maintenance.md`](maintenance.md#how-this-package-is-typically-consumed--plan-for-no-release-step)
+  `verdict-rules` — see the [repo-root `README.md`](../README.md) and
+  [`maintenance/releases/`](maintenance/releases/README.md)
   for the model that decision replaced.
 
 ## Related docs
 
-- [`extension.md`](extension.md) — the recipes that already cover most
-  of what's rejected above, at zero cost to this package.
-- [`architecture.md`](architecture.md) — the design philosophy this
+- [`extending/`](extending/README.md) — the scenarios that already cover
+  most of what's rejected above, at zero cost to this package.
+- [`architecture/README.md`](architecture/README.md) — the design philosophy this
   whole evaluation test is derived from.
-- [`maintenance.md`](maintenance.md) — what actually changes, file by
+- [`maintenance/`](maintenance/README.md) — what actually changes, file by
   file, on the day a candidate here does clear the bar.
