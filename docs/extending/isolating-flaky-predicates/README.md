@@ -1,16 +1,6 @@
 <!-- Title: Extending — Isolating A Flaky Predicate -->
 # Extending verdict: stop one flaky predicate from taking out the whole run
 
-> Worth stating plainly, because it is a fact a consumer has no way to
-> arrive at except by being told.
-
-**Nothing in this package catches an exception a predicate raises.** Not
-`AndRule`/`OrRule`, not a run-everything mode, not a named or grouped
-lookup. If a predicate's own code raises — an HTTP call to a
-promo-validation service timing out, a database lookup failing — that
-exception propagates straight out of whichever call you made, exactly
-as if you'd called the failing code yourself with nothing in between.
-
 > **A note from the author**: this is deliberate, stated plainly rather
 > than left to be discovered. I can't know whether a given exception is
 > a valid outcome in *your* domain or a genuine bug — that's a fact
@@ -18,6 +8,13 @@ as if you'd called the failing code yourself with nothing in between.
 > the exception alone. And I can't force your hand on it either: no
 > default this package could pick would be right for every consumer, so
 > the choice stays with whoever wrote the predicate.
+
+**Nothing in this package catches an exception a predicate raises.** Not
+`AndRule`/`OrRule`, not a run-everything mode, not a named or grouped
+lookup. If a predicate's own code raises — an HTTP call to a
+promo-validation service timing out, a database lookup failing — that
+exception propagates straight out of whichever call you made, exactly
+as if you'd called the failing code yourself with nothing in between.
 
 This is worth a scenario of its own, and not just a line in
 [`../../architecture/README.md`](../../architecture/README.md), because
