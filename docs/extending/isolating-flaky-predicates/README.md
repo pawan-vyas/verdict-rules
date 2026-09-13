@@ -1,13 +1,13 @@
 <!-- Title: Extending — Isolating A Flaky Predicate -->
 # Extending verdict: stop one flaky predicate from taking out the whole run
 
-> **A note from the author**: this is deliberate, stated plainly rather
-> than left to be discovered. I can't know whether a given exception is
-> a valid outcome in *your* domain or a genuine bug — that's a fact
-> about your own predicate, not something this package can infer from
-> the exception alone. And I can't force your hand on it either: no
-> default this package could pick would be right for every consumer, so
-> the choice stays with whoever wrote the predicate.
+> **A note from the author**: this is a deliberate boundary, not an
+> oversight. Whether a given exception means the condition failed or the
+> code is broken is a fact about your own predicate, not something this
+> package can read off the exception itself — and it isn't this
+> package's call to make either way. That decision stays with whoever
+> wrote the predicate, opted into per rule, never assumed for all of
+> them.
 
 **Nothing in this package catches an exception a predicate raises.** Not
 `AndRule`/`OrRule`, not a run-everything mode, not a named or grouped
