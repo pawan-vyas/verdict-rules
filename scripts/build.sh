@@ -29,13 +29,13 @@ skill_src="$stage/skill-src"
 mkdir -p "$skill_src"
 cp -r skills/verdict/. "$skill_src/"
 
-# The bundled tier, from MANIFEST. A trailing slash on both sides copies a
-# directory. Anything marked `fetch` is deliberately absent — SKILL.md explains
-# how it is pulled on demand, pinned to the consumer's installed version.
+# The bundled tier, from MANIFEST.toml (read via scripts/skill_manifest.py —
+# one parser, not a second hand-rolled one here). A trailing slash on both
+# sides copies a directory. Anything marked `fetch` is deliberately absent —
+# SKILL.md explains how it is pulled on demand, pinned to the consumer's
+# installed version.
 bundled=0
-while IFS="$(printf '\t')" read -r tier src dst; do
-  case "$tier" in ''|'#'*) continue;; esac
-  [ "$tier" = "bundled" ] || continue
+while IFS="$(printf '\t')" read -r src dst; do
   target="$skill_src/references/$dst"
   mkdir -p "$(dirname "$target")"
   if [ "${src%/}" != "$src" ]; then
@@ -45,15 +45,15 @@ while IFS="$(printf '\t')" read -r tier src dst; do
     cp "$src" "$target"
   fi
   bundled=$((bundled + 1))
-done < skills/verdict/MANIFEST
+done < <(python3 scripts/skill_manifest.py bundled)
 
-[ "$bundled" -gt 0 ] || { echo "error: MANIFEST declared no bundled documents." >&2; exit 1; }
+[ "$bundled" -gt 0 ] || { echo "error: MANIFEST.toml declared no bundled documents." >&2; exit 1; }
 
 # Validate the assembled bundle before packaging it: SKILL.md must not route
 # to anything the manifest omitted, and links between bundled documents must
 # resolve where the manifest put them. A script rather than an inline block —
 # shell nested inside a generated file is how .agents/incidents/005 happened.
-python3 scripts/check_skill_bundle.py "$skill_src" skills/verdict/MANIFEST
+python3 scripts/check_skill_bundle.py "$skill_src" skills/verdict/MANIFEST.toml
 
 echo "skill assembled: $bundled bundled document(s)"
 
@@ -87,7 +87,7 @@ cp scripts/install.sh "$stage/tools/verdict-tools/install.sh"
 chmod +x "$stage/tools/verdict-tools/install.sh"
 cp -r scripts/harness-templates "$stage/tools/verdict-tools/harness-templates"
 cp "$skill_src/SKILL.md" "$stage/tools/verdict-tools/skill/SKILL.md"
-cp "$skill_src/MANIFEST" "$stage/tools/verdict-tools/skill/MANIFEST"
+cp "$skill_src/MANIFEST.toml" "$stage/tools/verdict-tools/skill/MANIFEST.toml"
 cp -r "$skill_src/references/." "$stage/tools/verdict-tools/skill/references/"
 ( cd "$stage/tools" && zip -r -q "$ROOT/dist/verdict-tools.zip" verdict-tools -x '*/.DS_Store' )
 

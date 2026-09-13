@@ -23,7 +23,7 @@ Each of these was a restructure done specifically to remove a shared edit:
 | One release workflow | `release-<lang>.yml` calling a shared tail |
 | One PR template | `PULL_REQUEST_TEMPLATE/` with one file per kind of change |
 | `SKILL.md` listing every reference file | `references/<language>/`, routed to generically |
-| Skill reference content restated per language | `MANIFEST` rows, copied from the repo's own docs |
+| Skill reference content restated per language | `MANIFEST.toml` rows, copied from the repo's own docs |
 | One repo-wide `CHANGELOG.md` | One beside each package's own manifest |
 
 Six restructures, all the same shape. The pattern was operating long before it
