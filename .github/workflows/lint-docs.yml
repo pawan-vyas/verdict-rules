@@ -1,0 +1,33 @@
+# Lints every markdown file in the repo with markdownlint-cli, using the rules
+# and exclusions committed at .markdownlint.jsonc and .markdownlintignore --
+# nothing is configured here that isn't also visible to someone running the
+# same command locally.
+#
+# Runs on EVERY pull request, with no trigger-level path filter, so it can be
+# marked required in branch protection. A path-filtered workflow never starts
+# on an unrelated PR, so no check run is ever created and protection waits
+# forever -- the same reasoning check-skill-version.yml documents.
+#
+# Language-agnostic, because docs/ is: this check has nothing to do with any
+# one SDK, so it sits alongside test-python.yml rather than inside it.
+name: Lint docs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: Markdown lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Run markdownlint
+        run: npx --yes markdownlint-cli@0.49.1 "**/*.md"

@@ -17,7 +17,11 @@ venv/
 
 # Editor/OS
 .DS_Store
-.vscode/
+# .vscode/ stays ignored for personal editor state (launch configs, per-user
+# overrides) -- settings.json is the one exception, committed deliberately
+# for fixes that belong to every contributor, not this machine.
+.vscode/*
+!.vscode/settings.json
 .idea/
 
 # Skill eval loop working material — see skills/verdict-workspace/.gitignore

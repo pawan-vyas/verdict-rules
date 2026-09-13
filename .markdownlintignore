@@ -1,0 +1,31 @@
+# Its own gitignore-syntax "#" comment lines read as Markdown ATX headings to
+# anything that treats it as Markdown (an editor extension including dotfiles
+# in live linting, or a future -d/--dot in CI) -- excluded here so that stays
+# true regardless of what does the linting, not just the exact CI command.
+.markdownlintignore
+
+# Vendored or generated content -- not authored here, never linted.
+js/node_modules/
+.agents/skills/
+.claude/skills/
+
+# A recorded snapshot of a past eval run's model output, kept for reference --
+# historical, not living prose. See skills/verdict-workspace/evals/README.md.
+skills/verdict-workspace/iteration-1/
+
+# Standard Contributor Covenant boilerplate, unmodified aside from the contact
+# line -- linting a vendored external document as if it were ours would mean
+# either editing a widely-recognized standard text or permanently suppressing
+# rules on it for no benefit.
+CODE_OF_CONDUCT.md
+
+# A one-line Claude Code include shim (`@AGENTS.md`). Its entire content is
+# that one directive; a heading would be extra content in a file whose only
+# job is the include itself.
+CLAUDE.md
+
+# A snippet appended into a *consumer's* own CLAUDE.md by scripts/install.sh,
+# not a standalone doc of ours -- it also carries its own idempotency marker
+# comment (`<!-- verdict:marker v1 -->`) that install.sh matches on exactly,
+# which a markdownlint directive must not be confused with.
+scripts/harness-templates/claude/append/CLAUDE.md
