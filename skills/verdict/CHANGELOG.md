@@ -50,6 +50,16 @@ cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skil
   preserving the directory shape the same way the samples entries do.
   `SKILL.md`'s routing and its predicate-isolation example both point
   at the new paths.
+- **Every `docs/extending/` and `docs/samples/` fetch entry's
+  destination now mirrors its source path**, landing at
+  `references/docs/extending/...` and `references/docs/samples/...`
+  instead of a `references/python/...` alias — these are
+  language-agnostic docs, the same status `docs/testing.md` already
+  had, so they get the same treatment: one destination, read by every
+  language's agent, with no second entry needed when a new language
+  ships. Only a destination whose *source* is itself language-specific
+  (the quickstart, the example project) still aliases to a shorter
+  `references/python/...` path.
 
 ## [0.4.0] - 2026-09-13
 
