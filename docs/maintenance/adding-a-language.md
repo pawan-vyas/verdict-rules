@@ -28,8 +28,8 @@ by reading registry documentation, which is why that happens first here.
 The fourth — proving the engine actually behaves identically across
 languages — is handled by a shared fixture rather than by each language
 inventing its own evidence. See
-[`testing.md`](testing.md) and
-[`../fixtures/graduation_verdict/README.md`](../fixtures/graduation_verdict/README.md).
+[`../testing.md`](../testing.md) and
+[`../../fixtures/graduation_verdict/README.md`](../../fixtures/graduation_verdict/README.md).
 
 ## The stages
 
@@ -74,6 +74,7 @@ stateDiagram-v2
 ```
 
 > **Stage transitions**:
+>
 > 1. **Clerical → Minimal**: every naming and registry question is
 >    answered *in writing*, not in someone's head. This is the stage
 >    people skip, and the only one whose mistakes cannot be corrected
@@ -144,7 +145,7 @@ belongs in `.agents/scratch/`, not in the repo's public surfaces.
       `RulesEngine`, `RuleResult`, `RunResult`
 - [ ] **Sequential evaluation**, in a plain loop with `await` — never
       the language's "run these concurrently" primitive. See
-      [`architecture.md`](architecture.md)
+      [`../architecture/`](../architecture/README.md)
 - [ ] Short-circuiting proven with a call counter or mutable-list side
       effect, never just the final boolean
 - [ ] Vacuous-truth cases explicit: the empty-`AndRule` and empty-`OrRule`
@@ -179,7 +180,7 @@ belongs in `.agents/scratch/`, not in the repo's public surfaces.
 - [ ] `release-<lang>.yml` on a `<lang>-v*` tag, publishing via trusted
       publishing
 - [ ] Release workflow attaches the full skill artifact set — see
-      [`maintenance.md`](maintenance.md)
+      [`releases/README.md`](releases/README.md)
 - [ ] **Publish over OIDC, never a stored token.** On PyPI and npm this is
       what produces provenance at all — a workflow using a token uploads
       successfully and silently carries none.
@@ -191,12 +192,12 @@ belongs in `.agents/scratch/`, not in the repo's public surfaces.
       offers nothing comparable — say so explicitly there rather than leaving
       the omission looking accidental.
 
-      Query the **version-specific** endpoint, not the package summary: the
-      summary is usually CDN-cached and lags a publish by minutes, so
-      asserting against it fails good releases.
+  Query the **version-specific** endpoint, not the package summary: the
+  summary is usually CDN-cached and lags a publish by minutes, so
+  asserting against it fails good releases.
 - [ ] A `CHANGELOG.md` **beside that package's own manifest** — next to
-      `pyproject.toml`, `package.json`, the `.csproj`, `pubspec.yaml — not at
-      the repo root and not at the language directory root if the manifest
+      `pyproject.toml`, `package.json`, the `.csproj`, `pubspec.yaml` — not
+      at the repo root and not at the language directory root if the manifest
       sits deeper. That is what the packaging tools bundle, and it gives the
       track exactly one writer so two releases can never contend for one file.
       **Research that ecosystem's own convention** rather than copying
@@ -253,9 +254,10 @@ to an identity, absence is an error.
       quickstart, samples, worked example — in the `fetch` tier. The
       `bundled` tier is language-agnostic and should not grow.
 - [ ] `.claude-plugin/plugin.json` bumped in the same commit, with a
-      `## skill-vX.Y.Z` changelog entry. **`SKILL.md` needs no edit** —
-      it routes to `references/<language>/` and names no language, so
-      adding one touches nothing another language's branch also touches
+      `## skill-vX.Y.Z` changelog entry. **[`SKILL.md`](../../skills/verdict/SKILL.md)
+      needs no edit** — it routes to `references/<language>/` and names
+      no language, so adding one touches nothing another language's
+      branch also touches
 - [ ] `skills/verdict-workspace/evals/<lang>/` — this language's own
       evals, as a **new directory**: one JSON file per eval plus a
       minimal project manifest under `files/`, which is what lets an
@@ -267,7 +269,7 @@ to an identity, absence is an error.
       others do not — `asyncio.gather` has an equivalent everywhere, and
       each one is a different name
 - [ ] Documentation at the quality of the Python set: architecture
-      notes where the language diverges, extension recipes in its own
+      notes where the language diverges, extension scenarios in its own
       idiom
 - [ ] A real install from the registry exercised end to end
 
@@ -287,7 +289,7 @@ In practice:
 - **A new capability is a cross-language piece of work**, not a
   single-language one. If it is not worth doing four times, that is
   useful evidence about whether it is worth doing at all —
-  [`future_plan.md`](future_plan.md) already sets a high bar for
+  [`../future_plan.md`](../future_plan.md) already sets a high bar for
   additions, and this raises it further on purpose.
 - **Behaviour changes are enforced mechanically**, not by memory: they
   show up as changes to the shared fixture, and every language's suite
@@ -308,7 +310,7 @@ In practice:
 ## What is shared and what is not
 
 **Shared**: the fixture data under
-[`../fixtures/graduation_verdict/`](../fixtures/graduation_verdict/) —
+[`../../fixtures/graduation_verdict/`](../../fixtures/graduation_verdict/) —
 the curriculum, the students, and the expected outcomes, including the
 short-circuit evidence. Every language asserts against the same numbers.
 
@@ -334,10 +336,10 @@ Any language claiming to be verdict has to clear it.
 
 ## Related
 
-- [`architecture.md`](architecture.md) — the guarantees a port must
+- [`../architecture/`](../architecture/README.md) — the guarantees a port must
   preserve.
-- [`testing.md`](testing.md) — what a change has to prove.
-- [`maintenance.md`](maintenance.md) — release procedure, tagging, and
-  the skill's separate version.
-- [`extension.md`](extension.md) — the recipes each language's own
-  reference content should cover.
+- [`../testing.md`](../testing.md) — what a change has to prove.
+- [`README.md`](README.md) — release procedure, tagging, and the
+  skill's separate version.
+- [`../extending/`](../extending/README.md) — the scenarios each
+  language's own reference content should cover.
