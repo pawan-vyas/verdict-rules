@@ -64,7 +64,7 @@ engine.rule_names, engine.group_names     # tuples of what exists
 
 ## Testing what matters
 
-`references/docs/testing.md` (fetch it) is the full checklist. The parts
+[`references/docs/testing.md`](../../../../docs/testing.md) (fetch it) is the full checklist. The parts
 that are easy to skip:
 
 - Prove short-circuiting with a **call log**, not the final boolean. A

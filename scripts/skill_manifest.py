@@ -39,9 +39,9 @@ def bundled_sources(manifest_path: Path = DEFAULT_PATH) -> list[str]:
 
     Used by check-skill-version.yml: these paths ship in every skill
     install regardless of which repo directory they physically live in
-    (docs/architecture.md and docs/extension.md sit outside skills/verdict/
-    entirely), so a workflow watching only skills/verdict/ for "did shipped
-    content change" would miss an edit to either of them.
+    (docs/architecture/ sits outside skills/verdict/ entirely), so a
+    workflow watching only skills/verdict/ for "did shipped content
+    change" would miss an edit to it.
     """
     return [src for src, _ in rows("bundled", manifest_path)]
 

@@ -59,8 +59,10 @@ passes its own tests while being silently incorrect:
   say this plainly rather than let a consumer discover it in production
   when one flaky check takes the rest of a rule set's diagnostics with
   it. If a task needs one predicate's failure isolated from the others,
-  that is a wrapper the caller opts into per rule (`extension.md`,
-  Recipe 7) — never a blanket default, since the same catch-everything
+  that is a wrapper the caller opts into per rule
+  ([`extending/isolating-flaky-predicates/`](../../docs/extending/isolating-flaky-predicates/README.md),
+  fetched on demand)
+  — never a blanket default, since the same catch-everything
   behavior would also turn a genuine bug into a silent, wrong "this rule
   failed" instead of a stack trace pointing at it.
 
@@ -72,20 +74,24 @@ repository ships, so it cannot drift from the implementation.
 
 | Read | When |
 | :-- | :-- |
-| `references/docs/architecture.md` | Understanding *why* it is shaped this way — the type structure, the execution model, and which run mode a caller needs. |
-| `references/docs/extension.md` | Building anything *with* verdict — wrapping a predicate, a new rule shape, the one-adapter-module boundary, rules from stored configuration, choosing what an absent lookup should mean, isolating one flaky predicate from the rest of a run. |
+| [`references/docs/architecture/README.md`](../../docs/architecture/README.md) | Understanding *why* it is shaped this way — the type structure, the execution model, and which run mode a caller needs. Each language's own concrete realization (real type/method names) is alongside it in the same directory, e.g. [`references/docs/architecture/python.md`](../../docs/architecture/python.md). |
 | `references/<language>/agent-notes.md` | Always, first. Short and language-specific. |
 
-Prefer a section over a document. These files carry headings and
-anchors, so `references/docs/extension.md#recipe-2` is a better read
-than the whole file.
+Prefer a section over a document. This file carries headings and
+anchors, so `references/docs/architecture/README.md#type-structure` is
+a better read than the whole file.
 
 ### Documents fetched on demand
 
 Deeper material is not shipped, and is pulled only when a task needs
-it: the testing guide, the language quickstart, the worked samples, and
-the full worked example. `references/<language>/agent-notes.md` carries
-the exact command.
+it: the testing guide, the language quickstart, the extension scenarios
+(building anything *with* verdict — wrapping a predicate, a new rule
+shape, the one-adapter-module boundary, rules from stored
+configuration, choosing what an absent lookup should mean, isolating
+one flaky predicate from the rest of a run — see
+[`docs/extending/`](../../docs/extending/README.md) for the full
+index), the worked samples, and the full worked example.
+`references/<language>/agent-notes.md` carries the exact command.
 
 **Fetch at the version the project actually has installed**, never from
 the default branch. A project pinned to an older release that reads
