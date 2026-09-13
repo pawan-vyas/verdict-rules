@@ -3,8 +3,6 @@
 
 > Because `AndRule`/`OrRule` satisfy `Rule` themselves, they can hold
 > each other as sub-rules to any depth, with no special-casing anywhere.
-> Each language's own file in this directory — [`python.md`](python.md)
-> today — shows the concrete code.
 
 ```mermaid
 graph TB

@@ -3,9 +3,7 @@
 
 > What this scenario is, and what any language's worked implementation
 > of it must demonstrate — language-agnostic, read once here rather
-> than restated per language. Each language's own file in this
-> directory — [`python.md`](python.md) today — is the actual code, in that
-> language's own idiom, built to satisfy this spec.
+> than restated per language.
 
 **The question**: a support screen lets an agent type a check name and
 run it against one customer, to answer "why didn't this customer

@@ -3,10 +3,9 @@
 
 > Because rules are plain objects, nothing stops building them from
 > whatever configuration a caller already has, rather than hand-writing
-> one rule per case at import time. Each language's own file in this
-> directory — [`python.md`](python.md) today — shows the concrete code.
+> one rule per case at import time.
 
-A list of dicts, database rows, a settings file — any of them can drive
+A list of maps, database rows, a settings file — any of them can drive
 a factory function that turns one config entry into one rule, combined
 under a composite the same way a hand-written rule set would be. An
 empty configuration source produces an empty composite, which vacuously

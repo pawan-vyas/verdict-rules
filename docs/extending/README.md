@@ -16,8 +16,8 @@ this package's permission to add a new kind of rule.
 
 Each scenario here follows the same template as
 [`../samples/`](../samples/README.md): a language-agnostic spec in
-`README.md`, plus one concrete file per language that has written it up
-— `python.md` today. See
+`README.md`, plus one concrete file per language that has written it
+up. See
 [`../maintenance/doc-authoring/extending.md`](../maintenance/doc-authoring/extending.md)
 for that template.
 

@@ -4,12 +4,10 @@
 > Why `verdict` is shaped the way it is, and the behavior a caller can
 > rely on that isn't obvious from the API surface alone — independent of
 > any specific consumer's domain or any one language's type system.
-> [`../../README.md`](../../README.md) is the narrative overview;
-> [`python/packages/verdict-rules/docs/quickstart.md`](../../python/packages/verdict-rules/docs/quickstart.md)
-> is the core concepts and one worked example. The concrete realization
-> in a real type system, with real method names, is each language's own
-> file in this directory — [`python.md`](python.md) today, a future
-> language's own `<language>.md` alongside it.
+> [`../../README.md`](../../README.md) is the narrative overview; that
+> language's own quickstart is the core concepts and one worked example.
+> The concrete realization in a real type system, with real method
+> names, is that language's own file in this directory.
 
 ## Design philosophy
 
@@ -294,12 +292,6 @@ coverage, and what a new contribution's own tests need to add.
 ## Related docs
 
 - [`../../README.md`](../../README.md) — the narrative front door.
-- [`../../python/packages/verdict-rules/docs/quickstart.md`](../../python/packages/verdict-rules/docs/quickstart.md) — core
-  concepts and the one worked example, in Python (today's only shipped
-  language).
-- [`python.md`](python.md) — the concrete Python realization of
-  everything on this page: real type names, real method names, the
-  class diagram.
 - [`../maintenance/`](../maintenance/README.md) — changing this package
   itself: the zero-release-step consumption model, where to make a
   given kind of change, and the consumer-impact checklist for a shape

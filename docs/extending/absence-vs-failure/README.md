@@ -3,9 +3,7 @@
 
 > The strict named/group lookup raises when nothing matches; a
 > try-prefixed lookup exists for when absence is expected instead —
-> and only the caller can say what absence should mean. Each language's
-> own file in this directory — [`python.md`](python.md) today — shows
-> the concrete code.
+> and only the caller can say what absence should mean.
 
 The strict lookup raises when nothing matches. That is the right
 default: a group exists only because some rule declared it, so a lookup
@@ -108,9 +106,9 @@ try-prefixed lookup defaulting to a pass is a rule set that silently
 stopped being enforced, and nothing will tell you.
 
 If you only need to enumerate what exists, the engine's own name/group
-listings report exactly the lookups that will not raise — see
-[`../../architecture/python.md`](../../architecture/python.md) for the
-concrete Python names.
+listings report exactly the lookups that will not raise — see that
+language's own file in [`../../architecture/`](../../architecture/README.md)
+for the concrete names.
 
 ## The fallback only applies to absence
 
@@ -136,8 +134,9 @@ everybody thinks of first. See [`../../testing.md`](../../testing.md).
 
 ## Related
 
-- [`../../architecture/python.md`](../../architecture/python.md) —
-  the concrete Python method names behind the strict/lenient lookups.
+- [`../../architecture/`](../../architecture/README.md) — that
+  language's own concrete method names behind the strict/lenient
+  lookups.
 - [`../../testing.md`](../../testing.md) — why the present-and-failing
   case is the one worth a dedicated test.
 - [`../isolating-flaky-predicates/README.md`](../isolating-flaky-predicates/README.md) —

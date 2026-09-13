@@ -2,8 +2,7 @@
 # Extending verdict: stop one flaky predicate from taking out the whole run
 
 > Worth stating plainly, because it is a fact a consumer has no way to
-> arrive at except by being told. Each language's own file in this
-> directory — [`python.md`](python.md) today — shows the concrete code.
+> arrive at except by being told.
 
 **Nothing in this package catches an exception a predicate raises.** Not
 `AndRule`/`OrRule`, not a run-everything mode, not a named or grouped
@@ -29,6 +28,31 @@ becomes a failing result instead of propagating out of the run that
 contains it. Now a timeout in the wrapped check reports as a normal
 failing entry, same as any other failing rule — and every other rule in
 that run still runs and still reports.
+
+```mermaid
+sequenceDiagram
+    participant Caller as 📞 Caller
+    participant Engine as ⚙️ RulesEngine
+    participant R1 as ✅ rule_1
+    participant R2 as 🛡️ defensive(promo_code_valid)
+    participant R3 as ✅ rule_3
+
+    Caller->>Engine: run_all(context)
+    Engine->>R1: evaluate(context)
+    R1-->>Engine: RuleResult(passed=True)
+    Engine->>R2: evaluate(context)
+    Note over R2: predicate raises TimeoutError —<br/>caught inside the wrapper, never escapes
+    R2-->>Engine: RuleResult(passed=False,<br/>detail="...")
+    Engine->>R3: evaluate(context)
+    R3-->>Engine: RuleResult(passed=True)
+    Engine-->>Caller: RunResult(passed=False,<br/>results=[R1, R2, R3])
+```
+
+> **`rule_3` Still Runs**: without the wrapper, `R2`'s own `TimeoutError`
+> would propagate straight out of `run_all` itself — `Engine` never gets
+> to call `R3` at all, and the caller gets a stack trace instead of a
+> `RunResult`. Wrapping `R2` alone is enough to keep the other two rules'
+> diagnostics intact; nothing about `R1` or `R3` needed to change.
 
 ## Why the library does not catch this for you
 

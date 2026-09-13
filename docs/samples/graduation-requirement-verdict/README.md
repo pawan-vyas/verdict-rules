@@ -3,9 +3,7 @@
 
 > What this scenario is, and what any language's worked implementation
 > of it must demonstrate — language-agnostic, read once here rather
-> than restated per language. Each language's own file in this
-> directory — [`python.md`](python.md) today — points at that language's own full,
-> tested implementation, built to satisfy this spec.
+> than restated per language.
 
 **The question**: does this student qualify to graduate?
 
@@ -24,13 +22,12 @@ needs all of them at once, not because the scenario is trying to be
 exhaustive for its own sake.
 
 This is the one scenario backed by a full, tested project rather than a
-markdown code block — see each language's own worked example
-(`python/examples/graduation_verdict/` today) for a complete
-implementation, a runnable demo across several varied students, and a
-test suite that doubles as an integration/regression net for that
-language's SDK itself. The shared inputs and expected outcomes every
-port must reproduce — including how many rules should have run, which
-is short-circuiting stated as data rather than prose — live in
+markdown code block: a complete implementation, a runnable demo across
+several varied students, and a test suite that doubles as an
+integration/regression net for that language's SDK itself. The shared
+inputs and expected outcomes every port must reproduce — including how
+many rules should have run, which is short-circuiting stated as data
+rather than prose — live in
 [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md),
 the cross-language parity fixture.
 

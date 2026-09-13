@@ -3,8 +3,7 @@
 
 > `AndRule`/`OrRule` cover "every sub-rule must pass" and "at least one
 > must pass." A requirement that doesn't fit either is a new type,
-> written entirely in your own code. Each language's own file in this
-> directory — [`python.md`](python.md) today — shows the concrete code.
+> written entirely in your own code.
 
 "At least N of these M must pass," a weighted score threshold, anything
 with its own combination logic — none of that needs a change on

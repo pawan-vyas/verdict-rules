@@ -17,7 +17,7 @@ Every scenario is a directory, `docs/samples/<slug>/`:
   implementation of it must show. Written once, read by every language.
   Renders automatically on GitHub when linking to the directory itself.
 - **The implementation** — `docs/samples/<slug>/<language>.md`, one per
-  language that has built this sample (`python.md` today). Real,
+  language that has built this sample (`python.md`, for instance). Real,
   runnable-shaped code in that language's own idiom, plus the
   language-specific variant of the naive approach it's replacing.
 
@@ -31,8 +31,9 @@ nothing reserves the slot.
 A sample backed by a full tested project rather than a markdown code
 block (graduation-requirement-verdict is the current example) keeps its
 *code* in that language's own idiomatic location
-(`python/examples/graduation_verdict/` today) and, if the scenario is
-also a cross-language parity fixture, its shared data contract under
+(`python/examples/graduation_verdict/`, for instance) and, if the
+scenario is also a cross-language parity fixture, its shared data
+contract under
 `fixtures/<name>/` — see
 [`../adding-a-fixture.md`](../adding-a-fixture.md). Only the *docs*
 consolidate here. Its implementation file has no inline naive/`verdict`
@@ -44,8 +45,12 @@ like "Where the design lives in the code," fits this case).
 
 In order:
 
-1. **Title + blockquote framing** — what the scenario is, and a pointer
-   to `<language>.md` in this same directory as "the actual code."
+1. **Title + blockquote framing** — what the scenario is. Never a
+   pointer to a specific `<language>.md` by name or with a "today"
+   hedge — GitHub already renders the directory listing when linking to
+   the directory itself, and naming one language's file here is exactly
+   the kind of line a second language's arrival would force an edit to.
+   See [`README.md`](README.md)'s durable-shared-doc rule.
 2. **The question** — one line, plain language, the exact yes/no or
    selection the scenario resolves.
 3. **Why it's a good fit** — one short paragraph naming the shape of the

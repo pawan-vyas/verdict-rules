@@ -19,8 +19,8 @@ Every scenario is a directory, `docs/extending/<slug>/`:
   must show. Written once, read by every language. Renders
   automatically on GitHub when linking to the directory itself.
 - **The implementation** — `docs/extending/<slug>/<language>.md`, one
-  per language that has written this scenario up (`python.md` today).
-  The real, concrete code for that language's own idiom.
+  per language that has written this scenario up (`python.md`, for
+  instance). The real, concrete code for that language's own idiom.
 
 A scenario that is architectural rather than a rule shape still earns a
 small, generic `<language>.md` per language
@@ -37,9 +37,9 @@ a language that hasn't written one.
 
 In order:
 
-1. **Title + blockquote framing** — what the extension point is, and a
-   pointer to `<language>.md` in this same directory as "the concrete
-   code," when one exists.
+1. **Title + blockquote framing** — what the extension point is. Never
+   a pointer to a specific `<language>.md` by name or with a "today"
+   hedge — see [`README.md`](README.md)'s durable-shared-doc rule.
 2. **The extension point, explained** — what it lets a consumer do
    without changing this package's own source, and why the underlying
    type structure (a structural `Rule`, not a fixed hierarchy) is what

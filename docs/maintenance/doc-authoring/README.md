@@ -13,6 +13,7 @@
 | --- | --- |
 | [`samples.md`](samples.md) | Sample spec/implementation docs under `docs/samples/` and each language's own samples directory |
 | [`extending.md`](extending.md) | Extension-scenario spec/implementation docs under `docs/extending/` |
+| [`architecture.md`](architecture.md) | The shared design doc plus one concrete file per language under `docs/architecture/` |
 | [`maintenance.md`](maintenance.md) | This `maintenance/` directory's own file-naming and structure conventions |
 
 ## No narration about the document itself
@@ -89,3 +90,53 @@ single file that grows a new section per variant. See
 to this directory itself, and [`../releases/`](../releases/README.md)
 for a worked instance. The test: if a second variant showing up would
 mean editing a file the first variant already owns, it's a directory.
+
+## A shared, language-agnostic doc never names one language's own file
+
+The directory split above solves the file-per-variant problem; this
+rule is what actually keeps the *shared* file inside it — the spec, the
+architecture overview, any doc read by every language rather than
+written by one — from quietly becoming a forced edit anyway. A spec's
+own prose is exactly as durable as its structure only if it never says
+which concrete `<language>.md` exists, and never hedges with "today":
+
+- **No pointer to a specific implementation file in a spec's own
+  blockquote or body.** `` "Each language's own file in this
+  directory — [`python.md`](python.md) today — is the actual code" ``
+  reads as a stable structural fact but is not one: it is true only
+  until a second language's file exists beside it, at which point the
+  sentence is either wrong (implying `python.md` is the only one) or
+  needs an edit nobody's process actually triggers. GitHub already
+  renders a directory's file listing when linking to the directory
+  itself, and a sample's own fetch pairing already puts the language
+  file right beside the spec — nothing in the spec's own prose needs to
+  name it. Drop the pointer; don't replace it with a generic version.
+- **No hardcoded path to another doc's language-specific file either.**
+  Pointing a shared doc at `python/packages/verdict-rules/docs/quickstart.md`
+  or `architecture/python.md` by name has the identical problem one
+  level removed — link the shared parent
+  (`architecture/README.md`, `docs/samples/README.md`) instead, or say
+  "that language's own quickstart" with no link at all.
+- **A concrete filename is fine as an illustrative example in a
+  maintainer-facing template** (this file, `samples.md`, `extending.md`
+  saying "`python.md`, for instance") — the reader is being taught the
+  pattern, not handed a spec that must stay accurate to every language
+  forever. Drop "today" there too, since the illustration doesn't
+  become false when a second language's file exists — only the word
+  "today" would.
+- **Not even a "Related" section entry, if the target is a same-directory
+  sibling.** Adding a bullet for a new language's file is additive, not
+  an edit — but it is still a touchpoint nothing requires, since the
+  sibling is already one click away in the same directory's own GitHub
+  listing. A "Related" entry earns its place linking to a genuinely
+  different doc a reader might not think to look for (a sibling
+  scenario, a sample, `testing.md`) — never a same-directory
+  implementation file the directory listing already shows for free.
+
+This was found the hard way: seven sample specs, seven extending
+scenarios, both authoring templates, and `architecture/README.md`'s own
+opening blockquote all repeated some variant of the pointer this rule
+now forbids — see
+[`../../../.agents/memory/shared-docs-never-name-one-languages-file.md`](../../../.agents/memory/shared-docs-never-name-one-languages-file.md)
+for the full account of how it spread before anyone noticed the
+pattern, not just the rule that came out of it.
