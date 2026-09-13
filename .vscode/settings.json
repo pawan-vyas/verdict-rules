@@ -1,0 +1,9 @@
+{
+  // .markdownlintignore uses gitignore syntax with "#" comment lines, which
+  // VS Code otherwise guesses are Markdown ATX headings -- triggering live
+  // markdownlint warnings on a file the linter itself never actually lints
+  // (the CI/CLI glob only matches "**/*.md", which this file doesn't).
+  "files.associations": {
+    ".markdownlintignore": "ignore"
+  }
+}

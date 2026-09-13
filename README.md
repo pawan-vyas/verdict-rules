@@ -20,7 +20,7 @@ the code asking the question has shipped.
 Verdict is the small piece of infrastructure that question deserves: a
 place to name each condition once, combine named conditions into a
 verdict, and run that verdict against whatever facts a caller hands it
-— a plain `dict`, nothing more. It has no idea what a rate limit is, or
+— a plain map, nothing more. It has no idea what a rate limit is, or
 a permission, or a discount. It only knows how to ask a rule "did you
 pass?" and combine the answers honestly.
 
@@ -59,7 +59,7 @@ guarantee underneath it:
 
 ```mermaid
 graph LR
-    Ctx[/"📥 context<br/>(plain dict)"/]
+    Ctx[/"📥 context<br/>(plain map)"/]
     Comp{"🔀 AndRule"}
     R1("✅ under_limit<br/>passed")
     R2("❌ in_good_standing<br/>failed")
@@ -85,7 +85,7 @@ graph LR
     style Out fill:#51CF66,stroke:#37B24D,stroke-width:2px,color:#000
 
     %% Link Index:
-    %% 0: facts enter as a plain dict
+    %% 0: facts enter as a plain map
     %% 1: the first sub-rule is evaluated and passes
     %% 2: the second is evaluated and fails
     %% 3: everything after it is never started at all
@@ -104,7 +104,7 @@ graph LR
 > audit row. A library that evaluated all three concurrently would return
 > the same `False` and be silently wrong.
 >
-> The rest follows from it. Facts are a plain `dict` Verdict never
+> The rest follows from it. Facts are a plain map Verdict never
 > inspects. A `Rule` is anything with `name`, `group` and
 > `evaluate()` — no base class, no registration. `RulesEngine` is the
 > diagnostic counterpart, for when you want every rule's answer rather
@@ -122,7 +122,8 @@ graph LR
   the two ever coupling to each other.
 - **Rules are structurally typed, not inherited.** A custom rule never
   imports anything from this package or subclasses anything — it just
-  needs a `name`, a `group`, and an `evaluate(context)` coroutine.
+  needs a `name`, a `group`, and an `evaluate(context)` that returns a
+  `RuleResult`.
 
 ## Where to go next
 
