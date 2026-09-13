@@ -10,7 +10,7 @@ docs/
   README.md            you are here
   architecture/         the "why" — language-agnostic design
     README.md            shared design: type structure, execution model
-    python.md             Python's own concrete realization
+    <language>.md         each language's own concrete realization
   extending/            building on top of verdict, no changes here
     README.md             the index of extension scenarios
     <scenario>/            one directory per scenario, spec + per-language code
@@ -29,9 +29,8 @@ docs/
 
 1. **[`../README.md`](../README.md)** — the narrative overview of what
    this package is and why, with no code.
-2. **Each language's own quickstart** (today:
-   [`python/packages/verdict-rules/docs/quickstart.md`](../python/packages/verdict-rules/docs/quickstart.md)) —
-   the core concepts and one complete, runnable example.
+2. **That language's own quickstart** — the core concepts and one
+   complete, runnable example.
 3. **[`architecture/`](architecture/README.md)** — the "why": type
    structure, the execution model, and the reasoning behind each design
    choice, for anyone who needs more than the quickstart before relying

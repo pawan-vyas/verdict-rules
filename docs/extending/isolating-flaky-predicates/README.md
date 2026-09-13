@@ -11,6 +11,14 @@ promo-validation service timing out, a database lookup failing — that
 exception propagates straight out of whichever call you made, exactly
 as if you'd called the failing code yourself with nothing in between.
 
+> **A note from the author**: this is deliberate, stated plainly rather
+> than left to be discovered. I can't know whether a given exception is
+> a valid outcome in *your* domain or a genuine bug — that's a fact
+> about your own predicate, not something this package can infer from
+> the exception alone. And I can't force your hand on it either: no
+> default this package could pick would be right for every consumer, so
+> the choice stays with whoever wrote the predicate.
+
 This is worth a scenario of its own, and not just a line in
 [`../../architecture/README.md`](../../architecture/README.md), because
 "rules *engine*" invites the opposite assumption. A consumer reaching
