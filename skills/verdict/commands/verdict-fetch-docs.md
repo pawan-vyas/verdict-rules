@@ -22,7 +22,7 @@ Follow these steps exactly.
    API it does not have, which is worse than reading nothing. Say that the
    deeper documents were unavailable and continue with what is bundled.
 
-4. **Fetch each `fetch` entry in `MANIFEST`** from
+4. **Fetch each `fetch` entry in `MANIFEST.toml`** from
    `https://raw.githubusercontent.com/pawan-vyas/verdict-rules/<tag>/<source>`
    into `references/<destination>`, creating directories as needed.
 

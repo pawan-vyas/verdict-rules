@@ -23,28 +23,18 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent))
+import skill_manifest  # noqa: E402 — needs sys.path set first
+
 LINK = re.compile(r"\]\(([^)#\s]+)")
 SKILL_REF = re.compile(r"references/[A-Za-z0-9_./-]+\.md")
 # A documented fetch command, e.g.  curl ... "${BASE}/docs/testing.md" ...
 FETCH_URL = re.compile(r"\$\{BASE\}/([A-Za-z0-9_./-]+)")
 
 
-def manifest_rows(manifest: Path, tier: str) -> list[tuple[str, str]]:
-    """(source, destination) pairs declared for one tier."""
-    rows: list[tuple[str, str]] = []
-    for line in manifest.read_text().splitlines():
-        if not line.strip() or line.lstrip().startswith("#"):
-            continue
-        parts = line.split("\t")
-        if len(parts) != 3 or parts[0].strip() != tier:
-            continue
-        rows.append((parts[1].strip(), parts[2].strip()))
-    return rows
-
-
 def bundled_destinations(manifest: Path) -> set[str]:
     """Destination paths, relative to references/, that the bundle contains."""
-    return {dest for _, dest in manifest_rows(manifest, "bundled")}
+    return {dest for _, dest in skill_manifest.rows("bundled", manifest)}
 
 
 def check(skill_dir: Path, manifest: Path) -> list[str]:
@@ -79,7 +69,7 @@ def check(skill_dir: Path, manifest: Path) -> list[str]:
     # not in CI, but months later inside a consumer's project, against a tag
     # whose layout moved. A 404 there is silent — the agent simply proceeds
     # without the document it was told to read.
-    fetch_sources = {src for src, _ in manifest_rows(manifest, "fetch")}
+    fetch_sources = {src for src, _ in skill_manifest.rows("fetch", manifest)}
     for doc in sorted(skill_dir.rglob("*.md")):
         for path in sorted(set(FETCH_URL.findall(doc.read_text()))):
             if any(path == src or path.startswith(src) for src in fetch_sources):

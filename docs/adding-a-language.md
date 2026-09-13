@@ -244,12 +244,12 @@ to an identity, absence is an error.
       and the only hand-written skill content a language needs. Everything
       about what verdict *is* comes from the repository's own documents,
       which `scripts/build.sh` copies into the bundle from
-      `skills/verdict/MANIFEST`; a language restating them is how the
+      `skills/verdict/MANIFEST.toml`; a language restating them is how the
       skill went stale twice. Keep it to what is specific to this SDK:
       its idioms, its naming, the mistakes that show up in generated code
       for this language, and the fetch recipe for the documents the
       bundle does not carry.
-- [ ] Add this language's own documents to `skills/verdict/MANIFEST` —
+- [ ] Add this language's own documents to `skills/verdict/MANIFEST.toml` —
       quickstart, samples, worked example — in the `fetch` tier. The
       `bundled` tier is language-agnostic and should not grow.
 - [ ] `.claude-plugin/plugin.json` bumped in the same commit, with a

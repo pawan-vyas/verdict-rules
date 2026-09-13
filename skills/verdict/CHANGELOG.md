@@ -6,6 +6,22 @@ Release history for the verdict AI-agent skill. Format follows
 This versions **the guidance**, not any language's API, so it moves on its own
 cadence — see `docs/maintenance.md`. Tagged `skill-vX.Y.Z`.
 
+## [0.4.0] - 2026-09-13
+
+- **`extension.md`'s Recipe 4 now names the testing bar explicitly.**
+  "As the rule set grows more varied, testing needs to scale with it —
+  property-based or oracle/differential testing over a wide space, not
+  hand-picked fixtures one at a time." This is bundled-tier, so it ships
+  regardless of a consumer's own release-tag state — `testing.md`, which
+  carries the same guidance in full depth, is fetch-tier and can be
+  unreachable before a language's own first tag exists.
+- **The manifest is now `MANIFEST.toml`**, not a hand-rolled
+  tab-separated file. Same two tiers, same fields, machine-parsable
+  without a custom parser — read via stdlib `tomllib` (Python 3.11+),
+  through one shared module (`scripts/skill_manifest.py`) instead of two
+  independent hand-rolled readers. No content moved; nothing a consumer
+  reads changed shape.
+
 ## [0.3.4] - 2026-09-13
 
 No guidance changed.

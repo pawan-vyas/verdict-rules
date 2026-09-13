@@ -240,6 +240,15 @@ out of the same rule, no special-casing needed at the call site. See
 for a fuller worked version of this, worked through for both
 rate-limit windows and access-control conditions.
 
+This is exactly the shape where testing has to scale with the rule set:
+as `load_rule_configs()` grows more varied, a handful of hand-picked
+fixtures stops being enough coverage, the same way it stopped being
+enough for the sample above. Reach for property-based testing or an
+oracle/differential approach — an independent reference implementation
+checked against many randomly-generated configurations — rather than
+adding fixtures one at a time as bugs are found. Full guidance in
+[`testing.md`](testing.md).
+
 ## Recipe 5 — nest composites arbitrarily
 
 Because `AndRule`/`OrRule` satisfy `Rule` themselves, they can hold each

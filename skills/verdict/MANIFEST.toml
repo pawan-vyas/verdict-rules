@@ -1,0 +1,66 @@
+# Which repository documents this skill carries, and how.
+#
+# Hand-authored on purpose: adding a doc to the repo must never silently
+# enlarge the skill. An entry here is a deliberate decision that an agent
+# building with verdict needs this document.
+#
+# Two tiers, each an array of tables:
+#
+#   [[bundled]]  copied into the artifact by scripts/build.sh. Available with
+#                no network and no round trip. Keep this set small — it is
+#                read on every invocation that needs it.
+#   [[fetch]]    NOT shipped. Pulled on demand from the repository at the tag
+#                matching the consumer's installed version. See SKILL.md.
+#
+# Every entry has `source` (path in this repo) and `destination` (path under
+# `references/` in the built skill). A trailing slash on both copies a
+# directory rather than a single file.
+#
+# Deliberately absent, and not by oversight:
+#   docs/maintenance.md, docs/adding-a-language.md, docs/future_plan.md
+#     -- maintainer documents. A consumer changing their own rules never
+#        needs them, and shipping them would spend an agent's context on
+#        this repo's internals rather than on the caller's problem.
+#   fixtures/graduation_verdict/
+#     -- the cross-language parity fixture. It exists to prove a new
+#        language port matches the reference, which is a contributor
+#        activity. docs/adding-a-language.md routes contributors there;
+#        SKILL.md mentions it for an agent that wants a worked example of
+#        testing rule-based logic, without spending routing surface on it.
+#   python/examples/graduation_verdict/*.py and its data files
+#     -- example *code*. An agent reads the pattern from the example's own
+#        docs; shipping the project itself would put a pyproject.toml, and
+#        in other languages a .csproj or pubspec.yaml, inside a consumer's
+#        skill directory.
+
+[[bundled]]
+source = "docs/architecture.md"
+destination = "docs/architecture.md"
+
+[[bundled]]
+source = "docs/extension.md"
+destination = "docs/extension.md"
+
+[[fetch]]
+source = "docs/testing.md"
+destination = "docs/testing.md"
+
+[[fetch]]
+source = "python/packages/verdict-rules/docs/quickstart.md"
+destination = "python/quickstart.md"
+
+[[fetch]]
+source = "python/packages/verdict-rules/docs/samples/"
+destination = "python/samples/"
+
+[[fetch]]
+source = "python/examples/graduation_verdict/README.md"
+destination = "python/example/README.md"
+
+[[fetch]]
+source = "python/examples/graduation_verdict/docs/architecture.md"
+destination = "python/example/architecture.md"
+
+[[fetch]]
+source = "python/examples/graduation_verdict/docs/testing.md"
+destination = "python/example/testing.md"

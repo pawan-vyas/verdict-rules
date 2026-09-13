@@ -90,7 +90,7 @@ curl -fsSL "${BASE}/python/packages/verdict-rules/docs/quickstart.md" \
      -o references/python/quickstart.md
 ```
 
-The manifest at `MANIFEST` lists every fetchable document with its
+The manifest at `MANIFEST.toml` lists every fetchable document with its
 source and destination. Record the tag you fetched at in
 `references/python/.version` so a later reader can tell whether the
 documents still match what is installed.
