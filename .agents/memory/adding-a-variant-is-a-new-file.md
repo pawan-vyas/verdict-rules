@@ -29,8 +29,9 @@ Each of these was a restructure done specifically to remove a shared edit:
 | One `docs/architecture.md` monolith | [`docs/architecture/`](../../docs/architecture/README.md) — shared `README.md` plus one concrete file per language |
 | A release procedure written per-target inline | [`docs/maintenance/releases/`](../../docs/maintenance/releases/README.md) — shared pipeline plus one file per target |
 | A sample's spec restated inside each language's own package tree | [`docs/samples/<scenario>/`](../../docs/samples/README.md) — spec plus one implementation file per language, in one directory |
+| One `docs/extension.md` monolith, seven Python-only "Recipes" | [`docs/extending/<scenario>/`](../../docs/extending/README.md) — spec plus one implementation file per language, one directory per scenario, "recipes" renamed to "scenarios" |
 
-Ten restructures, all the same shape. The pattern was operating long before it
+Eleven restructures, all the same shape. The pattern was operating long before it
 was written down, which is how the changelog stayed monolithic until two
 release tracks were already contending for it — and the docs restructures were
 the same lesson applied to prose instead of code: a doc is bound by nothing a
@@ -53,6 +54,17 @@ duplicating them per language would create drift rather than remove conflict.
 The distinction is whether adding a variant **forces** an edit. A shared file
 that all variants *read* is fine. A shared file that each variant must *write
 to* is the problem.
+
+The root [`README.md`](../../README.md) is the one deliberate exception that
+still obeys the same rule at a finer grain: it repeats a worked example per
+language on purpose, because it is the landing page and has to explain the
+library "in one shot" without sending a first-time reader elsewhere. A landed
+language adds its own `### <Language>` subsection under **Quickstart** and
+**Development** — new subsections, appended, never an edit to an existing
+language's own — and a new row in **Where to go next**'s table. Same dispatch
+rule, applied at the sub-file level instead of across files, precisely because
+this one file is intentionally not split into a directory the way every other
+multi-language doc in this repo is.
 
 Related: [`features-land-in-every-language`](features-land-in-every-language.md),
 [`verdict-is-a-protocol-spec`](verdict-is-a-protocol-spec.md).

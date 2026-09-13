@@ -24,6 +24,16 @@ verdict, and run that verdict against whatever facts a caller hands it
 a permission, or a discount. It only knows how to ask a rule "did you
 pass?" and combine the answers honestly.
 
+Verdict is a polyglot design. **Only Python ships today.**
+
+## Quickstart
+
+### Python
+
+```bash
+pip install verdict-rules
+```
+
 ```python
 from verdict import AndRule, FunctionRule, RuleResult
 
@@ -116,13 +126,6 @@ graph LR
 
 ## Where to go next
 
-Verdict is a polyglot design — the `Rule`/`FunctionRule`/`AndRule`/
-`OrRule`/`RulesEngine` shape and its execution-model guarantees are
-meant to exist in more than one language. **Only Python ships today.**
-The docs below split the same way the repo does: language-agnostic
-design rationale lives at the repo root; anything with directly
-runnable code lives under that language's own directory.
-
 | Doc | For |
 | --- | --- |
 | [`python/README.md`](python/packages/verdict-rules/README.md) | Python quickstart — `pip install verdict-rules`, first rule |
@@ -138,6 +141,8 @@ runnable code lives under that language's own directory.
 
 ## Development
 
+### Python
+
 ```bash
 cd python/
 uv sync
@@ -149,7 +154,6 @@ uv run pytest
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for how to set up a change and
 what it needs to prove before it's mergeable, and
 [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) for community standards.
-Licensed under [MIT](LICENSE). Each package keeps its own release history
-beside its own manifest — [`python/CHANGELOG.md`](python/packages/verdict-rules/CHANGELOG.md) and
-[`skills/verdict/CHANGELOG.md`](skills/verdict/CHANGELOG.md) today — because
-each releases independently under its own tag.
+Licensed under [MIT](LICENSE). Release history:
+[`python/CHANGELOG.md`](python/packages/verdict-rules/CHANGELOG.md) and
+[`skills/verdict/CHANGELOG.md`](skills/verdict/CHANGELOG.md).

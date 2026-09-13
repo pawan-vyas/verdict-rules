@@ -271,6 +271,19 @@ to an identity, absence is an error.
 - [ ] Documentation at the quality of the Python set: architecture
       notes where the language diverges, extension scenarios in its own
       idiom
+- [ ] The root [`README.md`](../../README.md) gets this language's own
+      `### <Language>` subsection under **Quickstart** (install command
+      plus the same minimal example every other language's subsection
+      shows) and under **Development** (how to run that language's own
+      test suite) — appended after the existing subsections, never
+      editing one. A new row in **Where to go next**'s table points at
+      this language's own quickstart doc. This is the one file in the
+      repo that intentionally repeats a worked example per language
+      rather than linking out to it, precisely because it is the
+      landing page — see
+      [`../../.agents/memory/adding-a-variant-is-a-new-file.md`](../../.agents/memory/adding-a-variant-is-a-new-file.md)
+      for why every other doc in this repo avoids that repetition and
+      this one file does not
 - [ ] A real install from the registry exercised end to end
 
 ## Features land everywhere, or nowhere
