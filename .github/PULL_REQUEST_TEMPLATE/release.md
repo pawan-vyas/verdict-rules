@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD041 (GitHub shows the PR title as the H1; a template starting with its own would duplicate it) -->
 ## Release
 
 <!-- Which language, and from what version to what. -->
