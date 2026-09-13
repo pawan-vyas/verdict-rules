@@ -95,6 +95,22 @@ No guidance changed.
   independent hand-rolled readers. No content moved; nothing a consumer
   reads changed shape.
 
+## [0.4.0] - 2026-09-13
+
+- **The skill routes to JS/TS for the first time.** Adds
+  `references/js/agent-notes.md`, matching Python's own depth: install
+  and import, the full API on one screen, mistakes specific to
+  generated JS/TS code (`Promise.all` in a composite, `||`'s
+  falsy-coercion footgun where Python's `or` was saved by its result
+  types happening to be truthy but this one is not, catching
+  `UnknownLookupError` where `ruleNames`/`groupNames` should be reached
+  for instead), and the testing checklist. No quickstart or samples yet
+  for this language — noted honestly rather than pointing at documents
+  that do not exist.
+- Documents that a language's evals can run before that language's own
+  first registry publish, and how the fixture manifest's pinned version
+  is meant to be read in that case (`evals/README.md`).
+
 ## [0.3.4] - 2026-09-13
 
 No guidance changed.

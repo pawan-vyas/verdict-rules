@@ -49,6 +49,18 @@ the skill says to fetch deeper documentation at the version a project
 actually has rather than from the default branch, which is not a
 reachable instruction without a version to read.
 
+**Running a language's evals before that language's first registry
+publish** — the point of shipping evals alongside a `0.0.1` PR rather
+than waiting for `0.1.0` — means the pinned version in its fixture
+manifest cannot resolve through an ordinary registry install yet,
+because nothing is published there. The manifest still declares the
+same version the package itself carries, matching what a real consumer
+will see once it *is* published; whoever runs the eval sandbox in the
+meantime substitutes a local install (a `file:` dependency, a locally
+built tarball, an editable install — whatever that ecosystem's own
+tooling calls it) for that one step, without editing the fixture file
+to say so.
+
 ## What the evals cover, and what they deliberately do not
 
 The three scenario evals measure the thing the skill exists for —
