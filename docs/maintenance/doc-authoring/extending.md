@@ -22,12 +22,16 @@ Every scenario is a directory, `docs/extending/<slug>/`:
   per language that has written this scenario up (`python.md` today).
   The real, concrete code for that language's own idiom.
 
-A scenario that is purely architectural — no per-language code to show
-beyond what a sample already demonstrates concretely
+A scenario that is architectural rather than a rule shape still earns a
+small, generic `<language>.md` per language
 ([`domain-adapter-module/`](../../extending/domain-adapter-module/README.md)
-is the current example) has no `<language>.md` file at all; its spec
-points at the samples that are real instances of it instead. Nothing
-reserves the slot for a language that hasn't written one.
+is the current example) — illustrative code, not a contract, kept
+deliberately generic (a rate-limiting or access-control illustration,
+never a real named consumer's domain) so a reader isn't left with only
+prose. Its spec still points at the samples that are real, full-scale
+instances of it. Only a scenario with no code worth showing at all
+skips the `<language>.md` file entirely; nothing reserves the slot for
+a language that hasn't written one.
 
 ## Spec file structure
 

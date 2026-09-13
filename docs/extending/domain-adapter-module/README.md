@@ -1,11 +1,13 @@
 <!-- Title: Extending — Keep Your Own Domain Out Of Verdict -->
 # Extending verdict: keep your own domain out of it, in one adapter module
 
-> The single most important extension pattern. Language-agnostic by
-> construction — it's an architectural boundary, not code, so this
-> scenario has no separate per-language file; every sample in
+> The single most important extension pattern — an architectural
+> boundary, not a rule shape, so the code below is illustrative rather
+> than a scenario the way the others here are. Each language's own file
+> in this directory — [`python.md`](python.md) today — shows a small,
+> generic worked instance; every sample in
 > [`../../samples/`](../../samples/README.md) is a concrete instance of
-> it in practice.
+> it in practice, at full scale.
 
 Build **one** module that translates your domain's own vocabulary into
 `Rule` objects and back out of `RuleResult.data`, and never let that
