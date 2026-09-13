@@ -288,10 +288,11 @@ class TestExceptionPropagation:
     """A predicate's own exception is never caught anywhere in the engine
     — it propagates exactly as if the caller had invoked the predicate
     directly, with nothing in between. This is a documented guarantee
-    (SKILL.md, extension.md Recipe 7), so a regression here — someone
-    "helpfully" wrapping the loop in a try/except — would silently break
-    a stated promise rather than fail loudly, which is exactly the
-    failure mode this test exists to catch."""
+    (SKILL.md, docs/extending/isolating-flaky-predicates/), so a
+    regression here — someone "helpfully" wrapping the loop in a
+    try/except — would silently break a stated promise rather than fail
+    loudly, which is exactly the failure mode this test exists to
+    catch."""
 
     async def test_run_all_does_not_catch_a_predicate_s_exception(self) -> None:
         async def flaky(context: dict) -> RuleResult:

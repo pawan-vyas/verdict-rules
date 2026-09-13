@@ -54,7 +54,7 @@ class SubjectPolicy:
 class AtLeastNRule:
     """Passes if at least `minimum` of the given sub-rules pass.
 
-    Same shape as verdict's docs/extension.md Recipe 2 (`ThresholdRule`)
+    Same shape as verdict's docs/extending/new-rule-shape/ (`ThresholdRule`)
     — not part of `verdict` itself, a consumer-defined combinator for a
     requirement `AndRule`/`OrRule` can't express directly. Evaluates
     every sub-rule unconditionally (no short-circuit is possible for a
