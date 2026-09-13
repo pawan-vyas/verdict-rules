@@ -68,7 +68,7 @@ asyncio.run(main())
 ## Where to go next
 
 | Doc | For |
-|---|---|
+| --- | --- |
 | [`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.1/python/packages/verdict-rules/docs/quickstart.md) | The quickstart — core concepts and a full worked example |
 | [`docs/architecture.md`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.1/docs/architecture.md) | Why it's shaped this way, in depth — type structure, the execution model |
 | [`docs/extension.md`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.1/docs/extension.md) | Building on top of it from your own code, with no changes here |

@@ -9,7 +9,7 @@ composable units (:class:`FunctionRule` for a plain predicate,
 context, by any of three modes (all, one named rule, one group).
 
 See ``README.md`` for a quickstart and a worked example, and
-``docs/architecture.md`` for the full architecture write-up (type
+``docs/architecture/`` for the full architecture write-up (type
 structure, the execution model, and why it's shaped this way).
 """
 
