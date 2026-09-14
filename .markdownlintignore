@@ -13,12 +13,6 @@ js/node_modules/
 # historical, not living prose. See skills/verdict-workspace/evals/README.md.
 skills/verdict-workspace/iteration-1/
 
-# Standard Contributor Covenant boilerplate, unmodified aside from the contact
-# line -- linting a vendored external document as if it were ours would mean
-# either editing a widely-recognized standard text or permanently suppressing
-# rules on it for no benefit.
-CODE_OF_CONDUCT.md
-
 # A one-line Claude Code include shim (`@AGENTS.md`). Its entire content is
 # that one directive; a heading would be extra content in a file whose only
 # job is the include itself.

@@ -6,7 +6,6 @@
   "files.associations": {
     ".markdownlintignore": "ignore",
     "CLAUDE.md": "ignore",
-    "CODE_OF_CONDUCT.md": "ignore",
     "CONTRIBUTING.md": "ignore",
     "LICENSE.md": "ignore",
     "CODEOWNERS": "ignore",
