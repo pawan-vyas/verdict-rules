@@ -5,6 +5,10 @@
   // (the CI/CLI glob only matches "**/*.md", which this file doesn't).
   "files.associations": {
     ".markdownlintignore": "ignore",
-    "CLAUDE.md": "ignore"
+    "CLAUDE.md": "ignore",
+    "CODE_OF_CONDUCT.md": "ignore",
+    "CONTRIBUTING.md": "ignore",
+    "LICENSE.md": "ignore",
+    "CODEOWNERS": "ignore",
   }
 }
