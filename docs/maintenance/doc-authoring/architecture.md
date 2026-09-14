@@ -56,7 +56,7 @@ realization rather than naming one.
   run mode costs, and the emptiness-vs-absence distinction every
   language's SDK handles identically. Cross-links to
   [`../../extending/`](../../extending/README.md) and
-  [`../../testing.md`](../../testing.md) rather than restating them.
+  [`../../testing/`](../../testing/README.md) rather than restating them.
 - **Related docs** — the narrative root, maintenance, extending,
   testing, samples. Not each language's own concrete file — it's
   already one click away in this same directory's own GitHub listing,

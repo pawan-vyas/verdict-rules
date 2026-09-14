@@ -48,8 +48,12 @@ source = "docs/architecture/"
 destination = "docs/architecture/"
 
 [[fetch]]
-source = "docs/testing.md"
-destination = "docs/testing.md"
+source = "docs/testing/README.md"
+destination = "docs/testing/README.md"
+
+[[fetch]]
+source = "docs/testing/python.md"
+destination = "docs/testing/python.md"
 
 [[fetch]]
 source = "docs/extending/README.md"

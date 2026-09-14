@@ -60,6 +60,13 @@ cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skil
   ships. Only a destination whose *source* is itself language-specific
   (the quickstart, the example project) still aliases to a shorter
   `references/python/...` path.
+- **`docs/testing.md` is now `docs/testing/`**, the last doc still
+  bundling one language's specifics into an otherwise-shared file:
+  `README.md` carries the seven testing contracts and the checklist,
+  generically; `python.md` carries the current coverage snapshot, the
+  concrete file layout, and a table naming which test proves which
+  contract. The manifest's single fetch entry becomes a pair, both
+  destinations mirroring their source paths per the rule above.
 
 ## [0.4.0] - 2026-09-13
 

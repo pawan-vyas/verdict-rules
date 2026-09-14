@@ -30,8 +30,9 @@ Each of these was a restructure done specifically to remove a shared edit:
 | A release procedure written per-target inline | [`docs/maintenance/releases/`](../../docs/maintenance/releases/README.md) — shared pipeline plus one file per target |
 | A sample's spec restated inside each language's own package tree | [`docs/samples/<scenario>/`](../../docs/samples/README.md) — spec plus one implementation file per language, in one directory |
 | One `docs/extension.md` monolith, seven Python-only "Recipes" | [`docs/extending/<scenario>/`](../../docs/extending/README.md) — spec plus one implementation file per language, one directory per scenario, "recipes" renamed to "scenarios" |
+| One `docs/testing.md` monolith, Python specifics bundled straight in | [`docs/testing/`](../../docs/testing/README.md) — shared contracts and checklist plus one concrete file per language |
 
-Eleven restructures, all the same shape. The pattern was operating long before it
+Twelve restructures, all the same shape. The pattern was operating long before it
 was written down, which is how the changelog stayed monolithic until two
 release tracks were already contending for it — and the docs restructures were
 the same lesson applied to prose instead of code: a doc is bound by nothing a

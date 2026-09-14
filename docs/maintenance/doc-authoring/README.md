@@ -14,6 +14,7 @@
 | [`samples.md`](samples.md) | Sample spec/implementation docs under `docs/samples/` and each language's own samples directory |
 | [`extending.md`](extending.md) | Extension-scenario spec/implementation docs under `docs/extending/` |
 | [`architecture.md`](architecture.md) | The shared design doc plus one concrete file per language under `docs/architecture/` |
+| [`testing.md`](testing.md) | The shared testing guide plus one concrete file per language under `docs/testing/` |
 | [`maintenance.md`](maintenance.md) | This `maintenance/` directory's own file-naming and structure conventions |
 
 ## No narration about the document itself
@@ -45,7 +46,7 @@ depends on a hypothetical future edit.
 
 ## Every mention of another doc is a link, never a bare filename
 
-A doc named in backticks without a link (`` `testing.md` ``) is
+A doc named in backticks without a link (`` `testing/` ``) is
 invisible to every tool that checks whether a reference still resolves
 — renaming, moving, or deleting the target leaves the mention silently
 wrong forever, exactly the failure mode
@@ -53,10 +54,10 @@ wrong forever, exactly the failure mode
 already names for stale prose. If another doc in this repo is being
 named — anywhere, for any reason, no matter how in-passing the
 mention — it's a real inline link:
-`` [`testing.md`](../testing.md) ``, not `` `testing.md` ``.
+`` [`testing/`](../../testing/README.md) ``, not `` `testing/` ``.
 
 **Link the specific section, not just the file, when that's what's
-actually being referenced.** `` [`../extending/new-rule-shape/`'s type-structure note](../architecture/README.md#type-structure) ``
+actually being referenced.** `` [`../extending/new-rule-shape/`'s type-structure note](../../architecture/README.md#type-structure) ``
 catches a renamed or removed *section* immediately; a bare file-level
 link to that doc would stay "resolving" even after the section being
 pointed at is gone, silently pointing at the wrong part of a
@@ -130,7 +131,7 @@ which concrete `<language>.md` exists, and never hedges with "today":
   sibling is already one click away in the same directory's own GitHub
   listing. A "Related" entry earns its place linking to a genuinely
   different doc a reader might not think to look for (a sibling
-  scenario, a sample, `testing.md`) — never a same-directory
+  scenario, a sample, `testing/`) — never a same-directory
   implementation file the directory listing already shows for free.
 
 This was found the hard way: seven sample specs, seven extending
