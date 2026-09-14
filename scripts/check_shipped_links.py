@@ -26,7 +26,11 @@ from pathlib import Path
 
 REPO = "pawan-vyas/verdict-rules"
 LINK = re.compile(
-    r"https://github\.com/" + re.escape(REPO) + r"/blob/(?P<ref>[^/]+)/(?P<path>[^)\"\s]+)"
+    # Excludes ')', '"' and whitespace for markdown/plain-URL forms, and '<'
+    # too so a link immediately followed by an XML closing tag (a .csproj's
+    # <PackageReleaseNotes>...</PackageReleaseNotes>, with no whitespace
+    # between the URL and the tag) doesn't swallow the tag into the path.
+    r"https://github\.com/" + re.escape(REPO) + r"/blob/(?P<ref>[^/]+)/(?P<path>[^)\"\s<]+)"
 )
 
 # Content that is bundled into a published artifact, and so is read long after
@@ -39,6 +43,12 @@ SHIPPED = [
         lambda: re.search(
             r'^version = "(.+?)"', Path("python/packages/verdict-rules/pyproject.toml").read_text(), re.M
         ).group(1),
+    ),
+    (
+        "JS/TS",
+        ["js/packages/verdict-rules/README.md", "js/packages/verdict-rules/package.json"],
+        "js-v",
+        lambda: json.loads(Path("js/packages/verdict-rules/package.json").read_text())["version"],
     ),
 ]
 

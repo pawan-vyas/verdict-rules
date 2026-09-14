@@ -1,0 +1,206 @@
+# Releases JS/TS when its version changes on main — nothing is tagged or
+# published by hand. Same single-run shape as release-python.yml and
+# release-csharp.yml: bump js/packages/verdict-rules/package.json's version,
+# add the changelog entry, merge. It builds, tests, publishes, and only then
+# tags. Unlike pub.dev (see release-dart.yml), npm's trusted-publishing
+# verification is pinned to the org/repo/workflow-filename triple rather than
+# requiring the publishing run itself to be tag-triggered, so one file
+# suffices here.
+#
+# npm's own bootstrap trap, from .agents/plans/js-sdk/PLAN.md §3: unlike
+# NuGet, a trusted-publishing policy cannot be attached to a package that has
+# never been published — there is no equivalent to PyPI's "pending
+# publisher". The very first version has to go out as a manual `npm publish`
+# from a developer machine, deliberately below the real first release (e.g.
+# 0.0.0), purely to create the package record; only then can the trusted
+# publisher be configured, after which this workflow owns every version after
+# that placeholder.
+name: Release (JS/TS)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "js/packages/verdict-rules/**"
+      - ".github/workflows/release-js.yml"
+  workflow_dispatch: # escape hatch: re-run a release that failed after tagging
+
+concurrency:
+  group: release-js
+  cancel-in-progress: false # never interrupt a publish
+
+jobs:
+  detect:
+    name: Is there a new version to release?
+    runs-on: ubuntu-latest
+    outputs:
+      should-release: ${{ steps.check.outputs.should-release }}
+      version: ${{ steps.check.outputs.version }}
+      tag: ${{ steps.check.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Compare the manifest version against existing tags
+        id: check
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./js/packages/verdict-rules/package.json').version")"
+          tag="js-v${version}"
+
+          if [ -z "$version" ]; then
+            echo "::error file=js/packages/verdict-rules/package.json::Could not read a version."
+            exit 1
+          fi
+
+          if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+            echo "Version ${version} is already released as ${tag}. Nothing to do."
+            echo "should-release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Version ${version} has no ${tag} tag yet — releasing."
+            echo "should-release=true" >> "$GITHUB_OUTPUT"
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+
+      - name: The changelog section exists before anything is published
+        if: steps.check.outputs.should-release == 'true'
+        run: python3 scripts/changelog_section.py js/packages/verdict-rules/CHANGELOG.md "${{ steps.check.outputs.version }}" > /dev/null
+
+  test:
+    name: Full suite before anything is published
+    needs: detect
+    if: needs.detect.outputs.should-release == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true # one failure should stop the release, not survey the rest
+      matrix:
+        node-version: ["18", "20", "22", "24"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install, typecheck, build, test
+        working-directory: js
+        run: |
+          npm ci
+          npm run typecheck
+          npm run build
+          npm test
+
+  build:
+    name: Build the publishable tarball
+    needs: [detect, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install and build
+        working-directory: js
+        run: |
+          npm ci
+          npm run build --workspace=verdict-rules
+
+      - name: Pack
+        working-directory: js/packages/verdict-rules
+        run: npm pack --pack-destination dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: js-dist
+          path: js/packages/verdict-rules/dist/
+
+  # This job must stay in THIS file, the same reason the other languages'
+  # publish steps do: publishing is the one genuinely per-registry step, with
+  # no shared step to factor out — only the tail after it, which is what
+  # release-github.yml holds.
+  publish-npm:
+    name: Publish to npm
+    needs: [detect, build]
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      id-token: write # npm Trusted Publishing (OIDC) — no long-lived token stored
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      # Trusted publishing needs npm 11.5.1+; GitHub-hosted runners' bundled
+      # npm can lag behind that, so this is asserted rather than assumed.
+      - name: Ensure npm is new enough for Trusted Publishing
+        run: |
+          set -euo pipefail
+          npm install -g npm@latest
+          npm --version
+
+      - name: Publish
+        working-directory: js/packages/verdict-rules
+        run: npm publish
+
+  release:
+    name: Tag and publish the GitHub release
+    needs: [detect, publish-npm]
+    permissions:
+      contents: write
+    uses: ./.github/workflows/release-github.yml
+    with:
+      tag: ${{ needs.detect.outputs.tag }}
+      version: ${{ needs.detect.outputs.version }}
+      changelog-path: js/packages/verdict-rules/CHANGELOG.md
+      title: JS/TS v${{ needs.detect.outputs.version }}
+      artifact-name: js-dist
+
+  # Confirms what npm is actually serving, rather than trusting that the
+  # publish step exiting zero means the right thing is there. See
+  # release-python.yml's own verify-published for why this queries the
+  # version-specific endpoint rather than a summary that may lag a publish.
+  verify-published:
+    name: Verify what npm is serving
+    needs: [detect, release]
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.detect.outputs.version }}
+    steps:
+      - name: The version is live and resolvable
+        run: |
+          set -euo pipefail
+          url="https://registry.npmjs.org/verdict-rules/${VERSION}"
+
+          code=000
+          for attempt in 1 2 3 4 5 6; do
+            code="$(curl -s -o version.json -w '%{http_code}' "$url")"
+            [ "$code" = "200" ] && break
+            echo "Attempt ${attempt}: HTTP ${code} — waiting for propagation"
+            sleep 20
+          done
+
+          if [ "$code" != "200" ]; then
+            echo "::error::npm is not serving ${VERSION} after ~2 minutes. The publish step reported success, so check the package page before assuming a false alarm."
+            exit 1
+          fi
+          echo "Serving $(jq -r '.version' version.json)"
+
+      # Provenance is published automatically for a public repo publishing a
+      # public package over Trusted Publishing — nothing here is opt-in the
+      # way PyPI's PEP 740 attestations are, but it can still silently
+      # disappear if the publish step ever regresses to a stored token
+      # instead of OIDC, which is exactly what this catches. dist.attestations
+      # is an object ({url, provenance}), not a list, when present.
+      - name: The published version carries provenance attestations
+        run: |
+          set -euo pipefail
+          predicate="$(jq -r '.dist.attestations.provenance.predicateType // empty' version.json)"
+          if [ -z "$predicate" ]; then
+            echo "::error::No dist.attestations.provenance for ${VERSION}. Publishing is no longer producing provenance — check that publish-npm still runs under Trusted Publishing with id-token: write rather than a stored token."
+            exit 1
+          fi
+          echo "Provenance attestation present: ${predicate}"

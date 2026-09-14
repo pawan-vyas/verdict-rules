@@ -85,7 +85,7 @@ and `{ passed, results }`.
 
 ## Testing what matters
 
-`references/docs/testing.md` (fetch it) is the full checklist. The parts
+[`references/docs/testing/`](../../../../docs/testing/README.md) (fetch it) is the full checklist. The parts
 that are easy to skip:
 
 - Prove short-circuiting with a **call log**, not the final boolean. A
@@ -98,21 +98,24 @@ that are easy to skip:
 
 ## Fetching the deeper documents
 
-This SDK does not yet have its own quickstart or worked samples —
-`docs/architecture.md` and `docs/extension.md` (both bundled already)
-cover the design rationale in full; a JS/TS-specific quickstart and
-samples arrive before `0.1.0`. Until then, `references/docs/testing.md`
-is the one document worth fetching:
+[`references/docs/architecture/README.md`](../../../../docs/architecture/README.md)
+ships bundled — the design rationale is always available with no fetch
+needed. `docs/extending/` and `docs/samples/` are fetch-tier, same as
+for every language: too much to ship on every install, pulled at the
+version actually installed. This SDK does not yet have its own
+quickstart or worked samples, so
+[`references/docs/testing/`](../../../../docs/testing/README.md) is the
+one document worth fetching before those exist:
 
 ```bash
 VERSION=$(node -p "require('verdict-rules/package.json').version")
 TAG="js-v${VERSION}"
 BASE="https://raw.githubusercontent.com/pawan-vyas/verdict-rules/${TAG}"
 
-curl -fsSL "${BASE}/docs/testing.md" -o references/docs/testing.md
+curl -fsSL "${BASE}/docs/testing/README.md" -o references/docs/testing/README.md
 ```
 
-The manifest at `MANIFEST` lists every fetchable document with its
+The manifest at `MANIFEST.toml` lists every fetchable document with its
 source and destination. Record the tag you fetched at in
 `references/js/.version` so a later reader can tell whether the
 documents still match what is installed.

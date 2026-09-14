@@ -89,13 +89,13 @@ and rewording a message then becomes a breaking change.
 
 ## Before calling a change done
 
-```
+```bash
 cd js && npm run typecheck && npm run build && npm test
 ```
 
 Each of those fans out across every workspace. To scope one package:
 
-```
+```bash
 npm run build -w verdict-rules
 ```
 
@@ -103,4 +103,4 @@ npm run build -w verdict-rules
 
 Short-circuiting is proven with a call log, never the final boolean.
 Vacuous-truth polarities and unknown-lookup throws each get their own test.
-See the repo-root `docs/testing.md`.
+See the repo-root [`docs/testing/`](../docs/testing/README.md).

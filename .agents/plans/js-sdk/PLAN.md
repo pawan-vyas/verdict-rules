@@ -148,13 +148,13 @@ preserves this, not whether it feels similar:
   scheduling would already have kicked off every sub-rule before the
   first result returned. This is the single easiest thing to "optimize"
   into incorrectness, because the tests still pass — the returned
-  boolean is unchanged. See [`../../docs/architecture.md`](../../../docs/architecture.md).
+  boolean is unchanged. See [`../../../docs/architecture/`](../../../docs/architecture/README.md).
 - Vacuous-truth polarity decided explicitly per composite shape
   (`AndRule([])` passes, `OrRule([])` fails — deliberately asymmetric).
 - `RuleResult.data` stays opaque: only what actually ran, never padded,
   never flattened.
 - The one-adapter-module extension pattern
-  ([`../../docs/extension.md`](../../../docs/extension.md), Recipe 3).
+  ([`../../../docs/extending/domain-adapter-module/`](../../../docs/extending/domain-adapter-module/README.md)).
 
 ## 5 · First-pass concept mapping (validate against real code)
 
@@ -175,7 +175,7 @@ preserves this, not whether it feels similar:
    language's own `AGENTS.md`, mirroring `python/AGENTS.md`'s role.
 3. Port the seven types, then the test suite — including a
    short-circuit proof via a call counter and explicit vacuous-truth
-   cases, per [`../../docs/testing.md`](../../../docs/testing.md).
+   cases, per [`../../../docs/testing/`](../../../docs/testing/README.md).
 4. Port the oracle/differential chaos suite from
    [`../../python/examples/graduation_verdict/`](../../../python/examples/graduation_verdict/) —
    an independent, deliberately naive re-implementation checked against
