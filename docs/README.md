@@ -42,8 +42,7 @@ docs/
      then [`testing/`](testing/README.md) to prove the change.
    - Building something on top of it, without changing anything here →
      [`extending/`](extending/README.md), whose scenarios have full worked
-     instances in [`samples/`](samples/README.md) and each language's
-     own samples directory covering generic domains.
+     instances in [`samples/`](samples/README.md) covering generic domains.
 5. **[`future_plan.md`](future_plan.md)** — exploratory feature
    candidates rejected or deferred so far, and the test used to
    evaluate a new one.
