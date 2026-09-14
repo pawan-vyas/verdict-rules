@@ -41,6 +41,7 @@
     "build:types": "tsc -p tsconfig.build.json",
     "build:bundles": "node scripts/build.mjs",
     "test": "node --test test/*.test.js",
+    "test:coverage": "node --test --experimental-test-coverage test/*.test.js",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build",
     "sri": "node scripts/sri.mjs",

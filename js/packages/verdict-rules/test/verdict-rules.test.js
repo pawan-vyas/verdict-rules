@@ -281,6 +281,64 @@ describe("try lookups", () => {
   });
 });
 
+describe("duplicate rule names", () => {
+  it("the last registered rule wins the by-name lookup", async () => {
+    // new Map(rules.map(r => [r.name, r])) keeps whichever entry came last
+    // for a repeated key — this test is what makes that a documented
+    // contract rather than an accident of the Map constructor.
+    const engine = new RulesEngine([
+      new FunctionRule("dup", async () => ({ ruleName: "dup", passed: true, detail: "first" })),
+      new FunctionRule("dup", async () => ({ ruleName: "dup", passed: false, detail: "second" })),
+    ]);
+    const result = await engine.runNamed("dup", {});
+    assert.equal(result.detail, "second");
+  });
+});
+
+describe("a predicate's own exception is never caught", () => {
+  // Worth stating plainly, because it is a fact a consumer has no way to
+  // arrive at except by being told: nothing in this package catches an
+  // exception a predicate throws. This is deliberate — verdict cannot know
+  // whether a thrown error is a valid failure for a consumer's own domain
+  // or a bug, and cannot force the caller's hand over it either. All four
+  // paths a predicate's exception can reach are covered, not just one.
+  const boom = new FunctionRule("boom", async () => {
+    throw new Error("predicate blew up");
+  });
+
+  it("AndRule does not catch a sub-rule's exception", async () => {
+    await assert.rejects(
+      () => new AndRule("outer", [boom]).evaluate({}),
+      /predicate blew up/,
+    );
+  });
+
+  it("OrRule does not catch a sub-rule's exception", async () => {
+    await assert.rejects(
+      () => new OrRule("outer", [boom]).evaluate({}),
+      /predicate blew up/,
+    );
+  });
+
+  it("runAll does not catch a predicate's exception", async () => {
+    const engine = new RulesEngine([boom]);
+    await assert.rejects(() => engine.runAll({}), /predicate blew up/);
+  });
+
+  it("runGroup does not catch a predicate's exception", async () => {
+    const engine = new RulesEngine([
+      new FunctionRule(
+        "boom",
+        async () => {
+          throw new Error("predicate blew up");
+        },
+        "g1",
+      ),
+    ]);
+    await assert.rejects(() => engine.runGroup("g1", {}), /predicate blew up/);
+  });
+});
+
 describe("introspection", () => {
   it("reports exactly what the lookups accept", async () => {
     const engine = new RulesEngine([

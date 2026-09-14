@@ -56,6 +56,10 @@ source = "docs/testing/python.md"
 destination = "docs/testing/python.md"
 
 [[fetch]]
+source = "docs/testing/js.md"
+destination = "docs/testing/js.md"
+
+[[fetch]]
 source = "docs/extending/README.md"
 destination = "docs/extending/README.md"
 

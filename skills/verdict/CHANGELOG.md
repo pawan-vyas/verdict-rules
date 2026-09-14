@@ -21,6 +21,13 @@ cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skil
 - Documents that a language's evals can run before that language's own
   first registry publish, and how the fixture manifest's pinned version
   is meant to be read in that case (`evals/README.md`).
+- **JS/TS gets its own concrete architecture and testing docs**:
+  `docs/architecture/js.md` ships automatically (the whole directory is
+  bundled) and `docs/testing/js.md` is a new fetch-tier row, both at
+  the same depth as Python's own. `references/js/agent-notes.md`
+  corrected: it claimed `docs/extension.md` was bundled already, which
+  was true when first written but not after this session's `docs/extending/`
+  split moved it to fetch-tier.
 
 ## [0.5.1] - 2026-09-15
 
