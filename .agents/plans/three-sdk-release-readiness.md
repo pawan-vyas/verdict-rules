@@ -60,71 +60,84 @@
 
 Same shape for csharp and dart; js gets the extra Stage-4 rows.
 
-### `plan/csharp-sdk`
+### `plan/csharp-sdk` — [PR #5](https://github.com/pawan-vyas/verdict-rules/pull/5), Stage 2/3 done, CI green
 
-- [ ] Rebase onto `main`, resolve conflicts (expect: doc path renames,
-      `skills/verdict/MANIFEST*`, `skills/verdict/CHANGELOG.md`)
-- [ ] Confirm code still builds/tests clean post-rebase
-- [ ] Repoint anything the branch added that named an old doc path
-      (`docs/adding-a-language.md` → `docs/maintenance/adding-a-language.md`,
-      `docs/extension.md` → `docs/extending/`) at the new location
-- [ ] `test-csharp.yml` — `changes`/real-jobs/`gate` shape, no `paths:`
-      filter on the trigger (see adding-a-language.md's own warning)
-- [ ] `release-csharp.yml` — version-change-on-main trigger, tags
-      `csharp-v*`, includes a `verify-published` job against NuGet's
-      version-specific endpoint (never the cached summary)
-- [ ] `CHANGELOG.md` already exists beside `VerdictRules.csproj` —
-      confirm it follows this repo's Keep-a-Changelog convention
-      already used elsewhere
-- [ ] Add to `scripts/check_shipped_links.py`'s pinned-package table
-- [ ] Push (force-with-lease, solo branch)
+- [x] Rebase onto `main` — clean, zero conflicts (this branch never
+      touched a path the restructuring moved)
+- [x] Confirm code still builds/tests clean post-rebase — 26/26
+- [x] Repoint stale doc paths — `csharp/AGENTS.md` and
+      `.agents/plans/csharp-sdk/PLAN.md` both had pre-restructure links,
+      never caught before since this branch predates `lint-docs.yml`
+- [x] `test-csharp.yml` — `changes`/`test`/`gate` shape, no `paths:`
+      filter on the trigger
+- [x] `release-csharp.yml` — version-change-on-main trigger, tags
+      `csharp-v*`, `verify-published` against NuGet's version-specific
+      flat-container endpoint, checks for `.signature.p7s`
+- [x] `CHANGELOG.md` already existed beside `VerdictRules.csproj`,
+      already correct
+- [x] Added to `scripts/check_shipped_links.py`'s pinned-package
+      table — surfaced and fixed a real pre-existing regex bug there
+      (a link followed immediately by an XML closing tag)
+- [x] Pushed; PR #5 (pre-existing draft) updated, all CI green
 
-### `plan/dart-sdk`
+### `plan/dart-sdk` — [PR #7](https://github.com/pawan-vyas/verdict-rules/pull/7), Stage 2/3 done, CI green
 
-- [ ] Rebase onto `main`, resolve conflicts
-- [ ] Confirm code still builds/tests clean post-rebase
-- [ ] Repoint old doc paths the same way as csharp
-- [ ] `test-dart.yml`, same gate shape
-- [ ] `release-dart.yml`, tags `dart-v*`, `verify-published` against
-      pub.dev's version-specific endpoint — note in the workflow that
-      pub.dev offers no attestation equivalent, per
-      adding-a-language.md's own callout, rather than leaving the gap
-      looking accidental
-- [ ] `CHANGELOG.md` beside `pubspec.yaml` — confirm pub.dev's own
-      convention (it parses this file and documents `## 1.2.3`)
-- [ ] Add to `scripts/check_shipped_links.py`
-- [ ] Push (force-with-lease)
+- [x] Rebase onto `main` — clean, zero conflicts
+- [x] Confirm code still builds/tests clean post-rebase — 28/28,
+      `dart analyze` clean
+- [x] Repoint stale doc paths — `dart/AGENTS.md` and its `PLAN.md`;
+      also corrected a factually wrong CHANGELOG header claiming a
+      repo-root `CHANGELOG.md` exists (it doesn't, hasn't for a while)
+- [x] `test-dart.yml`, same gate shape
+- [x] `release-dart.yml` — **not** structurally parallel to Python/C#,
+      deliberately: pub.dev requires the publishing run to be
+      triggered *by* the tag push itself (OIDC-verified), so this
+      workflow runs in two phases from one file — a main-push tests
+      and pushes only the tag, and that tag push re-triggers the same
+      workflow into the phase that actually publishes. Required a
+      small, non-breaking idempotency fix to `release-github.yml`'s
+      tag-creation step to support a pre-existing tag at HEAD.
+      `verify-published` checks pub.dev's version endpoint and
+      `archive_sha256` (pub.dev has no attestation equivalent)
+- [x] `CHANGELOG.md` beside `pubspec.yaml`, confirmed against pub.dev's
+      real bare `## X.Y.Z` convention (not Keep a Changelog's bracketed
+      form)
+- [x] Added to `scripts/check_shipped_links.py`
+- [x] Pushed; PR #7 (pre-existing draft) updated, all CI green
 
-### `plan/js-sdk`
+### `plan/js-sdk` — [PR #3](https://github.com/pawan-vyas/verdict-rules/pull/3), Stage 2/3 done and CI green; Stage 4 not started
 
-- [ ] Rebase onto `main`, resolve conflicts (likely the heaviest of
-      the three — 14 commits ahead, already touches skill references
-      and evals)
-- [ ] Confirm code still builds/tests clean post-rebase
-- [ ] Repoint old doc paths
-- [ ] `test-js.yml`, same gate shape
-- [ ] `release-js.yml`, tags `js-v*`, `verify-published` against npm's
-      version-specific endpoint, asserting `dist.attestations`
-- [ ] `CHANGELOG.md` beside `package.json` — confirm npm's Keep-a-Changelog
-      convention (already in place per the branch's own history)
-- [ ] Add to `scripts/check_shipped_links.py`
-- [ ] Refresh `skills/verdict/references/js/agent-notes.md` against
-      current conventions (it predates the `MANIFEST.toml` migration
-      and the docs restructuring)
-- [ ] Refresh `skills/verdict-workspace/evals/js/*.json` the same way;
-      confirm `scripts/build_evals.py` still discovers the directory
-      cleanly post-rebase
+- [x] Rebase onto `main` — one real conflict in `.claude-plugin/plugin.json`
+      (this branch's own skill-content version bump collided with an
+      unrelated, already-shipped version from this session); resolved
+      by bumping past what's already tagged and moving this branch's
+      changelog entry into its own newest section
+- [x] Confirm code still builds/tests clean post-rebase — 27/27,
+      typecheck and build clean on Node 18/20/22/24
+- [x] Repoint stale doc paths — `js/AGENTS.md` and its `PLAN.md`
+- [x] `test-js.yml`, same gate shape, Node matrix from the package's
+      stated floor (18) through current (24)
+- [x] `release-js.yml` — single-run shape like Python/C# (npm's
+      Trusted Publishing doesn't require a tag-triggered run the way
+      pub.dev does), `verify-published` against npm's version-specific
+      endpoint, asserting `dist.attestations.provenance`
+- [x] `CHANGELOG.md` beside `package.json`, already correct
+- [x] Added to `scripts/check_shipped_links.py`
+- [x] Refreshed `skills/verdict/references/js/agent-notes.md` — this
+      was shipped, bundled content with a real factual error, not just
+      a stale link: it claimed `docs/extension.md` was "bundled
+      already," which stopped being true when `docs/extending/` moved
+      to fetch-tier this session. Fixed to state current reality
+- [ ] Refresh `skills/verdict-workspace/evals/js/*.json` against
+      current conventions — **not started**
 - [ ] Author `docs/architecture/js.md`, `docs/testing/js.md`, and a
       `js.md` alongside each `docs/samples/<scenario>/` and
       `docs/extending/<scenario>/` this SDK is ready to demonstrate —
-      same quality bar as the Python set, not a stub
-- [ ] Root `README.md` gets a `### JavaScript/TypeScript` subsection
-      under **Quickstart** and **Development**, appended, per
-      adding-a-language.md's explicit exception for that one file
-- [ ] Run real evals against a fresh subagent with the skill vendored
-      into an isolated scratch project (not a documentation audit —
-      see the standing correction on this from earlier in the session)
-- [ ] Push (force-with-lease)
+      **not started**
+- [ ] Root `README.md` gets a `### JavaScript/TypeScript` subsection —
+      **not started**
+- [ ] Run real evals against a fresh subagent — **not started**
+- [x] Pushed; PR #3 (pre-existing draft) updated, all CI green
 
 ## Sequencing
 
