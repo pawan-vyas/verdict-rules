@@ -90,5 +90,5 @@ fits in a new language's own release ritual.
   a fixture's own sample spec and per-language docs follow.
 - [`adding-a-language.md`](adding-a-language.md) — the ritual a new
   language SDK follows, which includes passing every existing fixture.
-- [`../../fixtures/graduation_verdict/README.md`](../../fixtures/graduation_verdict/README.md) —
-  the one fixture that exists today, as a worked example of this shape.
+- [`../../fixtures/`](../../fixtures/README.md) — every fixture that
+  exists, as a worked example of this shape.

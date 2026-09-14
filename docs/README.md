@@ -43,9 +43,7 @@ docs/
    - Building something on top of it, without changing anything here →
      [`extending/`](extending/README.md), whose scenarios have full worked
      instances in [`samples/`](samples/README.md) and each language's
-     own samples directory (generic domains — discounts, fee waivers,
-     tier promotions, moderation routing — plus the data-driven pattern
-     this package is designed for).
+     own samples directory covering generic domains.
 5. **[`future_plan.md`](future_plan.md)** — exploratory feature
    candidates rejected or deferred so far, and the test used to
    evaluate a new one.
