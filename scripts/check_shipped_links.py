@@ -74,6 +74,14 @@ SHIPPED = [
             r"^version:\s*(\S+)", Path("dart/packages/verdict_rules/pubspec.yaml").read_text(), re.M
         ).group(1),
     ),
+    (
+        "C#",
+        ["csharp/src/VerdictRules/README.md", "csharp/src/VerdictRules/VerdictRules.csproj"],
+        "csharp-v",
+        lambda: re.search(
+            r"<Version>(.+?)</Version>", Path("csharp/src/VerdictRules/VerdictRules.csproj").read_text()
+        ).group(1),
+    ),
 ]
 
 

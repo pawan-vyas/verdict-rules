@@ -1,0 +1,107 @@
+# Runs on EVERY pull request, deliberately — see test-python.yml for why the
+# path filter lives inside the workflow rather than on its trigger, and why the
+# gate job is what branch protection marks required.
+#
+# Sibling to test-python.yml, test-dart.yml, test-js.yml: each language's own
+# workflow stays independent, so adding one is a new file rather than an edit
+# to another language's.
+name: Test (C#)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  changes:
+    name: Did anything C# change?
+    runs-on: ubuntu-latest
+    outputs:
+      csharp: ${{ steps.filter.outputs.csharp }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # the base commit must be present to diff against
+
+      - name: Decide whether the suite needs to run
+        id: filter
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+
+          # A branch creation, a force-push or a manual dispatch leaves no
+          # usable base commit. Having nothing to compare against must mean
+          # "run the tests", never "skip them" — the failure has to be safe.
+          if [ -z "${BASE_SHA:-}" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ] \
+             || ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            echo "No usable base commit — running the suite rather than assuming it is unnecessary."
+            echo "csharp=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          changed="$(git diff --name-only "$BASE_SHA" HEAD -- 'csharp' '.github/workflows/test-csharp.yml')"
+          if [ -n "$changed" ]; then
+            echo "C# files changed:"
+            echo "$changed" | sed 's/^/  /'
+            echo "csharp=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No C# files changed in ${BASE_SHA}..HEAD."
+            echo "csharp=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  test:
+    name: dotnet test
+    needs: changes
+    if: needs.changes.outputs.csharp == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      # Builds both TargetFrameworks (net8.0, netstandard2.1) declared in
+      # VerdictRules.csproj, so a netstandard2.1-only regression fails here
+      # even though the test project itself only runs against net8.0.
+      - name: Build (both target frameworks)
+        working-directory: csharp
+        run: dotnet build src/VerdictRules/VerdictRules.csproj -c Release
+
+      - name: Run tests
+        working-directory: csharp
+        run: dotnet test tests/VerdictRules.Tests/VerdictRules.Tests.csproj -c Release
+
+  # THE JOB TO MARK REQUIRED IN BRANCH PROTECTION. See test-python.yml for why
+  # it must distinguish success/skipped from failure/cancelled, and why an
+  # empty result set fails rather than passing vacuously.
+  gate:
+    name: C# tests passed or were not needed
+    needs: [changes, test]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every upstream job must have succeeded or been skipped
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          set -euo pipefail
+          echo "Upstream results: $RESULTS"
+
+          if [ -z "$(printf '%s' "$RESULTS" | tr -d '[:space:]')" ]; then
+            echo "::error::No upstream job results were reported. Refusing to pass a gate that learned nothing."
+            exit 1
+          fi
+
+          failed=0
+          for result in $RESULTS; do
+            case "$result" in
+              success|skipped) ;;
+              *) echo "::error::An upstream job finished as '$result'."; failed=1 ;;
+            esac
+          done
+          [ "$failed" -eq 0 ] || exit 1
+          echo "Gate satisfied."
