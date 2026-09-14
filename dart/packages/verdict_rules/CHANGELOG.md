@@ -1,8 +1,15 @@
 # Changelog
 
-Version provenance for the Dart SDK. The repo-root `CHANGELOG.md` is the
-cross-language record; pub.dev requires this file to live alongside the
-package, so it mirrors this language's own entries.
+Release history for the `verdict_rules` Dart package, scoped to this
+package — it releases independently of the other language SDKs and of
+the AI-agent skill, each of which keeps its own changelog beside its
+own manifest. pub.dev parses this file directly and documents whatever
+heading matches `## X.Y.Z`, unlike PyPI and npm which follow
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/) but parse
+nothing — so the headings below stay in pub.dev's own bare form rather
+than that convention's bracketed, dated one.
+
+Tagged `dart-vX.Y.Z`.
 
 ## 0.0.1
 

@@ -43,12 +43,23 @@ jobs:
         with:
           fetch-depth: 0 # tags, so an existing one can be detected
 
-      - name: Refuse to release a tag that already exists
+      # Most callers never pre-create the tag — this refuses outright. One
+      # real exception: pub.dev's automated publishing requires the workflow
+      # run that publishes to be *triggered by* the tag push itself (verified
+      # via the OIDC token's claims), so release-dart.yml must push the tag
+      # before calling this workflow, in a separate, earlier run. That is the
+      # one shape where the tag already existing at exactly this commit is
+      # correct rather than a re-release of something already shipped.
+      - name: Refuse to release a tag that already exists elsewhere
         run: |
           set -euo pipefail
-          if git rev-parse -q --verify "refs/tags/${{ inputs.tag }}" >/dev/null; then
-            echo "::error::Tag ${{ inputs.tag }} already exists. A release is being attempted for a version that has already shipped."
-            exit 1
+          if existing="$(git rev-parse -q --verify "refs/tags/${{ inputs.tag }}")"; then
+            if [ "$existing" = "$(git rev-parse HEAD)" ]; then
+              echo "Tag ${{ inputs.tag }} already exists and points at this exact commit — a caller pushed it ahead of calling this workflow. Continuing."
+            else
+              echo "::error::Tag ${{ inputs.tag }} already exists, pointing at a different commit ($existing). A release is being attempted for a version that has already shipped."
+              exit 1
+            fi
           fi
 
       # Each package keeps its own changelog beside its own manifest, in its
@@ -91,10 +102,14 @@ jobs:
       - name: Create the tag
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "${{ inputs.tag }}" -m "${{ inputs.title }}"
-          git push origin "${{ inputs.tag }}"
+          if git rev-parse -q --verify "refs/tags/${{ inputs.tag }}" >/dev/null; then
+            echo "Tag ${{ inputs.tag }} already exists (pushed by the caller) — nothing to do."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "${{ inputs.tag }}" -m "${{ inputs.title }}"
+            git push origin "${{ inputs.tag }}"
+          fi
 
       - name: Create GitHub Release
         env:

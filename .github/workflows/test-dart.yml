@@ -1,0 +1,104 @@
+# Runs on EVERY pull request, deliberately — see test-python.yml for why the
+# path filter lives inside the workflow rather than on its trigger, and why the
+# gate job is what branch protection marks required.
+name: Test (Dart)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  changes:
+    name: Did anything Dart change?
+    runs-on: ubuntu-latest
+    outputs:
+      dart: ${{ steps.filter.outputs.dart }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # the base commit must be present to diff against
+
+      - name: Decide whether the suite needs to run
+        id: filter
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+
+          # A branch creation, a force-push or a manual dispatch leaves no
+          # usable base commit. Having nothing to compare against must mean
+          # "run the tests", never "skip them" — the failure has to be safe.
+          if [ -z "${BASE_SHA:-}" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ] \
+             || ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            echo "No usable base commit — running the suite rather than assuming it is unnecessary."
+            echo "dart=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          changed="$(git diff --name-only "$BASE_SHA" HEAD -- 'dart' '.github/workflows/test-dart.yml')"
+          if [ -n "$changed" ]; then
+            echo "Dart files changed:"
+            echo "$changed" | sed 's/^/  /'
+            echo "dart=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No Dart files changed in ${BASE_SHA}..HEAD."
+            echo "dart=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  test:
+    name: dart test
+    needs: changes
+    if: needs.changes.outputs.dart == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dart/packages/verdict_rules
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dart-lang/setup-dart@v1
+
+      - name: Install dependencies
+        run: dart pub get
+
+      # Must report zero issues, not just "doesn't crash" — analysis_options.yaml
+      # enables lints beyond the defaults, and a lint regression is exactly the
+      # kind of thing a green test suite alone would miss.
+      - name: Analyze
+        run: dart analyze
+
+      - name: Run tests
+        run: dart test
+
+  # THE JOB TO MARK REQUIRED IN BRANCH PROTECTION. See test-python.yml for why
+  # it must distinguish success/skipped from failure/cancelled, and why an
+  # empty result set fails rather than passing vacuously.
+  gate:
+    name: Dart tests passed or were not needed
+    needs: [changes, test]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every upstream job must have succeeded or been skipped
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          set -euo pipefail
+          echo "Upstream results: $RESULTS"
+
+          if [ -z "$(printf '%s' "$RESULTS" | tr -d '[:space:]')" ]; then
+            echo "::error::No upstream job results were reported. Refusing to pass a gate that learned nothing."
+            exit 1
+          fi
+
+          failed=0
+          for result in $RESULTS; do
+            case "$result" in
+              success|skipped) ;;
+              *) echo "::error::An upstream job finished as '$result'."; failed=1 ;;
+            esac
+          done
+          [ "$failed" -eq 0 ] || exit 1
+          echo "Gate satisfied."

@@ -66,6 +66,14 @@ SHIPPED = [
         "js-v",
         lambda: json.loads(Path("js/packages/verdict-rules/package.json").read_text())["version"],
     ),
+    (
+        "Dart",
+        ["dart/packages/verdict_rules/README.md", "dart/packages/verdict_rules/pubspec.yaml"],
+        "dart-v",
+        lambda: re.search(
+            r"^version:\s*(\S+)", Path("dart/packages/verdict_rules/pubspec.yaml").read_text(), re.M
+        ).group(1),
+    ),
 ]
 
 

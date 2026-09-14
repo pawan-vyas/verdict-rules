@@ -82,7 +82,7 @@ raw) and `csharp/AGENTS.md` (no local source at all).
 
 ## Before calling a change done
 
-```
+```bash
 cd dart/packages/verdict_rules && dart analyze && dart test
 ```
 
@@ -95,4 +95,4 @@ For a release, also `dart pub publish --dry-run` and expect zero warnings.
 
 Short-circuiting is proven with a call log, never with the final boolean.
 Vacuous-truth polarities and unknown-lookup throws each get their own test.
-See the repo-root `docs/testing.md`.
+See the repo-root [`docs/testing/`](../docs/testing/README.md).

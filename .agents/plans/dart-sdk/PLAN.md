@@ -75,7 +75,7 @@ not a warning.
   short-circuit in a plain `for` loop with `await`, **never
   `Future.wait`** — the same exclusion as `Promise.all` and
   `Task.WhenAll` in the other SDKs, for the reason
-  [`../../../docs/architecture.md`](../../../docs/architecture.md)
+  [`../../../docs/architecture/`](../../../docs/architecture/README.md)
   gives: short-circuiting only means something if later work never
   *starts*. The returned boolean is identical either way, so the tests
   keep passing while the guarantee is gone.
@@ -84,7 +84,7 @@ not a warning.
 - `RuleResult.data` stays opaque: only what actually ran, never padded,
   never flattened.
 - The one-adapter-module extension pattern
-  ([`../../../docs/extension.md`](../../../docs/extension.md), Recipe 3).
+  ([`../../../docs/extending/domain-adapter-module/`](../../../docs/extending/domain-adapter-module/README.md)).
 
 ## 5 · Design notes specific to Dart
 
@@ -113,7 +113,7 @@ is not acceptable.
    `AGENTS.md`, mirroring `python/AGENTS.md`'s role.
 3. Port the seven types, then the test suite — including a
    short-circuit proof via a call counter and explicit vacuous-truth
-   cases, per [`../../../docs/testing.md`](../../../docs/testing.md).
+   cases, per [`../../../docs/testing/`](../../../docs/testing/README.md).
 4. Port the oracle/differential chaos suite from
    [`../../../python/examples/graduation_verdict/`](../../../python/examples/graduation_verdict/) —
    an independent, deliberately naive re-implementation checked against
@@ -138,7 +138,7 @@ language-scoped.
 ## 8 · Stage 0 decisions — settled
 
 Every clerical question from
-[`../../../docs/adding-a-language.md`](../../../docs/adding-a-language.md)'s
+[`../../../docs/maintenance/adding-a-language.md`](../../../docs/maintenance/adding-a-language.md)'s
 stage 0, answered in writing. Re-verified 2026-09-12.
 
 | Question | Decision |

@@ -1,0 +1,193 @@
+# Releases Dart when its version changes on main -- nothing is tagged or
+# published by hand, same intent as release-python.yml and release-csharp.yml.
+# The SHAPE is deliberately not parallel to either, though, for one mechanical
+# reason: pub.dev's automated publishing requires the workflow RUN that
+# publishes to be triggered BY the tag push itself, verified against the tag
+# pattern registered on pub.dev's admin page through the run's own OIDC token
+# claims. A workflow triggered by a push to main cannot publish, even if a
+# matching tag already exists -- see .agents/plans/dart-sdk/PLAN.md §2 for the
+# research this trades on.
+#
+# So this file runs in two phases, both triggered from here:
+#
+#   1. Push to main, version changed -> test, then push ONLY the tag. Nothing
+#      is published in this run.
+#   2. That tag push re-triggers this same workflow -> THIS run calls
+#      pub.dev's own reusable publish workflow, then the shared GitHub-release
+#      tail (which recognizes the tag already exists at this exact commit and
+#      skips re-creating it -- see release-github.yml's own idempotency note).
+#
+# paths: is not evaluated for tag pushes at all (GitHub's own documented
+# behavior), so phase 2 always runs regardless of the filter below.
+name: Release (Dart)
+
+on:
+  push:
+    branches: [main]
+    tags: ["dart-v*"]
+    paths:
+      - "dart/**"
+      - ".github/workflows/release-dart.yml"
+  workflow_dispatch: # escape hatch: re-run a release that failed after tagging
+
+concurrency:
+  group: release-dart
+  cancel-in-progress: false # never interrupt a publish
+
+jobs:
+  detect:
+    name: Is there a new version to release, or is this the tag that publishes it?
+    runs-on: ubuntu-latest
+    outputs:
+      phase: ${{ steps.check.outputs.phase }} # "tag-only" | "publish" | "none"
+      version: ${{ steps.check.outputs.version }}
+      tag: ${{ steps.check.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Work out which phase this run is
+        id: check
+        run: |
+          set -euo pipefail
+
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            # Phase 2: this run's own trigger IS the release signal. Derive
+            # the version from the tag name rather than re-reading pubspec.yaml
+            # -- the tag was cut from the commit where they already agreed.
+            tag="${GITHUB_REF_NAME}"
+            version="${tag#dart-v}"
+            echo "Tag push ${tag} -- publishing."
+            echo "phase=publish" >> "$GITHUB_OUTPUT"
+            echo "version=${version}" >> "$GITHUB_OUTPUT"
+            echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Phase 1: a branch push (or workflow_dispatch). Compare the
+          # manifest against existing tags the same way release-python.yml
+          # and release-csharp.yml do.
+          version="$(grep -m1 '^version:' dart/packages/verdict_rules/pubspec.yaml | sed -E 's/version:\s*(.+)/\1/')"
+          tag="dart-v${version}"
+
+          if [ -z "$version" ]; then
+            echo "::error file=dart/packages/verdict_rules/pubspec.yaml::Could not read a version."
+            exit 1
+          fi
+
+          if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+            echo "Version ${version} is already released as ${tag}. Nothing to do."
+            echo "phase=none" >> "$GITHUB_OUTPUT"
+          else
+            echo "Version ${version} has no ${tag} tag yet -- testing, then tagging."
+            echo "phase=tag-only" >> "$GITHUB_OUTPUT"
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+
+      - name: The changelog section exists before anything is tagged
+        if: steps.check.outputs.phase != 'none'
+        run: python3 scripts/changelog_section.py dart/packages/verdict_rules/CHANGELOG.md "${{ steps.check.outputs.version }}" > /dev/null
+
+  test:
+    name: Full suite before tagging
+    needs: detect
+    if: needs.detect.outputs.phase == 'tag-only'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dart/packages/verdict_rules
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
+      - run: dart analyze
+      - run: dart test
+
+  # Phase 1's terminal step: push the tag, publish nothing. The tag push is
+  # what re-triggers this workflow into phase 2.
+  push-tag:
+    name: Push the release tag
+    needs: [detect, test]
+    if: needs.detect.outputs.phase == 'tag-only'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - name: Tag
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ needs.detect.outputs.tag }}" -m "Dart v${{ needs.detect.outputs.version }}"
+          git push origin "${{ needs.detect.outputs.tag }}"
+
+  # Phase 2 begins here, in the run that the tag push above triggered.
+  publish-pubdev:
+    name: Publish to pub.dev
+    needs: detect
+    if: needs.detect.outputs.phase == 'publish'
+    permissions:
+      id-token: write # pub.dev's OIDC-verified automated publishing
+    uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
+    with:
+      working-directory: dart/packages/verdict_rules
+
+  release:
+    name: Tag (already done) and publish the GitHub release
+    needs: [detect, publish-pubdev]
+    if: needs.detect.outputs.phase == 'publish'
+    permissions:
+      contents: write
+    uses: ./.github/workflows/release-github.yml
+    with:
+      tag: ${{ needs.detect.outputs.tag }}
+      version: ${{ needs.detect.outputs.version }}
+      changelog-path: dart/packages/verdict_rules/CHANGELOG.md
+      title: Dart v${{ needs.detect.outputs.version }}
+
+  # Confirms what pub.dev is actually serving, rather than trusting that the
+  # reusable publish workflow succeeding means the right thing is live.
+  verify-published:
+    name: Verify what pub.dev is serving
+    needs: [detect, release]
+    if: needs.detect.outputs.phase == 'publish'
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.detect.outputs.version }}
+    steps:
+      - name: The version is live and resolvable
+        run: |
+          set -euo pipefail
+          url="https://pub.dev/api/packages/verdict_rules/versions/${VERSION}"
+
+          code=000
+          for attempt in 1 2 3 4 5 6; do
+            code="$(curl -s -o version.json -w '%{http_code}' "$url")"
+            [ "$code" = "200" ] && break
+            echo "Attempt ${attempt}: HTTP ${code} -- waiting for propagation"
+            sleep 20
+          done
+
+          if [ "$code" != "200" ]; then
+            echo "::error::pub.dev is not serving ${VERSION} after ~2 minutes. The publish step reported success, so check the package page before assuming a false alarm."
+            exit 1
+          fi
+          echo "Serving $(jq -r '.version' version.json)"
+
+      # pub.dev offers no attestation or signature equivalent to PyPI's PEP 740
+      # or NuGet's repository signature -- adding-a-language.md's own registry
+      # table says so explicitly. archive_sha256 is the one integrity value it
+      # does publish, so that is what gets asserted instead of leaving the gap
+      # looking accidental.
+      - name: The version carries an integrity hash
+        run: |
+          set -euo pipefail
+          sha="$(jq -r '.archive_sha256 // empty' version.json)"
+          if [ -z "$sha" ]; then
+            echo "::error::No archive_sha256 present for ${VERSION}."
+            exit 1
+          fi
+          echo "archive_sha256: ${sha}"
