@@ -105,7 +105,26 @@ Same shape for csharp and dart; js gets the extra Stage-4 rows.
 - [x] Added to `scripts/check_shipped_links.py`
 - [x] Pushed; PR #7 (pre-existing draft) updated, all CI green
 
-### `plan/js-sdk` — [PR #3](https://github.com/pawan-vyas/verdict-rules/pull/3), Stage 2/3 and Stage 4 both done, CI green
+### `plan/js-sdk` — [PR #3](https://github.com/pawan-vyas/verdict-rules/pull/3), Stage 2/3 and Stage 4 both done, CI green; name claimed on npm
+
+**2026-09-14: `verdict-rules` claimed on npm.** Published `0.0.0` by
+hand from `js/packages/verdict-rules/` (version temporarily edited for
+the publish, then reverted — never committed) to create the package
+record, since npm's Trusted Publishing cannot attach to a name that has
+never been published (no PyPI-style "pending publisher"). Required
+enabling account TOTP 2FA first — npm now refuses any publish, even a
+fresh `npm login` session, without it or a bypass-2FA granular token.
+Confirmed live: `https://registry.npmjs.org/verdict-rules` serves
+`0.0.0` as the only version, `latest` dist-tag pointing at it.
+
+**Next step, still manual, still only the account owner**: on
+npmjs.com, configure `verdict-rules`'s Trusted Publisher — GitHub
+Actions, this repo, workflow filename `release-js.yml` (exact match),
+optional environment `npm` (matches `release-js.yml`'s own
+`environment: npm`). Once that's set, merging PR #3 (which carries the
+real `0.0.1` version bump, already sitting there) triggers
+`release-js.yml` and publishes the actual first real version
+automatically — no further manual `npm publish` needed after this.
 
 - [x] Rebase onto `main` — one real conflict in `.claude-plugin/plugin.json`
       (this branch's own skill-content version bump collided with an
