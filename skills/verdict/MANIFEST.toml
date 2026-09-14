@@ -175,12 +175,20 @@ source = "docs/samples/dynamic-discounts/python.md"
 destination = "docs/samples/dynamic-discounts/python.md"
 
 [[fetch]]
+source = "docs/samples/dynamic-discounts/js.md"
+destination = "docs/samples/dynamic-discounts/js.md"
+
+[[fetch]]
 source = "docs/samples/shipping-fee-waiver/README.md"
 destination = "docs/samples/shipping-fee-waiver/README.md"
 
 [[fetch]]
 source = "docs/samples/shipping-fee-waiver/python.md"
 destination = "docs/samples/shipping-fee-waiver/python.md"
+
+[[fetch]]
+source = "docs/samples/shipping-fee-waiver/js.md"
+destination = "docs/samples/shipping-fee-waiver/js.md"
 
 [[fetch]]
 source = "docs/samples/loyalty-tier-promotion/README.md"
@@ -191,12 +199,20 @@ source = "docs/samples/loyalty-tier-promotion/python.md"
 destination = "docs/samples/loyalty-tier-promotion/python.md"
 
 [[fetch]]
+source = "docs/samples/loyalty-tier-promotion/js.md"
+destination = "docs/samples/loyalty-tier-promotion/js.md"
+
+[[fetch]]
 source = "docs/samples/content-moderation-routing/README.md"
 destination = "docs/samples/content-moderation-routing/README.md"
 
 [[fetch]]
 source = "docs/samples/content-moderation-routing/python.md"
 destination = "docs/samples/content-moderation-routing/python.md"
+
+[[fetch]]
+source = "docs/samples/content-moderation-routing/js.md"
+destination = "docs/samples/content-moderation-routing/js.md"
 
 [[fetch]]
 source = "docs/samples/data-driven-rule-sets/README.md"
@@ -207,12 +223,20 @@ source = "docs/samples/data-driven-rule-sets/python.md"
 destination = "docs/samples/data-driven-rule-sets/python.md"
 
 [[fetch]]
+source = "docs/samples/data-driven-rule-sets/js.md"
+destination = "docs/samples/data-driven-rule-sets/js.md"
+
+[[fetch]]
 source = "docs/samples/admin-eligibility-lookup/README.md"
 destination = "docs/samples/admin-eligibility-lookup/README.md"
 
 [[fetch]]
 source = "docs/samples/admin-eligibility-lookup/python.md"
 destination = "docs/samples/admin-eligibility-lookup/python.md"
+
+[[fetch]]
+source = "docs/samples/admin-eligibility-lookup/js.md"
+destination = "docs/samples/admin-eligibility-lookup/js.md"
 
 [[fetch]]
 source = "docs/samples/graduation-requirement-verdict/README.md"
