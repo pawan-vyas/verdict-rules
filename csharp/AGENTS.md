@@ -127,14 +127,14 @@ higher-friction, network-dependent act, not a local file read. A C# eval
 reaching for that anyway would be real evidence of a trust gap rather than
 convenience; not reaching for it would settle nothing either way, since it
 stays consistent with "just convenient when free." Worth watching once this
-language's own evals exist (see `docs/adding-a-language.md` Stage 4) — not
+language's own evals exist (see [`docs/maintenance/adding-a-language.md`](../docs/maintenance/adding-a-language.md) Stage 4) — not
 something to guard against. Restricting an agent from reading its own public
 source, for a benefit this hard to define, would cost real flexibility for
 no clear correctness gain.
 
 ## Before calling a change done
 
-```
+```bash
 cd csharp && dotnet build -warnaserror && dotnet test
 ```
 
@@ -145,4 +145,4 @@ For a release, also `dotnet pack -c Release` and confirm both a `.nupkg` and a
 
 Short-circuiting is proven with a call log, never the final boolean.
 Vacuous-truth polarities and unknown-lookup throws each get their own test.
-See the repo-root `docs/testing.md`.
+See the repo-root [`docs/testing/`](../docs/testing/README.md).

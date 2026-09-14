@@ -80,7 +80,7 @@ idiom changes:
 - **Sequential, never concurrent evaluation.** `AndRule`/`OrRule` must
   short-circuit in a plain `foreach` with `await`, **never
   `Task.WhenAll`** — for exactly the reason
-  [`../../../docs/architecture.md`](../../../docs/architecture.md)
+  [`../../../docs/architecture/`](../../../docs/architecture/README.md)
   gives: short-circuiting only means something if later work never
   *starts*, and `WhenAll` has already started every sub-rule before the
   first result returns. The returned boolean is unchanged either way,
@@ -91,7 +91,7 @@ idiom changes:
 - `RuleResult.Data` stays opaque: only what actually ran, never padded,
   never flattened.
 - The one-adapter-module extension pattern
-  ([`../../../docs/extension.md`](../../../docs/extension.md), Recipe 3).
+  ([`../../../docs/extending/domain-adapter-module/`](../../../docs/extending/domain-adapter-module/README.md)).
 
 ## 5 · The one genuinely non-mechanical design point
 
@@ -127,7 +127,7 @@ context and the exact async naming both need a real design pass against
    language's own `AGENTS.md`, mirroring `python/AGENTS.md`'s role.
 3. Port the seven types, then the test suite — including a
    short-circuit proof via a call counter and explicit vacuous-truth
-   cases, per [`../../../docs/testing.md`](../../../docs/testing.md).
+   cases, per [`../../../docs/testing/`](../../../docs/testing/README.md).
 4. Port the oracle/differential chaos suite from
    [`../../../python/examples/graduation_verdict/`](../../../python/examples/graduation_verdict/) —
    an independent, deliberately naive re-implementation checked against
