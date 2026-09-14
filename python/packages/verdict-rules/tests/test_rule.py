@@ -130,8 +130,8 @@ class TestOrRule:
 class TestExceptionPropagation:
     """AndRule/OrRule catch nothing either — a sub-rule's own exception
     propagates straight out of evaluate(), the same guarantee test_engine.py
-    proves for run_all/run_group. See extension.md Recipe 7 for the wrapper
-    a consumer opts into if they want the opposite."""
+    proves for run_all/run_group. See docs/extending/isolating-flaky-predicates/
+    for the wrapper a consumer opts into if they want the opposite."""
 
     async def test_and_rule_does_not_catch_a_sub_rule_s_exception(self) -> None:
         async def flaky(context: dict) -> RuleResult:

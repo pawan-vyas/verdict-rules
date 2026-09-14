@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD041 (GitHub shows the PR title as the H1; a template starting with its own would duplicate it) -->
 ## What this changes and why
 
 <!-- One or two sentences. Link the issue this addresses, if any. -->
@@ -12,9 +13,9 @@ this list is how documentation goes stale for two versions.
 
 Other templates exist for changes this does not fit — append
 `?template=clerical.md` or `?template=release.md` to the pull request URL. See
-[`.github/PULL_REQUEST_TEMPLATE/README.md`](.github/PULL_REQUEST_TEMPLATE/README.md).
+[`.github/PULL_REQUEST_TEMPLATE/README.md`](PULL_REQUEST_TEMPLATE/README.md).
 
-**Code**
+### Code
 
 - [ ] Scoped to one change — no unrelated fixes bundled in.
 - [ ] Tests added or updated, passing locally (`uv run pytest` from `python/`).
@@ -24,22 +25,24 @@ Other templates exist for changes this does not fit — append
 - [ ] If behaviour changed: the shared fixture under
       `fixtures/graduation_verdict/` pins it, so no language port can miss it.
 
-**Documentation** — a behaviour change is a documentation change. Nothing
-fails when a doc is wrong, so this is the part that has to be deliberate.
+### Documentation
+
+A behaviour change is a documentation change. Nothing fails when a doc
+is wrong, so this is the part that has to be deliberate.
 
 - [ ] Source docstrings.
-- [ ] `docs/architecture.md`, **including its diagrams** — a diagram showing
+- [ ] `docs/architecture/`, **including its diagrams** — a diagram showing
       the old shape is more misleading than stale prose.
-- [ ] `docs/extension.md` — does this enable a recipe, or invalidate one?
-- [ ] `docs/testing.md` — it names specific tests; renaming one breaks it
-      silently.
-- [ ] `docs/maintenance.md`, language quickstarts, samples, `README.md`.
+- [ ] [`docs/extending/`](../docs/extending/README.md) — does this enable a scenario, or invalidate one?
+- [ ] [`docs/testing/`](../docs/testing/README.md) — it names specific
+      tests; renaming one breaks it silently.
+- [ ] `docs/maintenance/`, language quickstarts, samples, `README.md`.
 - [ ] `skills/verdict/references/` updated, with `.claude-plugin/plugin.json`
       bumped in the same commit (CI enforces this).
 - [ ] A changelog entry in *that package's own* `CHANGELOG.md`, written
       with the version bump rather than backfilled.
 
-**Verified, not assumed**
+### Verified, not assumed
 
 - [ ] Every code sample added or changed was **executed** against the built
       package — the first example in a document runs verbatim.

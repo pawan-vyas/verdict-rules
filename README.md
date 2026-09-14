@@ -20,9 +20,19 @@ the code asking the question has shipped.
 Verdict is the small piece of infrastructure that question deserves: a
 place to name each condition once, combine named conditions into a
 verdict, and run that verdict against whatever facts a caller hands it
-— a plain `dict`, nothing more. It has no idea what a rate limit is, or
+— a plain map, nothing more. It has no idea what a rate limit is, or
 a permission, or a discount. It only knows how to ask a rule "did you
 pass?" and combine the answers honestly.
+
+Verdict is a polyglot design. **Only Python ships today.**
+
+## Quickstart
+
+### Python
+
+```bash
+pip install verdict-rules
+```
 
 ```python
 from verdict import AndRule, FunctionRule, RuleResult
@@ -49,7 +59,7 @@ guarantee underneath it:
 
 ```mermaid
 graph LR
-    Ctx[/"📥 context<br/>(plain dict)"/]
+    Ctx[/"📥 context<br/>(plain map)"/]
     Comp{"🔀 AndRule"}
     R1("✅ under_limit<br/>passed")
     R2("❌ in_good_standing<br/>failed")
@@ -75,7 +85,7 @@ graph LR
     style Out fill:#51CF66,stroke:#37B24D,stroke-width:2px,color:#000
 
     %% Link Index:
-    %% 0: facts enter as a plain dict
+    %% 0: facts enter as a plain map
     %% 1: the first sub-rule is evaluated and passes
     %% 2: the second is evaluated and fails
     %% 3: everything after it is never started at all
@@ -94,7 +104,7 @@ graph LR
 > audit row. A library that evaluated all three concurrently would return
 > the same `False` and be silently wrong.
 >
-> The rest follows from it. Facts are a plain `dict` Verdict never
+> The rest follows from it. Facts are a plain map Verdict never
 > inspects. A `Rule` is anything with `name`, `group` and
 > `evaluate()` — no base class, no registration. `RulesEngine` is the
 > diagnostic counterpart, for when you want every rule's answer rather
@@ -112,31 +122,27 @@ graph LR
   the two ever coupling to each other.
 - **Rules are structurally typed, not inherited.** A custom rule never
   imports anything from this package or subclasses anything — it just
-  needs a `name`, a `group`, and an `evaluate(context)` coroutine.
+  needs a `name`, a `group`, and an `evaluate(context)` that returns a
+  `RuleResult`.
 
 ## Where to go next
 
-Verdict is a polyglot design — the `Rule`/`FunctionRule`/`AndRule`/
-`OrRule`/`RulesEngine` shape and its execution-model guarantees are
-meant to exist in more than one language. **Only Python ships today.**
-The docs below split the same way the repo does: language-agnostic
-design rationale lives at the repo root; anything with directly
-runnable code lives under that language's own directory.
-
 | Doc | For |
-|---|---|
+| --- | --- |
 | [`python/README.md`](python/packages/verdict-rules/README.md) | Python quickstart — `pip install verdict-rules`, first rule |
 | [`python/packages/verdict-rules/docs/quickstart.md`](python/packages/verdict-rules/docs/quickstart.md) | Core concepts and a full worked example |
-| [`docs/architecture.md`](docs/architecture.md) | Why it's shaped this way, in depth — type structure, the execution model |
-| [`docs/extension.md`](docs/extension.md) | Building on top of it from your own code, with no changes here |
-| [`docs/maintenance.md`](docs/maintenance.md) | Changing this package itself |
-| [`docs/testing.md`](docs/testing.md) | How the test suite is organized, and what a change needs to prove |
+| [`docs/architecture/`](docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
+| [`docs/extending/`](docs/extending/README.md) | Building on top of it from your own code, with no changes here |
+| [`docs/maintenance/`](docs/maintenance/README.md) | Changing this package itself |
+| [`docs/testing/`](docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
 | [`docs/future_plan.md`](docs/future_plan.md) | Exploratory feature candidates, and the test used to evaluate one |
-| [`python/packages/verdict-rules/docs/samples/`](python/packages/verdict-rules/docs/samples/1_README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
+| [`docs/samples/`](docs/samples/README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
 | [`python/examples/`](python/examples/README.md) | Full, tested mini-projects behind the more comprehensive samples — real code, real tests, real docs |
 | [`skills/verdict/SKILL.md`](skills/verdict/SKILL.md) | The AI-agent skill for building with Verdict |
 
 ## Development
+
+### Python
 
 ```bash
 cd python/
@@ -147,9 +153,9 @@ uv run pytest
 ## Contributing
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for how to set up a change and
-what it needs to prove before it's mergeable, and
-[`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) for community standards.
-Licensed under [MIT](LICENSE). Each package keeps its own release history
-beside its own manifest — [`python/CHANGELOG.md`](python/packages/verdict-rules/CHANGELOG.md) and
-[`skills/verdict/CHANGELOG.md`](skills/verdict/CHANGELOG.md) today — because
-each releases independently under its own tag.
+what it needs to prove before it's mergeable.  
+Licensed under [MIT](LICENSE).  
+Release history:
+
+- [`python/packages/verdict-rules/CHANGELOG.md`](python/packages/verdict-rules/CHANGELOG.md)
+- [`skills/verdict/CHANGELOG.md`](skills/verdict/CHANGELOG.md)

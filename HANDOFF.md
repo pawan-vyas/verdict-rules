@@ -15,8 +15,8 @@ state_at_commit_short: fcfb637
 
 > The **migratable state container** for this project: session-to-session, not cross-session. It may
 > be freely rewritten when a new session or tool takes over (see §0.1). Standing rules live in
-> `AGENTS.md` (imported by `CLAUDE.md`), plus `python/AGENTS.md` for Python-specific ones — never
-> here. Verify against the code; the source of truth for the design is `docs/architecture.md`, and
+> [`AGENTS.md`](AGENTS.md) (imported by `CLAUDE.md`), plus [`python/AGENTS.md`](python/AGENTS.md) for Python-specific ones — never
+> here. Verify against the code; the source of truth for the design is `docs/architecture/`, and
 > for what shipped, each package's own `CHANGELOG.md`.
 
 ## 0 · How to use this file
@@ -36,7 +36,7 @@ commit itself, so it would read "stale by 1" the instant this file is written, e
 Diff against the commit that last touched `HANDOFF.md` instead; that range is empty exactly when
 nothing has happened since:
 
-```
+```bash
 git log --oneline "$(git log -1 --format=%H -- HANDOFF.md)"..HEAD
 git status --short
 ```
@@ -64,7 +64,7 @@ ships today**, under `python/` (a workspace root; the package itself is in
 tested example project). A second language lands as a new sibling top-level directory with its own
 `AGENTS.md`. Cross-language docs are in `docs/`, the AI-agent skill in `skills/verdict/` (vendored
 into other projects by `scripts/install.sh`), the published site in `site/`, and agent working
-material in `.agents/`. Design source of truth: [`docs/architecture.md`](docs/architecture.md).
+material in `.agents/`. Design source of truth: [`docs/architecture/`](docs/architecture/README.md).
 
 ## 1b · External references (NOT part of this repo)
 
@@ -114,13 +114,14 @@ pick up. If you are starting fresh, the useful entry points are:
 2. **If a second language is starting**, read
    [`.agents/plans/polyglot-sdk-resume.md`](.agents/plans/polyglot-sdk-resume.md) first — especially
    its "explicitly not decided yet" list (npm/NuGet name availability, `js/` vs `typescript/`,
-   `csharp/` vs `dotnet/`, per-language CI layout) — then `docs/architecture.md` and
-   `docs/extension.md` fresh, rather than that file's compressed summary of them.
+   `csharp/` vs `dotnet/`, per-language CI layout) — then `docs/architecture/` and
+   `docs/extending/` fresh, rather than that file's compressed summary of them.
 3. **If you change anything under `skills/verdict/`**, bump `.claude-plugin/plugin.json`'s version in
    the same commit, or `check-skill-version.yml` will fail the push. That version is unrelated to
-   `python/pyproject.toml`'s — see §4 and `docs/maintenance.md`.
+   `python/pyproject.toml`'s — see §4 and `docs/maintenance/releases/verdict-agent-skill.md`.
 4. **The first skill-only release will exercise `release-skill.yml` for the first time** (§4):
-   ```
+
+   ```bash
    # bump .claude-plugin/plugin.json, add a ## skill-vX.Y.Z CHANGELOG entry, commit, then:
    git tag skill-vX.Y.Z && git push origin skill-vX.Y.Z
    ```
@@ -148,7 +149,7 @@ pick up. If you are starting fresh, the useful entry points are:
 
 ## 5 · Verify (gate / test commands)
 
-```
+```bash
 cd python && uv sync && uv run pytest --cov=verdict --cov-report=term-missing
 ```
 
@@ -159,13 +160,13 @@ separate lint or type gate configured.
 
 For a doc change, additionally validate every mermaid diagram touched:
 
-```
+```bash
 node .claude/skills/mermaid-diagrams/scripts/validate_diagrams.js --markdown <file.md>
 ```
 
 For a change to the distribution scripts, confirm all three artifacts still build:
 
-```
+```bash
 bash scripts/build.sh && ls dist/   # verdict-plugin.zip  verdict-tools.zip  verdict.skill
 ```
 
@@ -173,7 +174,7 @@ bash scripts/build.sh && ls dist/   # verdict-plugin.zip  verdict-tools.zip  ver
 
 - **Python** ≥3.10 (floor in `python/pyproject.toml`), managed with **`uv`**; `python/uv.lock` is
   committed. Test deps: `pytest>=8.0`, `pytest-asyncio>=0.24`. The package has **zero runtime
-  dependencies** — adding one requires an explicit discussion first, per `AGENTS.md`.
+  dependencies** — adding one requires an explicit discussion first, per [`AGENTS.md`](AGENTS.md).
 - **Node** is needed only for the mermaid diagram validator, and **`jq`** only by the two CI
   workflows (preinstalled on `ubuntu-latest`). Neither is needed to use or test the package.
 - **Vendored skills**, mirrored to both `.agents/skills/` and `.claude/skills/`:
@@ -186,14 +187,15 @@ bash scripts/build.sh && ls dist/   # verdict-plugin.zip  verdict-tools.zip  ver
 ## 6 · Key docs
 
 - [`AGENTS.md`](AGENTS.md) — standing rules for every agent (`CLAUDE.md` is just `@AGENTS.md`);
-  `python/AGENTS.md` adds the Python layer.
-- [`docs/architecture.md`](docs/architecture.md) — design source of truth: why evaluation is
+  [`python/AGENTS.md`](python/AGENTS.md) adds the Python layer.
+- [`docs/architecture/`](docs/architecture/README.md) — design source of truth: why evaluation is
   sequential, why `Rule` is structural, why `RuleResult.data` stays opaque.
-- [`docs/extension.md`](docs/extension.md) — the five extension recipes; Recipe 3's
-  one-adapter-module boundary is the pattern to steer consumers toward.
-- [`docs/maintenance.md`](docs/maintenance.md) — the two never-slip constraints, the language
+- [`docs/extending/`](docs/extending/README.md) — the seven extension scenarios;
+  `domain-adapter-module/`'s one-adapter-module boundary is the pattern to steer
+  consumers toward.
+- [`docs/maintenance/`](docs/maintenance/README.md) — the two never-slip constraints, the language
   release procedure, and the separate skill release procedure.
-  [`docs/testing.md`](docs/testing.md) — the testing checklist.
+  [`docs/testing/`](docs/testing/README.md) — the testing checklist.
 - [`docs/future_plan.md`](docs/future_plan.md) — exploratory candidates, explicitly not a roadmap.
 - [`python/examples/graduation_verdict/`](python/examples/graduation_verdict/) — the worked example,
   including the oracle/differential chaos suite worth re-deriving in any future language.

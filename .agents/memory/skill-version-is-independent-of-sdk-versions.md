@@ -57,7 +57,7 @@ skill artifacts, so `latest` always carries a usable
 
 Bump `plugin.json` in the same commit as the skill edit, add a
 `skill-vX.Y.Z` CHANGELOG entry, tag, push. Full procedure in
-`docs/maintenance.md`. Marketplace and clone installs are current as
+[`docs/maintenance/releases/verdict-agent-skill.md`](../../docs/maintenance/releases/verdict-agent-skill.md). Marketplace and clone installs are current as
 soon as it lands on `main`; the tag exists for `get.sh`.
 
 ## What enforces it

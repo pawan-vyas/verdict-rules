@@ -12,7 +12,7 @@ engine — the same `Rule`/`FunctionRule`/`AndRule`/`OrRule`/
 `RulesEngine`/`RuleResult`/`RunResult` design and execution-model
 guarantees, meant to exist in more than one language. **Only Python
 ships today** — see [`python/README.md`](python/packages/verdict-rules/README.md) and its own
-`python/AGENTS.md` for everything Python-specific. A second language
+[`python/AGENTS.md`](python/AGENTS.md) for everything Python-specific. A second language
 lands as a new top-level directory alongside `python/`, with its own
 `AGENTS.md` for that language's own conventions — check which
 directories actually exist before assuming a language has an SDK yet.
@@ -34,8 +34,8 @@ Where things go:
 
 | Kind | Home |
 | :-- | :-- |
-| Standing rules (this file) | `AGENTS.md`, plus each language's own (`python/AGENTS.md`) |
-| Session state — resume from here | `HANDOFF.md` |
+| Standing rules (this file) | `AGENTS.md`, plus each language's own ([`python/AGENTS.md`](python/AGENTS.md)) |
+| Session state — resume from here | [`HANDOFF.md`](HANDOFF.md) |
 | Plans, specs, playbooks, resume notes | [`.agents/plans/`](.agents/plans/) |
 | Durable facts / confirmed preferences | [`.agents/memory/`](.agents/memory/) |
 | Vendored operations manuals an agent follows | [`.agents/skills/`](.agents/skills/), mirrored to `.claude/skills/` |
@@ -132,7 +132,7 @@ irreversible: publishing, force-pushing, or editing a release. Each entry ends
 with what prevents a repeat, which is the part that makes it worth writing.
 
 **Don't create parallel planning docs.** In-flight work and next steps
-go in `HANDOFF.md` §3; anything longer-lived goes in `.agents/plans/`
+go in [`HANDOFF.md`](HANDOFF.md) §3; anything longer-lived goes in `.agents/plans/`
 as a named plan. A second "notes" or "TODO" file at the repo root is
 how context gets lost, not how it gets organized.
 
@@ -179,7 +179,7 @@ rewriting. Concretely:
 ## The two constraints that must never quietly slip, per language
 
 Both are covered in full in each language's own maintenance doc (today:
-[`docs/maintenance.md`](docs/maintenance.md)), but they're
+[`docs/maintenance/`](docs/maintenance/README.md)), but they're
 standing rules for every language this repo ever ships, not just
 documentation to consult on request:
 
@@ -262,12 +262,20 @@ each language's own `AGENTS.md` adds the syntax-specific detail on top:
   a one-paragraph "what this covers, why it exists" statement in `>`
   form, for the same immediate visual emphasis, before the first `##`
   section. Every doc in this repo already does this; match it.
+- **Every mention of another doc is a real inline link, never a bare
+  backtick-quoted filename** — a bare mention is invisible to every
+  link checker, so a rename or a move leaves it silently wrong forever.
+  Link the specific section when that's what's being cited, not just
+  the file, so a moved or renamed *section* is caught too. Full rule,
+  with the two narrow exceptions (a filename naming a pattern rather
+  than one file; a file that doesn't exist yet), in
+  [`docs/maintenance/doc-authoring/README.md`](docs/maintenance/doc-authoring/README.md#every-mention-of-another-doc-is-a-link-never-a-bare-filename).
 - **Testing**: short-circuit behavior is proven with a call-counter or
   mutable-list side effect, never just the final boolean; vacuous-truth
   cases (an empty rule list) and absence cases (an unknown rule name or
   group, which raise rather than pass vacuously) each get their own
   explicit test, never an assumption. See each language's own testing doc (today:
-  [`docs/testing.md`](docs/testing.md)) for the full
+  [`docs/testing/`](docs/testing/README.md)) for the full
   checklist, and
   [`python/examples/graduation_verdict/docs/testing.md`](python/examples/graduation_verdict/docs/testing.md)
   for the oracle/differential-testing pattern when validating a
@@ -278,7 +286,7 @@ each language's own `AGENTS.md` adds the syntax-specific detail on top:
 Every mermaid diagram in this repo (in any language's `docs/`, an
 `examples/*/docs/`, or anywhere else) follows the standards vendored at
 [`.claude/skills/mermaid-diagrams/SKILL.md`](.claude/skills/mermaid-diagrams/SKILL.md)
-(also vendored at `.agents/skills/mermaid-diagrams/SKILL.md` for
+(also vendored at [`.agents/skills/mermaid-diagrams/SKILL.md`](.agents/skills/mermaid-diagrams/SKILL.md) for
 harnesses that read that location instead) — color palette, node-shape
 vocabulary, arrow styling, emoji rules, link indexing, and the
 real-renderer validator script. Follow it directly rather than
@@ -292,12 +300,12 @@ Changing what the library does is the small half. The larger half is
 that other files now describe something untrue, and **nothing fails when
 they do** — the tests pass and CI stays green while the wrong answer
 sits there. Sweep outward from the code every time: source docstrings,
-`docs/architecture.md` **and its diagrams**, `docs/extension.md` (does
-this enable a recipe, or invalidate one?), `docs/testing.md` (it names
-specific tests by name), `docs/maintenance.md`, each language's
+[`docs/architecture/`](docs/architecture/README.md) **and its diagrams**, [`docs/extending/`](docs/extending/README.md) (does
+this enable a scenario, or invalidate one?), [`docs/testing/`](docs/testing/README.md) (it names
+specific tests by name), [`docs/maintenance/`](docs/maintenance/README.md), each language's
 quickstart and samples, the shared fixture if the change is behavioural,
 `skills/verdict/references/` with a `plugin.json` bump, that package's own
-`CHANGELOG.md`, and the `README.md`.
+`CHANGELOG.md`, and the [root `README.md`](README.md).
 
 A behavioural change usually also means the skill's evals no longer
 measure the current skill. If the change introduced a way to be *subtly*

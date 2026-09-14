@@ -5,13 +5,12 @@ Python-specific conventions for this directory. See the repo-root
 (portability, the two constraints, diagram authoring, doc conventions)
 — this file only adds what's specific to Python.
 
-
 ## Layout
 
 `python/` is a **uv workspace**, not a package. Distributions live under
 `packages/`, so adding a second is a new directory and nothing existing moves:
 
-```
+```text
 python/
   pyproject.toml            workspace root — declares members, is not a package
   AGENTS.md                 this file
@@ -36,8 +35,11 @@ member, so one `uv run pytest` covers both `packages/*/tests/` and `examples/`.
 `verdict` is a small, zero-dependency, async-native rule-evaluation
 engine for Python — see [`README.md`](packages/verdict-rules/README.md) for what it is and
 its "Where to go next" table for the full doc suite
-(`docs/quickstart.md`, `docs/architecture.md`, `docs/extension.md`,
-`docs/maintenance.md`, `docs/testing.md`, `docs/samples/`).
+([`docs/quickstart.md`](packages/verdict-rules/docs/quickstart.md),
+[`docs/architecture/`](../docs/architecture/README.md),
+[`docs/extending/`](../docs/extending/README.md),
+[`docs/maintenance/`](../docs/maintenance/README.md),
+[`docs/testing/`](../docs/testing/README.md), [`docs/samples/`](../docs/samples/README.md)).
 [`examples/`](examples/README.md) holds full, tested mini-projects
 behind the more comprehensive samples.
 
@@ -53,7 +55,7 @@ behind the more comprehensive samples.
   — the shape `RuleResult`/`RunResult` already use; match it for any
   new value type.
 
-The repo-root `AGENTS.md`'s cross-language conventions (no hardcoded
+The repo-root [`AGENTS.md`](../AGENTS.md)'s cross-language conventions (no hardcoded
 values, dispatch as a table not a ladder, no internal task references,
 blockquote doc framing, testing patterns) apply here unchanged — this
 file doesn't repeat them.

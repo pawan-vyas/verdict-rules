@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD041 (GitHub shows the PR title as the H1; a template starting with its own would duplicate it) -->
 ## Release
 
 <!-- Which language, and from what version to what. -->
@@ -17,8 +18,8 @@ matter are the ones that happen before this merges.
 - [ ] The version is genuinely new (no existing tag) — the release workflow
       checks this too, and does nothing if it finds one.
 - [ ] Semver: a breaking change takes `MINOR` pre-1.0. The one carve-out for
-      `PATCH` is in `docs/maintenance.md`, and its bar is "there is no way to
-      rely on it correctly", not "we think nobody does".
+      `PATCH` is in `docs/maintenance/releases/python.md`, and its bar is
+      "there is no way to rely on it correctly", not "we think nobody does".
 - [ ] If `skills/verdict/**` changed, `.claude-plugin/plugin.json` is bumped
       too — it versions independently and will release on its own tag.
 
@@ -36,4 +37,4 @@ these two are checked by hand:
       a release published with a stored token instead of OIDC succeeds and
       carries none.
 
-See `docs/maintenance.md` for both procedures in full.
+See `docs/maintenance/releases/` for both procedures in full.

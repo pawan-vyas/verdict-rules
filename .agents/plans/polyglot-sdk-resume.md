@@ -5,7 +5,7 @@
 > independent of which one. Trimmed down to exactly that: the
 > per-language detail this file used to carry now lives in each SDK's
 > own plan, and the process for getting there lives in
-> [`../../docs/adding-a-language.md`](../../docs/adding-a-language.md).
+> [`../../docs/maintenance/adding-a-language.md`](../../docs/maintenance/adding-a-language.md).
 > Kept for now rather than deleted, since the claim below is the thing
 > every port is judged against and it belongs somewhere durable.
 
@@ -43,7 +43,7 @@ which a port must pass before it is called `0.1.0`.
 
 | | |
 | :-- | :-- |
-| Process, stages and version milestones | [`../../docs/adding-a-language.md`](../../docs/adding-a-language.md) |
+| Process, stages and version milestones | [`../../docs/maintenance/adding-a-language.md`](../../docs/maintenance/adding-a-language.md) |
 | JavaScript/TypeScript | `js-sdk/PLAN.md` |
 | C# | `csharp-sdk/PLAN.md` |
 | Dart | `dart-sdk/PLAN.md` |
@@ -56,8 +56,10 @@ ships. Links would be broken here and correct nowhere.
 
 Read these fresh in each new language's own context rather than
 translating any summary of them:
-[`../../docs/architecture.md`](../../docs/architecture.md) for why
+[`../../docs/architecture/`](../../docs/architecture/README.md) for why
 evaluation is sequential, why `Rule` is structural, and why
 `RuleResult.data` stays opaque; and
-[`../../docs/extension.md`](../../docs/extension.md) for the extension
-recipes, especially Recipe 3's one-adapter-module boundary.
+[`../../docs/extending/`](../../docs/extending/README.md) for the
+extension scenarios, especially
+[`domain-adapter-module/`](../../docs/extending/domain-adapter-module/README.md)'s
+one-adapter-module boundary.

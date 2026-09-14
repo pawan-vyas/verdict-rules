@@ -4,7 +4,8 @@ These aren't just tests of this example's own logic — because this
 project exercises FunctionRule, AndRule, OrRule, a custom Rule shape,
 and all three RulesEngine run modes together, this suite functions as
 an integration/e2e regression net for `verdict` itself. See
-docs/maintenance.md for the full reasoning behind that claim.
+docs/testing/README.md's "second testing layer" section for the
+full reasoning behind that claim.
 """
 
 from __future__ import annotations
@@ -37,7 +38,10 @@ def _policy(subject_id: str):
 
 
 class TestRuleShapeDispatch:
-    """Each subject_type must produce the Rule shape docs/architecture.md claims."""
+    """Each subject_type must produce the Rule shape the sample spec claims.
+
+    See docs/samples/graduation-requirement-verdict/README.md.
+    """
 
     def test_academic_subject_is_a_plain_function_rule(self) -> None:
         rule = rule_for_subject(_policy("MATH101"))
@@ -95,7 +99,10 @@ class TestLanguageOrRule:
 
 
 class TestEngineRunModes:
-    """run_named/run_group/run_all each serve the specific job docs/architecture.md claims."""
+    """run_named/run_group/run_all each serve the specific job the sample spec claims.
+
+    See docs/samples/graduation-requirement-verdict/README.md.
+    """
 
     async def test_run_named_looks_up_one_subject(self) -> None:
         engine, _ = build_graduation_check(_POLICIES, _ELECTIVE_MINIMUM)

@@ -1,7 +1,7 @@
 <!-- Title: Adding A Variant Is A New File -->
 # Adding a variant is a new file, never an edit to a shared one
 
-> The repo-structure form of the dispatch rule `AGENTS.md` already states for
+> The repo-structure form of the dispatch rule [`AGENTS.md`](../../AGENTS.md) already states for
 > code. **If adding the Nth thing means editing a file the other N−1 share,
 > the structure is wrong.** Restructure so the Nth thing is a new file, a new
 > directory, or a new row — and nothing existing moves.
@@ -22,13 +22,22 @@ Each of these was a restructure done specifically to remove a shared edit:
 | One `test.yml` for all languages | `test-<lang>.yml`, path-filtered, one per language |
 | One release workflow | `release-<lang>.yml` calling a shared tail |
 | One PR template | `PULL_REQUEST_TEMPLATE/` with one file per kind of change |
-| `SKILL.md` listing every reference file | `references/<language>/`, routed to generically |
+| [`SKILL.md`](../../skills/verdict/SKILL.md) listing every reference file | `references/<language>/`, routed to generically |
 | Skill reference content restated per language | `MANIFEST.toml` rows, copied from the repo's own docs |
 | One repo-wide `CHANGELOG.md` | One beside each package's own manifest |
+| One `docs/maintenance.md` monolith | [`docs/maintenance/`](../../docs/maintenance/README.md), one file per concern |
+| One `docs/architecture.md` monolith | [`docs/architecture/`](../../docs/architecture/README.md) — shared `README.md` plus one concrete file per language |
+| A release procedure written per-target inline | [`docs/maintenance/releases/`](../../docs/maintenance/releases/README.md) — shared pipeline plus one file per target |
+| A sample's spec restated inside each language's own package tree | [`docs/samples/<scenario>/`](../../docs/samples/README.md) — spec plus one implementation file per language, in one directory |
+| One `docs/extension.md` monolith, seven Python-only "Recipes" | [`docs/extending/<scenario>/`](../../docs/extending/README.md) — spec plus one implementation file per language, one directory per scenario, "recipes" renamed to "scenarios" |
+| One `docs/testing.md` monolith, Python specifics bundled straight in | [`docs/testing/`](../../docs/testing/README.md) — shared contracts and checklist plus one concrete file per language |
 
-Six restructures, all the same shape. The pattern was operating long before it
+Twelve restructures, all the same shape. The pattern was operating long before it
 was written down, which is how the changelog stayed monolithic until two
-release tracks were already contending for it.
+release tracks were already contending for it — and the docs restructures were
+the same lesson applied to prose instead of code: a doc is bound by nothing a
+language's own tooling imposes, so it has even less excuse to stay monolithic
+than the workflows did.
 
 ## The test, before adding anything
 
@@ -39,13 +48,24 @@ not after the fourth.
 
 ## What this does not mean
 
-Not every shared file is wrong. `AGENTS.md`, the shared docs, and the reusable
+Not every shared file is wrong. [`AGENTS.md`](../../AGENTS.md), the shared docs, and the reusable
 release workflow are shared **because their content is genuinely common**, and
 duplicating them per language would create drift rather than remove conflict.
 
 The distinction is whether adding a variant **forces** an edit. A shared file
 that all variants *read* is fine. A shared file that each variant must *write
 to* is the problem.
+
+The root [`README.md`](../../README.md) is the one deliberate exception that
+still obeys the same rule at a finer grain: it repeats a worked example per
+language on purpose, because it is the landing page and has to explain the
+library "in one shot" without sending a first-time reader elsewhere. A landed
+language adds its own `### <Language>` subsection under **Quickstart** and
+**Development** — new subsections, appended, never an edit to an existing
+language's own — and a new row in **Where to go next**'s table. Same dispatch
+rule, applied at the sub-file level instead of across files, precisely because
+this one file is intentionally not split into a directory the way every other
+multi-language doc in this repo is.
 
 Related: [`features-land-in-every-language`](features-land-in-every-language.md),
 [`verdict-is-a-protocol-spec`](verdict-is-a-protocol-spec.md).

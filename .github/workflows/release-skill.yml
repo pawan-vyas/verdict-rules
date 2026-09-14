@@ -1,7 +1,7 @@
 # Releases the AI-agent skill when its version changes on main.
 #
 # The skill versions independently of every language SDK — it measures the
-# guidance under skills/verdict/, not any library's API. See docs/maintenance.md.
+# guidance under skills/verdict/, not any library's API. See docs/maintenance/releases/verdict-agent-skill.md.
 #
 # Same shape as release-python.yml: a version bump on main is the trigger, and
 # the release job only runs once everything before it has passed. There is no

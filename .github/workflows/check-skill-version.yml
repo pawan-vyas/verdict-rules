@@ -59,11 +59,11 @@ jobs:
           fi
 
           # Bundled-tier documents ship in every install regardless of which directory they
-          # physically live in — docs/architecture.md and docs/extension.md sit outside
-          # skills/verdict/ entirely, copied in at build time. Watching only skills/verdict/
-          # would miss an edit to either of them, so their source paths are read from the
-          # manifest itself rather than hardcoded here, where they would silently drift the
-          # next time a bundled document's source path changed.
+          # physically live in — docs/architecture/ sits outside skills/verdict/ entirely,
+          # copied in at build time. Watching only skills/verdict/ would miss an edit to it,
+          # so its source path is read from the manifest itself rather than hardcoded here,
+          # where it would silently drift the next time a bundled document's source path
+          # changed.
           mapfile -t bundled_sources < <(python3 scripts/skill_manifest.py bundled | cut -f1)
 
           # The path filters above can fire for a reason that does not need a bump (this workflow

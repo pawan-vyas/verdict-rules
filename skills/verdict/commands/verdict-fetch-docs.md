@@ -2,6 +2,8 @@
 description: Fetch verdict's deeper documentation at the version this project has installed, into the skill's own references directory.
 ---
 
+<!-- markdownlint-disable MD041 (a Claude Code command file's title is its own filename and description field; the body starts with the instruction, not a heading) -->
+
 Pull the documents the verdict skill does not bundle — the testing guide, the
 language quickstart, the worked samples, and the worked example — so they are
 available locally for the rest of this session and afterwards.

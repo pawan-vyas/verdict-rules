@@ -10,7 +10,7 @@
 
 `0.1.1` changed `run_group` to raise on an unknown group. The code and
 its tests were updated. Three skill reference files were updated. And
-`docs/testing.md` went on saying *"`RulesEngine.run_group()` on an
+[`docs/testing/`](../../docs/testing/README.md) went on saying *"`RulesEngine.run_group()` on an
 unknown group passes"* — the exact opposite — plus citing a test that
 had been renamed out of existence. It was found by an audit two versions
 later, not by anything automated.
@@ -24,27 +24,27 @@ Work outward from the code. Each ring describes the same thing at a
 different altitude, so a change that reaches one usually reaches all.
 
 1. **Source docstrings** — the API reference for most readers.
-2. **`docs/architecture.md`** — the design position, *and its diagrams*.
+2. **[`docs/architecture/`](../../docs/architecture/README.md)** — the design position, *and its diagrams*.
    A class diagram missing a new method is stale; a decision diagram
    that no longer covers the choices is worse, because it looks
    authoritative.
-3. **`docs/extension.md`** — does this enable a recipe that did not
-   exist, or invalidate one that did? A capability with no recipe is a
-   capability nobody finds.
-4. **`docs/testing.md`** — it names specific tests. Renaming a test
+3. **[`docs/extending/`](../../docs/extending/README.md)** — does this enable a scenario that did
+   not exist, or invalidate one that did? A capability with no scenario
+   is a capability nobody finds.
+4. **[`docs/testing/`](../../docs/testing/README.md)** — it names specific tests. Renaming a test
    breaks this doc silently.
-5. **`docs/maintenance.md`** — release procedure, versioning, where a
+5. **[`docs/maintenance/`](../../docs/maintenance/README.md)** — release procedure, versioning, where a
    change goes.
 6. **Language quickstarts and samples** — `<lang>/docs/`.
 7. **The shared fixture** — if the change is behavioural, does
-   `fixtures/graduation_verdict/` need to pin it? If it does and you
+   [`fixtures/graduation_verdict/`](../../fixtures/graduation_verdict/README.md) need to pin it? If it does and you
    skip it, every future port can get it wrong.
 8. **`skills/verdict/references/`** — an agent acting on a stale skill
    writes wrong code confidently. Bump `.claude-plugin/plugin.json` in
    the same commit or CI fails.
 9. **That package's own `CHANGELOG.md`**, beside its manifest — the entry
    is written with the version bump, never backfilled.
-10. **`README.md`** — usually untouched, but check: it makes claims too.
+10. **[`README.md`](../../README.md)** — usually untouched, but check: it makes claims too.
 
 ## Checks worth running, since none of this is automatic
 
@@ -70,8 +70,9 @@ boilerplate at every snippet makes an advanced doc unreadable — but
 everything *after* that implied preamble must still be correct as
 written.
 
-This is cheap to check and catches real errors: the samples in Recipe 6
-were run line by line against the real engine before `0.2.0` shipped,
+This is cheap to check and catches real errors: the samples in what is
+now the [`absence-vs-failure`](../../docs/extending/absence-vs-failure/README.md)
+scenario were run line by line against the real engine before `0.2.0` shipped,
 and the README's opening example was executed to confirm the `detail`
 string it prints is character-for-character what the library actually
 returns.

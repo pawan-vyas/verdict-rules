@@ -8,6 +8,22 @@ which keeps its own changelog beside its own manifest.
 
 Tagged `python-vX.Y.Z`.
 
+## [0.2.2] - 2026-09-14
+
+### Fixed
+
+- Four **"Where to go next"** links in this package's PyPI metadata pointed
+  at `docs/architecture.md`, `docs/extension.md`, `docs/maintenance.md`, and
+  the old numbered samples path — all moved or renamed by the `docs/`
+  restructuring that shipped alongside this release, none of it touching
+  this package's own code. They now point at `docs/architecture/`,
+  `docs/extending/`, `docs/maintenance/`, and `docs/samples/`.
+
+No code changed; the package itself is identical to `0.2.1`. It is a release
+rather than something left for the next one for the same reason `0.2.1`
+was: PyPI metadata is immutable per version, so a link can only be
+corrected by publishing a new one.
+
 ## [0.2.1] - 2026-09-12
 
 ### Fixed

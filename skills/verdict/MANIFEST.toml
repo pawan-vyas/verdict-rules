@@ -16,17 +16,27 @@
 # `references/` in the built skill). A trailing slash on both copies a
 # directory rather than a single file.
 #
+# Destination mirrors source for anything under docs/ — a doc there is
+# language-agnostic by construction (see each one's own blockquote), so it is
+# fetched to the exact same path under references/docs/, read by every
+# language's agent from the same place. No second entry is ever needed when a
+# new language ships; only that language's own `<language>.md` sibling files
+# do. A destination diverges from its source only when the source itself is
+# language-specific (it lives under a language's own top-level directory,
+# e.g. python/) and an alias makes for a shorter, tidier local path.
+#
 # Deliberately absent, and not by oversight:
-#   docs/maintenance.md, docs/adding-a-language.md, docs/future_plan.md
+#   docs/maintenance/, docs/future_plan.md
 #     -- maintainer documents. A consumer changing their own rules never
 #        needs them, and shipping them would spend an agent's context on
 #        this repo's internals rather than on the caller's problem.
 #   fixtures/graduation_verdict/
 #     -- the cross-language parity fixture. It exists to prove a new
 #        language port matches the reference, which is a contributor
-#        activity. docs/adding-a-language.md routes contributors there;
-#        SKILL.md mentions it for an agent that wants a worked example of
-#        testing rule-based logic, without spending routing surface on it.
+#        activity. docs/maintenance/adding-a-language.md and
+#        adding-a-fixture.md route contributors there; SKILL.md mentions
+#        it for an agent that wants a worked example of testing
+#        rule-based logic, without spending routing surface on it.
 #   python/examples/graduation_verdict/*.py and its data files
 #     -- example *code*. An agent reads the pattern from the example's own
 #        docs; shipping the project itself would put a pyproject.toml, and
@@ -34,32 +44,155 @@
 #        skill directory.
 
 [[bundled]]
-source = "docs/architecture.md"
-destination = "docs/architecture.md"
-
-[[bundled]]
-source = "docs/extension.md"
-destination = "docs/extension.md"
+source = "docs/architecture/"
+destination = "docs/architecture/"
 
 [[fetch]]
-source = "docs/testing.md"
-destination = "docs/testing.md"
+source = "docs/testing/README.md"
+destination = "docs/testing/README.md"
+
+[[fetch]]
+source = "docs/testing/python.md"
+destination = "docs/testing/python.md"
+
+[[fetch]]
+source = "docs/extending/README.md"
+destination = "docs/extending/README.md"
+
+# Each scenario fetches both halves (spec + Python implementation) into the
+# same relative shape they have in the repo, so the implementation doc's own
+# same-directory link to its spec (`README.md`) still resolves once fetched —
+# the same reasoning as the samples entries below. Only a scenario with no
+# per-language code worth showing at all would fetch just its spec; none do
+# today.
+[[fetch]]
+source = "docs/extending/wrapping-a-predicate/README.md"
+destination = "docs/extending/wrapping-a-predicate/README.md"
+
+[[fetch]]
+source = "docs/extending/wrapping-a-predicate/python.md"
+destination = "docs/extending/wrapping-a-predicate/python.md"
+
+[[fetch]]
+source = "docs/extending/new-rule-shape/README.md"
+destination = "docs/extending/new-rule-shape/README.md"
+
+[[fetch]]
+source = "docs/extending/new-rule-shape/python.md"
+destination = "docs/extending/new-rule-shape/python.md"
+
+[[fetch]]
+source = "docs/extending/domain-adapter-module/README.md"
+destination = "docs/extending/domain-adapter-module/README.md"
+
+[[fetch]]
+source = "docs/extending/domain-adapter-module/python.md"
+destination = "docs/extending/domain-adapter-module/python.md"
+
+[[fetch]]
+source = "docs/extending/data-driven-rule-construction/README.md"
+destination = "docs/extending/data-driven-rule-construction/README.md"
+
+[[fetch]]
+source = "docs/extending/data-driven-rule-construction/python.md"
+destination = "docs/extending/data-driven-rule-construction/python.md"
+
+[[fetch]]
+source = "docs/extending/nesting-composites/README.md"
+destination = "docs/extending/nesting-composites/README.md"
+
+[[fetch]]
+source = "docs/extending/nesting-composites/python.md"
+destination = "docs/extending/nesting-composites/python.md"
+
+[[fetch]]
+source = "docs/extending/absence-vs-failure/README.md"
+destination = "docs/extending/absence-vs-failure/README.md"
+
+[[fetch]]
+source = "docs/extending/absence-vs-failure/python.md"
+destination = "docs/extending/absence-vs-failure/python.md"
+
+[[fetch]]
+source = "docs/extending/isolating-flaky-predicates/README.md"
+destination = "docs/extending/isolating-flaky-predicates/README.md"
+
+[[fetch]]
+source = "docs/extending/isolating-flaky-predicates/python.md"
+destination = "docs/extending/isolating-flaky-predicates/python.md"
 
 [[fetch]]
 source = "python/packages/verdict-rules/docs/quickstart.md"
 destination = "python/quickstart.md"
 
 [[fetch]]
-source = "python/packages/verdict-rules/docs/samples/"
-destination = "python/samples/"
+source = "docs/samples/README.md"
+destination = "docs/samples/README.md"
+
+# Each sample fetches both halves (spec + Python implementation) into the
+# same relative shape they have in the repo, so the implementation doc's
+# own same-directory link to its spec (`README.md`) still resolves once
+# fetched — flattening the destination would silently point that link at
+# a sibling sample's spec instead.
+[[fetch]]
+source = "docs/samples/dynamic-discounts/README.md"
+destination = "docs/samples/dynamic-discounts/README.md"
+
+[[fetch]]
+source = "docs/samples/dynamic-discounts/python.md"
+destination = "docs/samples/dynamic-discounts/python.md"
+
+[[fetch]]
+source = "docs/samples/shipping-fee-waiver/README.md"
+destination = "docs/samples/shipping-fee-waiver/README.md"
+
+[[fetch]]
+source = "docs/samples/shipping-fee-waiver/python.md"
+destination = "docs/samples/shipping-fee-waiver/python.md"
+
+[[fetch]]
+source = "docs/samples/loyalty-tier-promotion/README.md"
+destination = "docs/samples/loyalty-tier-promotion/README.md"
+
+[[fetch]]
+source = "docs/samples/loyalty-tier-promotion/python.md"
+destination = "docs/samples/loyalty-tier-promotion/python.md"
+
+[[fetch]]
+source = "docs/samples/content-moderation-routing/README.md"
+destination = "docs/samples/content-moderation-routing/README.md"
+
+[[fetch]]
+source = "docs/samples/content-moderation-routing/python.md"
+destination = "docs/samples/content-moderation-routing/python.md"
+
+[[fetch]]
+source = "docs/samples/data-driven-rule-sets/README.md"
+destination = "docs/samples/data-driven-rule-sets/README.md"
+
+[[fetch]]
+source = "docs/samples/data-driven-rule-sets/python.md"
+destination = "docs/samples/data-driven-rule-sets/python.md"
+
+[[fetch]]
+source = "docs/samples/admin-eligibility-lookup/README.md"
+destination = "docs/samples/admin-eligibility-lookup/README.md"
+
+[[fetch]]
+source = "docs/samples/admin-eligibility-lookup/python.md"
+destination = "docs/samples/admin-eligibility-lookup/python.md"
+
+[[fetch]]
+source = "docs/samples/graduation-requirement-verdict/README.md"
+destination = "docs/samples/graduation-requirement-verdict/README.md"
+
+[[fetch]]
+source = "docs/samples/graduation-requirement-verdict/python.md"
+destination = "docs/samples/graduation-requirement-verdict/python.md"
 
 [[fetch]]
 source = "python/examples/graduation_verdict/README.md"
 destination = "python/example/README.md"
-
-[[fetch]]
-source = "python/examples/graduation_verdict/docs/architecture.md"
-destination = "python/example/architecture.md"
 
 [[fetch]]
 source = "python/examples/graduation_verdict/docs/testing.md"

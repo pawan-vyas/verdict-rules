@@ -27,7 +27,7 @@ belongs in it and what doesn't, and a row in the table above.
 ## What does not live here
 
 - **Standing rules** → [`AGENTS.md`](../AGENTS.md) at the repo root,
-  imported by `CLAUDE.md` and read natively by most other harnesses.
+  imported by [`CLAUDE.md`](../CLAUDE.md) and read natively by most other harnesses.
 - **Session state** → [`HANDOFF.md`](../HANDOFF.md), rewritten each
   session and carrying its own staleness marker.
 - **Published documentation** → [`docs/`](../docs/) and each

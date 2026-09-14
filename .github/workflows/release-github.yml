@@ -110,7 +110,7 @@ jobs:
       # that publishing succeeded. Only the deterministic checks live here — a
       # registry needs time to serve a new version, so "is it installable" and
       # "does it carry provenance" are a documented post-flight step in
-      # docs/maintenance.md instead of a flaky job.
+      # docs/maintenance/ instead of a flaky job.
       - name: Verify the release notes survived the shell
         env:
           GH_TOKEN: ${{ github.token }}

@@ -16,7 +16,7 @@ couldn't write themselves in a few lines?**
 <!-- Short-circuiting, vacuous-truth polarity, and an invariant on RuleResult.data
      are the three contracts verdict's own core has earned a place for. If your
      proposal doesn't have something in that shape, it's very likely a
-     docs/extension.md recipe instead. -->
+     docs/extending/ scenario instead. -->
 
 **Has this come up more than once, from more than one real use case?**
 <!-- A single hypothetical use isn't enough signal on its own -- see

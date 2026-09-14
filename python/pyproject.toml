@@ -7,7 +7,7 @@
 #
 # That matters more than it looks: the package root and the language directory
 # used to be the same path, which reads unambiguously only while there is
-# exactly one distribution. See docs/maintenance.md.
+# exactly one distribution. See ../docs/maintenance/packages-and-changelogs.md.
 #
 # This root exists now rather than later because examples/ lives outside any
 # package and still has to import one. `uv run pytest` here resolves the

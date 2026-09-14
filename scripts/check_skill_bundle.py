@@ -28,7 +28,7 @@ import skill_manifest  # noqa: E402 — needs sys.path set first
 
 LINK = re.compile(r"\]\(([^)#\s]+)")
 SKILL_REF = re.compile(r"references/[A-Za-z0-9_./-]+\.md")
-# A documented fetch command, e.g.  curl ... "${BASE}/docs/testing.md" ...
+# A documented fetch command, e.g.  curl ... "${BASE}/docs/testing/README.md" ...
 FETCH_URL = re.compile(r"\$\{BASE\}/([A-Za-z0-9_./-]+)")
 
 

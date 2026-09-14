@@ -1,7 +1,7 @@
 # Deploys site/index.html (the GitHub Pages hero page) via the Actions-based
 # Pages deployment model, not the classic branch-source model -- classic
 # branch source only supports "/" or "/docs" as the published path, and
-# "/docs" here is real narrative documentation (architecture.md, etc.), not
+# "/docs" here is real narrative documentation (architecture/, etc.), not
 # free for a Pages source. A workflow-built deployment can publish any
 # directory as its artifact instead.
 name: Deploy Pages

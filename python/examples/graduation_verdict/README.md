@@ -6,8 +6,9 @@
 > breadth of `verdict` at once: heterogeneous `Rule` shapes built from
 > external policy data, a custom `Rule` type, and all three
 > `RulesEngine` run modes serving three different real callers. See
-> [`docs/samples/7_graduation-requirement-verdict.md`](../../packages/verdict-rules/docs/samples/7_graduation-requirement-verdict.md)
-> for the original framing question this project answers.
+> [`docs/samples/graduation-requirement-verdict/`](../../../docs/samples/graduation-requirement-verdict/README.md)
+> for the original framing question this project answers, the design,
+> and what a solution must demonstrate.
 
 ## Run it
 
@@ -32,11 +33,12 @@ invocation is required day to day.
 
 ## Read more
 
-- [`docs/architecture.md`](docs/architecture.md) — the naive way this
-  policy is usually implemented, why it breaks down, and both diagrams
-  behind the design actually used here.
-- [`docs/maintenance.md`](docs/maintenance.md) — how to add a subject,
-  a student scenario, or a new subject type.
+- [`../../../docs/samples/graduation-requirement-verdict/`](../../../docs/samples/graduation-requirement-verdict/README.md) —
+  the naive way this policy is usually implemented, why it breaks down,
+  and both diagrams behind the design actually used here.
+- [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md) —
+  how to add a subject, a student scenario, or a new subject type, and
+  the shared cross-language fixture contract.
 - [`docs/testing.md`](docs/testing.md) — the two test suites and what
   each proves, including why this project's own tests also serve as an
   integration/e2e regression net for `verdict` itself.
@@ -44,7 +46,7 @@ invocation is required day to day.
 ## Files
 
 | File | What it is |
-|---|---|
+| --- | --- |
 | [`../../../fixtures/graduation_verdict/policies.json`](../../../fixtures/graduation_verdict/policies.json) | The curriculum — the elective-count threshold plus one row per subject, no code. **Shared across every language.** |
 | [`../../../fixtures/graduation_verdict/students.json`](../../../fixtures/graduation_verdict/students.json) | 8 varied students, each carrying its own expected outcome — including how many rules should run, which proves short-circuiting. **Shared.** |
 | [`../../../fixtures/graduation_verdict/edge_cases.json`](../../../fixtures/graduation_verdict/edge_cases.json) | Degenerate curricula proving vacuous-truth polarity. **Shared.** |

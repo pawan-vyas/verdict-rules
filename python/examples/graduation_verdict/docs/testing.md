@@ -3,14 +3,16 @@
 
 > How this project is tested, and why its two test files serve two
 > different purposes rather than being one bigger suite of the same
-> kind. See [`architecture.md`](architecture.md) for why it's built the
-> way it is, and [`maintenance.md`](maintenance.md) for how to extend
-> it.
+> kind. See
+> [`../../../../docs/samples/graduation-requirement-verdict/`](../../../../docs/samples/graduation-requirement-verdict/README.md)
+> for why it's built the way it is, and
+> [`../../../../fixtures/graduation_verdict/README.md`](../../../../fixtures/graduation_verdict/README.md)
+> for how to extend the curriculum.
 
 ## Two suites, two different jobs
 
 | File | Style | Proves |
-|---|---|---|
+| --- | --- | --- |
 | `test_graduation_verdict.py` | Curated scenarios | Each subject type builds the right `Rule` shape; `run_named`/`run_group`/`run_all` each behave as documented; all 8 hand-picked, hand-verified students get exactly the verdict their own `expected_passed` says. |
 | `test_chaos.py` | Differential/property-based | The real engine agrees with an independent oracle across 500 deterministically-generated, schema-valid random curricula and students — a much wider space than anyone would hand-curate. |
 
@@ -33,7 +35,7 @@ against real, varied data, it functions as an integration/e2e test for
   narrow, unit-level contracts in isolation — short-circuit behavior,
   vacuous-truth polarity — each against minimal fixtures built just to
   exercise that one contract. See verdict's own
-  [`testing.md`](../../../../docs/testing.md) for the full reasoning.
+  [`testing/`](../../../../docs/testing/README.md) for the full reasoning.
 - This project proves those same primitives compose correctly *together*,
   the way a real consumer's code actually uses them — heterogeneous
   rule shapes built from external data, `Rule` objects shared between
@@ -77,7 +79,7 @@ graph LR
 > project alongside `tests/` with no extra configuration) is the
 > concrete action — run it after any change to `src/verdict/`, not just
 > a change to this project. This is also cross-linked from verdict's
-> own [`maintenance.md`](../../../../docs/maintenance.md#consumer-impact-checklist-for-a-shape-change)
+> own [`maintenance.md`](../../../../docs/maintenance/before-merging-checklists.md#consumer-impact-checklist-for-a-shape-change)
 > consumer-impact checklist as one of the things to re-run, alongside
 > any external consumer's own suite.
 
@@ -88,8 +90,8 @@ scenarios come out right. `test_chaos.py` checks a much wider space,
 using a different technique than fixture matching: **differential
 testing** against `oracle.py`, a second, deliberately dumb,
 `verdict`-free re-implementation of the same decision (the "naive way"
-from [`architecture.md`](architecture.md), generalized to score *any*
-policy list). If the real engine and the oracle ever disagree on a
+from the [sample spec](../../../../docs/samples/graduation-requirement-verdict/README.md),
+generalized to score *any* policy list). If the real engine and the oracle ever disagree on a
 generated case, one of them is wrong — that disagreement is the signal,
 not a fixed expected value.
 
@@ -176,12 +178,15 @@ uv run pytest examples/graduation_verdict/
 
 ## Related
 
-- [`architecture.md`](architecture.md) — why it's built the way it is.
-- [`maintenance.md`](maintenance.md) — how to extend it.
+- [`../../../../docs/samples/graduation-requirement-verdict/`](../../../../docs/samples/graduation-requirement-verdict/README.md) —
+  the language-agnostic spec, why it's built the way it is.
+- [`../../../../fixtures/graduation_verdict/README.md`](../../../../fixtures/graduation_verdict/README.md) —
+  how to extend the curriculum, and the shared cross-language fixture
+  contract.
 - [`../README.md`](../README.md) — how to run the demo.
-- [`../../../../docs/maintenance.md`](../../../../docs/maintenance.md) —
+- [`../../../../docs/maintenance/`](../../../../docs/maintenance/README.md) —
   verdict's own maintenance guide, whose consumer-impact checklist
   points back here.
-- [`../../../../docs/testing.md`](../../../../docs/testing.md) — verdict's
+- [`../../../../docs/testing/`](../../../../docs/testing/README.md) — verdict's
   own testing guide, which this project complements rather than
   duplicates.

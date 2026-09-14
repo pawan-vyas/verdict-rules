@@ -7,7 +7,7 @@
 
 ## Layout
 
-```
+```text
 evals/
   <target>/
     NN-<name>.json     one eval

@@ -4,7 +4,69 @@ Release history for the verdict AI-agent skill. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 This versions **the guidance**, not any language's API, so it moves on its own
-cadence — see `docs/maintenance.md`. Tagged `skill-vX.Y.Z`.
+cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skill-vX.Y.Z`.
+
+## [0.5.0] - 2026-09-13
+
+- **`docs/architecture.md` (bundled) is now `docs/architecture/`, a
+  directory: `README.md` carries the shared, language-agnostic design;
+  each language gets its own concrete file alongside it (`python.md`
+  today). The manifest's bundled entry copies the whole directory, so a
+  future language's own file ships automatically with no manifest edit.
+  `SKILL.md`'s routing table points at the new path.
+- **Sample docs are now one directory per scenario**,
+  `docs/samples/<scenario>/README.md` (the language-agnostic spec) plus
+  `<language>.md` (that language's implementation) alongside it — no
+  numbering, no per-language samples directory scattered inside that
+  language's own package tree. All 7 scenarios now have a spec, read
+  once and implemented per language. The manifest's fetch tier was
+  rewritten to match: each scenario fetches its spec and Python
+  implementation as a pair, preserving the directory shape so the
+  implementation doc's own same-directory link to its spec still
+  resolves once fetched.
+- **`graduation_verdict`'s docs were untangled from being partly
+  Python-only.** Its language-agnostic design now lives at
+  `docs/samples/graduation-requirement-verdict/`, same as every other
+  scenario; its data contract stays at `fixtures/graduation_verdict/`,
+  now with the "how to extend the curriculum" guidance folded in. The
+  Python implementation's own code and operational testing doc stay in
+  `python/examples/graduation_verdict/`, unmoved — only the docs that
+  were duplicating the spec moved out. A new
+  `docs/maintenance/adding-a-fixture.md` documents this shape for a
+  future cross-language fixture, not shipped (maintainer document).
+- **`docs/maintenance.md` (never shipped) is now `docs/maintenance/`**,
+  split into one focused, keyword-named file per concern, plus a
+  `releases/` directory following the same shared-plus-per-target
+  pattern as the architecture split. Not bundled or fetched — this
+  entry exists because `extension.md`'s and `architecture/README.md`'s
+  own links into it changed shape.
+- **`docs/extension.md` (bundled) is now `docs/extending/`**, one
+  directory per extension scenario ("recipes" renamed to "scenarios"
+  throughout), each with a language-agnostic spec (`README.md`) and,
+  where one exists, a concrete per-language file (`python.md` today) —
+  the same shape as the samples split above. No longer bundled: seven
+  scenarios is too much to ship on every install, so the manifest's
+  single bundled entry became one fetch-tier pair per scenario,
+  preserving the directory shape the same way the samples entries do.
+  `SKILL.md`'s routing and its predicate-isolation example both point
+  at the new paths.
+- **Every `docs/extending/` and `docs/samples/` fetch entry's
+  destination now mirrors its source path**, landing at
+  `references/docs/extending/...` and `references/docs/samples/...`
+  instead of a `references/python/...` alias — these are
+  language-agnostic docs, the same status `docs/testing.md` already
+  had, so they get the same treatment: one destination, read by every
+  language's agent, with no second entry needed when a new language
+  ships. Only a destination whose *source* is itself language-specific
+  (the quickstart, the example project) still aliases to a shorter
+  `references/python/...` path.
+- **`docs/testing.md` is now `docs/testing/`**, the last doc still
+  bundling one language's specifics into an otherwise-shared file:
+  `README.md` carries the seven testing contracts and the checklist,
+  generically; `python.md` carries the current coverage snapshot, the
+  concrete file layout, and a table naming which test proves which
+  contract. The manifest's single fetch entry becomes a pair, both
+  destinations mirroring their source paths per the rule above.
 
 ## [0.4.0] - 2026-09-13
 
