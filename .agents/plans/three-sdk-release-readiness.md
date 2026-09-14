@@ -105,7 +105,7 @@ Same shape for csharp and dart; js gets the extra Stage-4 rows.
 - [x] Added to `scripts/check_shipped_links.py`
 - [x] Pushed; PR #7 (pre-existing draft) updated, all CI green
 
-### `plan/js-sdk` — [PR #3](https://github.com/pawan-vyas/verdict-rules/pull/3), Stage 2/3 done and CI green; Stage 4 not started
+### `plan/js-sdk` — [PR #3](https://github.com/pawan-vyas/verdict-rules/pull/3), Stage 2/3 and Stage 4 both done, CI green
 
 - [x] Rebase onto `main` — one real conflict in `.claude-plugin/plugin.json`
       (this branch's own skill-content version bump collided with an
@@ -128,15 +128,56 @@ Same shape for csharp and dart; js gets the extra Stage-4 rows.
       a stale link: it claimed `docs/extension.md` was "bundled
       already," which stopped being true when `docs/extending/` moved
       to fetch-tier this session. Fixed to state current reality
-- [ ] Refresh `skills/verdict-workspace/evals/js/*.json` against
-      current conventions — **not started**
-- [ ] Author `docs/architecture/js.md`, `docs/testing/js.md`, and a
-      `js.md` alongside each `docs/samples/<scenario>/` and
-      `docs/extending/<scenario>/` this SDK is ready to demonstrate —
-      **not started**
-- [ ] Root `README.md` gets a `### JavaScript/TypeScript` subsection —
-      **not started**
-- [ ] Run real evals against a fresh subagent — **not started**
+- [x] Reviewed `skills/verdict-workspace/evals/js/*.json` against
+      `evals/README.md`'s own documented pre-publish design — already
+      correct as written, no changes needed (the pinned `0.0.1` is
+      meant to match the package regardless of registry status; the
+      eval sandbox substitutes a local install, not the fixture)
+- [x] Authored `docs/architecture/js.md`, `docs/testing/js.md` (plus
+      two real test gaps found and fixed along the way: duplicate-name
+      resolution and predicate-exception propagation had no test
+      before this — 32/32 now, 100% coverage), all 7
+      `docs/extending/<scenario>/js.md`, and 6 of 7
+      `docs/samples/<scenario>/js.md` (`graduation-requirement-verdict`
+      deliberately deferred — its Python counterpart is a full separate
+      tested project proving the shared fixture, Stage 4's "Prove"
+      milestone in its own right, not a documentation task). Every code
+      sample run for real against the built package and typechecked,
+      not eyeballed
+- [x] Root `README.md` gets `### JavaScript/TypeScript` under both
+      **Quickstart** and **Development**, appended after Python's own
+- [x] Ran real evals against four genuinely fresh subagents (isolated
+      scratch projects, skill vendored via `scripts/install.sh`, a
+      local `file:`-equivalent install substituting for the
+      not-yet-published registry version) — graded by reading the
+      actual generated code against each eval's `expectations`, not by
+      trusting the subagent's own summary. Results:
+      - `discount-eligibility`: **real gap** — built only the
+        fast-path `AndRule`, never `runAll()`-style diagnostics; its
+        "explain to support" function reads `AndRule`'s own
+        short-circuited `.detail`, which only names the *first* of
+        possibly several failing conditions. Exactly the
+        fast-path-vs-diagnostic-path distinction `dynamic-discounts/js.md`
+        exists to teach
+      - `shipping-fee-waiver`: clean pass, all 6 expectations verified
+        against real code and a real 7/7 test run
+      - `data-driven-admin-rules`: mostly strong — genuinely
+        compile-time-exhaustive dispatch, correct vacuous-truth and
+        absence-vs-emptiness handling — but the "wide/systematic test
+        space" expectation (property-based or oracle/differential
+        testing) wasn't met; three hand-authored trees against ~9
+        hand-picked contexts is thorough hand-picked coverage, not the
+        broader technique the eval asks for
+      - `absence-versus-emptiness`: clean pass, arguably the strongest
+        of the four — correctly distinguished absence from emptiness
+        *and* pushed back on the literal request (collapsing a typo
+        into a plain "not eligible") in its own response text, not
+        just in code
+      - Net: 2 of 4 clean, 1 with a real design gap, 1 with a real
+        test-depth gap — consistent with this session's earlier
+        finding that agent-run variance on test/diagnostic thoroughness
+        is a recurring pattern, not something specific to this
+        language or this skill content
 - [x] Pushed; PR #3 (pre-existing draft) updated, all CI green
 
 ## Sequencing
