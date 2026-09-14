@@ -199,6 +199,67 @@ automatically — no further manual `npm publish` needed after this.
         language or this skill content
 - [x] Pushed; PR #3 (pre-existing draft) updated, all CI green
 
+## Round 2 — package README template, second rebase, npm bootstrap
+
+Triggered by the user reviewing the live JS/TS package README and
+flagging real leaks (cross-language comparisons, self-narration about
+the package's own maturity, internal maintainer-workflow detail) —
+none of it caught by markdownlint or the link checker, since both only
+check structure, never "does this sentence belong here."
+
+- [x] `verdict-rules` claimed on npm — `0.0.0` published by hand
+      (2026-09-14) to bootstrap Trusted Publishing, which cannot attach
+      to a name that has never been published. Required enabling
+      account TOTP 2FA first. Confirmed live.
+- [x] New template, `docs/maintenance/doc-authoring/package-readmes.md`
+      — the shared skeleton every package README follows, what's
+      genuinely package-manager/language specific, and the three leaks
+      to check for, stated as policy (not as a retelling of where they
+      were found — an earlier draft read as an incident report and was
+      reworded).
+- [x] All four package READMEs brought into that shape: JS/TS first
+      (where the leaks were originally found), then Python (gained a
+      `What it guarantees` section it was missing, released as
+      `python-v0.2.3` — merged, live on PyPI), then C# and Dart in this
+      round. C#'s title needed one extra word (`Verdict — C# SDK`, not
+      `Verdict — C#`) — markdownlint's MD020 reads a trailing `#` as a
+      stray closed-heading marker; recorded in the template. Also found
+      and fixed a real, unrelated bug while verifying C#'s own
+      `Development` section actually ran: `csharp/AGENTS.md`'s
+      documented command failed outright (no solution file; needs each
+      project path named explicitly).
+- [x] All three SDK branches rebased a second time onto the
+      now-further-ahead `main` (PR #46 already included; PR #48 —
+      the template + Python's fix — merged and pulled in). All three
+      clean rebases, no new conflicts. C# 26/26, Dart 28/28, JS/TS
+      32/32 — all still passing.
+- [x] JS/TS's own README re-read in full after the second rebase, per
+      the user's explicit ask — confirmed still fully compliant with
+      the template, nothing further needed.
+
+**npm Trusted Publisher setup — the exact fields, matched against
+`release-js.yml`'s own declarations:**
+
+| Field | Value |
+| --- | --- |
+| Publisher | GitHub Actions |
+| Organization or user | `pawan-vyas` |
+| Repository | `verdict-rules` |
+| Workflow filename | `release-js.yml` |
+| **Environment name** | **`npm`** — load-bearing: `release-js.yml`'s `publish-npm` job declares `environment: npm`; a mismatch here means the OIDC claim never matches and the trust silently never fires |
+| Allowed actions | **check "Allow `npm publish`"** — the workflow runs a direct publish, not `npm stage publish` (which is always-allowed by default and needs a separate manual approval step) |
+
+Also recommended: switch the package's own "Publishing access" setting
+to "Require two-factor authentication and disallow bypass 2FA tokens"
+now that CI goes through OIDC rather than a personal token — trusted
+publishers work under either option, so this only tightens what a
+*human* publish can do.
+
+Once that policy exists, merging PR #3 (which already carries the real
+`0.0.1` version bump) fires `release-js.yml` and publishes the actual
+first real version automatically — no further manual `npm publish`
+needed after this.
+
 ## Sequencing
 
 csharp and dart first (lighter, parity-only scope, can happen in
