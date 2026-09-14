@@ -14,5 +14,5 @@ work by adding a row, not by editing a central branch.
 GitHub uses the default automatically and only offers the others through the
 `?template=` query parameter, so **the default is deliberately the strictest**.
 A clerical change answering "n/a" to most of it loses nothing; a behaviour
-change that never saw the list is how `docs/testing.md` spent two versions
-describing behaviour that had been removed.
+change that never saw the list is how [`docs/testing/`](../../docs/testing/README.md)
+spent two versions describing behaviour that had been removed.

@@ -121,7 +121,7 @@ cannot mask it.
 
 If you are testing code that uses one of these, assert that too: the
 case worth covering is a *present, failing* group, not the absent one
-everybody thinks of first. See [`../../testing.md`](../../testing.md).
+everybody thinks of first. See [`../../testing/`](../../testing/README.md).
 
 ## What this demonstrates
 
@@ -137,7 +137,7 @@ everybody thinks of first. See [`../../testing.md`](../../testing.md).
 - [`../../architecture/`](../../architecture/README.md) — that
   language's own concrete method names behind the strict/lenient
   lookups.
-- [`../../testing.md`](../../testing.md) — why the present-and-failing
+- [`../../testing/`](../../testing/README.md) — why the present-and-failing
   case is the one worth a dedicated test.
 - [`../isolating-flaky-predicates/README.md`](../isolating-flaky-predicates/README.md) —
   the same "the library will not guess for you" reasoning, applied to a

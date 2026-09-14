@@ -20,7 +20,9 @@ docs/
     releases/              the release pipeline, shared and per-target
     doc-authoring/         the standard every doc in this repo follows
     ...
-  testing.md           what a change has to prove
+  testing/             what a change has to prove
+    README.md            shared testing contracts and checklist
+    <language>.md         each language's own concrete test names
   future_plan.md       exploratory, not-yet-decided feature candidates
   samples/             language-agnostic specs for the worked samples
 ```
@@ -37,7 +39,7 @@ docs/
    on this package.
 4. **From here, two audiences split**:
    - Changing `verdict` itself → [`maintenance/`](maintenance/README.md),
-     then [`testing.md`](testing.md) to prove the change.
+     then [`testing/`](testing/README.md) to prove the change.
    - Building something on top of it, without changing anything here →
      [`extending/`](extending/README.md), whose scenarios have full worked
      instances in [`samples/`](samples/README.md) and each language's

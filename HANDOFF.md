@@ -195,7 +195,7 @@ bash scripts/build.sh && ls dist/   # verdict-plugin.zip  verdict-tools.zip  ver
   consumers toward.
 - [`docs/maintenance/`](docs/maintenance/README.md) — the two never-slip constraints, the language
   release procedure, and the separate skill release procedure.
-  [`docs/testing.md`](docs/testing.md) — the testing checklist.
+  [`docs/testing/`](docs/testing/README.md) — the testing checklist.
 - [`docs/future_plan.md`](docs/future_plan.md) — exploratory candidates, explicitly not a roadmap.
 - [`python/examples/graduation_verdict/`](python/examples/graduation_verdict/) — the worked example,
   including the oracle/differential chaos suite worth re-deriving in any future language.

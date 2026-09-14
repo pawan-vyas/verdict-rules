@@ -28,7 +28,7 @@ by reading registry documentation, which is why that happens first here.
 The fourth — proving the engine actually behaves identically across
 languages — is handled by a shared fixture rather than by each language
 inventing its own evidence. See
-[`../testing.md`](../testing.md) and
+[`../testing/`](../testing/README.md) and
 [`../../fixtures/graduation_verdict/README.md`](../../fixtures/graduation_verdict/README.md).
 
 ## The stages
@@ -351,7 +351,7 @@ Any language claiming to be verdict has to clear it.
 
 - [`../architecture/`](../architecture/README.md) — the guarantees a port must
   preserve.
-- [`../testing.md`](../testing.md) — what a change has to prove.
+- [`../testing/`](../testing/README.md) — what a change has to prove.
 - [`README.md`](README.md) — release procedure, tagging, and the
   skill's separate version.
 - [`../extending/`](../extending/README.md) — the scenarios each

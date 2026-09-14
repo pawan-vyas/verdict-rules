@@ -125,6 +125,6 @@ for a fuller worked version of the same pattern.
   design reasoning.
 - [`../../docs/extending/`](../../../../docs/extending/README.md) — building on top
   of this package from your own code.
-- [`../../docs/testing.md`](../../../../docs/testing.md) — `uv sync && uv run
+- [`../../docs/testing/`](../../../../docs/testing/README.md) — `uv sync && uv run
   pytest`, and what a test here actually needs to prove.
 - [`../../../../docs/samples/`](../../../../docs/samples/README.md) — more worked examples.

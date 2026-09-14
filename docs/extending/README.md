@@ -67,7 +67,7 @@ something to guess at speculatively ahead of that demand.
   being a structural type is what makes all of the above free.
 - [`../maintenance/README.md`](../maintenance/README.md) — changing
   this package itself.
-- [`../testing.md`](../testing.md) — testing verdict itself, if a
+- [`../testing/`](../testing/README.md) — testing verdict itself, if a
   scenario here turns out to need a change on that side after all.
 - [`../samples/README.md`](../samples/README.md) — full worked
   examples using these scenarios end-to-end.

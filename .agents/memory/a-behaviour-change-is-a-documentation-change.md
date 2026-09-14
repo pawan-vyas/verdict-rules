@@ -10,7 +10,7 @@
 
 `0.1.1` changed `run_group` to raise on an unknown group. The code and
 its tests were updated. Three skill reference files were updated. And
-[`docs/testing.md`](../../docs/testing.md) went on saying *"`RulesEngine.run_group()` on an
+[`docs/testing/`](../../docs/testing/README.md) went on saying *"`RulesEngine.run_group()` on an
 unknown group passes"* — the exact opposite — plus citing a test that
 had been renamed out of existence. It was found by an audit two versions
 later, not by anything automated.
@@ -31,7 +31,7 @@ different altitude, so a change that reaches one usually reaches all.
 3. **[`docs/extending/`](../../docs/extending/README.md)** — does this enable a scenario that did
    not exist, or invalidate one that did? A capability with no scenario
    is a capability nobody finds.
-4. **[`docs/testing.md`](../../docs/testing.md)** — it names specific tests. Renaming a test
+4. **[`docs/testing/`](../../docs/testing/README.md)** — it names specific tests. Renaming a test
    breaks this doc silently.
 5. **[`docs/maintenance/`](../../docs/maintenance/README.md)** — release procedure, versioning, where a
    change goes.

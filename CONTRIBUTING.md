@@ -33,7 +33,7 @@ is as standalone as the package itself. Before opening a PR:
   delegation test, and if it's a composite: short-circuit behavior in
   both directions it can short-circuit on, plus its vacuous-input case
   (empty list, or whatever "nothing configured" means for that shape).
-  See [`docs/testing.md`'s "Checklist for a new contribution"](docs/testing.md#checklist-for-a-new-contribution) for the
+  See [`docs/testing/`'s "Checklist for a new contribution"](docs/testing/README.md#checklist-for-a-new-contribution) for the
   full table by change kind.
 - **A change to `RuleResult`/`RunResult`'s shape, or to `Rule`'s
   required attributes/signature**, is the one class of change that

@@ -23,7 +23,7 @@ enough for the sample above. Reach for property-based testing or an
 oracle/differential approach — an independent reference implementation
 checked against many randomly-generated configurations — rather than
 adding fixtures one at a time as bugs are found. Full guidance in
-[`../../testing.md`](../../testing.md).
+[`../../testing/`](../../testing/README.md).
 
 ## What this demonstrates
 
@@ -38,5 +38,5 @@ adding fixtures one at a time as bugs are found. Full guidance in
 
 - [`../../samples/data-driven-rule-sets/README.md`](../../samples/data-driven-rule-sets/README.md) —
   the full worked version of this scenario.
-- [`../../testing.md`](../../testing.md) — the property-based/oracle
+- [`../../testing/`](../../testing/README.md) — the property-based/oracle
   testing guidance this scenario's test coverage needs.

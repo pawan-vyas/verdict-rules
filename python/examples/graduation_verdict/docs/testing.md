@@ -35,7 +35,7 @@ against real, varied data, it functions as an integration/e2e test for
   narrow, unit-level contracts in isolation — short-circuit behavior,
   vacuous-truth polarity — each against minimal fixtures built just to
   exercise that one contract. See verdict's own
-  [`testing.md`](../../../../docs/testing.md) for the full reasoning.
+  [`testing/`](../../../../docs/testing/README.md) for the full reasoning.
 - This project proves those same primitives compose correctly *together*,
   the way a real consumer's code actually uses them — heterogeneous
   rule shapes built from external data, `Rule` objects shared between
@@ -187,6 +187,6 @@ uv run pytest examples/graduation_verdict/
 - [`../../../../docs/maintenance/`](../../../../docs/maintenance/README.md) —
   verdict's own maintenance guide, whose consumer-impact checklist
   points back here.
-- [`../../../../docs/testing.md`](../../../../docs/testing.md) — verdict's
+- [`../../../../docs/testing/`](../../../../docs/testing/README.md) — verdict's
   own testing guide, which this project complements rather than
   duplicates.

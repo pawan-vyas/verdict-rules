@@ -169,8 +169,7 @@ already owns, that doc is a directory-with-README, not a flat file.
   model, and the reasoning behind each design choice.
 - [`../extending/`](../extending/README.md) — building on top of this
   package from a consumer's own code, without changing anything here.
-- [`../testing.md`](../testing.md) — the full testing checklist and
-  current suite coverage.
+- [`../testing/`](../testing/README.md) — the full testing checklist.
 - [`../samples/`](../samples/README.md) —
   worked, domain-flavored examples of where a rule engine like this
   earns its keep.

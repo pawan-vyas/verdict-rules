@@ -134,7 +134,7 @@ graph LR
 | [`docs/architecture/`](docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
 | [`docs/extending/`](docs/extending/README.md) | Building on top of it from your own code, with no changes here |
 | [`docs/maintenance/`](docs/maintenance/README.md) | Changing this package itself |
-| [`docs/testing.md`](docs/testing.md) | How the test suite is organized, and what a change needs to prove |
+| [`docs/testing/`](docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
 | [`docs/future_plan.md`](docs/future_plan.md) | Exploratory feature candidates, and the test used to evaluate one |
 | [`docs/samples/`](docs/samples/README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
 | [`python/examples/`](python/examples/README.md) | Full, tested mini-projects behind the more comprehensive samples — real code, real tests, real docs |

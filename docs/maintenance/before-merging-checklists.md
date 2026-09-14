@@ -49,7 +49,7 @@ not less.
 A new `Rule` shape added under
 [`README.md`](README.md)'s "Where to make a change" table needs a
 short-circuit-and-vacuous-case test (if it's a composite) or a plain
-delegation test (if it isn't) — see [`../testing.md`](../testing.md) for the
-full checklist by change type, the current suite's coverage, and why
+delegation test (if it isn't) — see [`../testing/`](../testing/README.md) for the
+full checklist by change type, and why
 line coverage alone doesn't prove the contracts that actually matter
 here (short-circuiting, vacuous truth).

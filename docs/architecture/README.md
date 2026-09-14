@@ -286,8 +286,8 @@ than probing one name.
 
 Short-circuiting (both directions) and every vacuous-truth edge case
 above are the specific things worth proving, not just executing — see
-[`../testing.md`](../testing.md) for the full reasoning, the current
-coverage, and what a new contribution's own tests need to add.
+[`../testing/`](../testing/README.md) for the full reasoning and what a
+new contribution's own tests need to add.
 
 ## Related docs
 
@@ -300,8 +300,8 @@ coverage, and what a new contribution's own tests need to add.
   package from a consumer's own code, with no changes here: wrapping a
   predicate, a new composite shape, the one-adapter-module pattern, and
   nesting.
-- [`../testing.md`](../testing.md) — how this package's own test suite
-  is organized, what a change needs to prove, and current coverage.
+- [`../testing/`](../testing/README.md) — how this package's own test
+  suite is organized and what a change needs to prove.
 - [`../samples/`](../samples/README.md) —
   worked, domain-flavored examples of where a rule engine like this
   earns its keep, including the data-driven pattern this package is

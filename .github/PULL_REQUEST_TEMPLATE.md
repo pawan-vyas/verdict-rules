@@ -34,8 +34,8 @@ is wrong, so this is the part that has to be deliberate.
 - [ ] `docs/architecture/`, **including its diagrams** — a diagram showing
       the old shape is more misleading than stale prose.
 - [ ] [`docs/extending/`](../docs/extending/README.md) — does this enable a scenario, or invalidate one?
-- [ ] `docs/testing.md` — it names specific tests; renaming one breaks it
-      silently.
+- [ ] [`docs/testing/`](../docs/testing/README.md) — it names specific
+      tests; renaming one breaks it silently.
 - [ ] `docs/maintenance/`, language quickstarts, samples, `README.md`.
 - [ ] `skills/verdict/references/` updated, with `.claude-plugin/plugin.json`
       bumped in the same commit (CI enforces this).

@@ -130,5 +130,5 @@ raising, and `None` always means *absent*, never *vacuously passed*.
   itself.
 - [`../extending/`](../extending/README.md) — building on top of this
   package from a consumer's own code, with no changes here.
-- [`../testing.md`](../testing.md) — how this package's own test suite
-  is organized, what a change needs to prove, and current coverage.
+- [`../testing/python.md`](../testing/python.md) — how this package's
+  own test suite is organized, and current coverage.

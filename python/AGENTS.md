@@ -39,7 +39,7 @@ its "Where to go next" table for the full doc suite
 [`docs/architecture/`](../docs/architecture/README.md),
 [`docs/extending/`](../docs/extending/README.md),
 [`docs/maintenance/`](../docs/maintenance/README.md),
-[`docs/testing.md`](../docs/testing.md), [`docs/samples/`](../docs/samples/README.md)).
+[`docs/testing/`](../docs/testing/README.md), [`docs/samples/`](../docs/samples/README.md)).
 [`examples/`](examples/README.md) holds full, tested mini-projects
 behind the more comprehensive samples.
 

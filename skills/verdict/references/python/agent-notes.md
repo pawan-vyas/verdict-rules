@@ -64,8 +64,10 @@ engine.rule_names, engine.group_names     # tuples of what exists
 
 ## Testing what matters
 
-[`references/docs/testing.md`](../../../../docs/testing.md) (fetch it) is the full checklist. The parts
-that are easy to skip:
+[`references/docs/testing/`](../../../../docs/testing/README.md) (fetch it) is the full checklist,
+with [`references/docs/testing/python.md`](../../../../docs/testing/python.md)
+naming which test proves which contract. The parts that are easy to
+skip:
 
 - Prove short-circuiting with a **call log**, not the final boolean. A
   composite that evaluates everything still returns the right answer.
@@ -85,7 +87,7 @@ VERSION=$(python -c "import importlib.metadata as m; print(m.version('verdict-ru
 TAG="python-v${VERSION}"
 BASE="https://raw.githubusercontent.com/pawan-vyas/verdict-rules/${TAG}"
 
-curl -fsSL "${BASE}/docs/testing.md" -o references/docs/testing.md
+curl -fsSL "${BASE}/docs/testing/README.md" -o references/docs/testing/README.md
 curl -fsSL "${BASE}/python/packages/verdict-rules/docs/quickstart.md" \
      -o references/python/quickstart.md
 ```

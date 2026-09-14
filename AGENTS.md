@@ -275,7 +275,7 @@ each language's own `AGENTS.md` adds the syntax-specific detail on top:
   cases (an empty rule list) and absence cases (an unknown rule name or
   group, which raise rather than pass vacuously) each get their own
   explicit test, never an assumption. See each language's own testing doc (today:
-  [`docs/testing.md`](docs/testing.md)) for the full
+  [`docs/testing/`](docs/testing/README.md)) for the full
   checklist, and
   [`python/examples/graduation_verdict/docs/testing.md`](python/examples/graduation_verdict/docs/testing.md)
   for the oracle/differential-testing pattern when validating a
@@ -301,7 +301,7 @@ that other files now describe something untrue, and **nothing fails when
 they do** — the tests pass and CI stays green while the wrong answer
 sits there. Sweep outward from the code every time: source docstrings,
 [`docs/architecture/`](docs/architecture/README.md) **and its diagrams**, [`docs/extending/`](docs/extending/README.md) (does
-this enable a scenario, or invalidate one?), [`docs/testing.md`](docs/testing.md) (it names
+this enable a scenario, or invalidate one?), [`docs/testing/`](docs/testing/README.md) (it names
 specific tests by name), [`docs/maintenance/`](docs/maintenance/README.md), each language's
 quickstart and samples, the shared fixture if the change is behavioural,
 `skills/verdict/references/` with a `plugin.json` bump, that package's own
