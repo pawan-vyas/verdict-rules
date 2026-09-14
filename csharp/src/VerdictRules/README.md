@@ -1,15 +1,16 @@
-# VerdictRules
+# Verdict — C# SDK
 
-> A small, zero-dependency, async-native rule-evaluation engine for .NET.
-> Compose independently-changing conditions into one explainable pass/fail
-> verdict.
-
-The C# SDK of [verdict](https://github.com/pawan-vyas/verdict-rules), which
-exists in more than one language with identical execution-model guarantees.
-
-**This is `0.0.1` — correct, but minimal.** The type set and its guarantees are
-complete and tested. The worked example, the shared cross-language fixture, and
-the full documentation set arrive before `0.1.0`.
+> The C# implementation of Verdict — a small, zero-dependency,
+> async-native rule-evaluation engine. See the [top-level
+> `README.md`](https://github.com/pawan-vyas/verdict-rules#readme) for
+> what Verdict is and why it's shaped this way in narrative form; this
+> doc is just "how do I install it and write my first rule" for C#
+> specifically.
+>
+> This exact file is also what NuGet renders as the package description
+> — none of its sibling files travel with a `dotnet add package`, which
+> is why every link below is an absolute GitHub URL rather than a
+> relative path; on GitHub itself they work exactly the same way.
 
 ## Install
 
@@ -108,13 +109,12 @@ case comes up.
 
 What C# lacks is structural typing for a *multi-member* interface. An object
 that happens to carry `Name`, `Group` and `EvaluateAsync` is not thereby an
-`IRule` — a rule shape owning its own name and group must declare `: IRule`.
-Python's `Protocol` and TypeScript's structural interfaces accept such an
-object as-is.
+`IRule` — a rule shape owning its own name and group must declare `: IRule`
+explicitly.
 
-That narrow difference is why `FunctionRule` carries more weight in this SDK:
-it is the escape hatch back to shape-based rules, and most rules should use it
-rather than declaring a type.
+That's why `FunctionRule` carries more weight in this SDK: it is the escape
+hatch back to shape-based rules, and most rules should use it rather than
+declaring a type.
 
 ## Debugging
 
@@ -127,6 +127,20 @@ without expanding every level by hand.
 SourceLink is enabled and symbols ship as a `.snupkg`, so stepping into the
 package lands on real source rather than a decompiler.
 
-## Licence
+## Where to go next
 
-MIT.
+| Doc | For |
+| --- | --- |
+| [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.0.1/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
+| [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.0.1/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
+| [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.0.1/docs/maintenance/README.md) | Changing this package itself |
+| [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.0.1/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
+| [`docs/samples/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.0.1/docs/samples/README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
+
+## Development
+
+```bash
+cd csharp
+dotnet build src/VerdictRules/VerdictRules.csproj -warnaserror
+dotnet test tests/VerdictRules.Tests/VerdictRules.Tests.csproj
+```

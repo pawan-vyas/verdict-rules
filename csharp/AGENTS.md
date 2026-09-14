@@ -135,8 +135,14 @@ no clear correctness gain.
 ## Before calling a change done
 
 ```bash
-cd csharp && dotnet build -warnaserror && dotnet test
+cd csharp
+dotnet build src/VerdictRules/VerdictRules.csproj -warnaserror
+dotnet test tests/VerdictRules.Tests/VerdictRules.Tests.csproj
 ```
+
+There is no solution file, so a bare `dotnet build`/`dotnet test` from
+`csharp/` fails with "Specify a project or solution file" — always name
+the project explicitly.
 
 For a release, also `dotnet pack -c Release` and confirm both a `.nupkg` and a
 `.snupkg` are produced.
