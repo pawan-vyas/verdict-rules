@@ -48,6 +48,33 @@ verdict.passed   # False
 verdict.detail   # "'in_good_standing' failed"
 ```
 
+### JavaScript/TypeScript
+
+```bash
+npm install verdict-rules
+```
+
+```ts
+import { AndRule, FunctionRule } from "verdict-rules";
+
+async function underLimit(ctx) {
+  return { ruleName: "under_limit", passed: ctx.used < ctx.quota };
+}
+
+async function inGoodStanding(ctx) {
+  return { ruleName: "in_good_standing", passed: ctx.strikes === 0 };
+}
+
+const allowed = new AndRule("allowed", [
+  new FunctionRule("under_limit", underLimit),
+  new FunctionRule("in_good_standing", inGoodStanding),
+]);
+
+const verdict = await allowed.evaluate({ used: 3, quota: 10, strikes: 1 });
+verdict.passed;   // false
+verdict.detail;   // "'in_good_standing' failed"
+```
+
 That is the whole library in one screen. What it buys you is not the
 composition — you could write that yourself in an afternoon — but the
 guarantee underneath it:
@@ -145,6 +172,15 @@ graph LR
 cd python/
 uv sync
 uv run pytest
+```
+
+### JavaScript/TypeScript
+
+```bash
+cd js/
+npm install
+npm run build   # tests import from dist/, not src/
+npm test
 ```
 
 ## Contributing
