@@ -7,10 +7,6 @@
 The JS/TS SDK of [verdict](https://github.com/pawan-vyas/verdict-rules), which
 exists in more than one language with identical execution-model guarantees.
 
-**This is `0.0.1` — correct, but minimal.** The type set and its guarantees are
-complete and tested. The worked example, the shared cross-language fixture, and
-the full documentation set arrive before `0.1.0`.
-
 ## Install
 
 ```sh
@@ -54,10 +50,6 @@ const overEighteen = {
 
 await new AndRule("eligible", [overEighteen]).evaluate({ age: 21 });
 ```
-
-This matches Python's `Protocol` exactly. The Dart and C# SDKs have nominal
-typing and require an explicit `implements`, so the extension story genuinely
-differs between them rather than only the syntax.
 
 Most rules need no object literal either: `FunctionRule` wraps a plain async
 predicate.
@@ -132,10 +124,9 @@ try {
 }
 ```
 
-Python raises `KeyError` here, C# `KeyNotFoundException`, Dart `ArgumentError`.
-JavaScript has no built-in equivalent, and a bare `Error` would leave callers
-matching on message text — which breaks the moment a message is reworded. So
-the package exports its own.
+JavaScript has no built-in equivalent to a typed lookup-miss error, and a bare
+`Error` would leave callers matching on message text — which breaks the moment
+a message is reworded. So the package exports its own.
 
 Reaching for it in a `catch` usually means the check belongs earlier —
 `tryRunNamed` and `tryRunGroup` ask in a single call, returning `undefined`
