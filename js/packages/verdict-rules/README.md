@@ -83,18 +83,8 @@ Neither half of that is optional, and both failures are silent:
   trust boundary. The hash makes a compromised CDN able to break the page but
   never to inject into it.
 
-The exact tag for any version is generated, not written by hand:
-
-```sh
-npm run sri            # ready-to-paste tags for every CDN
-npm run sri:verify     # assert each CDN serves exactly the published bytes
-```
-
-It is also checked: `npm test` fails if any `<script>` tag in this
-documentation is unpinned or missing its hash.
-
-Or as a module, with no bundler — no SRI, because these transform on the fly
-and so have no stable bytes to hash:
+Or as a module, with no bundler — no `integrity` here, since these transform
+on the fly and so have no stable bytes to hash:
 
 ```html
 <script type="module">
@@ -105,10 +95,7 @@ and so have no stable bytes to hash:
 `require("verdict-rules")` works too. The global build targets ES2019, so it
 runs in browsers that never learned private class fields.
 
-Nothing is published to a CDN separately: unpkg, jsDelivr and esm.sh all mirror
-npm automatically, so every one of them serves this package the moment it is on
-npm. The same integrity hash is valid on all of them, because they all serve the
-tarball's bytes unchanged.
+Also available via unpkg and esm.sh — same package, same integrity hash.
 
 ## Unknown lookups throw a typed error
 
