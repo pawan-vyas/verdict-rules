@@ -15,6 +15,7 @@
 | [`extending.md`](extending.md) | Extension-scenario spec/implementation docs under `docs/extending/` |
 | [`architecture.md`](architecture.md) | The shared design doc plus one concrete file per language under `docs/architecture/` |
 | [`testing.md`](testing.md) | The shared testing guide plus one concrete file per language under `docs/testing/` |
+| [`package-readmes.md`](package-readmes.md) | Each package's own `README.md` — the file its registry renders as the package description |
 | [`maintenance.md`](maintenance.md) | This `maintenance/` directory's own file-naming and structure conventions |
 
 ## No narration about the document itself

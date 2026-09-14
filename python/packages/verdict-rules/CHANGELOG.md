@@ -8,6 +8,21 @@ which keeps its own changelog beside its own manifest.
 
 Tagged `python-vX.Y.Z`.
 
+## [0.2.3] - 2026-09-14
+
+### Changed
+
+- **The PyPI landing page's structure now matches the new, shared
+  package-README template** (`docs/maintenance/doc-authoring/package-readmes.md`):
+  gains a **"What it guarantees"** section (short-circuiting, vacuous
+  truth's polarity, emptiness-vs-absence, opaque `RuleResult.data`,
+  zero runtime dependencies) — the one section a skimming reader most
+  needed and this page didn't have. Title, blockquote, "Where to go
+  next", and "Development" were already the template's own shape;
+  written first here, then applied to JS/TS's own README to match.
+
+No code changed; the package itself is identical to `0.2.2`.
+
 ## [0.2.2] - 2026-09-14
 
 ### Fixed
