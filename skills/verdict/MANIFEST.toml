@@ -78,12 +78,20 @@ source = "docs/extending/wrapping-a-predicate/python.md"
 destination = "docs/extending/wrapping-a-predicate/python.md"
 
 [[fetch]]
+source = "docs/extending/wrapping-a-predicate/js.md"
+destination = "docs/extending/wrapping-a-predicate/js.md"
+
+[[fetch]]
 source = "docs/extending/new-rule-shape/README.md"
 destination = "docs/extending/new-rule-shape/README.md"
 
 [[fetch]]
 source = "docs/extending/new-rule-shape/python.md"
 destination = "docs/extending/new-rule-shape/python.md"
+
+[[fetch]]
+source = "docs/extending/new-rule-shape/js.md"
+destination = "docs/extending/new-rule-shape/js.md"
 
 [[fetch]]
 source = "docs/extending/domain-adapter-module/README.md"
@@ -94,12 +102,20 @@ source = "docs/extending/domain-adapter-module/python.md"
 destination = "docs/extending/domain-adapter-module/python.md"
 
 [[fetch]]
+source = "docs/extending/domain-adapter-module/js.md"
+destination = "docs/extending/domain-adapter-module/js.md"
+
+[[fetch]]
 source = "docs/extending/data-driven-rule-construction/README.md"
 destination = "docs/extending/data-driven-rule-construction/README.md"
 
 [[fetch]]
 source = "docs/extending/data-driven-rule-construction/python.md"
 destination = "docs/extending/data-driven-rule-construction/python.md"
+
+[[fetch]]
+source = "docs/extending/data-driven-rule-construction/js.md"
+destination = "docs/extending/data-driven-rule-construction/js.md"
 
 [[fetch]]
 source = "docs/extending/nesting-composites/README.md"
@@ -110,6 +126,10 @@ source = "docs/extending/nesting-composites/python.md"
 destination = "docs/extending/nesting-composites/python.md"
 
 [[fetch]]
+source = "docs/extending/nesting-composites/js.md"
+destination = "docs/extending/nesting-composites/js.md"
+
+[[fetch]]
 source = "docs/extending/absence-vs-failure/README.md"
 destination = "docs/extending/absence-vs-failure/README.md"
 
@@ -118,12 +138,20 @@ source = "docs/extending/absence-vs-failure/python.md"
 destination = "docs/extending/absence-vs-failure/python.md"
 
 [[fetch]]
+source = "docs/extending/absence-vs-failure/js.md"
+destination = "docs/extending/absence-vs-failure/js.md"
+
+[[fetch]]
 source = "docs/extending/isolating-flaky-predicates/README.md"
 destination = "docs/extending/isolating-flaky-predicates/README.md"
 
 [[fetch]]
 source = "docs/extending/isolating-flaky-predicates/python.md"
 destination = "docs/extending/isolating-flaky-predicates/python.md"
+
+[[fetch]]
+source = "docs/extending/isolating-flaky-predicates/js.md"
+destination = "docs/extending/isolating-flaky-predicates/js.md"
 
 [[fetch]]
 source = "python/packages/verdict-rules/docs/quickstart.md"
