@@ -5,11 +5,9 @@
 > target is shipping — job ordering, when each check runs, and why
 > nothing is tagged or published by hand. A given target's own concrete
 > steps (which file to bump, which workflow notices it) live in that
-> target's own sibling file in this directory — today
-> [`verdict-agent-skill.md`](verdict-agent-skill.md) and
-> [`python.md`](python.md). A new language
-> adds its own `<language>.md` here; nothing in this file changes for it
-> to do so.
+> target's own sibling file in this directory. A new language adds its
+> own `<language>.md` here; nothing in this file changes for it to do
+> so.
 
 ## Nothing is tagged or published by hand
 

@@ -1,10 +1,10 @@
 """Graduation requirement verdict — the flagship verdict example, as real code.
 
-See docs/architecture.md (in this same directory) for the full design —
-the naive-way contrast, both diagrams, and the reasoning behind every
-choice below. See docs/maintenance.md for how to extend this project
-and why its own test suite doubles as a regression net for `verdict`
-itself.
+See docs/samples/graduation-requirement-verdict/README.md for the full
+design — the naive-way contrast, both diagrams, and the reasoning
+behind every choice below. See fixtures/graduation_verdict/README.md
+for how to extend this project, and docs/testing/README.md for why its
+own test suite doubles as a regression net for `verdict` itself.
 
 Nothing here is illustrative pseudocode: every function is imported and
 exercised by test_graduation_verdict.py, and the __main__ block at the
@@ -218,7 +218,9 @@ def build_graduation_check(
         A `(engine, graduates)` pair built from the *same* underlying
         `Rule` objects — `engine` serves `run_named`/`run_group`/
         `run_all` lookups, `graduates` is the fast, short-circuiting
-        pass/fail composite. See docs/architecture.md's second diagram.
+        pass/fail composite. See
+        docs/samples/graduation-requirement-verdict/README.md's second
+        diagram.
     """
     subject_rules = [rule_for_subject(p) for p in policies]
     engine = RulesEngine(subject_rules)

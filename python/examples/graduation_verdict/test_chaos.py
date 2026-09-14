@@ -18,7 +18,7 @@ the exact same case. "The chaos suite didn't cause any breakdown" is
 therefore a real, re-checkable claim across runs, not a one-off observation
 about whatever numbers came up this time.
 
-See docs/maintenance.md for the full design reasoning.
+See docs/testing/README.md for the full design reasoning.
 """
 
 from __future__ import annotations

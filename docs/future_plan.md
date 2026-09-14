@@ -168,8 +168,8 @@ neither is urgent enough to build without a specific trigger:
   `group_names`, or simple iteration) — `_by_name`/`_by_group` already
   hold exactly this data privately; nothing needs to be computed, only
   exposed. The recurring gap this would close showed up organically
-  while writing [`samples/content-moderation-routing/`](samples/content-moderation-routing/python.md)
-  and [`samples/data-driven-rule-sets/`](samples/data-driven-rule-sets/python.md)'s
+  while writing [`samples/content-moderation-routing/`](samples/content-moderation-routing/README.md)
+  and [`samples/data-driven-rule-sets/`](samples/data-driven-rule-sets/README.md)'s
   own "naive way" sections: an admin/audit screen that wants to list
   "every currently-active rule" has no way to ask an engine that today
   short of reaching into its private attributes. Real subtlety is mild
@@ -178,8 +178,8 @@ neither is urgent enough to build without a specific trigger:
 - **A shared, tested helper for walking a `RuleResult`/`RunResult` tree**
   into a plain, JSON-able structure — every sample in this doc set that
   needs a "why did/didn't this pass" breakdown
-  ([`samples/dynamic-discounts/`](samples/dynamic-discounts/python.md),
-  [`samples/loyalty-tier-promotion/`](samples/loyalty-tier-promotion/python.md))
+  ([`samples/dynamic-discounts/`](samples/dynamic-discounts/README.md),
+  [`samples/loyalty-tier-promotion/`](samples/loyalty-tier-promotion/README.md))
   manually destructures `result.results[0].data`, and the
   rate-limiting adapter mentioned above does the identical thing in
   production (`[r.data for r in combined.data]`). The real subtlety:

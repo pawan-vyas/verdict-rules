@@ -7,9 +7,9 @@
 > across every release target; see
 > [`README.md`](README.md).
 
-`.claude-plugin/plugin.json`'s `version` is **not** part of
-[`python.md`](python.md)'s procedure and is not meant to
-match `python/pyproject.toml`. It measures the *skill* under
+`.claude-plugin/plugin.json`'s `version` is **not** part of any
+language's own release procedure and is not meant to match that
+language's own manifest version. It measures the *skill* under
 `skills/verdict/`, and it exists for one consumer: Claude Code's
 marketplace, which compares it against a user's vendored copy to decide
 whether that copy is stale. No other harness reads it —

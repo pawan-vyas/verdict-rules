@@ -1,10 +1,11 @@
 """A second, independent, verdict-free implementation of the graduation decision.
 
-This is deliberately the "naive way" from docs/architecture.md, generalized
+This is deliberately the "naive way" from
+docs/samples/graduation-requirement-verdict/README.md, generalized
 to score *any* policy list rather than the fixed 7-subject curriculum — its
 entire job is to be obviously correct by inspection, so it can serve as
 ground truth for test_chaos.py's differential testing. See that file's own
-docstring and docs/maintenance.md for the full reasoning: two independently
+docstring and docs/testing/README.md for the full reasoning: two independently
 written implementations (this plain loop, and the verdict-based engine in
 graduation_verdict.py) must agree on every input, or one of them is wrong.
 

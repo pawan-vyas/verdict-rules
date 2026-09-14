@@ -74,7 +74,7 @@ repository ships, so it cannot drift from the implementation.
 
 | Read | When |
 | :-- | :-- |
-| [`references/docs/architecture/README.md`](../../docs/architecture/README.md) | Understanding *why* it is shaped this way — the type structure, the execution model, and which run mode a caller needs. Each language's own concrete realization (real type/method names) is alongside it in the same directory, e.g. [`references/docs/architecture/python.md`](../../docs/architecture/python.md). |
+| [`references/docs/architecture/README.md`](../../docs/architecture/README.md) | Understanding *why* it is shaped this way — the type structure, the execution model, and which run mode a caller needs. Each language's own concrete realization (real type/method names) is alongside it in the same directory. |
 | `references/<language>/agent-notes.md` | Always, first. Short and language-specific. |
 
 Prefer a section over a document. This file carries headings and
