@@ -95,6 +95,12 @@ that are easy to skip:
   `try` form returning `undefined`.
 - If code uses a fallback, test the **present-but-failing** case — not
   just the absent one. That is the direction where a bug is silent.
+- For a rule set **built from stored/config data at runtime** rather
+  than hand-written, hand-picked fixtures stop scaling as the
+  configuration space grows — reach for property-based testing or an
+  oracle/differential approach (an independent, deliberately simpler
+  reference implementation checked against many random configurations)
+  instead of adding fixtures one at a time as bugs are found.
 
 ## Fetching the deeper documents
 
