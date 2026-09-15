@@ -204,16 +204,26 @@ jobs:
           set -euo pipefail
           url="https://registry.npmjs.org/verdict-rules/${VERSION}"
 
+          # npm's own publish output says a fresh version "may take a few
+          # minutes to become available" -- normally well under the old
+          # 6x20s (~2min) budget, but js-v0.0.4's real publish (provenance
+          # signed and independently verifiable in Sigstore's transparency
+          # log, so genuinely not a failed publish) took over 20 minutes to
+          # resolve, landing shortly after a real npm publishing-performance
+          # incident (status.npmjs.org, resolved ~34 min before this publish)
+          # -- residual backlog, most likely. 20x30s (~10min) covers that
+          # case with room to spare while still failing in bounded time if a
+          # publish is genuinely broken.
           code=000
-          for attempt in 1 2 3 4 5 6; do
+          for attempt in $(seq 1 20); do
             code="$(curl -s -o version.json -w '%{http_code}' "$url")"
             [ "$code" = "200" ] && break
             echo "Attempt ${attempt}: HTTP ${code} — waiting for propagation"
-            sleep 20
+            sleep 30
           done
 
           if [ "$code" != "200" ]; then
-            echo "::error::npm is not serving ${VERSION} after ~2 minutes. The publish step reported success, so check the package page before assuming a false alarm."
+            echo "::error::npm is not serving ${VERSION} after ~10 minutes. The publish step reported success, so check the package page before assuming a false alarm."
             exit 1
           fi
           echo "Serving $(jq -r '.version' version.json)"
