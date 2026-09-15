@@ -1,11 +1,11 @@
 ---
 kind: session-handoff
 handoff_schema: 1
-updated_utc: 2026-09-11T17:02:26Z
-updated_local: 2026-09-11T22:32:26+05:30
+updated_utc: 2026-09-15T08:33:35Z
+updated_local: 2026-09-15T14:03:35+05:30
 branch: main
-state_at_commit: fcfb6370f6ace9babdf10aa014a4cf876a868d79
-state_at_commit_short: fcfb637
+state_at_commit: 7d068aad3d5af884c0a26a8f7a51529d698db7dc
+state_at_commit_short: 7d068aa
 # Freshness: run `git log --oneline "$(git log -1 --format=%H -- HANDOFF.md)"..HEAD`. Empty (+ clean
 # tree) = current. Non-empty = stale — reconcile per §0.1 before trusting §2–§3. (Comparing against
 # state_at_commit directly always shows the handoff commit itself as "drift" — see §0.1.)
@@ -15,7 +15,7 @@ state_at_commit_short: fcfb637
 
 > The **migratable state container** for this project: session-to-session, not cross-session. It may
 > be freely rewritten when a new session or tool takes over (see §0.1). Standing rules live in
-> [`AGENTS.md`](AGENTS.md) (imported by `CLAUDE.md`), plus [`python/AGENTS.md`](python/AGENTS.md) for Python-specific ones — never
+> [`AGENTS.md`](AGENTS.md) (imported by `CLAUDE.md`), plus each language's own `AGENTS.md` — never
 > here. Verify against the code; the source of truth for the design is `docs/architecture/`, and
 > for what shipped, each package's own `CHANGELOG.md`.
 
@@ -24,8 +24,9 @@ state_at_commit_short: fcfb637
 You (the next agent) are continuing work on **verdict**. Read §1 for what it is, §2 for where we
 are, §3 for what to do next, §4 for known issues, §5 for how to verify.
 
-**Everything is committed, merged, and pushed.** `main` is at `fcfb637`, CI green. Nothing is in
-flight and no branch is outstanding.
+**`main` is at `7d068aa`, CI green. Four PRs are open** — see §2 and §3. This is not a "nothing in
+flight" state: three language SDKs and a doc-audit branch are mid-review, each independently
+mergeable.
 
 ## 0.1 · Freshness & alignment protocol (read before trusting §2–§3)
 
@@ -52,19 +53,25 @@ git status --short
 `git pull` before trusting any of this if you have been away — the formula above compares against
 your *local* HEAD, so an out-of-date clone reads "current" while `origin/main` has moved.
 
+**Open PRs live on their own branches, not on `main`.** This file describes `main`'s own state; §2
+and §3 name each open PR's branch explicitly, since `git log`/`git status` on `main` alone won't
+surface them.
+
 ## 1 · What this project is (one paragraph)
 
 `verdict` is a small, zero-dependency, async-native rule-evaluation engine —
 `Rule`/`FunctionRule`/`AndRule`/`OrRule`/`RulesEngine`/`RuleResult`/`RunResult` — designed to exist
 in more than one language with identical execution-model guarantees: sequential, never concurrent,
 evaluation so short-circuiting is a real contract rather than an optimization, and vacuous-truth
-polarity decided explicitly per composite shape. The repo is polyglot in layout but **only Python
-ships today**, under `python/` (a workspace root; the package itself is in
-`python/packages/verdict-rules/`, with its own `src/verdict/`, tests, and docs, plus a fully
-tested example project). A second language lands as a new sibling top-level directory with its own
-`AGENTS.md`. Cross-language docs are in `docs/`, the AI-agent skill in `skills/verdict/` (vendored
-into other projects by `scripts/install.sh`), the published site in `site/`, and agent working
-material in `.agents/`. Design source of truth: [`docs/architecture/`](docs/architecture/README.md).
+polarity decided explicitly per composite shape. **Python is the only language merged to `main`**
+(PyPI `verdict-rules` at `0.2.3`, under `python/` — a workspace root; the package itself is in
+`python/packages/verdict-rules/`). **JS/TS, C#, and Dart each exist complete on their own open PR**
+(§2) — not yet on `main` — each with its own top-level directory (`js/`, `csharp/`, `dart/`), its
+own `AGENTS.md`, and its own `docs/maintenance/releases/<language>.md` documenting that registry's
+real first-publish mechanics. Cross-language docs are in `docs/`, the AI-agent skill in
+`skills/verdict/` (its own release cadence, currently `0.5.0` on `main`; vendored into other
+projects by `scripts/install.sh`), the published site in `site/`, and agent working material in
+`.agents/`. Design source of truth: [`docs/architecture/`](docs/architecture/README.md).
 
 ## 1b · External references (NOT part of this repo)
 
@@ -74,89 +81,120 @@ follow either. Nothing a session needs lives outside the boundary.
 
 ## 2 · Where we are (this session's work)
 
-Starting point was `bf5e4e1` (release polish after `python-v0.1.0`, tagged 2026-09-07). Range
-**`bf5e4e1..fcfb637`** — four commits, fast-forwarded onto `main` via PR #1 and pushed. `main`'s
-history stays linear (the repo allows only merge commits, so the PR was landed by fast-forward
-rather than taking a merge bubble for a branch already sitting on `main`'s HEAD; GitHub marked #1
-merged once the commits became reachable):
+Starting point was `fcfb637` (the previous handoff). Everything since is the polyglot SDK buildout
+this handoff was written to capture — far more than fits as a commit list, so grouped by theme
+instead:
 
-- **`243d6b5` — docs standalone.** Several docs asserted as fact that specific named consumers run
-  this code in production, and `CHANGELOG.md` described where the source originated. Neither
-  survives the package being read elsewhere. Rewritten across `docs/extension.md`,
-  `docs/architecture.md`, `docs/maintenance.md`, `docs/future_plan.md`, `python/docs/quickstart.md`,
-  and two sample docs, so each claim now stands on the design itself. The rate-limiting and
-  access-control *illustrations* stay — they're generic patterns. Also fixed three code samples that
-  told the reader to run commands from a directory that doesn't exist in this layout.
-- **`204d4e0` — skill versioning + release.** `.claude-plugin/plugin.json`'s version measures the
-  skill's content (it's Claude Code's marketplace signal that a vendored copy is stale);
-  `python/pyproject.toml`'s measures the library. They are meant to drift, and nothing should assert
-  they match. Two new workflows: `check-skill-version.yml` (fails a PR/push to `main` that changes
-  shipped skill content without bumping `plugin.json`) and `release-skill.yml` (`skill-vX.Y.Z` tag →
-  verify against `plugin.json` → build → release). Both release workflows now attach the full
-  `dist/*`, which is load-bearing — see §4.
-- **`86b933c` — context fence.** `AGENTS.md` gained a "Working notes stay in the repo" section
-  (where things go; harness plan *and* memory files count as durable context; no parallel planning
-  docs) and an "Asking the user" section. `.agents/` is now the home for agent working material:
-  `memory/`, `plans/`, and the existing `skills/`, each with a README. The gitignored root-level
-  `RESUME.md` was rewritten to stand on its own and folded into
-  `.agents/plans/polyglot-sdk-resume.md`.
-- **`fcfb637` — handoff.** This file, resealed against the three above; then reconciled again after
-  the merge, per §0.1.
+- **Three language SDKs built out complete, each on its own open PR:**
+  - **JS/TS** — [PR #3](https://github.com/pawan-vyas/verdict-rules/pull/3), branch `plan/js-sdk`.
+    Full package under `js/packages/verdict-rules/` (source, tests, README, CHANGELOG, `docs/
+    quickstart.md`), `js/AGENTS.md`. npm Trusted Publishing bootstrapped by hand: a throwaway
+    `0.0.0` placeholder published manually (npm has no PyPI-style pending-publisher — see
+    `docs/maintenance/releases/js.md`), account 2FA enabled, Trusted Publisher configured against
+    `release-js.yml`. `0.0.1` (the real first version) will publish from CI once this PR merges and
+    the tag lands. The minified CDN/global build was dropped before that happens — Socket.dev
+    flagged it, and the transfer-size saving doesn't justify the ding for a library this size (see
+    `js/AGENTS.md`'s "Distribution shape is effectively permanent").
+  - **C#** — [PR #5](https://github.com/pawan-vyas/verdict-rules/pull/5), branch
+    `plan/csharp-sdk`. Full package under `csharp/src/VerdictRules/`, `csharp/AGENTS.md`. One
+    explicitly recorded open question not yet resolved: how far back `TargetFrameworks` should
+    reach (`netstandard2.0` for .NET Framework reach) — decide before `0.0.1` actually publishes to
+    NuGet, not before this PR merges.
+  - **Dart** — [PR #7](https://github.com/pawan-vyas/verdict-rules/pull/7), branch
+    `plan/dart-sdk`. Full package under `dart/packages/verdict_rules/`, `dart/AGENTS.md`. Verified
+    against `pana` (pub.dev's own analyzer, run locally — no publish needed): `150/160` pub points,
+    the one gap being a false negative of testing against this unmerged branch (`pana` clones the
+    `repository:` field at `main`, where `dart/` doesn't exist yet — resolves on merge).
+- **Python `0.2.3` cut and released** — a docs-only patch (package identical to `0.2.2`), confirmed
+  live on PyPI.
+- **Three new doc-authoring templates**, joining `package-readmes.md`:
+  `docs/maintenance/doc-authoring/language-agents.md` (every language's own `AGENTS.md`),
+  `skill-agent-notes.md` (`skills/verdict/references/<language>/agent-notes.md`),
+  `release-procedures.md` (`docs/maintenance/releases/<language>.md`) — each grounded in real
+  convergence across the languages that already existed, not invented from scratch.
+- **Two full doc audits**, resolved via interactive review (recommended fix presented, user
+  decided): bare-backtick doc references real-linked across all four `AGENTS.md` files; AGENTS.md
+  title suffix and section order standardized to the template (`# AGENTS.md — <Language> SDK`
+  everywhere, `csharp`/`dart`'s section order corrected to match); JS's initial CHANGELOG entry
+  rewritten to drop self-narration ("claiming the name", "arrives before 0.1.0") matching Python's
+  factual voice; `"only Python ships today"` dropped entirely (not updated) from `plugin.json`,
+  `marketplace.json`, `CONTRIBUTING.md`, and the root `README.md` — the Quickstart section and the
+  new Status table (below) are the actual source of truth now, so the sentence never needs editing
+  again as a language ships.
+- **Root `README.md` restructured**: the top-of-file badge line became a `## Status` section at the
+  end — one row per language plus a standing last row for the AI-agent skill, live-queried badges
+  throughout (PyPI/npm version, GitHub Actions tests, a GitHub-tag-filtered skill version, Socket.dev
+  linked rather than embedded since its badge image sits behind a Cloudflare check that blocks
+  GitHub's own image proxy). `## Where to go next` gained JS/TS's own quickstart rows, mirroring
+  Python's.
+- **This handoff refresh** — the previous one was 47 commits stale.
+
+Currently open, independently mergeable: **PR #3** (JS/TS), **PR #5** (C#), **PR #7** (Dart), and
+**[PR #50](https://github.com/pawan-vyas/verdict-rules/pull/50)** (`docs/audit-fixes-round2` — the
+doc-audit fixes above that touch shared/root files, kept off the language branches on purpose to
+avoid conflicts between them).
 
 ## 3 · What to do next (prioritized)
 
-**Nothing is pending.** The session's work is merged and green; there is no half-finished thread to
-pick up. If you are starting fresh, the useful entry points are:
-
-1. **Feature work is not in flight, and `docs/future_plan.md` is not a backlog** — it is an
-   explicitly exploratory thinking exercise. Don't treat any candidate there as decided; re-derive
-   its reasoning first.
-2. **If a second language is starting**, read
-   [`.agents/plans/polyglot-sdk-resume.md`](.agents/plans/polyglot-sdk-resume.md) first — especially
-   its "explicitly not decided yet" list (npm/NuGet name availability, `js/` vs `typescript/`,
-   `csharp/` vs `dotnet/`, per-language CI layout) — then `docs/architecture/` and
-   `docs/extending/` fresh, rather than that file's compressed summary of them.
-3. **If you change anything under `skills/verdict/`**, bump `.claude-plugin/plugin.json`'s version in
-   the same commit, or `check-skill-version.yml` will fail the push. That version is unrelated to
-   `python/pyproject.toml`'s — see §4 and `docs/maintenance/releases/verdict-agent-skill.md`.
-4. **The first skill-only release will exercise `release-skill.yml` for the first time** (§4):
-
-   ```bash
-   # bump .claude-plugin/plugin.json, add a ## skill-vX.Y.Z CHANGELOG entry, commit, then:
-   git tag skill-vX.Y.Z && git push origin skill-vX.Y.Z
-   ```
+1. **Merge PR #50 first** — small, green, touches only shared/root files
+   (`plugin.json`/`marketplace.json`/`CONTRIBUTING.md`/`README.md`/the doc-authoring templates).
+   After merging, rebase PRs #3/#5/#7 onto the new `main` (each has rebased cleanly every time so
+   far — no real conflicts across any of them).
+2. **Review and merge PR #3 (JS/TS)** when ready, then cut `js-v0.0.1`: bump
+   `js/packages/verdict-rules/package.json`'s version (already `0.0.1`), add the CHANGELOG entry
+   (already written), merge, tag. `release-js.yml` publishes over the already-configured Trusted
+   Publisher — no manual `npm publish` needed this time.
+3. **Review and merge PR #5 (C#) and PR #7 (Dart) independently**, whenever each is ready — read
+   that language's own `docs/maintenance/releases/<language>.md` before cutting its first release;
+   each registry's first-publish mechanics are genuinely different (NuGet can bootstrap over
+   Trusted Publishing directly; pub.dev cannot, same manual-first-publish trap npm had). C#'s target
+   -framework question (§2) needs an explicit decision before that first publish, not before merge.
+4. **Once a language actually ships its first real version**: add its keyword to `plugin.json`
+   (deferred on purpose — edit only after rebasing post-release, to avoid conflicts with an
+   in-flight branch) and confirm its `README.md` Status-table row's badges resolve for real (JS/TS's
+   row already exists, currently showing the `0.0.0` placeholder state since it's a live-queried
+   badge — it self-updates once `0.0.1` actually publishes, nothing to edit by hand).
+5. **`skills/verdict-workspace/evals/js/*.json`** (4 cases) exist, validate cleanly through
+   `scripts/build_evals.py`, and are meant to run via the **skill-creator** plugin (installed,
+   user-scope) against a local build of `verdict-rules` — not the generic `claude plugin eval` CLI
+   command, whose native `case.yaml`/`graders/*.md` format this repo's evals don't use. Check
+   whether they were actually run in this same session before assuming they still need it.
 
 ## 4 · Known issues / blockers
 
-- **`release-skill.yml` has never run.** Its shell logic was verified locally (tag parsing, and
-  both the matching and mismatching `plugin.json` cases), but it can only execute on a real
-  `skill-vX.Y.Z` tag push, so treat its first run as unproven. By contrast
-  `check-skill-version.yml` **is** proven: it ran green on PR #1 and again on the push to `main`,
-  and on the PR it correctly resolved the merge base and took the skip path
-  (`No shipped skill or plugin-manifest files changed`) rather than passing by accident — the
-  enforcement path itself is still only locally verified.
-- **Load-bearing invariant, easy to break.** `scripts/get.sh` resolves whatever GitHub calls the
-  *latest* release and pulls `verdict-tools.zip` from it. So **every** release workflow must attach
-  the full skill artifact set — if one stops, a release of that kind becomes "latest" without a
-  `verdict-tools.zip` and `get.sh` fails outright. Both workflows state this in their headers. Don't
-  "tidy" either one down to just its own artifacts.
-- **`.pytest_cache/` and `.venv/` are present in the working tree** but correctly gitignored, as are
-  `skills/verdict-workspace/{benchmarks,iteration-1}/` (regenerable eval output). No action needed.
-- No open defects in the package itself. One was raised this session and withdrawn — that
-  `plugin.json`'s version isn't asserted against `pyproject.toml`. It shouldn't be; see
-  [`.agents/memory/skill-version-is-independent-of-sdk-versions.md`](.agents/memory/skill-version-is-independent-of-sdk-versions.md),
-  written specifically to stop that conclusion being re-derived.
+- **Several links are transiently broken on `main` right now, all self-healing on their own PR's
+  merge** — confirmed via `.agents/scratch/check_links.py`, not a bug to chase down: `docs/
+  maintenance/releases/csharp.md` and `dart.md` each link to that SDK's own `CHANGELOG.md`, which
+  doesn't exist on `main` until `plan/csharp-sdk`/`plan/dart-sdk` merge; `README.md`'s new `js/`
+  rows under "Where to go next" likewise, until `plan/js-sdk` merges.
+- **Socket.dev's badge image cannot be embedded in `README.md`** — confirmed directly:
+  `badge.socket.dev` sits behind a Cloudflare bot check that returns the same 403 to GitHub's image
+  proxy as to a plain `curl`, regardless of pinned-vs-`latest` version. Every Supply Chain cell in
+  the Status table links to the live scorecard instead of an `<img>`.
+- **C#'s target-framework question is explicitly unresolved** (§2) — do not resolve it unprompted;
+  it's recorded with its full reasoning in `csharp/AGENTS.md`.
+- No open defect in any shipped package itself.
 
 ## 5 · Verify (gate / test commands)
 
-```bash
-cd python && uv sync && uv run pytest --cov=verdict --cov-report=term-missing
-```
+Each language's SDK lives only on its own open PR's branch until merged — `main` only has `python/`
+today.
 
-Exactly what `.github/workflows/test-python.yml` runs, across a 3.10–3.14 matrix (the
-`requires-python` floor through newest stable). **547 tests pass** as of `fcfb637`, confirmed on CI across all five matrix versions
-(`python/tests/` plus `python/examples/graduation_verdict/`, the latter 523 of them). There is no
-separate lint or type gate configured.
+```bash
+# Python (on main)
+cd python && uv sync && uv run pytest
+
+# JS/TS (checkout plan/js-sdk first)
+cd js && npm run typecheck && npm run build && npm test
+
+# C# (checkout plan/csharp-sdk first) -- no solution file, name the project explicitly
+cd csharp
+dotnet build src/VerdictRules/VerdictRules.csproj -warnaserror
+dotnet test tests/VerdictRules.Tests/VerdictRules.Tests.csproj
+
+# Dart (checkout plan/dart-sdk first)
+cd dart/packages/verdict_rules && dart analyze && dart test
+```
 
 For a doc change, additionally validate every mermaid diagram touched:
 
@@ -164,7 +202,15 @@ For a doc change, additionally validate every mermaid diagram touched:
 node .claude/skills/mermaid-diagrams/scripts/validate_diagrams.js --markdown <file.md>
 ```
 
-For a change to the distribution scripts, confirm all three artifacts still build:
+Real relative-link checking (not grep):
+
+```bash
+python3 .agents/scratch/check_links.py
+python3 scripts/check_shipped_links.py
+npx --yes markdownlint-cli@0.49.1 "**/*.md"
+```
+
+For a change to the distribution scripts, confirm all three skill artifacts still build:
 
 ```bash
 bash scripts/build.sh && ls dist/   # verdict-plugin.zip  verdict-tools.zip  verdict.skill
@@ -172,32 +218,44 @@ bash scripts/build.sh && ls dist/   # verdict-plugin.zip  verdict-tools.zip  ver
 
 ## 5b · Tooling / skills
 
-- **Python** ≥3.10 (floor in `python/pyproject.toml`), managed with **`uv`**; `python/uv.lock` is
-  committed. Test deps: `pytest>=8.0`, `pytest-asyncio>=0.24`. The package has **zero runtime
-  dependencies** — adding one requires an explicit discussion first, per [`AGENTS.md`](AGENTS.md).
-- **Node** is needed only for the mermaid diagram validator, and **`jq`** only by the two CI
-  workflows (preinstalled on `ubuntu-latest`). Neither is needed to use or test the package.
+- **Python** ≥3.10 (floor in `python/packages/verdict-rules/pyproject.toml`), managed with
+  **`uv`**. Zero runtime dependencies.
+- **Node** 18+ for JS/TS (`npm`, workspace-rooted at `js/`); also needed for the mermaid diagram
+  validator regardless of language.
+- **.NET SDK** (targets `net8.0`/`netstandard2.1`) for C#.
+- **Dart SDK** ≥3.0.0 for Dart. **`pana`** (pub.dev's own package analyzer —
+  `dart pub global activate pana`) reproduces pub.dev's real scoring locally, no publish required;
+  used this session to find and fix a real formatting deficit before it ever shipped.
+- **`jq`** only by CI workflows (preinstalled on `ubuntu-latest`).
 - **Vendored skills**, mirrored to both `.agents/skills/` and `.claude/skills/`:
-  `mermaid-diagrams` (diagram standards + validator — mandatory for any diagram in this repo) and
-  `context-fence` (the operations manual this file is the exit seal of). Both are tool-owned:
-  refresh them wholesale, never hand-edit.
+  `mermaid-diagrams` (diagram standards + validator) and `context-fence` (the operations manual
+  this file is the exit seal of). Both are tool-owned: refresh wholesale, never hand-edit.
 - `skills/verdict/` is the *shipped* skill; `skills/verdict-workspace/` is its eval working
-  material, where only `evals/evals.json` is tracked.
+  material — the per-target eval JSON files under `evals/<target>/` are tracked, the assembled
+  `evals/evals.json` is gitignored. Evals run via the **skill-creator** plugin, not `claude plugin
+  eval` (see §3, item 5).
 
 ## 6 · Key docs
 
 - [`AGENTS.md`](AGENTS.md) — standing rules for every agent (`CLAUDE.md` is just `@AGENTS.md`);
-  [`python/AGENTS.md`](python/AGENTS.md) adds the Python layer.
+  each language's own `AGENTS.md` (`python/AGENTS.md` on `main`; `js/AGENTS.md`, `csharp/AGENTS.md`,
+  `dart/AGENTS.md` on their own open PRs) adds that language's own layer.
 - [`docs/architecture/`](docs/architecture/README.md) — design source of truth: why evaluation is
   sequential, why `Rule` is structural, why `RuleResult.data` stays opaque.
+- [`docs/maintenance/doc-authoring/`](docs/maintenance/doc-authoring/README.md) — every doc-category
+  template this repo enforces by review: `package-readmes.md`, `language-agents.md`,
+  `skill-agent-notes.md`, `release-procedures.md`, and more.
+- [`docs/maintenance/releases/`](docs/maintenance/releases/README.md) — the shared release pipeline
+  plus each registry's own real mechanics (`python.md`, and — once merged — `js.md`, `csharp.md`,
+  `dart.md`).
 - [`docs/extending/`](docs/extending/README.md) — the seven extension scenarios;
-  `domain-adapter-module/`'s one-adapter-module boundary is the pattern to steer
-  consumers toward.
-- [`docs/maintenance/`](docs/maintenance/README.md) — the two never-slip constraints, the language
-  release procedure, and the separate skill release procedure.
-  [`docs/testing/`](docs/testing/README.md) — the testing checklist.
+  `domain-adapter-module/`'s one-adapter-module boundary is the pattern to steer consumers toward.
+- [`docs/testing/`](docs/testing/README.md) — the testing checklist, shared across every language.
 - [`docs/future_plan.md`](docs/future_plan.md) — exploratory candidates, explicitly not a roadmap.
 - [`python/examples/graduation_verdict/`](python/examples/graduation_verdict/) — the worked example,
   including the oracle/differential chaos suite worth re-deriving in any future language.
 - [`.agents/README.md`](.agents/README.md) — the agent working-material layout, and
-  [`.agents/memory/`](.agents/memory/) — durable facts worth not re-deriving.
+  [`.agents/memory/`](.agents/memory/) — durable facts worth not re-deriving, including
+  [`adding-a-variant-is-a-new-file.md`](.agents/memory/adding-a-variant-is-a-new-file.md) (why
+  PR #50 stays off the language branches) and
+  [`research-the-ecosystem-before-deciding-its-idiom.md`](.agents/memory/research-the-ecosystem-before-deciding-its-idiom.md).
