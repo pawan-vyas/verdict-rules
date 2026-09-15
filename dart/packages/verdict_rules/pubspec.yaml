@@ -1,0 +1,21 @@
+name: verdict_rules
+description: >-
+  A small, zero-dependency, async-native rule-evaluation engine. Compose
+  conditions into one explainable pass/fail verdict, with real
+  short-circuiting as a guarantee.
+version: 0.0.2
+repository: https://github.com/pawan-vyas/verdict-rules/tree/main/dart/packages/verdict_rules
+issue_tracker: https://github.com/pawan-vyas/verdict-rules/issues
+topics:
+  - rules-engine
+  - rule-evaluation
+  - eligibility
+  - decision-engine
+  - async
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dev_dependencies:
+  test: ^1.24.0
+  lints: ^5.0.0

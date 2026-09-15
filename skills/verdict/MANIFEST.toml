@@ -32,7 +32,7 @@
 # row to is a rebase conflict waiting to happen — the same reasoning as
 # `scripts/check_shipped_links.py`'s own `SHIPPED` list, and
 # `.agents/memory/adding-a-variant-is-a-new-file.md` generally.
-languages = ["python", "js"]
+languages = ["python", "js", "dart"]
 #              ^ add a language here once its own per-topic docs exist;
 #                nothing below needs a matching edit.
 
@@ -114,11 +114,13 @@ pattern = "docs/extending/isolating-flaky-predicates/{lang}.md"
 
 # Quickstarts stay individual [[fetch]] entries rather than a fetch_group:
 # each language's own package layout puts its quickstart at a genuinely
-# different path shape (python/packages/verdict-rules/docs/, js/packages/
-# verdict-rules/docs/, csharp/src/VerdictRules/docs/, ...), not a shared
-# docs/ directory a `{lang}.md` pattern could describe — one new row per
-# language here is real, unavoidable per-ecosystem variation, not the
-# hand-duplicated-across-every-topic shape `fetch_group` exists to remove.
+# different path shape -- python/packages/verdict-rules/docs/, js/packages/
+# verdict-rules/docs/, dart/packages/verdict_rules/doc/ (singular -- pub.dev's
+# own layout convention, not a typo), csharp/src/VerdictRules/docs/ once that
+# lands -- not a shared docs/ directory a `{lang}.md` pattern could describe.
+# One new row per language here is real, unavoidable per-ecosystem variation,
+# not the hand-duplicated-across-every-topic shape `fetch_group` exists to
+# remove.
 [[fetch]]
 source = "python/packages/verdict-rules/docs/quickstart.md"
 destination = "python/quickstart.md"
@@ -126,6 +128,10 @@ destination = "python/quickstart.md"
 [[fetch]]
 source = "js/packages/verdict-rules/docs/quickstart.md"
 destination = "js/quickstart.md"
+
+[[fetch]]
+source = "dart/packages/verdict_rules/doc/quickstart.md"
+destination = "dart/quickstart.md"
 
 [[fetch]]
 source = "docs/samples/README.md"
