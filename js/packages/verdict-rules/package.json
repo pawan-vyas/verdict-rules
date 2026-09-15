@@ -1,13 +1,14 @@
 {
   "name": "verdict-rules",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A small, zero-dependency, async-native rule-evaluation engine. Compose conditions into one explainable pass/fail verdict, with sequential evaluation and real short-circuiting as a guarantee.",
   "keywords": [
     "rules-engine",
     "rule-evaluation",
     "eligibility",
-    "policy",
-    "decision"
+    "decision",
+    "decision-engine",
+    "async"
   ],
   "license": "MIT",
   "repository": {

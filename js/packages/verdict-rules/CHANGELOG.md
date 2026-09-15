@@ -5,6 +5,17 @@ Release history for the `verdict-rules` JS/TS package. Format follows
 [semantic versioning](https://semver.org/), scoped to this package — it
 releases independently of the other language SDKs and of the AI-agent skill.
 
+## [0.0.4] - 2026-09-15
+
+- **`keywords` drops `policy` and adds `decision-engine` and `async`**,
+  now `rules-engine`, `rule-evaluation`, `eligibility`, `decision`,
+  `decision-engine`, `async`. `policy` names a rule together with what
+  happens when it's enforced -- this package only ever evaluates and
+  never acts on the result, so a "policy" keyword invited a search for
+  something this package doesn't do. `decision` stays: it's this
+  package's own output, a judgment reached, not an act of enforcing
+  anything. Package identical to `0.0.3` otherwise.
+
 ## [0.0.3] - 2026-09-15
 
 - **Drops the "Where to go next" row pointing back at the top-level

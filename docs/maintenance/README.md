@@ -133,6 +133,7 @@ graph TB
 | [`supply-chain-and-ownership.md`](supply-chain-and-ownership.md) | Provenance per registry, and how ownership/namespaces are handled |
 | [`import-name-and-second-distribution.md`](import-name-and-second-distribution.md) | The Python import-name decision, and what a second distribution or a promoted [`extending/`](../extending/README.md) scenario would look like |
 | [`before-merging-checklists.md`](before-merging-checklists.md) | The consumer-impact checklist for a shape change, and what a change needs tested |
+| [`discoverability-metadata.md`](discoverability-metadata.md) | Why every package's keywords/topics/tags stay in sync across registries, and pub.dev's one real structural exception |
 | [`doc-authoring/`](doc-authoring/README.md) | The standard every doc in this repo follows, the per-category templates built on top of it, and [how to add a new sample](doc-authoring/samples.md#adding-a-new-sample) |
 
 ## A doc category that will grow per-variant is a directory, not a flat file family
