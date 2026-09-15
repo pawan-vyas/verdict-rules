@@ -1,6 +1,7 @@
 # AGENTS.md — C# SDK
 
-C#-specific rules, on top of the repo-root `AGENTS.md`. Read that first.
+C#-specific rules, on top of the repo-root [`../AGENTS.md`](../AGENTS.md).
+Read that first.
 
 ## The guarantees, in C# terms
 
@@ -23,17 +24,6 @@ C#-specific rules, on top of the repo-root `AGENTS.md`. Read that first.
 - **`RuleResult.Data`** holds only what actually ran. Never padded, never
   flattened into the parent's level.
 
-## Conventions
-
-- `ConfigureAwait(false)` on every `await` in library code.
-- `Nullable` enabled, `TreatWarningsAsErrors` on. Warnings are build failures.
-- Targets `net8.0` and `netstandard2.1`; `IsTrimmable` and, on `net8.0`,
-  `IsAotCompatible`.
-- **Zero runtime dependencies.** `Microsoft.SourceLink.GitHub` is
-  `PrivateAssets="All"`, so it is a build-time reference and never flows to a
-  consumer.
-- XML documentation is generated; every public member carries it.
-
 ## Be precise about structural typing
 
 Do not write that "C# has no structural typing." It does, for **delegates** —
@@ -46,6 +36,28 @@ Python's `Protocol` and TypeScript's structural interfaces would accept it.
 That narrow difference is the honest statement, and it is why `FunctionRule`
 carries more weight in this SDK than in the others.
 
+## Layout
+
+`csharp/src/<Project>/` is the .NET convention for a repository that may hold
+more than one project, and it is already what this uses — so a second package
+is a new directory under `src/` and nothing existing moves. Each project's
+manifest, README and changelog live together inside it.
+
+NuGet has no changelog-file concept: release notes come from the
+`PackageReleaseNotes` metadata property, which points at `CHANGELOG.md` rather
+than duplicating it.
+
+## Conventions
+
+- `ConfigureAwait(false)` on every `await` in library code.
+- `Nullable` enabled, `TreatWarningsAsErrors` on. Warnings are build failures.
+- Targets `net8.0` and `netstandard2.1`; `IsTrimmable` and, on `net8.0`,
+  `IsAotCompatible`.
+- **Zero runtime dependencies.** `Microsoft.SourceLink.GitHub` is
+  `PrivateAssets="All"`, so it is a build-time reference and never flows to a
+  consumer.
+- XML documentation is generated; every public member carries it.
+
 ## Debuggability is part of the API surface
 
 `RuleResult` and `RunResult` carry `[DebuggerDisplay]`, and `RunResult` a
@@ -57,17 +69,6 @@ when the shape changes, and keep `ToString()` agreeing with them.
 SourceLink and `.snupkg` symbols are enabled so a consumer stepping into the
 package lands on real source. Both must be set *before* a version ships —
 released versions cannot be made debuggable retroactively.
-
-## Layout
-
-`csharp/src/<Project>/` is the .NET convention for a repository that may hold
-more than one project, and it is already what this uses — so a second package
-is a new directory under `src/` and nothing existing moves. Each project's
-manifest, README and changelog live together inside it.
-
-NuGet has no changelog-file concept: release notes come from the
-`PackageReleaseNotes` metadata property, which points at `CHANGELOG.md` rather
-than duplicating it.
 
 ## Open question: how far back should target frameworks reach — decide before `0.0.1` ships
 
@@ -113,9 +114,11 @@ before this branch's PR opens.
 
 A Python skill eval was observed opening the installed package's own `.py`
 source to double-check an exact signature, despite that signature already
-being fully documented in `agent-notes.md`'s "API, in one screen" section.
-Checked afterward: nothing in the final code diverged from what was already
-documented — the read added nothing, only cost tokens.
+being fully documented in
+[`references/python/agent-notes.md`](../skills/verdict/references/python/agent-notes.md)'s
+"API, in one screen" section. Checked afterward: nothing in the final code
+diverged from what was already documented — the read added nothing, only
+cost tokens.
 
 Whether that is a genuine trust gap (the agent does not believe a doc's
 stated signature over ground truth) or just an artifact of Python installing
