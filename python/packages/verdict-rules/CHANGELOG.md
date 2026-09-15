@@ -8,6 +8,19 @@ which keeps its own changelog beside its own manifest.
 
 Tagged `python-vX.Y.Z`.
 
+## [0.2.6] - 2026-09-15
+
+### Changed
+
+- **`keywords` drops `policy-evaluation` and adds `decision`**, now
+  `rules-engine`, `rule-evaluation`, `eligibility`, `decision`,
+  `decision-engine`, `async`. `policy` names a rule together with what
+  happens when it's enforced -- this package only ever evaluates and
+  never acts on the result, so a "policy" keyword invited a search for
+  something this package doesn't do. `decision` stays: it's this
+  package's own output, a judgment reached, not an act of enforcing
+  anything. Package identical to `0.2.5` otherwise.
+
 ## [0.2.5] - 2026-09-15
 
 ### Changed

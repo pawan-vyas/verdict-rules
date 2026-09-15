@@ -1,6 +1,6 @@
 [project]
 name = "verdict-rules"
-version = "0.2.5"
+version = "0.2.6"
 description = "A small, zero-dependency, async-native rule-evaluation engine for Python."
 readme = "README.md"
 authors = [
@@ -16,7 +16,7 @@ keywords = [
     "rules-engine",
     "rule-evaluation",
     "eligibility",
-    "policy-evaluation",
+    "decision",
     "decision-engine",
     "async",
 ]
@@ -39,7 +39,7 @@ classifiers = [
 Homepage = "https://github.com/pawan-vyas/verdict-rules"
 Repository = "https://github.com/pawan-vyas/verdict-rules"
 Issues = "https://github.com/pawan-vyas/verdict-rules/issues"
-Changelog = "https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.5/python/packages/verdict-rules/CHANGELOG.md"
+Changelog = "https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.6/python/packages/verdict-rules/CHANGELOG.md"
 
 [build-system]
 requires = ["uv_build>=0.11.14,<0.13.0"]
