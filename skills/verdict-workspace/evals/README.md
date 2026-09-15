@@ -73,6 +73,11 @@ wrong *and* silent when it is:
   outcome.
 - `cross-language/01-unsupported-language` — a language with no SDK
   should produce a plain statement of that, not an invented import path.
+- `js/05-cdn-conditional-ui` — the one scenario with no `package.json` at
+  all: a plain HTML page loading `verdict-rules` from a CDN, no build
+  step. Probes whether the pinned-version-plus-integrity-hash guidance
+  in the package's own README actually gets followed when there's no
+  npm-based manifest to establish the language from in the first place.
 
 **Not covered, and known**: that a fetch actually happens at the pinned
 tag. Measuring it needs network access and a real released tag inside

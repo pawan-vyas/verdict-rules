@@ -1,0 +1,14 @@
+{
+  "eval_name": "cdn-conditional-ui",
+  "prompt": "We have a marketing landing page with no build step at all -- just a plain index.html loaded straight in the browser, no bundler, no npm install. I want to show a 'first-time buyer' banner only when three things are all true: the cart total is under $50, the customer's region is one of US/CA/GB, and this is their first purchase. Can you wire this up using verdict-rules loaded from a CDN, and show or hide the #first-time-buyer-banner element based on the result?",
+  "expected_output": "A <script> tag loading verdict-rules from a CDN (jsDelivr or unpkg), pinned to a specific version with a real integrity attribute (or, if using the ESM +esm CDN path instead, an explicit note that no integrity hash is possible there since it transforms on the fly), building the three-condition rule set with the global VerdictRules API (or an ESM import), and toggling the banner's hidden attribute based on the RuleResult's passed field.",
+  "files": ["files/index.html"],
+  "expectations": [
+    "The script tag loading verdict-rules from a CDN is pinned to a specific version, never an unversioned URL",
+    "The script tag carries a real integrity attribute matching the pinned version, OR the response explicitly states why one isn't used if the ESM +esm CDN path is chosen instead",
+    "The three conditions (cart total, region, first purchase) are each represented as an independent, named rule -- not one inline boolean expression",
+    "The rule-evaluation logic and the DOM update (toggling the banner) are kept as separate concerns, not interleaved inside the same function",
+    "The banner's visibility is driven by the RuleResult's passed field, not a re-derived boolean computed separately from the rule evaluation",
+    "No bundler, npm install, or build step is introduced -- the solution respects that this page explicitly has none"
+  ]
+}
