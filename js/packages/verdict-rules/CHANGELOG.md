@@ -5,6 +5,18 @@ Release history for the `verdict-rules` JS/TS package. Format follows
 [semantic versioning](https://semver.org/), scoped to this package — it
 releases independently of the other language SDKs and of the AI-agent skill.
 
+## [0.0.5] - 2026-09-16
+
+- **The structural-typing example swaps `overEighteen`/`age` for
+  `isBusinessHours`/`hour`** -- kept distinct from the main example's
+  own `age` field, which already lives on the same page.
+- **`docs/quickstart.md`'s complete example now nests a composite**
+  (`AndRule` containing an `OrRule`, one branch of which is itself a
+  further `AndRule`) and demonstrates `runGroup` alongside a passing
+  and a failing call, rather than repeating the same flat two-rule
+  `AndRule` + `runNamed` shape the package README's own first example
+  already covers. Package identical to `0.0.4` otherwise.
+
 ## [0.0.4] - 2026-09-15
 
 - **`keywords` drops `policy` and adds `decision-engine` and `async`**,

@@ -32,21 +32,21 @@ pip install verdict-rules
 ```python
 from verdict import AndRule, FunctionRule, RuleResult, RulesEngine
 
-async def under_limit(ctx):
-    return RuleResult("under_limit", ctx["used"] < ctx["quota"])
+async def has_permission(ctx):
+    return RuleResult("has_permission", ctx["permission"])
 
-async def in_good_standing(ctx):
-    return RuleResult("in_good_standing", ctx["strikes"] == 0)
+async def resource_is_available(ctx):
+    return RuleResult("resource_is_available", ctx["available"])
 
-allowed = AndRule("allowed", [
-    FunctionRule("under_limit", under_limit),
-    FunctionRule("in_good_standing", in_good_standing),
+can_proceed = AndRule("can_proceed", [
+    FunctionRule("has_permission", has_permission),
+    FunctionRule("resource_is_available", resource_is_available),
 ])
 
-engine = RulesEngine([allowed])
-verdict = await engine.run_named("allowed", {"used": 3, "quota": 10, "strikes": 1})
+engine = RulesEngine([can_proceed])
+verdict = await engine.run_named("can_proceed", {"permission": True, "available": False})
 verdict.passed   # False
-verdict.detail   # "'in_good_standing' failed"
+verdict.detail   # "'resource_is_available' failed"
 ```
 
 ### JavaScript/TypeScript
@@ -58,23 +58,50 @@ npm install verdict-rules
 ```ts
 import { AndRule, FunctionRule, RulesEngine } from "verdict-rules";
 
-async function underLimit(ctx) {
-  return { ruleName: "under_limit", passed: ctx.used < ctx.quota };
+async function hasPermission(ctx) {
+  return { ruleName: "has_permission", passed: ctx.permission };
 }
 
-async function inGoodStanding(ctx) {
-  return { ruleName: "in_good_standing", passed: ctx.strikes === 0 };
+async function resourceIsAvailable(ctx) {
+  return { ruleName: "resource_is_available", passed: ctx.available };
 }
 
-const allowed = new AndRule("allowed", [
-  new FunctionRule("under_limit", underLimit),
-  new FunctionRule("in_good_standing", inGoodStanding),
+const canProceed = new AndRule("can_proceed", [
+  new FunctionRule("has_permission", hasPermission),
+  new FunctionRule("resource_is_available", resourceIsAvailable),
 ]);
 
-const engine = new RulesEngine([allowed]);
-const verdict = await engine.runNamed("allowed", { used: 3, quota: 10, strikes: 1 });
+const engine = new RulesEngine([canProceed]);
+const verdict = await engine.runNamed("can_proceed", { permission: true, available: false });
 verdict.passed;   // false
-verdict.detail;   // "'in_good_standing' failed"
+verdict.detail;   // "'resource_is_available' failed"
+```
+
+### Dart
+
+```yaml
+dependencies:
+  verdict_rules: ^0.0.2
+```
+
+```dart
+import 'package:verdict_rules/verdict_rules.dart';
+
+Future<RuleResult> hasPermission(Map<String, Object?> ctx) async =>
+    RuleResult(ruleName: 'has_permission', passed: ctx['permission']! as bool);
+
+Future<RuleResult> resourceIsAvailable(Map<String, Object?> ctx) async =>
+    RuleResult(ruleName: 'resource_is_available', passed: ctx['available']! as bool);
+
+final canProceed = AndRule('can_proceed', [
+  FunctionRule('has_permission', hasPermission),
+  FunctionRule('resource_is_available', resourceIsAvailable),
+]);
+
+final engine = RulesEngine([canProceed]);
+final verdict = await engine.runNamed('can_proceed', {'permission': true, 'available': false});
+verdict.passed;   // false
+verdict.detail;   // "'resource_is_available' failed"
 ```
 
 That is the whole library in one screen. What it buys you is not the
@@ -85,8 +112,8 @@ guarantee underneath it:
 graph LR
     Ctx[/"📥 context<br/>(plain map)"/]
     Comp{"🔀 AndRule"}
-    R1("✅ under_limit<br/>passed")
-    R2("❌ in_good_standing<br/>failed")
+    R1("✅ has_permission<br/>passed")
+    R2("❌ resource_is_available<br/>failed")
     R3("⏭️ any_later_rule<br/>never evaluated")
     Out("📤 RuleResult<br/>passed=False")
 
