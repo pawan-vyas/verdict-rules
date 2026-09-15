@@ -3,6 +3,6 @@
   "version": "1.4.0",
   "type": "module",
   "dependencies": {
-    "verdict-rules": "0.0.1"
+    "verdict-rules": "0.0.3"
   }
 }
