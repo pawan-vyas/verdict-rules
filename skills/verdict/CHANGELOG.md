@@ -6,6 +6,17 @@ Release history for the verdict AI-agent skill. Format follows
 This versions **the guidance**, not any language's API, so it moves on its own
 cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skill-vX.Y.Z`.
 
+## [0.5.1] - 2026-09-15
+
+No guidance changed.
+
+- **`plugin.json`'s and `marketplace.json`'s own descriptions drop "only
+  Python ships today."** The clause was correct when written and would
+  have gone stale the moment a second language actually shipped, on a
+  page neither file can retroactively edit once a marketplace caches
+  it. "Polyglot design" alone states the fact that stays true regardless
+  of which languages exist yet.
+
 ## [0.5.0] - 2026-09-13
 
 - **`docs/architecture.md` (bundled) is now `docs/architecture/`, a
