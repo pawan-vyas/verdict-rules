@@ -33,6 +33,22 @@ LINK = re.compile(
     r"https://github\.com/" + re.escape(REPO) + r"/blob/(?P<ref>[^/]+)/(?P<path>[^)\"\s<]+)"
 )
 
+def _regex_version(pattern: str, path: str) -> str:
+    """A manifest's version field, read by regex -- fails loudly, never AttributeErrors.
+
+    `re.search` returns `Match | None`; chaining `.group(1)` straight onto it
+    reads clean but turns a manifest whose format ever drifts (a renamed
+    field, a reordered line) into a bare `AttributeError` pointing at this
+    line instead of at the actual problem. Guarding the `None` explicitly
+    trades that for a message naming the file and pattern that stopped
+    matching.
+    """
+    match = re.search(pattern, Path(path).read_text(), re.M)
+    if match is None:
+        raise ValueError(f"{path}: version pattern {pattern!r} did not match -- check the file's format")
+    return match.group(1)
+
+
 # Content that is bundled into a published artifact, and so is read long after
 # the commit that wrote it. label | files | tag prefix | how to read the version
 SHIPPED = [
@@ -40,9 +56,9 @@ SHIPPED = [
         "Python",
         ["python/packages/verdict-rules/README.md", "python/packages/verdict-rules/pyproject.toml"],
         "python-v",
-        lambda: re.search(
-            r'^version = "(.+?)"', Path("python/packages/verdict-rules/pyproject.toml").read_text(), re.M
-        ).group(1),
+        lambda: _regex_version(
+            r'^version = "(.+?)"', "python/packages/verdict-rules/pyproject.toml"
+        ),
     ),
     (
         "JS/TS",
