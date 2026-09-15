@@ -6,6 +6,19 @@ Release history for the verdict AI-agent skill. Format follows
 This versions **the guidance**, not any language's API, so it moves on its own
 cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skill-vX.Y.Z`.
 
+## [0.5.3] - 2026-09-15
+
+- **`references/js/agent-notes.md`'s testing section names property-based
+  and oracle/differential testing** for a rule set built from stored
+  configuration at runtime, alongside the contracts it already named
+  (short-circuit proofs, vacuous-truth polarities, the present-but-failing
+  fallback case). Found via a real eval run: an agent satisfied every
+  contract already named here but reached for one more hand-picked
+  fixture instead of systematic coverage for the one dimension this
+  section didn't name — the guidance existed already, but only in
+  fetch-tier docs an agent correctly won't fetch before a real release
+  tag exists.
+
 ## [0.5.2] - 2026-09-15
 
 - **The skill routes to JS/TS for the first time.** Adds
