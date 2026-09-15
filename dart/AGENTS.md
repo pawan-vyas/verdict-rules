@@ -1,7 +1,7 @@
 # AGENTS.md — Dart SDK
 
-Dart-specific rules, on top of the repo-root `AGENTS.md`. Read that first;
-this file only adds what is particular to this language.
+Dart-specific rules, on top of the repo-root [`../AGENTS.md`](../AGENTS.md).
+Read that first; this file only adds what is particular to this language.
 
 ## The guarantees, in Dart terms
 
@@ -52,21 +52,6 @@ exists, which is also the day the shared lockfile starts paying for itself.
 Until then, run every command from inside the package directory rather than
 from `dart/`.
 
-## This package ships full, real source — same category as Python
-
-Worth recording for the day this language has its own evals (see
-`csharp/AGENTS.md` for the full context): a Python eval was seen opening the
-installed package's own source to double-check a signature already fully
-documented in `agent-notes.md`, and it found nothing the doc didn't already
-say. Whether an agent does the same here is confounded by the same fact that
-made it cheap in Python — no `.pubignore` and no pubspec exclude entries in
-this package, so pub's own default applies: `lib/` is exactly what a
-consumer's pub cache holds, real and commented, never a compiled artifact.
-Dart has no compiled-distribution stage for libraries at all, so this is not
-a choice this package made — it's true of every package on pub.dev. Sits at
-the same end of the spectrum as Python; contrast `js/AGENTS.md` (bundled, not
-raw) and `csharp/AGENTS.md` (no local source at all).
-
 ## Conventions
 
 - `Rule` is an `abstract interface class` — implemented, never extended.
@@ -79,6 +64,23 @@ raw) and `csharp/AGENTS.md` (no local source at all).
 - Public API lives in `lib/verdict_rules.dart`; everything else is `lib/src/`.
 - Keep `example/` runnable. pub.dev scores its presence and surfaces it on the
   package page, so it is the first code most readers see — not an afterthought.
+
+## This package ships full, real source — same category as Python
+
+Worth recording for the day this language has its own evals (see
+`csharp/AGENTS.md` for the full context): a Python eval was seen opening the
+installed package's own source to double-check a signature already fully
+documented in
+[`references/python/agent-notes.md`](../skills/verdict/references/python/agent-notes.md),
+and it found nothing the doc didn't already say. Whether an agent does the
+same here is confounded by the same fact that made it cheap in Python — no
+`.pubignore` and no pubspec exclude entries in this package, so pub's own
+default applies: `lib/` is exactly what a consumer's pub cache holds, real
+and commented, never a compiled artifact. Dart has no compiled-distribution
+stage for libraries at all, so this is not a choice this package made — it's
+true of every package on pub.dev. Sits at the same end of the spectrum as
+Python; contrast `js/AGENTS.md` (bundled, not raw) and `csharp/AGENTS.md` (no
+local source at all).
 
 ## Before calling a change done
 
