@@ -22,8 +22,7 @@ fixtures stops being enough coverage, the same way it stopped being
 enough for the sample above. Reach for property-based testing or an
 oracle/differential approach — an independent reference implementation
 checked against many randomly-generated configurations — rather than
-adding fixtures one at a time as bugs are found. Full guidance in
-[`../../testing/`](../../testing/README.md).
+adding fixtures one at a time as bugs are found.
 
 ## What this demonstrates
 
@@ -38,5 +37,8 @@ adding fixtures one at a time as bugs are found. Full guidance in
 
 - [`../../samples/data-driven-rule-sets/README.md`](../../samples/data-driven-rule-sets/README.md) —
   the full worked version of this scenario.
-- [`../../testing/`](../../testing/README.md) — the property-based/oracle
-  testing guidance this scenario's test coverage needs.
+- [`../../testing/`](../../testing/README.md) — the contracts verdict's
+  own primitives guarantee (short-circuiting, vacuous truth) that a
+  dynamically-built rule set still inherits and still needs proving;
+  the property-based/oracle-differential guidance this scenario's own
+  test coverage needs is above, not delegated there.
