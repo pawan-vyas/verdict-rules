@@ -2,12 +2,17 @@
   // .markdownlintignore uses gitignore syntax with "#" comment lines, which
   // VS Code otherwise guesses are Markdown ATX headings -- triggering live
   // markdownlint warnings on a file the linter itself never actually lints
-  // (the CI/CLI glob only matches "**/*.md", which this file doesn't).
+  // (the CI/CLI glob only matches "**/*.md", which this file doesn't). The
+  // same live-linting-something-the-CLI-never-would problem applies to
+  // LICENSE (no .md extension, so **/*.md already misses it too, but the
+  // extension's own language-detection guesses Markdown from content) and
+  // CODEOWNERS.
   "files.associations": {
     ".markdownlintignore": "ignore",
     "CLAUDE.md": "ignore",
     "CONTRIBUTING.md": "ignore",
     "LICENSE.md": "ignore",
+    "LICENSE": "ignore",
     "CODEOWNERS": "ignore",
   }
 }
