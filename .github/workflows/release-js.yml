@@ -153,8 +153,15 @@ jobs:
       # that job already has devDependencies installed to run it once: this
       # one doesn't, and re-running it here found that out the hard way,
       # via `Cannot find package 'esbuild'` on a job with no install step.
+      #
+      # The leading `./` is load-bearing, not style: npm's own arg parser
+      # treats a bare `owner/name`-shaped path as a GitHub shorthand spec
+      # before it considers a local file, so `js-dist/verdict-rules-*.tgz`
+      # (one slash, no `./`) gets read as `github:js-dist/verdict-rules-…`
+      # and npm tries to `git ls-remote` it -- confirmed by reproducing this
+      # exact failure locally. `./js-dist/...` is unambiguous.
       - name: Publish the exact tarball already built and tested
-        run: npm publish js-dist/verdict-rules-*.tgz
+        run: npm publish ./js-dist/verdict-rules-*.tgz
 
   release:
     name: Tag and publish the GitHub release
