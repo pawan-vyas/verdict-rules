@@ -66,8 +66,8 @@ without tooling. **Always pinned, always with an integrity hash:**
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/verdict-rules@0.0.1/dist/verdict-rules.global.min.js"
-  integrity="sha384-x/fYRkMxsgqXSrvhdixpsWsPx6LusOb0BpsMQ4sSljVqMQnB/GrTaLxiRsTyWsIq"
+  src="https://cdn.jsdelivr.net/npm/verdict-rules@0.0.1/dist/verdict-rules.global.js"
+  integrity="sha384-8UUn2T+f6wOMdw/f8XSZN9acZmqxSjQnfzSkXsZz8V05rPEl62oCYhpEw3wsYKEb"
   crossorigin="anonymous"></script>
 <script>
   const rule = new VerdictRules.FunctionRule("ok", async () => ({

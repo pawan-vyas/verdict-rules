@@ -19,10 +19,7 @@ const require = createRequire(import.meta.url);
 const { name, version } = require("../package.json");
 
 /** Every file a consumer could load with a <script src> tag. */
-const BROWSER_BUNDLES = [
-  "dist/verdict-rules.global.min.js",
-  "dist/verdict-rules.global.js",
-];
+const BROWSER_BUNDLES = ["dist/verdict-rules.global.js"];
 
 /**
  * CDNs that mirror npm automatically. Adding one is a row here — they all

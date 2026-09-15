@@ -56,10 +56,14 @@ with `npm test -w verdict-rules`.
 
 The `exports` map and the files it points at cannot change freely once
 published: a consumer's `require()` or `<script src>` that worked at `0.0.1`
-has to keep working. Four formats ship from one source tree via
-`scripts/build.mjs` — ESM, CJS, an ES2019 IIFE global for a plain `<script>`
-tag, and a minified global for CDN URLs. `unpkg`/`jsdelivr`/`browser` fields
-point at the global build.
+has to keep working. Three formats ship from one source tree via
+`scripts/build.mjs` — ESM, CJS, and an ES2019 IIFE global for a plain
+`<script>` tag or a CDN URL. `unpkg`/`jsdelivr`/`browser` fields point at the
+global build. Deliberately no minified build: for a library this size, the
+transfer-size saving is mostly erased by gzip/brotli, and it isn't worth
+trading against a permanent, visible ding on every consumer's own
+supply-chain scan of a package whose whole pitch is decision/eligibility
+logic — exactly the audience likely to run one.
 
 `tsc` emits declarations only; esbuild owns every `.js` in `dist/`. Declaration
 maps are off because `src/` is not published — esbuild's JS maps embed
@@ -75,8 +79,8 @@ worth being precise about, since "the source ships too" is not quite true
 for this package: `files` in `package.json` excludes `src/` outright, so the
 original, per-file TypeScript with its own comments never reaches a
 consumer's `node_modules`. What *does* ship is `dist/index.js`/`index.cjs` —
-bundled by esbuild, not minified (only the two CDN/IIFE builds are) — plus
-the full `.d.ts` declarations. An agent checking "the real source" here
+bundled by esbuild, not minified (nothing in this package is) — plus the
+full `.d.ts` declarations. An agent checking "the real source" here
 would find a bundled, single-file artifact rather than this repository's own
 tree, and the `.d.ts` file alone is arguably a more targeted way to confirm
 an exact signature than either. Sits between Python/Dart (full original
