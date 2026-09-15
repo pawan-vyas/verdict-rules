@@ -23,3 +23,18 @@ CLAUDE.md
 # comment (`<!-- verdict:marker v1 -->`) that install.sh matches on exactly,
 # which a markdownlint directive must not be confused with.
 scripts/harness-templates/claude/append/CLAUDE.md
+
+# Throwaway working material (research notes, drafts, recap scratch files),
+# gitignored and never committed -- see AGENTS.md's "Throwaway material goes
+# in .agents/scratch/" section. Held to no doc-authoring bar because nothing
+# here ships or is read by anyone but the session that wrote it; requiring
+# lint-clean prose here would fight the exact purpose of having a scratch
+# space at all.
+.agents/scratch/
+
+# Legal boilerplate, not authored prose -- never meant to follow this repo's
+# doc conventions (a blockquote opener, a title as H1, etc.) even on the rare
+# occasion one ships with a .md extension (most of this repo's LICENSE files
+# have none, so the **/*.md glob already misses them; this covers the case
+# where one doesn't, including a vendored one under a package's own tree).
+**/LICENSE*.md
