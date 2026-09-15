@@ -1,16 +1,7 @@
 # Verdict — Python
 
 > The Python implementation of Verdict — a small, zero-dependency,
-> async-native rule-evaluation engine. See the [top-level
-> `README.md`](https://github.com/pawan-vyas/verdict-rules#readme) for
-> what Verdict is and why it's shaped this way in narrative form; this
-> doc is just "how do I install it and write my first rule" for Python
-> specifically.
->
-> This exact file is also what PyPI renders as the package description
-> — none of its sibling files travel with a `pip install`, which is why
-> every link below is an absolute GitHub URL rather than a relative
-> path; on GitHub itself they work exactly the same way.
+> async-native rule-evaluation engine.
 
 ## Install
 
@@ -65,6 +56,26 @@ async def main() -> None:
 asyncio.run(main())
 ```
 
+## If it has the shape, it is a rule
+
+`Rule` is a `Protocol`, and Python's typing is **structural** — so any
+object with the right attributes and an `evaluate` coroutine already
+*is* a `Rule`. No inheritance, no registration:
+
+```python
+class OverEighteen:
+    name = "over_18"
+    group = None
+
+    async def evaluate(self, context: dict) -> RuleResult:
+        return RuleResult(rule_name="over_18", passed=context["age"] >= 18)
+
+await AndRule("eligible", [OverEighteen()]).evaluate({"age": 21})
+```
+
+Most rules need no class at all either: `FunctionRule` wraps a plain
+async function.
+
 ## What it guarantees
 
 - **Sequential evaluation, never concurrent.** Composites use a plain
@@ -87,17 +98,11 @@ asyncio.run(main())
 
 | Doc | For |
 | --- | --- |
-| [`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.3/python/packages/verdict-rules/docs/quickstart.md) | The quickstart — core concepts and a full worked example |
-| [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.3/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
-| [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.3/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
-| [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.3/docs/maintenance/README.md) | Changing this package itself |
-| [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.3/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
-| [`docs/samples/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.3/docs/samples/README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
-| [`examples/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.3/python/examples/README.md) | Full, tested mini-projects behind the more comprehensive samples — real code, real tests, real docs |
-
-## Development
-
-```bash
-uv sync
-uv run pytest
-```
+| [Top-level `README.md`](https://github.com/pawan-vyas/verdict-rules#readme) | What Verdict is and why it's shaped this way, in narrative form |
+| [`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.4/python/packages/verdict-rules/docs/quickstart.md) | The quickstart — core concepts and a full worked example |
+| [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.4/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
+| [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.4/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
+| [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.4/docs/maintenance/README.md) | Changing this package itself |
+| [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.4/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
+| [`docs/samples/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.4/docs/samples/README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
+| [`examples/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.4/python/examples/README.md) | Full, tested mini-projects behind the more comprehensive samples — real code, real tests, real docs |
