@@ -1,12 +1,13 @@
 # Changelog
 
-Version provenance for the JavaScript/TypeScript SDK. The repo-root
-`CHANGELOG.md` is the cross-language record.
+Release history for the `verdict-rules` JS/TS package. Format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning follows
+[semantic versioning](https://semver.org/), scoped to this package — it
+releases independently of the other language SDKs and of the AI-agent skill.
 
 ## 0.0.1
 
-First publish, claiming the name. Correct but minimal: the full type set and
-its guarantees, with the tests that prove them, and nothing else yet.
+Initial publish.
 
 - `Rule` (a structural `interface`), `FunctionRule`, `AndRule`, `OrRule`,
   `RulesEngine`, `RuleResult`, `RunResult`.
@@ -24,6 +25,3 @@ its guarantees, with the tests that prove them, and nothing else yet.
   catchable by type rather than by matching message text.
 - Ships as ESM, CommonJS, and an ES2019 global bundle for a plain `<script>`
   tag or a CDN URL. Node 18+, zero runtime dependencies, types included.
-
-Not yet included: the shared graduation fixture that every language must pass,
-and the documentation set. Those arrive before `0.1.0`.

@@ -1,8 +1,9 @@
 # AGENTS.md — JavaScript/TypeScript SDK
 
-JS/TS-specific rules, on top of the repo-root `AGENTS.md`. Read that first.
+JS/TS-specific rules, on top of the repo-root [`../AGENTS.md`](../AGENTS.md).
+Read that first.
 
-## The guarantees, in TS terms
+## The guarantees, in JS/TS terms
 
 - **Sequential evaluation.** `AndRule`/`OrRule` use a plain `for…of` loop with
   `await`. **Never `Promise.all`.** Short-circuiting only means something if
@@ -66,9 +67,10 @@ maps are off because `src/` is not published — esbuild's JS maps embed
 
 `src/` not shipping matters for more than declaration maps: a Python skill
 eval was seen opening the installed package's own source to double-check a
-signature already fully documented in `agent-notes.md` — worth watching for
-whether an agent does the same here once this language has its own evals
-(full note on `csharp/AGENTS.md`). What such an agent would actually find is
+signature already fully documented in
+[`references/python/agent-notes.md`](../skills/verdict/references/python/agent-notes.md)
+— worth watching for whether an agent does the same here once this language
+has its own evals (full note on `csharp/AGENTS.md`). What such an agent would actually find is
 worth being precise about, since "the source ships too" is not quite true
 for this package: `files` in `package.json` excludes `src/` outright, so the
 original, per-file TypeScript with its own comments never reaches a
