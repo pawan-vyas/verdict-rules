@@ -30,7 +30,7 @@ pip install verdict-rules
 ```
 
 ```python
-from verdict import AndRule, FunctionRule, RuleResult
+from verdict import AndRule, FunctionRule, RuleResult, RulesEngine
 
 async def under_limit(ctx):
     return RuleResult("under_limit", ctx["used"] < ctx["quota"])
@@ -43,7 +43,8 @@ allowed = AndRule("allowed", [
     FunctionRule("in_good_standing", in_good_standing),
 ])
 
-verdict = await allowed.evaluate({"used": 3, "quota": 10, "strikes": 1})
+engine = RulesEngine([allowed])
+verdict = await engine.run_named("allowed", {"used": 3, "quota": 10, "strikes": 1})
 verdict.passed   # False
 verdict.detail   # "'in_good_standing' failed"
 ```
@@ -55,7 +56,7 @@ npm install verdict-rules
 ```
 
 ```ts
-import { AndRule, FunctionRule } from "verdict-rules";
+import { AndRule, FunctionRule, RulesEngine } from "verdict-rules";
 
 async function underLimit(ctx) {
   return { ruleName: "under_limit", passed: ctx.used < ctx.quota };
@@ -70,7 +71,8 @@ const allowed = new AndRule("allowed", [
   new FunctionRule("in_good_standing", inGoodStanding),
 ]);
 
-const verdict = await allowed.evaluate({ used: 3, quota: 10, strikes: 1 });
+const engine = new RulesEngine([allowed]);
+const verdict = await engine.runNamed("allowed", { used: 3, quota: 10, strikes: 1 });
 verdict.passed;   // false
 verdict.detail;   // "'in_good_standing' failed"
 ```
