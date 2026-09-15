@@ -55,6 +55,5 @@ class RunResult {
   const RunResult({required this.passed, this.results = const []});
 
   @override
-  String toString() =>
-      'RunResult(passed: $passed, results: ${results.length})';
+  String toString() => 'RunResult(passed: $passed, results: ${results.length})';
 }

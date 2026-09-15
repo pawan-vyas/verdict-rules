@@ -4,16 +4,16 @@ import 'package:verdict_rules/verdict_rules.dart';
 /// A rule that records every evaluation, so short-circuiting can be proven by
 /// what actually ran rather than by the final boolean alone. A port that
 /// evaluates concurrently returns the same boolean and fails only here.
-FunctionRule counting(String name, bool passes, List<String> log,
-        {String? group}) =>
-    FunctionRule(
-      name,
-      (ctx) async {
-        log.add(name);
-        return RuleResult(ruleName: name, passed: passes);
-      },
-      group: group,
-    );
+FunctionRule counting(
+  String name,
+  bool passes,
+  List<String> log, {
+  String? group,
+}) =>
+    FunctionRule(name, (ctx) async {
+      log.add(name);
+      return RuleResult(ruleName: name, passed: passes);
+    }, group: group);
 
 /// A plain top-level function, declared as nothing in particular.
 Future<RuleResult> hasQuorum(Map<String, Object?> ctx) async =>
@@ -25,7 +25,11 @@ void main() {
       final rule = FunctionRule(
         'r',
         (ctx) async => RuleResult(
-            ruleName: 'r', passed: true, detail: 'why', data: {'k': 1}),
+          ruleName: 'r',
+          passed: true,
+          detail: 'why',
+          data: {'k': 1},
+        ),
       );
       final result = await rule.evaluate({});
       expect(result.passed, isTrue);
@@ -34,23 +38,30 @@ void main() {
     });
 
     test('carries its group label', () {
-      expect(FunctionRule('r', (ctx) async => RuleResult(ruleName: 'r', passed: true),
-              group: 'g')
-          .group, 'g');
+      expect(
+        FunctionRule(
+          'r',
+          (ctx) async => RuleResult(ruleName: 'r', passed: true),
+          group: 'g',
+        ).group,
+        'g',
+      );
     });
   });
 
   group('AndRule', () {
-    test('passes when every sub-rule passes, and evaluates all of them',
-        () async {
-      final log = <String>[];
-      final result = await AndRule('all', [
-        counting('a', true, log),
-        counting('b', true, log),
-      ]).evaluate({});
-      expect(result.passed, isTrue);
-      expect(log, ['a', 'b']);
-    });
+    test(
+      'passes when every sub-rule passes, and evaluates all of them',
+      () async {
+        final log = <String>[];
+        final result = await AndRule('all', [
+          counting('a', true, log),
+          counting('b', true, log),
+        ]).evaluate({});
+        expect(result.passed, isTrue);
+        expect(log, ['a', 'b']);
+      },
+    );
 
     test('short-circuits: later sub-rules never run', () async {
       final log = <String>[];
@@ -73,8 +84,11 @@ void main() {
       expect(top, hasLength(1), reason: 'only the failing sub-rule ran');
       expect(top.single.ruleName, 'inner');
       final nested = top.single.data! as List<RuleResult>;
-      expect(nested.single.ruleName, 'deep',
-          reason: 'nesting is preserved, not flattened into the parent');
+      expect(
+        nested.single.ruleName,
+        'deep',
+        reason: 'nesting is preserved, not flattened into the parent',
+      );
     });
 
     test('empty passes vacuously', () async {
@@ -110,22 +124,30 @@ void main() {
       final result = await engine.runAll({});
       expect(result.passed, isFalse);
       expect(result.results, hasLength(3));
-      expect(log, ['a', 'b', 'c'],
+      expect(
+          log,
+          [
+            'a',
+            'b',
+            'c',
+          ],
           reason: 'every rule reports even after an earlier failure');
     });
 
-    test('runGroup evaluates only its own group, and never short-circuits',
-        () async {
-      final log = <String>[];
-      final engine = RulesEngine([
-        counting('a', true, log, group: 'g1'),
-        counting('b', true, log, group: 'g2'),
-        counting('c', false, log, group: 'g1'),
-      ]);
-      final result = await engine.runGroup('g1', {});
-      expect(result.results.map((r) => r.ruleName), ['a', 'c']);
-      expect(result.passed, isFalse);
-    });
+    test(
+      'runGroup evaluates only its own group, and never short-circuits',
+      () async {
+        final log = <String>[];
+        final engine = RulesEngine([
+          counting('a', true, log, group: 'g1'),
+          counting('b', true, log, group: 'g2'),
+          counting('c', false, log, group: 'g1'),
+        ]);
+        final result = await engine.runGroup('g1', {});
+        expect(result.results.map((r) => r.ruleName), ['a', 'c']);
+        expect(result.passed, isFalse);
+      },
+    );
 
     test('runNamed looks one rule up', () async {
       final engine = RulesEngine([counting('a', true, [])]);
@@ -250,7 +272,11 @@ void main() {
       ].whereType<RunResult>().toList();
 
       expect(evaluated, hasLength(1), reason: 'absent contributes nothing');
-      expect(evaluated.single.passed, isFalse, reason: 'present reports honestly');
+      expect(
+        evaluated.single.passed,
+        isFalse,
+        reason: 'present reports honestly',
+      );
     });
   });
 
@@ -285,11 +311,13 @@ void main() {
     expect(result.passed, isTrue);
   });
 
-  test('a plain class satisfying the contract works without subclassing',
-      () async {
-    final result = await AndRule('composed', [_Custom()]).evaluate({});
-    expect(result.passed, isTrue);
-  });
+  test(
+    'a plain class satisfying the contract works without subclassing',
+    () async {
+      final result = await AndRule('composed', [_Custom()]).evaluate({});
+      expect(result.passed, isTrue);
+    },
+  );
 }
 
 /// A rule shape owning its own name and group must say `implements Rule`,

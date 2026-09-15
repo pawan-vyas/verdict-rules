@@ -45,10 +45,7 @@ class RulesEngine {
     for (final rule in _rules) {
       results.add(await rule.evaluate(context));
     }
-    return RunResult(
-      passed: results.every((r) => r.passed),
-      results: results,
-    );
+    return RunResult(passed: results.every((r) => r.passed), results: results);
   }
 
   /// Evaluate one rule by name, or return null if no such rule exists.
@@ -68,7 +65,9 @@ class RulesEngine {
   /// Null means *absent*, never *failed* — a rule that exists and fails still
   /// returns a [RuleResult] with `passed` false.
   Future<RuleResult?> tryRunNamed(
-      String name, Map<String, Object?> context) async {
+    String name,
+    Map<String, Object?> context,
+  ) async {
     final rule = _byName[name];
     if (rule == null) return null;
     return rule.evaluate(context);
@@ -82,8 +81,7 @@ class RulesEngine {
   /// has an answer for.
   ///
   /// Throws [ArgumentError] if no rule has this name.
-  Future<RuleResult> runNamed(
-      String name, Map<String, Object?> context) async {
+  Future<RuleResult> runNamed(String name, Map<String, Object?> context) async {
     final result = await tryRunNamed(name, context);
     if (result == null) {
       throw ArgumentError.value(name, 'name', 'No rule with this name');
@@ -105,17 +103,16 @@ class RulesEngine {
   /// stale name. Returning a passing [RunResult] here would mean a misspelled
   /// group silently approves.
   Future<RunResult?> tryRunGroup(
-      String group, Map<String, Object?> context) async {
+    String group,
+    Map<String, Object?> context,
+  ) async {
     final rules = _byGroup[group];
     if (rules == null || rules.isEmpty) return null;
     final results = <RuleResult>[];
     for (final rule in rules) {
       results.add(await rule.evaluate(context));
     }
-    return RunResult(
-      passed: results.every((r) => r.passed),
-      results: results,
-    );
+    return RunResult(passed: results.every((r) => r.passed), results: results);
   }
 
   /// Evaluate every rule sharing a group label. Never short-circuits.
@@ -126,8 +123,7 @@ class RulesEngine {
   /// happened to be empty — still folds to its identity; absence is an error.
   ///
   /// Throws [ArgumentError] if no rule carries this label.
-  Future<RunResult> runGroup(
-      String group, Map<String, Object?> context) async {
+  Future<RunResult> runGroup(String group, Map<String, Object?> context) async {
     final result = await tryRunGroup(group, context);
     if (result == null) {
       throw ArgumentError.value(group, 'group', 'No rules in this group');

@@ -3,17 +3,15 @@
 import 'package:verdict_rules/verdict_rules.dart';
 
 /// Builds a rule asserting that a numeric field clears a floor.
-FunctionRule atLeast(String name, String field, num floor) => FunctionRule(
-      name,
-      (ctx) async {
-        final value = ctx[field]! as num;
-        return RuleResult(
-          ruleName: name,
-          passed: value >= floor,
-          detail: '$value vs $floor',
-        );
-      },
-    );
+FunctionRule atLeast(String name, String field, num floor) =>
+    FunctionRule(name, (ctx) async {
+      final value = ctx[field]! as num;
+      return RuleResult(
+        ruleName: name,
+        passed: value >= floor,
+        detail: '$value vs $floor',
+      );
+    });
 
 Future<void> main() async {
   final eligible = AndRule('eligible', [
@@ -36,6 +34,8 @@ Future<void> main() async {
     atLeast('score_ok', 'score', 60),
   ]);
   final everything = await engine.runAll({'age': 16, 'score': 55});
-  print('runAll reported ${everything.results.length} rules, '
-      'passed=${everything.passed}');
+  print(
+    'runAll reported ${everything.results.length} rules, '
+    'passed=${everything.passed}',
+  );
 }
