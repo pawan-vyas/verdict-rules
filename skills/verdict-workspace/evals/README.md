@@ -78,10 +78,23 @@ wrong *and* silent when it is:
   step. Probes whether the pinned-version-plus-integrity-hash guidance
   in the package's own README actually gets followed when there's no
   npm-based manifest to establish the language from in the first place.
+- `python/05-fetch-docs-completeness` and `js/06-fetch-docs-completeness`
+  — added alongside `MANIFEST.toml`'s `[[fetch_group]]` restructuring, to
+  catch the failure that change actually could have shipped with: an
+  agent reading `references/<lang>/agent-notes.md`'s two illustrative
+  curl examples as the *complete* fetch list, rather than as examples of
+  a pattern that covers fourteen topics. Each prompt names two scenarios
+  deliberately not among those two examples, so getting the eval right
+  means the agent expanded a `fetch_group` pattern for itself rather
+  than pattern-matching on what it was shown literally.
 
 **Not covered, and known**: that a fetch actually happens at the pinned
-tag. Measuring it needs network access and a real released tag inside
-the eval sandbox, which would make the result depend on GitHub being
-reachable rather than on the skill being right.
-`scripts/check_skill_bundle.py` covers the failure that was actually
-reachable — a documented fetch path drifting away from the manifest.
+tag, over the real network, against a real released tag. Measuring that
+needs network access inside the eval sandbox, which would make the
+result depend on GitHub being reachable rather than on the skill being
+right — `python/05-fetch-docs-completeness` and `js/06-fetch-docs-completeness`
+measure whether the agent identifies the *correct set* of documents to
+fetch, not whether the `curl` itself succeeded. `scripts/check_skill_bundle.py`
+covers the one fetch-path failure that was actually reachable without a
+network round trip — a documented fetch path drifting away from the
+manifest.

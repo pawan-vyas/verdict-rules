@@ -14,12 +14,19 @@
 # changelog entry for a version that never went through the real release
 # workflow is not evidence it exists; pinning one here silently breaks the
 # fetch-at-the-installed-version instruction this fixture exists to test.
+#
+# Prefer the LATEST published tag over an older one. Every eval that fetches
+# specific doc paths (python/05-fetch-docs-completeness, for instance) fetches
+# them from this pinned tag's own snapshot of docs/, not from main — a version
+# pinned to a tag that predates a doc restructuring (docs/extension.md ->
+# docs/extending/, in 0.2.2) will legitimately 404 on paths that exist today,
+# for a reason that has nothing to do with whether the skill itself is right.
 [project]
 name = "storefront-api"
 version = "1.4.0"
 requires-python = ">=3.10"
 dependencies = [
-    "verdict-rules==0.2.0",
+    "verdict-rules==0.2.5",
 ]
 
 [build-system]
