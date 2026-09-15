@@ -42,7 +42,8 @@ Future<void> main() async {
     atLeast('score_ok', 'score', 60),
   ]);
 
-  final verdict = await eligible.evaluate({'age': 21, 'score': 55});
+  final engine = RulesEngine([eligible]);
+  final verdict = await engine.runNamed('eligible', {'age': 21, 'score': 55});
   print(verdict.passed); // false
   print(verdict.detail); // 'score_ok' failed: 55 vs 60
 }
@@ -118,11 +119,3 @@ implementation, rather than landing in a consumer's override.
 | [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.0.1/docs/maintenance/README.md) | Changing this package itself |
 | [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.0.1/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
 | [`docs/samples/`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.0.1/docs/samples/README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
-
-## Development
-
-```bash
-dart pub get
-dart analyze
-dart test
-```
