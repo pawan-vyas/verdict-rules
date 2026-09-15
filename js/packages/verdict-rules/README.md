@@ -1,16 +1,7 @@
 # Verdict — JS/TS
 
 > The JS/TS implementation of Verdict — a small, zero-dependency,
-> async-native rule-evaluation engine. See the [top-level
-> `README.md`](https://github.com/pawan-vyas/verdict-rules#readme) for
-> what Verdict is and why it's shaped this way in narrative form; this
-> doc is just "how do I install it and write my first rule" for JS/TS
-> specifically.
->
-> This exact file is also what npm renders as the package description
-> — none of its sibling files travel with an `npm install`, which is why
-> every link below is an absolute GitHub URL rather than a relative
-> path; on GitHub itself they work exactly the same way.
+> async-native rule-evaluation engine.
 
 ## Install
 
@@ -21,7 +12,7 @@ npm install verdict-rules
 ## Use
 
 ```ts
-import { AndRule, FunctionRule, type Context } from "verdict-rules";
+import { AndRule, FunctionRule, RulesEngine, type Context } from "verdict-rules";
 
 const atLeast = (name: string, field: string, floor: number) =>
   new FunctionRule(name, async (ctx: Context) => {
@@ -34,7 +25,8 @@ const eligible = new AndRule("eligible", [
   atLeast("score_ok", "score", 60),
 ]);
 
-const verdict = await eligible.evaluate({ age: 21, score: 55 });
+const engine = new RulesEngine([eligible]);
+const verdict = await engine.runNamed("eligible", { age: 21, score: 55 });
 console.log(verdict.passed); // false
 console.log(verdict.detail); // 'score_ok' failed: 55 vs 60
 ```
@@ -66,7 +58,7 @@ without tooling. **Always pinned, always with an integrity hash:**
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/verdict-rules@0.0.1/dist/verdict-rules.global.js"
+  src="https://cdn.jsdelivr.net/npm/verdict-rules@0.0.2/dist/verdict-rules.global.js"
   integrity="sha384-8UUn2T+f6wOMdw/f8XSZN9acZmqxSjQnfzSkXsZz8V05rPEl62oCYhpEw3wsYKEb"
   crossorigin="anonymous"></script>
 <script>
@@ -93,7 +85,7 @@ on the fly and so have no stable bytes to hash:
 
 ```html
 <script type="module">
-  import { AndRule } from "https://cdn.jsdelivr.net/npm/verdict-rules@0.0.1/+esm";
+  import { AndRule } from "https://cdn.jsdelivr.net/npm/verdict-rules@0.0.2/+esm";
 </script>
 ```
 
@@ -163,17 +155,10 @@ one everybody thinks of first.
 
 | Doc | For |
 | --- | --- |
-| [`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.1/js/packages/verdict-rules/docs/quickstart.md) | The quickstart — core concepts and a full worked example |
-| [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.1/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
-| [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.1/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
-| [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.1/docs/maintenance/README.md) | Changing this package itself |
-| [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.1/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
-| [`docs/samples/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.1/docs/samples/README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
-
-## Development
-
-```bash
-npm install
-npm run build   # tests import from dist/, not src/
-npm test
-```
+| [Top-level `README.md`](https://github.com/pawan-vyas/verdict-rules#readme) | What Verdict is and why it's shaped this way, in narrative form |
+| [`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.2/js/packages/verdict-rules/docs/quickstart.md) | The quickstart — core concepts and a full worked example |
+| [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.2/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
+| [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.2/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
+| [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.2/docs/maintenance/README.md) | Changing this package itself |
+| [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.2/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
+| [`docs/samples/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.2/docs/samples/README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |

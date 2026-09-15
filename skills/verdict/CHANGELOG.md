@@ -6,6 +6,15 @@ Release history for the verdict AI-agent skill. Format follows
 This versions **the guidance**, not any language's API, so it moves on its own
 cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skill-vX.Y.Z`.
 
+## [0.5.4] - 2026-09-15
+
+- **`references/python/agent-notes.md`'s testing section names
+  property-based and oracle/differential testing**, matching the fix
+  already made to the JS/TS reference — Python's own file had the
+  identical gap, since both predate the pattern being named at all.
+  Points at `python/examples/graduation_verdict/` as the real, shipped
+  instance.
+
 ## [0.5.3] - 2026-09-15
 
 - **`references/js/agent-notes.md`'s testing section names property-based

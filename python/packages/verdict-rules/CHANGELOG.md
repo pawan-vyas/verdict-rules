@@ -8,6 +8,28 @@ which keeps its own changelog beside its own manifest.
 
 Tagged `python-vX.Y.Z`.
 
+## [0.2.4] - 2026-09-15
+
+### Changed
+
+- **The PyPI landing page gains a "If it has the shape, it is a rule"
+  section**, showing a plain class satisfying `Rule` structurally with
+  no inheritance and no registration. `package-readmes.md`'s own
+  authoring template already named this section for Python's
+  `Protocol`, alongside TypeScript's `interface`; every later language's
+  README picked it up, but Python's own predates the template and had
+  gone without it.
+- **Drops the `## Development` section.** It duplicated a subset of
+  `CONTRIBUTING.md`'s own Python section on a page a consumer landed on
+  to install the package, not to change it — `package-readmes.md` no
+  longer mandates this section for any language.
+- **Cuts the blockquote to a single fact.** The second sentence pointed
+  to the top-level `README.md` while narrating what this file itself
+  was for — the document talking about itself, the same failure
+  `package-readmes.md` already names for every other doc in this repo.
+  That pointer moves to `## Where to go next`'s own first row instead.
+  Package identical to `0.2.3` otherwise.
+
 ## [0.2.3] - 2026-09-14
 
 ### Changed
