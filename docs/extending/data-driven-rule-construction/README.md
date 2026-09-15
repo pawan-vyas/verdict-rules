@@ -24,6 +24,15 @@ oracle/differential approach — an independent reference implementation
 checked against many randomly-generated configurations — rather than
 adding fixtures one at a time as bugs are found.
 
+A builder that constructs a leaf differently from how it constructs a
+composite is the shape where a shared per-rule field — a group label,
+most often — gets threaded through one path and quietly dropped from
+the other, since nothing forces the two to stay in sync. A config entry
+whose top-level condition is a bare leaf, with no composite wrapper
+around it, is the concrete case that exposes this: write one shared
+construction step both paths call through, carrying every field, rather
+than two independent ones that happen to agree today.
+
 ## What this demonstrates
 
 - Rules are built from configuration data at runtime, never hardcoded
