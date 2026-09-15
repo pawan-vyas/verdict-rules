@@ -205,6 +205,19 @@ convention holds without an exception for Dart.
 
 - **Test runner configuration details** beyond `package:test`, which is
   the only real option.
+- **A Flutter-widget eval, once `dart-v0.0.1` actually ships via OIDC.**
+  JS/TS has `skills/verdict-workspace/evals/js/05-cdn-conditional-ui.json` —
+  a plain HTML page pulling `verdict-rules` from a CDN with no build
+  step, conditionally showing a banner based on a rule's result. Dart's
+  own natural consumption context is a Flutter project, not a browser
+  `<script>` tag — the equivalent eval should guide the agent to set up
+  a real Flutter project and conditionally render a widget based on a
+  rule set, with `verdict_rules` pulled into `pubspec.yaml` as a real
+  dependency rather than a `path:` override. Add it only once
+  `dart-v0.0.1` is live on pub.dev, so the eval can test whether the
+  agent actually reaches for the published dependency in `pubspec.yaml`
+  — the same reasoning that held the JS eval's own first real run until
+  its package was live.
 
 Settled since this plan was first written: Dart's first stable is
 **`0.1.0`**, its own number. Versions are language-scoped, and parity
