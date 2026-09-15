@@ -31,7 +31,10 @@ over.
    registry's own page chrome already shows the package name in the
    title bar and the URL; repeating it as the H1 wastes the one line
    every reader sees first on a fact they already know, instead of using
-   it to say what this actually is.
+   it to say what this actually is. A language whose own name ends in a
+   character markdownlint's `MD020` reads as a stray closed-heading
+   marker (C#'s `#`) needs one more word after it — `# Verdict — C# SDK`
+   — rather than dropping the language name to dodge the lint failure.
 2. **Blockquote** — one line naming what this package is, a pointer to
    the [top-level `README.md`](https://github.com/pawan-vyas/verdict-rules#readme)
    for the narrative "why" (never restated here), and the fact that this
@@ -149,6 +152,21 @@ package":
   correct" belongs in
   [`../../../CONTRIBUTING.md`](../../../CONTRIBUTING.md) or that
   package's own dev-tooling docs, not its landing page.
+
+## The same discipline extends to a language's first CHANGELOG entry
+
+A package's `CHANGELOG.md` isn't the registry's own rendered page, but it
+is the same kind of artifact for this purpose: pinned to a release tag,
+permanently public, read by someone with no way to know it was ever
+edited. A language's very first entry is where the self-narration leak
+above is most tempting, because a first release genuinely is minimal in
+substance — but the entry should still say only what shipped, in the
+same past-tense, no-promise voice as every later entry. State what's in
+this version; never a sentence about why this particular version is
+minimal, what it's a placeholder for, or when the rest is expected to
+arrive. An expiring promise is exactly as wrong here as on the README,
+for the identical reason: the day the promised version actually ships,
+every already-tagged copy of the entry that named it is quietly wrong.
 
 ## Adding a new package's README
 

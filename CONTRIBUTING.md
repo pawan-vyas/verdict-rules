@@ -2,9 +2,9 @@
 
 > How to set up a change, what a contribution needs to prove before it's
 > mergeable, and where a given kind of change actually belongs. Verdict
-> is a polyglot design — only Python ships today — so this doc covers
-> what's true across every language, with a per-language section below
-> for the concrete commands.
+> is a polyglot design, so this doc covers what's true across every
+> language, with a per-language section below for the concrete
+> commands.
 
 ## Before you start
 

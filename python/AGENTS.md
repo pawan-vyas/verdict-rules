@@ -1,4 +1,4 @@
-# AGENTS.md — Python
+# AGENTS.md — Python SDK
 
 Python-specific conventions for this directory. See the repo-root
 [`../AGENTS.md`](../AGENTS.md) first for the cross-language rules
