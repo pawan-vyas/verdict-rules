@@ -134,6 +134,14 @@ jobs:
     uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
     with:
       working-directory: dart/packages/verdict_rules
+      # A job calling a reusable workflow via `uses:` cannot set `environment:`
+      # itself -- confirmed with actionlint, which rejects it outright. This
+      # reusable workflow works around that by exposing environment as an
+      # input instead and applying it to its own job internally, which is
+      # what actually lands the OIDC token's environment claim. Matches
+      # release-js.yml's `environment: npm` in effect, once pub.dev's own
+      # "Require GitHub Actions environment" is turned on to match this name.
+      environment: pub.dev
 
   release:
     name: Tag (already done) and publish the GitHub release
