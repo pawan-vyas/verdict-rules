@@ -6,6 +6,35 @@ Release history for the verdict AI-agent skill. Format follows
 This versions **the guidance**, not any language's API, so it moves on its own
 cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skill-vX.Y.Z`.
 
+## [0.5.5] - 2026-09-15
+
+- **`MANIFEST.toml`'s fetch tier no longer hand-duplicates one row per
+  language per topic.** Every topic that fetches a spec plus each
+  language's own implementation (testing, every extending scenario,
+  every sample) is now a single `[[fetch_group]]` — a `readme` and a
+  `{lang}`-templated `pattern` — expanded against a new top-level
+  `languages` list. A language with no file for a given topic yet is
+  skipped rather than erroring, so a topic doesn't have to land in
+  every language at once. Shipping a new language now means adding it
+  to `languages` once, not editing all fourteen topic blocks — the
+  file that used to grow by two lines per language per topic (a shared
+  file every language's own branch had to write new rows into, the
+  exact shape that caused two real rebase conflicts already this
+  project) now grows by one line, total, per language. Nothing an
+  agent fetches changed: `scripts/skill_manifest.py`'s `rows("fetch",
+  ...)` returns the identical (source, destination) pairs as before,
+  confirmed by diffing its output against the pre-change manifest.
+- **`commands/verdict-fetch-docs.md` now describes both manifest
+  shapes.** It previously told an agent to fetch each `[[fetch]]`
+  entry only — since the shipped `MANIFEST.toml` is read directly by a
+  consumer's own agent, not through this repository's Python parser,
+  an agent following the old instructions literally would have
+  silently skipped every `[[fetch_group]]` topic once this schema
+  shipped. Fixed before it ever shipped that way.
+- `references/python/agent-notes.md` and `references/js/agent-notes.md`
+  updated to match: the manifest holds two entry shapes now, one
+  needing `{lang}` substitution before fetching.
+
 ## [0.5.4] - 2026-09-15
 
 - **`references/python/agent-notes.md`'s testing section names

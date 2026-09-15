@@ -250,9 +250,17 @@ to an identity, absence is an error.
       its idioms, its naming, the mistakes that show up in generated code
       for this language, and the fetch recipe for the documents the
       bundle does not carry.
-- [ ] Add this language's own documents to `skills/verdict/MANIFEST.toml` —
-      quickstart, samples, worked example — in the `fetch` tier. The
-      `bundled` tier is language-agnostic and should not grow.
+- [ ] Add this language to `skills/verdict/MANIFEST.toml`'s top-level
+      `languages` list. Every `[[fetch_group]]` (testing, each extending
+      scenario, each sample) expands against that list automatically —
+      landing there is what makes this language's own file for each
+      existing topic fetchable, with no edit to any of those blocks
+      themselves. Only the quickstart still needs its own new `[[fetch]]`
+      row — its path shape (`<lang>/packages/verdict-rules/docs/`,
+      `csharp/src/VerdictRules/docs/`, ...) is genuine per-ecosystem
+      variation a pattern can't describe, not the hand-duplicated shape
+      `fetch_group` exists to remove. The `bundled` tier is
+      language-agnostic and should not grow.
 - [ ] `.claude-plugin/plugin.json` bumped in the same commit, with a
       `## skill-vX.Y.Z` changelog entry. **[`SKILL.md`](../../skills/verdict/SKILL.md)
       needs no edit** — it routes to `references/<language>/` and names
