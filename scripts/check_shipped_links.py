@@ -50,6 +50,14 @@ SHIPPED = [
         "js-v",
         lambda: json.loads(Path("js/packages/verdict-rules/package.json").read_text())["version"],
     ),
+    (
+        "C#",
+        ["csharp/src/VerdictRules/README.md", "csharp/src/VerdictRules/VerdictRules.csproj"],
+        "csharp-v",
+        lambda: re.search(
+            r"<Version>(.+?)</Version>", Path("csharp/src/VerdictRules/VerdictRules.csproj").read_text()
+        ).group(1),
+    ),
 ]
 
 
