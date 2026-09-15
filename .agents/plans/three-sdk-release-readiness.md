@@ -271,6 +271,19 @@ check-in after each branch — but surface anything genuinely blocking
 branch's own `PLAN.md` assumed) as it's found rather than guessing
 silently through it.
 
+## Deferred until every SDK reaches its terminal state
+
+[Issue #62](https://github.com/pawan-vyas/verdict-rules/issues/62) —
+exploring the skill's token economics (how much of `agent-notes.md` and
+the bundled tier is genuinely load-bearing per invocation vs. safely
+replaceable by a fetch-on-demand pointer) — is filed but deliberately
+not to be picked up yet. It needs every language's own `agent-notes.md`
+and doc set to actually exist first (Dart's and C#'s Stage 4 work,
+including their own `graduation_verdict`-equivalent example) so the
+measurement is against the real, final shape of the skill rather than
+a partial one two languages away from settling. Revisit once csharp and
+dart both reach the same terminal state js and python are already at.
+
 ## Related
 
 - [`../../docs/maintenance/adding-a-language.md`](../../docs/maintenance/adding-a-language.md) —
