@@ -82,10 +82,13 @@ the predicate signature is a rule through `FunctionRule`, with nothing declared
 and no type to name. A tear-off works directly:
 
 ```dart
-Future<RuleResult> hasQuorum(Map<String, Object?> ctx) async =>
-    RuleResult(ruleName: 'quorum', passed: ctx.length >= 3);
+Future<RuleResult> isBusinessHours(Map<String, Object?> ctx) async =>
+    RuleResult(
+      ruleName: 'is_business_hours',
+      passed: (ctx['hour']! as int) >= 9 && (ctx['hour']! as int) < 17,
+    );
 
-final rule = FunctionRule('quorum', hasQuorum);
+final rule = FunctionRule('is_business_hours', isBusinessHours);
 ```
 
 What Dart lacks is structural typing for a *multi-member* interface. An object

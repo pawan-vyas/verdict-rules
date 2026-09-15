@@ -27,9 +27,25 @@ Tagged `dart-vX.Y.Z`.
   `docs/maintenance/discoverability-metadata.md`). Dropped `policy`:
   it names a rule together with what happens when it's enforced, and
   this package only ever evaluates, never acts on the result.
+- **The structural-typing example swaps `hasQuorum`/`quorum` for
+  `isBusinessHours`/`hour`** -- kept distinct from
+  [`extending/new-rule-shape/`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.0.2/docs/extending/new-rule-shape/README.md)'s
+  own `quorum`/`ThresholdRule` vocabulary now that both ship in the
+  same repository.
+- **`doc/quickstart.md`'s complete example now nests a composite**
+  (`AndRule` containing an `OrRule`, one branch of which is itself a
+  further `AndRule`) and demonstrates `runGroup` alongside a passing
+  and a failing call, rather than repeating the same flat two-rule
+  `AndRule` + `runNamed` shape the package README's own first example
+  already covers.
+- This git tag also carries this package's own doc set for the
+  AI-agent skill, for the first time: `docs/testing/dart.md`,
+  `docs/architecture/dart.md`, one file per extending scenario, one
+  per sample -- repo-level content the skill fetches on demand, not
+  part of the published `.tar.gz` itself.
 
-No other code changed; the package itself is identical to `0.0.1`
-otherwise.
+No library code changed; the package's own runtime behavior is
+identical to `0.0.1` throughout.
 
 ## 0.0.1
 

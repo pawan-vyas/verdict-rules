@@ -38,73 +38,117 @@
 
 ## One complete example
 
+Composites nest arbitrarily deep — an `AndRule` can hold an `OrRule`,
+which can hold another `AndRule`, and so on. The same leaf checks below
+also get registered on a `RulesEngine` under one shared group label, so
+`runGroup` can report on all four regardless of whether the nested
+decision above ever looked at each one:
+
 ```dart
 import 'package:verdict_rules/verdict_rules.dart';
 
-Future<RuleResult> underDailyLimit(Map<String, Object?> context) async {
-  final spentToday = context['spent_today']! as int;
-  final limit = context['daily_limit']! as int;
-  return RuleResult(
-    ruleName: 'under_daily_limit',
-    passed: spentToday < limit,
-    detail: '$spentToday of $limit',
-  );
-}
+Future<RuleResult> inputsValid(Map<String, Object?> context) async =>
+    RuleResult(ruleName: 'inputs_valid', passed: context['has_required_fields']! as bool);
 
-Future<RuleResult> accountInGoodStanding(Map<String, Object?> context) async =>
-    RuleResult(
-      ruleName: 'account_in_good_standing',
-      passed: context['account_status'] == 'active',
-    );
+Future<RuleResult> autoApproved(Map<String, Object?> context) async =>
+    RuleResult(ruleName: 'auto_approved', passed: context['auto_approved']! as bool);
+
+Future<RuleResult> reviewerAssigned(Map<String, Object?> context) async =>
+    RuleResult(ruleName: 'reviewer_assigned', passed: context['reviewer_assigned']! as bool);
+
+Future<RuleResult> reviewCompleted(Map<String, Object?> context) async =>
+    RuleResult(ruleName: 'review_completed', passed: context['review_completed']! as bool);
 
 Future<void> main() async {
-  final canProceed = AndRule('can_proceed', [
-    FunctionRule('under_daily_limit', underDailyLimit),
-    FunctionRule('account_in_good_standing', accountInGoodStanding),
+  final taskApproved = AndRule('task_approved', [
+    FunctionRule('inputs_valid', inputsValid),
+    OrRule('approval_path', [
+      FunctionRule('auto_approved', autoApproved),
+      AndRule('manual_review', [
+        FunctionRule('reviewer_assigned', reviewerAssigned),
+        FunctionRule('review_completed', reviewCompleted),
+      ]),
+    ]),
   ]);
 
-  final engine = RulesEngine([canProceed]);
-  final result = await engine.runNamed('can_proceed', {
-    'spent_today': 42,
-    'daily_limit': 100,
-    'account_status': 'active',
-  });
-  print(result.passed); // true
+  final passing = {
+    'has_required_fields': true,
+    'auto_approved': false,
+    'reviewer_assigned': true,
+    'review_completed': true,
+  };
+  var result = await taskApproved.evaluate(passing);
+  print(result.passed); // true -- auto_approved failed, but manual review covered it
+
+  final failing = {...passing, 'review_completed': false};
+  result = await taskApproved.evaluate(failing);
+  print(result.passed); // false -- neither approval path succeeded
+
+  // The same four leaf checks, registered flat under one group for a full
+  // diagnostic view -- runGroup never short-circuits, so every check
+  // reports regardless of whether the nested decision above stopped early.
+  final engine = RulesEngine([
+    FunctionRule('inputs_valid', inputsValid, group: 'approval_checks'),
+    FunctionRule('auto_approved', autoApproved, group: 'approval_checks'),
+    FunctionRule('reviewer_assigned', reviewerAssigned, group: 'approval_checks'),
+    FunctionRule('review_completed', reviewCompleted, group: 'approval_checks'),
+  ]);
+  final diagnostic = await engine.runGroup('approval_checks', passing);
+  print(diagnostic.results.map((r) => r.passed).toList());
+  // [true, false, true, true] -- auto_approved's own failure is visible here,
+  // even though the nested decision above never had to look at it once the
+  // manual-review branch already succeeded
 }
 ```
 
 ```mermaid
 sequenceDiagram
     participant Caller as 📞 main()
-    participant Engine as ⚙️ RulesEngine
-    participant Combo as 🔀 AndRule<br/>can_proceed
-    participant R1 as ✅ under_daily_limit
-    participant R2 as ✅ account_in_good_standing
+    participant Top as 🔀 AndRule<br/>task_approved
+    participant R1 as ✅ inputs_valid
+    participant Path as 🔀 OrRule<br/>approval_path
+    participant R2 as ❌ auto_approved
+    participant Manual as 🔀 AndRule<br/>manual_review
+    participant R3 as ✅ reviewer_assigned
+    participant R4 as ✅ review_completed
 
-    Caller->>Engine: runNamed("can_proceed", context)
-    Engine->>Combo: evaluate(context)
-    Combo->>R1: evaluate(context)
-    R1-->>Combo: RuleResult(passed: true)
-    Combo->>R2: evaluate(context)
-    R2-->>Combo: RuleResult(passed: true)
-    Note over Combo: Both sub-rules passed —<br/>AndRule itself passes
-    Combo-->>Engine: RuleResult(passed: true)
-    Engine-->>Caller: RuleResult(passed: true)
+    Caller->>Top: evaluate(context)
+    Top->>R1: evaluate(context)
+    R1-->>Top: RuleResult(passed: true)
+    Top->>Path: evaluate(context)
+    Path->>R2: evaluate(context)
+    R2-->>Path: RuleResult(passed: false)
+    Note over Path: First branch failed —<br/>OrRule must try the next one
+    Path->>Manual: evaluate(context)
+    Manual->>R3: evaluate(context)
+    R3-->>Manual: RuleResult(passed: true)
+    Manual->>R4: evaluate(context)
+    R4-->>Manual: RuleResult(passed: true)
+    Note over Manual: Both sub-rules passed —<br/>AndRule itself passes
+    Manual-->>Path: RuleResult(passed: true)
+    Note over Path: A later branch passed —<br/>OrRule itself passes
+    Path-->>Top: RuleResult(passed: true)
+    Note over Top: Both sub-rules passed —<br/>AndRule itself passes
+    Top-->>Caller: RuleResult(passed: true)
 ```
 
 > **Reading the Sequence**:
 >
-> 1. **The engine looks up `"can_proceed"` by name** — `runNamed` is
->    exactly one map lookup plus one `evaluate()` call on whatever it
->    finds.
-> 2. **`AndRule` evaluates its two sub-rules in order** — the plain
->    field comparison, then the account-status check — stopping at the
->    first failure if there is one (neither fails here, so both run).
-> 3. **The composite's own result is what the engine hands back** — the
->    caller only sees one `RuleResult`, `passed: true`; the two
->    sub-rules' own results live nested in that one result's `data`, not
->    flattened into anything the caller has to unpack for this simple
->    case.
+> 1. **`inputs_valid` passes first** — a plain leaf check, no nesting
+>    involved yet.
+> 2. **`approval_path`'s first branch fails** — `auto_approved` is
+>    `false`, so the `OrRule` has no choice but to try its next branch;
+>    an `OrRule` only stops early once *something* passes, never on a
+>    failure.
+> 3. **`manual_review`, itself an `AndRule`, runs both its own checks**
+>    and passes — this is the nesting: `approval_path`'s second branch
+>    is a whole composite, not a leaf.
+> 4. **Every result folds upward** — `manual_review`'s pass makes
+>    `approval_path` pass, which makes `task_approved` pass. The caller
+>    only ever sees the one top-level `RuleResult`.
+> 5. **`runGroup` tells a different story from the same rules** — it
+>    reports `auto_approved`'s real failure, something the nested
+>    decision above never had to surface once a later branch succeeded.
 
 ## Next: build rules from your own configuration, not just hard-coded ones
 
