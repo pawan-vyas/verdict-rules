@@ -127,8 +127,6 @@ jobs:
     permissions:
       id-token: write # npm Trusted Publishing (OIDC) — no long-lived token stored
     steps:
-      - uses: actions/checkout@v7
-
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -142,9 +140,21 @@ jobs:
           npm install -g npm@latest
           npm --version
 
-      - name: Publish
-        working-directory: js/packages/verdict-rules
-        run: npm publish
+      - uses: actions/download-artifact@v4
+        with:
+          name: js-dist
+          path: js-dist
+
+      # Publishing the tarball the `build` job already produced -- not
+      # re-running `npm publish` from source -- means the bytes that were
+      # tested are the exact bytes that ship, and this job never needs its
+      # own `npm ci`. Publishing a tarball skips `prepublishOnly` entirely
+      # (it only fires when publishing a folder), which is deliberate here:
+      # that job already has devDependencies installed to run it once: this
+      # one doesn't, and re-running it here found that out the hard way,
+      # via `Cannot find package 'esbuild'` on a job with no install step.
+      - name: Publish the exact tarball already built and tested
+        run: npm publish js-dist/verdict-rules-*.tgz
 
   release:
     name: Tag and publish the GitHub release
