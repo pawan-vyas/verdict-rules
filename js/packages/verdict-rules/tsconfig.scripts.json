@@ -1,0 +1,20 @@
+{
+  // A second, narrower project: scripts/*.mjs are plain JS (esbuild-driven
+  // build tooling, never shipped -- see package.json's own "files"), so they
+  // sit outside tsconfig.json's own "include": ["src/**/*.ts"]. Without this,
+  // `npm run typecheck` never actually type-checks them at all -- confirmed
+  // the hard way, running an ad-hoc `tsc --allowJs --checkJs` against
+  // scripts/build.mjs surfaced a real bug (an inferred plain-`string` type
+  // for esbuild's `logLevel`, which a typo would have let through unnoticed).
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022"],
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": ["scripts/**/*.mjs"]
+}

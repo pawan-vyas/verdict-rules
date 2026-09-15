@@ -16,6 +16,11 @@ const shared = {
   entryPoints: ["src/index.ts"],
   bundle: true,
   sourcemap: true,
+  // Annotated, not left to plain-`string` inference: esbuild's own
+  // BuildOptions expects the LogLevel union, and a widened string type
+  // would let a typo here (`"inf0"`) through unnoticed by anything that
+  // ever typechecks this file.
+  /** @type {"info"} */
   logLevel: "info",
 };
 
