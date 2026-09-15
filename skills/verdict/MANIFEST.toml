@@ -56,6 +56,10 @@ source = "docs/testing/python.md"
 destination = "docs/testing/python.md"
 
 [[fetch]]
+source = "docs/testing/js.md"
+destination = "docs/testing/js.md"
+
+[[fetch]]
 source = "docs/extending/README.md"
 destination = "docs/extending/README.md"
 
@@ -74,12 +78,20 @@ source = "docs/extending/wrapping-a-predicate/python.md"
 destination = "docs/extending/wrapping-a-predicate/python.md"
 
 [[fetch]]
+source = "docs/extending/wrapping-a-predicate/js.md"
+destination = "docs/extending/wrapping-a-predicate/js.md"
+
+[[fetch]]
 source = "docs/extending/new-rule-shape/README.md"
 destination = "docs/extending/new-rule-shape/README.md"
 
 [[fetch]]
 source = "docs/extending/new-rule-shape/python.md"
 destination = "docs/extending/new-rule-shape/python.md"
+
+[[fetch]]
+source = "docs/extending/new-rule-shape/js.md"
+destination = "docs/extending/new-rule-shape/js.md"
 
 [[fetch]]
 source = "docs/extending/domain-adapter-module/README.md"
@@ -90,12 +102,20 @@ source = "docs/extending/domain-adapter-module/python.md"
 destination = "docs/extending/domain-adapter-module/python.md"
 
 [[fetch]]
+source = "docs/extending/domain-adapter-module/js.md"
+destination = "docs/extending/domain-adapter-module/js.md"
+
+[[fetch]]
 source = "docs/extending/data-driven-rule-construction/README.md"
 destination = "docs/extending/data-driven-rule-construction/README.md"
 
 [[fetch]]
 source = "docs/extending/data-driven-rule-construction/python.md"
 destination = "docs/extending/data-driven-rule-construction/python.md"
+
+[[fetch]]
+source = "docs/extending/data-driven-rule-construction/js.md"
+destination = "docs/extending/data-driven-rule-construction/js.md"
 
 [[fetch]]
 source = "docs/extending/nesting-composites/README.md"
@@ -106,12 +126,20 @@ source = "docs/extending/nesting-composites/python.md"
 destination = "docs/extending/nesting-composites/python.md"
 
 [[fetch]]
+source = "docs/extending/nesting-composites/js.md"
+destination = "docs/extending/nesting-composites/js.md"
+
+[[fetch]]
 source = "docs/extending/absence-vs-failure/README.md"
 destination = "docs/extending/absence-vs-failure/README.md"
 
 [[fetch]]
 source = "docs/extending/absence-vs-failure/python.md"
 destination = "docs/extending/absence-vs-failure/python.md"
+
+[[fetch]]
+source = "docs/extending/absence-vs-failure/js.md"
+destination = "docs/extending/absence-vs-failure/js.md"
 
 [[fetch]]
 source = "docs/extending/isolating-flaky-predicates/README.md"
@@ -122,8 +150,16 @@ source = "docs/extending/isolating-flaky-predicates/python.md"
 destination = "docs/extending/isolating-flaky-predicates/python.md"
 
 [[fetch]]
+source = "docs/extending/isolating-flaky-predicates/js.md"
+destination = "docs/extending/isolating-flaky-predicates/js.md"
+
+[[fetch]]
 source = "python/packages/verdict-rules/docs/quickstart.md"
 destination = "python/quickstart.md"
+
+[[fetch]]
+source = "js/packages/verdict-rules/docs/quickstart.md"
+destination = "js/quickstart.md"
 
 [[fetch]]
 source = "docs/samples/README.md"
@@ -143,12 +179,20 @@ source = "docs/samples/dynamic-discounts/python.md"
 destination = "docs/samples/dynamic-discounts/python.md"
 
 [[fetch]]
+source = "docs/samples/dynamic-discounts/js.md"
+destination = "docs/samples/dynamic-discounts/js.md"
+
+[[fetch]]
 source = "docs/samples/shipping-fee-waiver/README.md"
 destination = "docs/samples/shipping-fee-waiver/README.md"
 
 [[fetch]]
 source = "docs/samples/shipping-fee-waiver/python.md"
 destination = "docs/samples/shipping-fee-waiver/python.md"
+
+[[fetch]]
+source = "docs/samples/shipping-fee-waiver/js.md"
+destination = "docs/samples/shipping-fee-waiver/js.md"
 
 [[fetch]]
 source = "docs/samples/loyalty-tier-promotion/README.md"
@@ -159,12 +203,20 @@ source = "docs/samples/loyalty-tier-promotion/python.md"
 destination = "docs/samples/loyalty-tier-promotion/python.md"
 
 [[fetch]]
+source = "docs/samples/loyalty-tier-promotion/js.md"
+destination = "docs/samples/loyalty-tier-promotion/js.md"
+
+[[fetch]]
 source = "docs/samples/content-moderation-routing/README.md"
 destination = "docs/samples/content-moderation-routing/README.md"
 
 [[fetch]]
 source = "docs/samples/content-moderation-routing/python.md"
 destination = "docs/samples/content-moderation-routing/python.md"
+
+[[fetch]]
+source = "docs/samples/content-moderation-routing/js.md"
+destination = "docs/samples/content-moderation-routing/js.md"
 
 [[fetch]]
 source = "docs/samples/data-driven-rule-sets/README.md"
@@ -175,12 +227,20 @@ source = "docs/samples/data-driven-rule-sets/python.md"
 destination = "docs/samples/data-driven-rule-sets/python.md"
 
 [[fetch]]
+source = "docs/samples/data-driven-rule-sets/js.md"
+destination = "docs/samples/data-driven-rule-sets/js.md"
+
+[[fetch]]
 source = "docs/samples/admin-eligibility-lookup/README.md"
 destination = "docs/samples/admin-eligibility-lookup/README.md"
 
 [[fetch]]
 source = "docs/samples/admin-eligibility-lookup/python.md"
 destination = "docs/samples/admin-eligibility-lookup/python.md"
+
+[[fetch]]
+source = "docs/samples/admin-eligibility-lookup/js.md"
+destination = "docs/samples/admin-eligibility-lookup/js.md"
 
 [[fetch]]
 source = "docs/samples/graduation-requirement-verdict/README.md"

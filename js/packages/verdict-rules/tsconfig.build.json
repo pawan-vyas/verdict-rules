@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // Declarations only. esbuild owns every .js in dist/ — letting tsc also
+    // emit per-file modules would ship dead files that nothing resolves to,
+    // since the exports map points at the bundles.
+    "emitDeclarationOnly": true,
+    "sourceMap": false,
+    // src/ is not published, so a declaration map would point at files the
+    // consumer does not have. esbuild's JS maps embed sourcesContent and are
+    // self-contained; these would not be.
+    "declarationMap": false
+  }
+}

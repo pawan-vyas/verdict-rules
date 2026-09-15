@@ -6,6 +6,46 @@ Release history for the verdict AI-agent skill. Format follows
 This versions **the guidance**, not any language's API, so it moves on its own
 cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skill-vX.Y.Z`.
 
+## [0.5.3] - 2026-09-15
+
+- **`references/js/agent-notes.md`'s testing section names property-based
+  and oracle/differential testing** for a rule set built from stored
+  configuration at runtime, alongside the contracts it already named
+  (short-circuit proofs, vacuous-truth polarities, the present-but-failing
+  fallback case). Found via a real eval run: an agent satisfied every
+  contract already named here but reached for one more hand-picked
+  fixture instead of systematic coverage for the one dimension this
+  section didn't name — the guidance existed already, but only in
+  fetch-tier docs an agent correctly won't fetch before a real release
+  tag exists.
+
+## [0.5.2] - 2026-09-15
+
+- **The skill routes to JS/TS for the first time.** Adds
+  `references/js/agent-notes.md`, matching Python's own depth: install
+  and import, the full API on one screen, mistakes specific to
+  generated JS/TS code (`Promise.all` in a composite, `||`'s
+  falsy-coercion footgun where Python's `or` was saved by its result
+  types happening to be truthy but this one is not, catching
+  `UnknownLookupError` where `ruleNames`/`groupNames` should be reached
+  for instead), and the testing checklist.
+- Documents that a language's evals can run before that language's own
+  first registry publish, and how the fixture manifest's pinned version
+  is meant to be read in that case (`evals/README.md`).
+- **JS/TS gets its own concrete architecture and testing docs**:
+  `docs/architecture/js.md` ships automatically (the whole directory is
+  bundled) and `docs/testing/js.md` is a new fetch-tier row, both at
+  the same depth as Python's own. `references/js/agent-notes.md`
+  corrected: it claimed `docs/extension.md` was bundled already, which
+  was true when first written but not after this session's `docs/extending/`
+  split moved it to fetch-tier.
+- **JS/TS gets its own quickstart**,
+  `js/packages/verdict-rules/docs/quickstart.md`, a new fetch-tier row
+  matching Python's own. `references/js/agent-notes.md`'s own fetch
+  recipe updated to match — it previously said this language had no
+  quickstart or samples yet, which had already stopped being true
+  earlier in this same entry.
+
 ## [0.5.1] - 2026-09-15
 
 No guidance changed.

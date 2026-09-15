@@ -48,6 +48,33 @@ verdict.passed   # False
 verdict.detail   # "'in_good_standing' failed"
 ```
 
+### JavaScript/TypeScript
+
+```bash
+npm install verdict-rules
+```
+
+```ts
+import { AndRule, FunctionRule } from "verdict-rules";
+
+async function underLimit(ctx) {
+  return { ruleName: "under_limit", passed: ctx.used < ctx.quota };
+}
+
+async function inGoodStanding(ctx) {
+  return { ruleName: "in_good_standing", passed: ctx.strikes === 0 };
+}
+
+const allowed = new AndRule("allowed", [
+  new FunctionRule("under_limit", underLimit),
+  new FunctionRule("in_good_standing", inGoodStanding),
+]);
+
+const verdict = await allowed.evaluate({ used: 3, quota: 10, strikes: 1 });
+verdict.passed;   // false
+verdict.detail;   // "'in_good_standing' failed"
+```
+
 That is the whole library in one screen. What it buys you is not the
 composition — you could write that yourself in an afternoon — but the
 guarantee underneath it:
@@ -147,6 +174,15 @@ uv sync
 uv run pytest
 ```
 
+### JavaScript/TypeScript
+
+```bash
+cd js/
+npm install
+npm run build   # tests import from dist/, not src/
+npm test
+```
+
 ## Contributing
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for how to set up a change and
@@ -162,5 +198,5 @@ Release history:
 | Language | Registry | Version | Compatibility | Tests | Supply Chain |
 | :-- | :-- | :-- | :-- | :-- | :-- |
 | Python | [PyPI](https://pypi.org/project/verdict-rules/) | [![PyPI](https://img.shields.io/pypi/v/verdict-rules.svg)](https://pypi.org/project/verdict-rules/) | [![Python Versions](https://img.shields.io/pypi/pyversions/verdict-rules.svg)](https://pypi.org/project/verdict-rules/) | [![Tests](https://github.com/pawan-vyas/verdict-rules/actions/workflows/test-python.yml/badge.svg)](https://github.com/pawan-vyas/verdict-rules/actions/workflows/test-python.yml) | [Socket.dev](https://socket.dev/pypi/package/verdict-rules) |
-| JS/TS | [npm](https://www.npmjs.com/package/verdict-rules) | [![npm](https://img.shields.io/npm/v/verdict-rules.svg)](https://www.npmjs.com/package/verdict-rules) | [![Node](https://img.shields.io/node/v/verdict-rules.svg)](https://www.npmjs.com/package/verdict-rules), `<script>`/CDN | [![Tests](https://github.com/pawan-vyas/verdict-rules/actions/workflows/test-js.yml/badge.svg)](https://github.com/pawan-vyas/verdict-rules/actions/workflows/test-js.yml) | [Socket.dev](https://socket.dev/npm/package/verdict-rules) |
+| JS/TS | [npm](https://www.npmjs.com/package/verdict-rules) | [![npm](https://img.shields.io/npm/v/verdict-rules.svg)](https://www.npmjs.com/package/verdict-rules) | [![Node](https://img.shields.io/node/v/verdict-rules.svg)](https://www.npmjs.com/package/verdict-rules) `<script>`/CDN | [![Tests](https://github.com/pawan-vyas/verdict-rules/actions/workflows/test-js.yml/badge.svg)](https://github.com/pawan-vyas/verdict-rules/actions/workflows/test-js.yml) | [Socket.dev](https://socket.dev/npm/package/verdict-rules) |
 | Verdict-Rules Skill | [GitHub](skills/verdict/) | [![Skill](https://img.shields.io/github/v/tag/pawan-vyas/verdict-rules?filter=skill-v*&label=skill)](skills/verdict/CHANGELOG.md) | Any [Agent Skills](https://agentskills.io/home)-conformant harness | [![Skill Check](https://github.com/pawan-vyas/verdict-rules/actions/workflows/check-skill-version.yml/badge.svg)](https://github.com/pawan-vyas/verdict-rules/actions/workflows/check-skill-version.yml) | — |
