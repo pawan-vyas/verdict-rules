@@ -10,7 +10,8 @@ topics:
   - rules-engine
   - rule-evaluation
   - eligibility
-  - policy
+  - decision-engine
+  - async
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

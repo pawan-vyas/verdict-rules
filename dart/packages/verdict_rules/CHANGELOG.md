@@ -19,8 +19,17 @@ Tagged `dart-vX.Y.Z`.
   rather than the repository root. There is no root `pubspec.yaml` --
   the package lives in a subdirectory of a polyglot monorepo -- so
   pana's "provide a valid pubspec.yaml" check could never find one at
-  the bare repository URL and always failed. No other code changed;
-  the package itself is identical to `0.0.1` otherwise.
+  the bare repository URL and always failed.
+- `topics` is now `rules-engine`, `rule-evaluation`, `eligibility`,
+  `decision-engine`, `async` -- pub.dev caps this field at 5 entries,
+  so it carries a curated subset of the full keyword set this project
+  uses everywhere else (see
+  `docs/maintenance/discoverability-metadata.md`). Dropped `policy`:
+  it names a rule together with what happens when it's enforced, and
+  this package only ever evaluates, never acts on the result.
+
+No other code changed; the package itself is identical to `0.0.1`
+otherwise.
 
 ## 0.0.1
 
