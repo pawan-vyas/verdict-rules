@@ -100,12 +100,11 @@ that are easy to skip:
 
 [`references/docs/architecture/README.md`](../../../../docs/architecture/README.md)
 ships bundled — the design rationale is always available with no fetch
-needed. `docs/extending/` and `docs/samples/` are fetch-tier, same as
-for every language: too much to ship on every install, pulled at the
-version actually installed. This SDK does not yet have its own
-quickstart or worked samples, so
-[`references/docs/testing/`](../../../../docs/testing/README.md) is the
-one document worth fetching before those exist:
+needed. [`references/docs/testing/`](../../../../docs/testing/README.md),
+`docs/extending/`, and `docs/samples/` are fetch-tier, same as for
+every language: too much to ship on every install, pulled at the
+version actually installed. This SDK's own quickstart is fetch-tier
+too, same as Python's:
 
 ```bash
 VERSION=$(node -p "require('verdict-rules/package.json').version")
@@ -113,6 +112,8 @@ TAG="js-v${VERSION}"
 BASE="https://raw.githubusercontent.com/pawan-vyas/verdict-rules/${TAG}"
 
 curl -fsSL "${BASE}/docs/testing/README.md" -o references/docs/testing/README.md
+curl -fsSL "${BASE}/js/packages/verdict-rules/docs/quickstart.md" \
+     -o references/js/quickstart.md
 ```
 
 The manifest at `MANIFEST.toml` lists every fetchable document with its

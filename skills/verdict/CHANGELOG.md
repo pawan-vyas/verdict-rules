@@ -15,9 +15,7 @@ cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skil
   falsy-coercion footgun where Python's `or` was saved by its result
   types happening to be truthy but this one is not, catching
   `UnknownLookupError` where `ruleNames`/`groupNames` should be reached
-  for instead), and the testing checklist. No quickstart or samples yet
-  for this language — noted honestly rather than pointing at documents
-  that do not exist.
+  for instead), and the testing checklist.
 - Documents that a language's evals can run before that language's own
   first registry publish, and how the fixture manifest's pinned version
   is meant to be read in that case (`evals/README.md`).
@@ -28,6 +26,12 @@ cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skil
   corrected: it claimed `docs/extension.md` was bundled already, which
   was true when first written but not after this session's `docs/extending/`
   split moved it to fetch-tier.
+- **JS/TS gets its own quickstart**,
+  `js/packages/verdict-rules/docs/quickstart.md`, a new fetch-tier row
+  matching Python's own. `references/js/agent-notes.md`'s own fetch
+  recipe updated to match — it previously said this language had no
+  quickstart or samples yet, which had already stopped being true
+  earlier in this same entry.
 
 ## [0.5.1] - 2026-09-15
 

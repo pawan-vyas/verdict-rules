@@ -158,6 +158,10 @@ source = "python/packages/verdict-rules/docs/quickstart.md"
 destination = "python/quickstart.md"
 
 [[fetch]]
+source = "js/packages/verdict-rules/docs/quickstart.md"
+destination = "js/quickstart.md"
+
+[[fetch]]
 source = "docs/samples/README.md"
 destination = "docs/samples/README.md"
 

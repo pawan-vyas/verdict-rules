@@ -163,6 +163,7 @@ one everybody thinks of first.
 
 | Doc | For |
 | --- | --- |
+| [`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.1/js/packages/verdict-rules/docs/quickstart.md) | The quickstart — core concepts and a full worked example |
 | [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.1/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
 | [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.1/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
 | [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.1/docs/maintenance/README.md) | Changing this package itself |
