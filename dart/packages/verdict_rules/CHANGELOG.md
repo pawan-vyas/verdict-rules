@@ -11,6 +11,17 @@ than that convention's bracketed, dated one.
 
 Tagged `dart-vX.Y.Z`.
 
+## 0.0.2
+
+- Fixed `pubspec.yaml`'s `repository` field: pointed at this package's
+  own subdirectory
+  (`https://github.com/pawan-vyas/verdict-rules/tree/main/dart/packages/verdict_rules`)
+  rather than the repository root. There is no root `pubspec.yaml` --
+  the package lives in a subdirectory of a polyglot monorepo -- so
+  pana's "provide a valid pubspec.yaml" check could never find one at
+  the bare repository URL and always failed. No other code changed;
+  the package itself is identical to `0.0.1` otherwise.
+
 ## 0.0.1
 
 First publish, claiming the name. Correct but minimal: the full type set
