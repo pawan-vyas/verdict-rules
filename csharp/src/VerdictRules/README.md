@@ -39,7 +39,8 @@ var eligible = new AndRule("eligible", new IRule[]
     AtLeast("score_ok", "score", 60),
 });
 
-var verdict = await eligible.EvaluateAsync(new Dictionary<string, object?>
+var engine = new RulesEngine(new IRule[] { eligible });
+var verdict = await engine.RunNamedAsync("eligible", new Dictionary<string, object?>
 {
     ["age"] = 21,
     ["score"] = 55,
@@ -137,11 +138,3 @@ package lands on real source rather than a decompiler.
 | [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.0.1/docs/maintenance/README.md) | Changing this package itself |
 | [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.0.1/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
 | [`docs/samples/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.0.1/docs/samples/README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
-
-## Development
-
-```bash
-cd csharp
-dotnet build src/VerdictRules/VerdictRules.csproj -warnaserror
-dotnet test tests/VerdictRules.Tests/VerdictRules.Tests.csproj
-```
