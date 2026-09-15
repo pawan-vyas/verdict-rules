@@ -104,7 +104,6 @@ implementation, rather than landing in a consumer's override.
 
 | Doc | For |
 | --- | --- |
-| [Top-level `README.md`](https://github.com/pawan-vyas/verdict-rules#readme) | What Verdict is and why it's shaped this way, in narrative form |
 | [`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.0.1/dart/packages/verdict_rules/docs/quickstart.md) | The quickstart — core concepts and a full worked example |
 | [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.0.1/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
 | [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.0.1/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
