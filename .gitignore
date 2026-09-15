@@ -54,5 +54,14 @@ dart/.dart_tool/
 dart/.packages
 dart/pubspec.lock
 dart/build/
+# Dart commands run from inside each package directory (see dart/AGENTS.md --
+# there is deliberately no root pubspec.yaml yet), so .dart_tool/ actually
+# lands under packages/<name>/, not the workspace root. This pattern leaked
+# into a commit three times this session before catching that the rule above
+# never matched where the artifact was really created.
+dart/packages/*/.dart_tool/
+dart/packages/*/.packages
+dart/packages/*/pubspec.lock
+dart/packages/*/build/
 csharp/**/bin/
 csharp/**/obj/

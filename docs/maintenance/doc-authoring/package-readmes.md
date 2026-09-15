@@ -35,14 +35,19 @@ over.
    character markdownlint's `MD020` reads as a stray closed-heading
    marker (C#'s `#`) needs one more word after it — `# Verdict — C# SDK`
    — rather than dropping the language name to dodge the lint failure.
-2. **Blockquote** — one line naming what this package is, a pointer to
-   the [top-level `README.md`](https://github.com/pawan-vyas/verdict-rules#readme)
-   for the narrative "why" (never restated here), and the fact that this
-   exact file is what the registry renders as the package description —
-   which is *why* every link in it is an absolute GitHub URL rather than
-   a relative path: none of this file's sibling files travel with an
-   install, so a relative link that resolves on GitHub 404s the moment a
-   reader is looking at it from PyPI, npm, or wherever else.
+2. **Blockquote** — one line naming what this package is, nothing else.
+   Neither a pointer to the top-level `README.md`'s narrative "why" nor
+   an explanation of why the registry renders this file belongs here —
+   both read as the document talking about itself on a page a consumer
+   landed on to install something, the same failure "No narration about
+   the document itself" already names for every other doc in this repo.
+   The narrative-"why" pointer belongs in `## Where to go next`'s own
+   first row instead. Every link in the file still has to be an
+   absolute GitHub URL rather than a relative path — none of this
+   file's sibling files travel with an install, so a relative link that
+   resolves on GitHub 404s the moment a reader is looking at it from
+   PyPI, npm, or wherever else — but that's a fact for whoever authors
+   this file, not something the file needs to explain to its own reader.
 3. **`## Install`** — the install command, the import/require statement,
    and — only where the registry actually has one — a note on a naming
    split between the distribution name and the import name (Python's
@@ -50,8 +55,18 @@ over.
    name was already taken). Skip the note entirely where there's no
    split to explain; don't manufacture one.
 4. **One first-example section** — a single runnable example with real
-   output shown, not a fragment. Heading text is that language's own
-   idiom for "here's the whole thing" (Python's "A first rule," for
+   output shown, not a fragment, that demonstrates the whole path: build
+   a rule or two, wrap them in a `RulesEngine`, and run one by name —
+   never stop at a bare composite's own `.evaluate()`. `RulesEngine` is
+   one of the five named primitives this package is built around; an
+   example that skips straight from `AndRule` to `.evaluate()` shows
+   four of the five and never introduces the one that holds a whole rule
+   set. `docs/quickstart.md`'s own "one complete example" follows the
+   identical shape one level deeper — the same primitives, the same
+   run-by-name pattern, a second worked scenario rather than a
+   restatement of this one; the two should never demonstrate a different
+   subset of the API from each other. Heading text is that language's
+   own idiom for "here's the whole thing" (Python's "A first rule," for
    instance) rather than a generic "Usage" — see
    [`README.md`](README.md)'s rule against narrating the document
    instead of showing the thing.
@@ -66,21 +81,32 @@ over.
    type and method names. This is the actual value proposition — the
    one section a skimming reader most needs, so it never gets cut for
    space the way a "nice to have" section would.
-7. **`## Where to go next`** — a table linking the deeper docs
-   (quickstart, architecture, extending, maintenance, testing, samples,
-   examples), every link an absolute GitHub URL pinned to that package's
-   own release tag — see
+7. **`## Where to go next`** — a table linking the deeper docs. First
+   row is always the [top-level `README.md`](https://github.com/pawan-vyas/verdict-rules#readme)
+   itself, for what Verdict is and why it's shaped this way in
+   narrative form — the pointer the blockquote used to carry as prose.
+   The rest (quickstart, architecture, extending, maintenance, testing,
+   samples, examples) follow, every link an absolute GitHub URL pinned
+   to that package's own release tag — see
    [`versioned-links.md`](../versioned-links.md) and
    `scripts/check_shipped_links.py`, which enforces this mechanically.
-8. **`## Development`** — the local build/test commands for that
-   package, in that ecosystem's own tooling.
-
 License is deliberately not a mandated section: every registry this
 project ships to already surfaces it from that package's own manifest
 metadata (PyPI's `license` field, npm's `license` field, and so on), so
 a `## Licence` heading repeats what the registry's own page chrome
 already shows. Add one only if a package's own registry doesn't surface
 license metadata on its page.
+
+**`## Development` is deliberately not a mandated section either** —
+dropped, not just unmandated, after it turned out to fail this
+template's own three-leaks test below: `CONTRIBUTING.md`'s own
+per-language section already carries the same commands, plus the
+actual testing/PR bar around them, and a subset of that repeated here
+is contributor-facing content on a page a consumer landed on to
+install the package, not to change it. `## Where to go next` already
+links `docs/maintenance/` for "changing this package itself," so
+nothing is lost by dropping it — the skeleton is seven sections, not
+eight.
 
 ## What's genuinely package-manager and language specific
 
