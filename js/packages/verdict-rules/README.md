@@ -38,14 +38,14 @@ any object of the right shape already *is* a `Rule`. No `implements`, no base
 class, no registration:
 
 ```ts
-const overEighteen = {
-  name: "over_18",
+const isBusinessHours = {
+  name: "is_business_hours",
   async evaluate(ctx: Context) {
-    return { ruleName: "over_18", passed: (ctx.age as number) >= 18 };
+    return { ruleName: "is_business_hours", passed: (ctx.hour as number) >= 9 && (ctx.hour as number) < 17 };
   },
 };
 
-await new AndRule("eligible", [overEighteen]).evaluate({ age: 21 });
+await new AndRule("open", [isBusinessHours]).evaluate({ hour: 21 });
 ```
 
 Most rules need no object literal either: `FunctionRule` wraps a plain async
@@ -155,9 +155,9 @@ one everybody thinks of first.
 
 | Doc | For |
 | --- | --- |
-| [`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.4/js/packages/verdict-rules/docs/quickstart.md) | The quickstart — core concepts and a full worked example |
-| [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.4/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
-| [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.4/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
-| [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.4/docs/maintenance/README.md) | Changing this package itself |
-| [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.4/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
-| [`docs/samples/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.4/docs/samples/README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
+| [`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.5/js/packages/verdict-rules/docs/quickstart.md) | The quickstart — core concepts and a full worked example |
+| [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.5/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
+| [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.5/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
+| [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.5/docs/maintenance/README.md) | Changing this package itself |
+| [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.5/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
+| [`docs/samples/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.5/docs/samples/README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |

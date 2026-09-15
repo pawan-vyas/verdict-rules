@@ -8,6 +8,27 @@ which keeps its own changelog beside its own manifest.
 
 Tagged `python-vX.Y.Z`.
 
+## [0.2.7] - 2026-09-16
+
+### Changed
+
+- **The PyPI landing page's first example now uses a reusable
+  `at_least(name, field, floor)` predicate factory** (`eligible` --
+  `age_ok`/`score_ok`), matching the shape JS's and Dart's own package
+  pages already use, instead of two hand-written predicates with no
+  shared abstraction between them.
+- **The structural-typing example swaps `OverEighteen`/`age` for
+  `IsBusinessHours`/`hour`** -- kept distinct from the main example's
+  own `age` field now that both live on the same page.
+- **`docs/quickstart.md`'s complete example now nests a composite**
+  (`AndRule` containing an `OrRule`, one branch of which is itself a
+  further `AndRule`) and demonstrates `run_group` alongside a passing
+  and a failing call, rather than repeating the same flat two-rule
+  `AndRule` + `run_named` shape the package README's own first example
+  already covers.
+
+Package identical to `0.2.6` otherwise.
+
 ## [0.2.6] - 2026-09-15
 
 ### Changed
