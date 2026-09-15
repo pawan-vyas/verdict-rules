@@ -19,7 +19,7 @@ verdict, and run that verdict against whatever facts a caller hands it
 a permission, or a discount. It only knows how to ask a rule "did you
 pass?" and combine the answers honestly.
 
-Verdict is a polyglot design. **Only Python ships today.**
+Verdict is a polyglot design.
 
 ## Quickstart
 
@@ -126,6 +126,8 @@ graph LR
 | --- | --- |
 | [`python/README.md`](python/packages/verdict-rules/README.md) | Python quickstart — `pip install verdict-rules`, first rule |
 | [`python/packages/verdict-rules/docs/quickstart.md`](python/packages/verdict-rules/docs/quickstart.md) | Core concepts and a full worked example |
+| [`js/README.md`](js/packages/verdict-rules/README.md) | JS/TS quickstart — `npm install verdict-rules`, first rule |
+| [`js/packages/verdict-rules/docs/quickstart.md`](js/packages/verdict-rules/docs/quickstart.md) | Core concepts and a full worked example |
 | [`docs/architecture/`](docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
 | [`docs/extending/`](docs/extending/README.md) | Building on top of it from your own code, with no changes here |
 | [`docs/maintenance/`](docs/maintenance/README.md) | Changing this package itself |

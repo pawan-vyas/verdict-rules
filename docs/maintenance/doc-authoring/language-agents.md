@@ -25,7 +25,11 @@ that predates the convergence into the same shape.
 
 ## The shared skeleton, in order
 
-1. **Title** — `# AGENTS.md — <Language>`.
+1. **Title** — `# AGENTS.md — <Language> SDK` (`# AGENTS.md — Python SDK`,
+   `# AGENTS.md — C# SDK`). The `SDK` suffix isn't decorative: a bare
+   `# AGENTS.md — C#` trips markdownlint's `MD020` — a trailing `#`
+   reads as a stray closed-heading marker — so every language carries
+   the same suffix rather than only the one language that's forced to.
 2. **Opening line** — one sentence pointing at the repo-root
    [`AGENTS.md`](../../../AGENTS.md) for the cross-language rules
    (portability, the two constraints, dispatch-as-a-table, diagram
