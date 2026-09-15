@@ -24,7 +24,18 @@ Follow these steps exactly.
    API it does not have, which is worse than reading nothing. Say that the
    deeper documents were unavailable and continue with what is bundled.
 
-4. **Fetch each `fetch` entry in `MANIFEST.toml`** from
+4. **Fetch every document `MANIFEST.toml` names for this language.** Two
+   shapes:
+   - Each `[[fetch]]` entry, as-is: `source` and `destination` are already
+     the exact paths to use.
+   - Each `[[fetch_group]]` entry, twice: once for `readme` as-is, once for
+     `pattern` with `{lang}` replaced by the language determined in step 1
+     (e.g. `docs/testing/{lang}.md` → `docs/testing/python.md`). If that
+     substituted path 404s, that is expected, not an error — it means this
+     topic has no file for this language yet; skip it and continue, the
+     same as any other partial fetch.
+
+   Fetch each resolved `source` from
    `https://raw.githubusercontent.com/pawan-vyas/verdict-rules/<tag>/<source>`
    into `references/<destination>`, creating directories as needed.
 
