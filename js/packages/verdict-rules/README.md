@@ -155,10 +155,9 @@ one everybody thinks of first.
 
 | Doc | For |
 | --- | --- |
-| [Top-level `README.md`](https://github.com/pawan-vyas/verdict-rules#readme) | What Verdict is and why it's shaped this way, in narrative form |
-| [`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.2/js/packages/verdict-rules/docs/quickstart.md) | The quickstart — core concepts and a full worked example |
-| [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.2/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
-| [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.2/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
-| [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.2/docs/maintenance/README.md) | Changing this package itself |
-| [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.2/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
-| [`docs/samples/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.2/docs/samples/README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
+| [`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.3/js/packages/verdict-rules/docs/quickstart.md) | The quickstart — core concepts and a full worked example |
+| [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.3/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
+| [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.3/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
+| [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.3/docs/maintenance/README.md) | Changing this package itself |
+| [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.3/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
+| [`docs/samples/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.3/docs/samples/README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |

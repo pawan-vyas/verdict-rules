@@ -8,6 +8,17 @@ which keeps its own changelog beside its own manifest.
 
 Tagged `python-vX.Y.Z`.
 
+## [0.2.5] - 2026-09-15
+
+### Changed
+
+- **Drops the "Where to go next" row pointing back at the top-level
+  `README.md`.** `docs/architecture/` is already linked in the same
+  table and already covers "why it's shaped this way," in more depth
+  than a narrative pointer would — a second row saying the same thing
+  again was dead weight, not a different fact. Package identical to
+  `0.2.4` otherwise.
+
 ## [0.2.4] - 2026-09-15
 
 ### Changed

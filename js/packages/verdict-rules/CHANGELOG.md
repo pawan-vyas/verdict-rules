@@ -5,6 +5,14 @@ Release history for the `verdict-rules` JS/TS package. Format follows
 [semantic versioning](https://semver.org/), scoped to this package — it
 releases independently of the other language SDKs and of the AI-agent skill.
 
+## [0.0.3] - 2026-09-15
+
+- **Drops the "Where to go next" row pointing back at the top-level
+  `README.md`.** `docs/architecture/` is already linked in the same
+  table and already covers "why it's shaped this way," in more depth
+  than a narrative pointer would — a second row saying the same thing
+  again was dead weight, not a different fact.
+
 ## [0.0.2] - 2026-09-15
 
 - **The npm landing page's first example now demonstrates `RulesEngine`**,

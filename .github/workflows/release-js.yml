@@ -106,14 +106,26 @@ jobs:
           npm ci
           npm run build --workspace=verdict-rules
 
+      # Packed into its own directory, never the tsc/esbuild dist/ it
+      # builds alongside -- that folder also holds every raw build output
+      # (index.js, index.cjs, each .d.ts, every sourcemap). Uploading dist/
+      # itself as the artifact once meant every one of those files rode along
+      # as its own GitHub release asset instead of the single tarball a
+      # consumer actually wants -- the same shape Python's release gets for
+      # free because `uv build`'s own dist/ only ever holds the wheel and
+      # sdist. Packing to a dedicated pack/ directory is what keeps this
+      # artifact -- and everything downstream that reads it, the npm-publish
+      # step and the GitHub release assets alike -- down to that one file.
       - name: Pack
         working-directory: js/packages/verdict-rules
-        run: npm pack --pack-destination dist
+        run: |
+          mkdir -p pack
+          npm pack --pack-destination pack
 
       - uses: actions/upload-artifact@v4
         with:
           name: js-dist
-          path: js/packages/verdict-rules/dist/
+          path: js/packages/verdict-rules/pack/
 
   # This job must stay in THIS file, the same reason the other languages'
   # publish steps do: publishing is the one genuinely per-registry step, with

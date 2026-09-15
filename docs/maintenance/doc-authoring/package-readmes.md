@@ -41,8 +41,10 @@ over.
    both read as the document talking about itself on a page a consumer
    landed on to install something, the same failure "No narration about
    the document itself" already names for every other doc in this repo.
-   The narrative-"why" pointer belongs in `## Where to go next`'s own
-   first row instead. Every link in the file still has to be an
+   `## Where to go next`'s own `docs/architecture/` row already covers
+   the "why," in more depth than a narrative pointer would — a second
+   row saying it again would be dead weight next to it, not a
+   different fact. Every link in the file still has to be an
    absolute GitHub URL rather than a relative path — none of this
    file's sibling files travel with an install, so a relative link that
    resolves on GitHub 404s the moment a reader is looking at it from
@@ -81,15 +83,16 @@ over.
    type and method names. This is the actual value proposition — the
    one section a skimming reader most needs, so it never gets cut for
    space the way a "nice to have" section would.
-7. **`## Where to go next`** — a table linking the deeper docs. First
-   row is always the [top-level `README.md`](https://github.com/pawan-vyas/verdict-rules#readme)
-   itself, for what Verdict is and why it's shaped this way in
-   narrative form — the pointer the blockquote used to carry as prose.
-   The rest (quickstart, architecture, extending, maintenance, testing,
-   samples, examples) follow, every link an absolute GitHub URL pinned
-   to that package's own release tag — see
+7. **`## Where to go next`** — a table linking the deeper docs
+   (quickstart, architecture, extending, maintenance, testing, samples,
+   examples), every link an absolute GitHub URL pinned to that
+   package's own release tag — see
    [`versioned-links.md`](../versioned-links.md) and
    `scripts/check_shipped_links.py`, which enforces this mechanically.
+   No row for the top-level `README.md` itself: `docs/architecture/`
+   already covers "why it's shaped this way," so a second row pointing
+   at the same fact in narrative form is redundant next to it, not a
+   different one.
 License is deliberately not a mandated section: every registry this
 project ships to already surfaces it from that package's own manifest
 metadata (PyPI's `license` field, npm's `license` field, and so on), so
