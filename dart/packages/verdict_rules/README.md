@@ -1,16 +1,7 @@
 # Verdict — Dart
 
 > The Dart implementation of Verdict — a small, zero-dependency,
-> async-native rule-evaluation engine. See the [top-level
-> `README.md`](https://github.com/pawan-vyas/verdict-rules#readme) for
-> what Verdict is and why it's shaped this way in narrative form; this
-> doc is just "how do I install it and write my first rule" for Dart
-> specifically.
->
-> This exact file is also what pub.dev renders as the package
-> description — none of its sibling files travel with a `dart pub get`,
-> which is why every link below is an absolute GitHub URL rather than a
-> relative path; on GitHub itself they work exactly the same way.
+> async-native rule-evaluation engine.
 
 ## Install
 
@@ -113,6 +104,7 @@ implementation, rather than landing in a consumer's override.
 
 | Doc | For |
 | --- | --- |
+| [Top-level `README.md`](https://github.com/pawan-vyas/verdict-rules#readme) | What Verdict is and why it's shaped this way, in narrative form |
 | [`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.0.1/dart/packages/verdict_rules/docs/quickstart.md) | The quickstart — core concepts and a full worked example |
 | [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.0.1/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
 | [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.0.1/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
