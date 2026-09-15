@@ -16,6 +16,9 @@
 | [`architecture.md`](architecture.md) | The shared design doc plus one concrete file per language under `docs/architecture/` |
 | [`testing.md`](testing.md) | The shared testing guide plus one concrete file per language under `docs/testing/` |
 | [`package-readmes.md`](package-readmes.md) | Each package's own `README.md` — the file its registry renders as the package description |
+| [`language-agents.md`](language-agents.md) | Each language's own top-level `AGENTS.md` |
+| [`skill-agent-notes.md`](skill-agent-notes.md) | Each language's own `skills/verdict/references/<language>/agent-notes.md` |
+| [`release-procedures.md`](release-procedures.md) | Each language's own `docs/maintenance/releases/<language>.md` |
 | [`maintenance.md`](maintenance.md) | This `maintenance/` directory's own file-naming and structure conventions |
 
 ## No narration about the document itself
