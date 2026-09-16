@@ -70,17 +70,13 @@ SHIPPED = [
         "Dart",
         ["dart/packages/verdict_rules/README.md", "dart/packages/verdict_rules/pubspec.yaml"],
         "dart-v",
-        lambda: re.search(
-            r"^version:\s*(\S+)", Path("dart/packages/verdict_rules/pubspec.yaml").read_text(), re.M
-        ).group(1),
+        lambda: _regex_version(r"^version:\s*(\S+)", "dart/packages/verdict_rules/pubspec.yaml"),
     ),
     (
         "C#",
         ["csharp/src/VerdictRules/README.md", "csharp/src/VerdictRules/VerdictRules.csproj"],
         "csharp-v",
-        lambda: re.search(
-            r"<Version>(.+?)</Version>", Path("csharp/src/VerdictRules/VerdictRules.csproj").read_text()
-        ).group(1),
+        lambda: _regex_version(r"<Version>(.+?)</Version>", "csharp/src/VerdictRules/VerdictRules.csproj"),
     ),
 ]
 
