@@ -1,0 +1,16 @@
+{
+  "eval_name": "fetch-docs-completeness",
+  "prompt": "Before we touch any code, I want to understand what VerdictRules actually offers here. Our checks are a mix of a few hardcoded conditions and some rules that get built at runtime from per-tenant config stored in our database, and a couple of the underlying checks call out to a flaky third-party service that times out sometimes. Pull in whatever reference material is relevant to those two situations, and also grab a real worked example close to what we're doing so I can see a full solution end to end. Then tell me what you found and where each thing lives.",
+  "expected_output": "A response that fetches the deeper documentation at the version pinned in StorefrontApi.csproj's own PackageReference (csharp-v0.0.1) covering both scenarios named -- building rules from stored/runtime configuration and isolating a flaky predicate from the rest of a run -- plus at least one worked sample, and reports back what it fetched and roughly what each document covers. The two scenarios named are deliberately not the ones shown as literal examples in references/csharp/agent-notes.md's own fetch recipe, so getting them right means the agent expanded the manifest's fetch_group entries for this language rather than only fetching the handful of paths it saw spelled out verbatim.",
+  "files": [
+    "files/StorefrontApi.csproj"
+  ],
+  "expectations": [
+    "The project's language and installed version are both read from StorefrontApi.csproj's own PackageReference Version attribute, not assumed",
+    "The response fetches or otherwise surfaces docs/extending/data-driven-rule-construction/ content, not just a from-memory description of the pattern",
+    "The response fetches or otherwise surfaces docs/extending/isolating-flaky-predicates/ content, not just a from-memory description of the pattern",
+    "The response fetches or otherwise surfaces at least one docs/samples/ worked example, not just the quickstart",
+    "The response does not stop at only the two documents shown as literal curl examples in agent-notes.md (docs/testing/README.md and the quickstart) while treating the rest of the deeper documentation as unavailable",
+    "No document path is invented -- everything fetched or cited corresponds to an actual path MANIFEST.toml declares for this language"
+  ]
+}

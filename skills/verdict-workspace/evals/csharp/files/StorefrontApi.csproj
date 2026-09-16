@@ -1,0 +1,38 @@
+<!--
+A minimal, deliberately ordinary project manifest.
+
+It exists so an eval run has something to answer the skill's first step
+with -- "read the target project's own manifest to determine the
+language" is not testable in an empty directory, and an agent that has
+to guess the language is not being asked the question the skill
+actually poses.
+
+The pinned VerdictRules version matters for the same reason it matters
+for every other language: the skill says to fetch deeper documentation
+at the version a project actually has, never from the default branch.
+Unlike Dart's pubspec.yaml/pubspec.lock pair, a single PackageReference
+Version attribute already names the exact resolved version directly --
+NuGet's default is an exact pin, not a floating range -- so this
+fixture needs no separate lockfile the way Dart's does.
+
+Keep this at a version that is ACTUALLY published and ACTUALLY tagged
+(csharp-vX.Y.Z) -- check NuGet and the git tag before bumping it. A
+changelog entry for a version that never went through the real release
+workflow is not evidence it exists; pinning one here silently breaks
+the fetch-at-the-installed-version instruction this fixture exists to
+test.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>StorefrontApi</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="VerdictRules" Version="0.0.1" />
+  </ItemGroup>
+
+</Project>
