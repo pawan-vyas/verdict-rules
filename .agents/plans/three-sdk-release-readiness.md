@@ -145,6 +145,13 @@ Same shape for csharp and dart; js gets the extra Stage-4 rows.
       the API surface": SourceLink/`.snupkg` "must be set *before* a
       version ships — released versions cannot be made debuggable
       retroactively."
+- [ ] **Target-framework support surface, genuinely undecided** —
+      `net8.0;netstandard2.1` in `VerdictRules.csproj` was never itself
+      the product of a "how far back" discussion; see
+      `.agents/plans/csharp-sdk/PLAN.md` §8 for the full writeup
+      (whether `netstandard2.1` stays, whether `net9.0`/`net10.0` land
+      now, and the `<IsAotCompatible>` allowlist-vs-denylist follow-on).
+      Needs a real decision before the `0.0.1` cut, not a default.
 
 ### `plan/dart-sdk` — [PR #7](https://github.com/pawan-vyas/verdict-rules/pull/7), Stage 2/3 done, CI green
 
