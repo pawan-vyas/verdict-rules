@@ -24,7 +24,11 @@ public sealed class RulesEngine
     public RulesEngine(IReadOnlyList<IRule> rules)
     {
         _rules = rules;
-        _byName = new Dictionary<string, IRule>(StringComparer.Ordinal);
+        // rules.Count is an exact upper bound for _byName (one entry per rule,
+        // fewer only if names collide) but not for _byGroup -- the distinct
+        // group count is data-dependent and unknowable without a first pass,
+        // so only _byName gets a capacity hint.
+        _byName = new Dictionary<string, IRule>(rules.Count, StringComparer.Ordinal);
         _byGroup = new Dictionary<string, List<IRule>>(StringComparer.Ordinal);
 
         foreach (var rule in rules)
@@ -64,7 +68,7 @@ public sealed class RulesEngine
     /// <returns>One aggregate result carrying every rule's own outcome, in registration order.</returns>
     public async Task<RunResult> RunAllAsync(IReadOnlyDictionary<string, object?> context)
     {
-        var results = new List<RuleResult>();
+        var results = new List<RuleResult>(_rules.Count);
         foreach (var rule in _rules)
         {
             results.Add(await rule.EvaluateAsync(context).ConfigureAwait(false));
@@ -156,7 +160,7 @@ public sealed class RulesEngine
             return null;
         }
 
-        var results = new List<RuleResult>();
+        var results = new List<RuleResult>(rules.Count);
         foreach (var rule in rules)
         {
             results.Add(await rule.EvaluateAsync(context).ConfigureAwait(false));

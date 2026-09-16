@@ -33,7 +33,7 @@ public sealed class AndRule(string name, IReadOnlyList<IRule> rules, string? gro
     /// <inheritdoc />
     public async Task<RuleResult> EvaluateAsync(IReadOnlyDictionary<string, object?> context)
     {
-        var subResults = new List<RuleResult>();
+        var subResults = new List<RuleResult>(_rules.Count);
         // A plain sequential loop, never Task.WhenAll: short-circuiting only
         // means something if later work never *starts*, and concurrent
         // scheduling would already have begun every sub-rule before the first

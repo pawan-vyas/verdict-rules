@@ -25,7 +25,7 @@ public sealed class OrRule(string name, IReadOnlyList<IRule> rules, string? grou
     /// <inheritdoc />
     public async Task<RuleResult> EvaluateAsync(IReadOnlyDictionary<string, object?> context)
     {
-        var subResults = new List<RuleResult>();
+        var subResults = new List<RuleResult>(_rules.Count);
         // Sequential, for the same reason as AndRule.
         foreach (var rule in _rules)
         {
