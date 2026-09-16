@@ -79,6 +79,19 @@ Same shape for csharp and dart; js gets the extra Stage-4 rows.
       table — surfaced and fixed a real pre-existing regex bug there
       (a link followed immediately by an XML closing tag)
 - [x] Pushed; PR #5 (pre-existing draft) updated, all CI green
+- [ ] **Sweep the root `README.md` for C# once it lands on `main`** —
+      Dart's own equivalent sweep (PR #69) was done as a follow-up
+      *after* merge, not as part of Dart's own landing PR, and was
+      only caught because the user noticed the gap by eye. Do it as
+      part of cutting C#'s first release instead of after: Status
+      table row (NuGet registry, version badge, `test-csharp.yml`
+      badge, Supply Chain — check whether Socket.dev supports NuGet
+      before reusing its badge, it does not cover every registry
+      equally), Where-to-go-next rows (`csharp/README.md` +
+      quickstart), Development subsection, release-history changelog
+      link, and a `<details>` block in Quickstart alongside
+      Python/JS/Dart (collapsed, matching JS/Dart — Python alone stays
+      `open` as the canonical example).
 
 ### `plan/dart-sdk` — [PR #7](https://github.com/pawan-vyas/verdict-rules/pull/7), Stage 2/3 done, CI green
 
