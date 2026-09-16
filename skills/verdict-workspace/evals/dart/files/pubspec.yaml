@@ -1,0 +1,30 @@
+# A minimal, deliberately ordinary project manifest.
+#
+# It exists so an eval run has something to answer the skill's first step with
+# -- "read the target project's own manifest to determine the language" is not
+# testable in an empty directory, and an agent that has to guess the language
+# is not being asked the question the skill actually poses.
+#
+# The pinned verdict_rules version matters for the same reason it matters for
+# every other language: the skill says to fetch deeper documentation at the
+# version a project actually has, never from the default branch. Unlike
+# Python's pyproject.toml or JS's package.json, though, this caret constraint
+# alone does NOT name a resolved version -- Dart's own agent-notes.md says
+# explicitly to read pubspec.lock instead, which is why this fixture ships
+# both files rather than just this one.
+#
+# Keep both this and pubspec.lock's version at whatever is ACTUALLY published
+# and ACTUALLY tagged (dart-vX.Y.Z) -- check pub.dev and the git tag before
+# bumping either. A version that never went through the real release workflow
+# is not evidence it exists; pinning one here silently breaks the
+# fetch-at-the-installed-version instruction this fixture exists to test.
+name: storefront_api
+description: A small internal API for storefront checkout logic.
+version: 1.4.0
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  verdict_rules: ^0.0.2

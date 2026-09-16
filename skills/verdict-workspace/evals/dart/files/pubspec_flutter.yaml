@@ -1,0 +1,30 @@
+# The Flutter-specific counterpart to pubspec.yaml/pubspec.lock, used only by
+# 05-flutter-conditional-banner.json. Real filename is pubspec.yaml when this
+# is handed to an agent -- it is named distinctly here only because a flat
+# files/ directory can't hold two files both literally named pubspec.yaml.
+#
+# A real Flutter app's pubspec.yaml adds the framework itself as an SDK
+# dependency (sdk: flutter, not a hosted package). verdict_rules needs no
+# special handling alongside it because it is a pure Dart package with zero
+# dependencies of its own, so it resolves and runs inside a Flutter app
+# exactly like any other Dart package -- no Flutter-specific fork, no
+# adapter.
+name: profile_app
+description: A Flutter app for managing user profiles.
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  verdict_rules: ^0.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true

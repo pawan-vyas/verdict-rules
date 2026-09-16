@@ -63,5 +63,12 @@ dart/packages/*/.dart_tool/
 dart/packages/*/.packages
 dart/packages/*/pubspec.lock
 dart/packages/*/build/
+# skills/verdict-workspace/evals/dart/files/ ships a real pubspec.yaml as an
+# eval fixture -- committing its pubspec.lock is deliberate (the eval itself
+# reads it), but a fourth instance of the same leak above: something in this
+# environment auto-runs `dart pub get` the moment a pubspec.yaml appears
+# anywhere, regenerating .dart_tool/ wherever one exists, not just under
+# dart/packages/.
+skills/verdict-workspace/evals/*/files/.dart_tool/
 csharp/**/bin/
 csharp/**/obj/
