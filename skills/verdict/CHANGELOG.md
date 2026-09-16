@@ -6,6 +6,18 @@ Release history for the verdict AI-agent skill. Format follows
 This versions **the guidance**, not any language's API, so it moves on its own
 cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skill-vX.Y.Z`.
 
+## [0.5.6] - 2026-09-15
+
+- **Dart lands as a shipped language.** `references/dart/agent-notes.md`
+  -- install/import, the full API in one screen, mistakes specific to
+  Dart (forgetting `implements Rule`, `Future.wait` in a composite,
+  `RuleResult.detail` being a non-nullable `String`, `ArgumentError`'s
+  genericity compared to JS's `UnknownLookupError` or Python's
+  `KeyError`), testing checklist, and the fetch recipe. `MANIFEST.toml`
+  gains `"dart"` in `languages` (every existing `fetch_group` topic
+  becomes fetchable for Dart once its own `<topic>/dart.md` exists --
+  none do yet) and Dart's own quickstart `[[fetch]]` entry.
+
 ## [0.5.5] - 2026-09-15
 
 - **`MANIFEST.toml`'s fetch tier no longer hand-duplicates one row per
