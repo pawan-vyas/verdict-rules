@@ -145,13 +145,17 @@ Same shape for csharp and dart; js gets the extra Stage-4 rows.
       the API surface": SourceLink/`.snupkg` "must be set *before* a
       version ships — released versions cannot be made debuggable
       retroactively."
-- [ ] **Target-framework support surface, genuinely undecided** —
-      `net8.0;netstandard2.1` in `VerdictRules.csproj` was never itself
-      the product of a "how far back" discussion; see
-      `.agents/plans/csharp-sdk/PLAN.md` §8 for the full writeup
-      (whether `netstandard2.1` stays, whether `net9.0`/`net10.0` land
-      now, and the `<IsAotCompatible>` allowlist-vs-denylist follow-on).
-      Needs a real decision before the `0.0.1` cut, not a default.
+- [x] **Target-framework support surface — decided: `net10.0;netstandard2.1`.**
+      `net8.0` was the placeholder; replaced because `net8.0`/`net9.0` both
+      reach end of support November 10, 2026. `netstandard2.1` stays
+      (net8.0/net9.0/net10.0 all implement it, so nothing on the still-common
+      net8.0 install base is excluded); `netstandard2.0` (the actual door to
+      .NET Framework) was considered and deliberately deferred, not ruled
+      out. `IsTrimmable`/`IsAotCompatible` both moved to
+      `$([MSBuild]::IsTargetFrameworkCompatible(...))` denylist conditions
+      after the SDK itself rejected the naive string-inequality version.
+      Full record in `csharp/AGENTS.md`'s "Decision record: target-framework
+      reach" and `.agents/plans/csharp-sdk/PLAN.md` §8.
 
 ### `plan/dart-sdk` — [PR #7](https://github.com/pawan-vyas/verdict-rules/pull/7), Stage 2/3 done, CI green
 

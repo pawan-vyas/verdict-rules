@@ -163,33 +163,16 @@ the curl-pipe installer outright.
 - **Directory name**: `csharp/` vs `dotnet/`. `dotnet/` reads more
   naturally to a .NET audience; `csharp/` is more literally parallel to
   `python/`. No preference recorded.
-- **Target frameworks, and how far back to support** — still open, despite
-  `net8.0;netstandard2.1` already sitting in `VerdictRules.csproj`. That pair
-  was never itself the result of a "how far back" discussion; it was the
-  minimum needed to ship something buildable. Before the `0.0.1` cut, decide:
-  - Whether `netstandard2.1` (the .NET Framework/older-runtime compatibility
-    target) stays, given `net5.0`/`net6.0`/`net7.0` are already out of
-    support and the ecosystem's own newer-first convention (see `[[fetch]]`
-    et al. elsewhere in this repo) leans toward supporting only in-support
-    LTS/STS releases.
-  - Whether to add `net9.0`/`net10.0` now, or let them land as each ships.
-  - How `<IsAotCompatible>` should scale with that answer.
-    `VerdictRules.csproj` currently reads
-    `<IsAotCompatible Condition="'$(TargetFramework)' == 'net8.0'">true</IsAotCompatible>`
-    — correct today (AOT-compatibility analysis needs a modern TFM's
-    reference assemblies; `netstandard2.1` has no runtime of its own to be
-    AOT-compatible *with*, so it cannot carry this flag at all), but the
-    condition is an **allowlist keyed to one specific TFM**, so every future
-    `net9.0`/`net10.0`/`net11.0` addition would need its own edit to this
-    same line to also turn AOT-compatibility on for it — exactly the
-    "adding a variant means editing a file the others share" shape this
-    repo's own dispatch conventions argue against elsewhere. The fix once
-    the TFM answer above is settled: flip the condition to a **denylist**
-    instead — set `<IsAotCompatible>true</IsAotCompatible>` unconditionally
-    and turn it off only for the TFMs that genuinely can't carry it
-    (`netstandard2.1`, and any pre-net8 TFM if one is ever added), so a new
-    modern TFM lands already AOT-compatible with zero edits to this
-    property.
+- ~~Target frameworks, and how far back to support~~ — **decided:
+  `net10.0;netstandard2.1`**, replacing the `net8.0;netstandard2.1`
+  placeholder. `netstandard2.0` (the actual door to .NET Framework) was
+  considered and deliberately deferred rather than added speculatively.
+  `IsTrimmable`/`IsAotCompatible` both use a
+  `$([MSBuild]::IsTargetFrameworkCompatible(...))` denylist condition, not a
+  hand-rolled string check — the SDK itself rejected the naive
+  string-inequality version once `netstandard2.1` was actually built
+  alongside `net10.0`. Full reasoning: `csharp/AGENTS.md`'s "Decision
+  record: target-framework reach".
 - **Nullable reference types** policy, and whether the public surface is
   annotated from day one.
 - **The context type.** `IDictionary<string, object>` is a placeholder.
