@@ -11,7 +11,11 @@ dotnet add package VerdictRules
 
 `net8.0` and `netstandard2.1`. Trimmable and AOT-compatible.
 
-## Use
+```csharp
+using VerdictRules;
+```
+
+## A first rule
 
 ```csharp
 using VerdictRules;
@@ -40,41 +44,6 @@ var verdict = await engine.RunNamedAsync("eligible", new Dictionary<string, obje
 Console.WriteLine(verdict.Passed); // False
 Console.WriteLine(verdict.Detail); // 'score_ok' failed: 55 vs 60
 ```
-
-## What it guarantees
-
-- **Sequential evaluation, never concurrent.** Composites use a plain
-  `foreach` with `await`, never `Task.WhenAll`. Short-circuiting only means
-  something if later work never *starts* — and because the returned boolean is
-  identical either way, getting this wrong is silent.
-- **Vacuous truth has a polarity.** `AndRule([])` passes, `OrRule([])` fails.
-  Deliberately asymmetric.
-- **Emptiness is not absence.** An empty composite folds to its identity; an
-  unknown rule name or group throws `KeyNotFoundException`. A group exists only
-  because some rule declared it, so a lookup matching nothing can only be a
-  mistake — and a misspelled group silently approving is the worst failure an
-  eligibility check can have.
-
-  When absence *is* expected, `TryRunNamedAsync`/`TryRunGroupAsync` return
-  `null` instead of throwing:
-
-  ```csharp
-  var result = await engine.TryRunGroupAsync("beta_checks", ctx);
-  var allowed = result?.Passed ?? true;   // absent means "no constraint here"
-  ```
-
-  `null` means **absent, never failed** — a rule that exists and fails still
-  returns a `RuleResult` with `Passed` false. These are the primitives; the
-  throwing forms are assertions on top of them.
-
-  **The fallback only applies to absence.** A group that exists always reports
-  its real verdict, so `?? true` does not mean "sometimes true" — a failing group
-  is still a failure whatever default you choose. If you test code using this,
-  the case worth covering is a *present, failing* group rather than the absent
-  one everybody thinks of first.
-- **`RuleResult.Data` is opaque** — only what actually ran, never padded, never
-  flattened.
-- **Zero runtime dependencies.**
 
 ## Shape-based rules, within what C# allows
 
@@ -118,6 +87,46 @@ without expanding every level by hand.
 
 SourceLink is enabled and symbols ship as a `.snupkg`, so stepping into the
 package lands on real source rather than a decompiler.
+
+## Absence returns null, not a thrown error
+
+`RunNamedAsync`/`RunGroupAsync` throw `KeyNotFoundException` on an unknown
+name or group. When absence *is* expected, `TryRunNamedAsync`/`TryRunGroupAsync`
+return `null` instead:
+
+```csharp
+var result = await engine.TryRunGroupAsync("beta_checks", ctx);
+var allowed = result?.Passed ?? true;   // absent means "no constraint here"
+```
+
+`null` means **absent, never failed** — a rule that exists and fails still
+returns a `RuleResult` with `Passed` false. These are the primitives; the
+throwing forms are assertions on top of them.
+
+**The fallback only applies to absence.** A group that exists always reports
+its real verdict, so `?? true` does not mean "sometimes true" — a failing group
+is still a failure whatever default you choose. If you test code using this,
+the case worth covering is a *present, failing* group rather than the absent
+one everybody thinks of first.
+
+## What it guarantees
+
+- **Sequential evaluation, never concurrent.** Composites use a plain
+  `foreach` with `await`, never `Task.WhenAll`. Short-circuiting only means
+  something if later work never *starts* — and because the returned boolean is
+  identical either way, getting this wrong is silent.
+- **Vacuous truth has a polarity.** `AndRule([])` passes, `OrRule([])` fails.
+  Deliberately asymmetric.
+- **Emptiness is not absence.** An empty composite folds to its identity; an
+  unknown rule name or group throws `KeyNotFoundException`. A group exists only
+  because some rule declared it, so a lookup matching nothing can only be a
+  mistake — and a misspelled group silently approving is the worst failure an
+  eligibility check can have. Use `RuleNames` / `GroupNames` to check
+  membership, or `TryRunNamedAsync` / `TryRunGroupAsync` where your own
+  domain has an answer for absence — both return `null` instead of throwing.
+- **`RuleResult.Data` is opaque** — only what actually ran, never padded, never
+  flattened.
+- **Zero runtime dependencies.**
 
 ## Where to go next
 

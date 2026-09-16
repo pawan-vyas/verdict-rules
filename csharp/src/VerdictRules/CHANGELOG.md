@@ -12,8 +12,7 @@ Tagged `csharp-vX.Y.Z`.
 
 ## [0.0.1] - 2026-09-12
 
-First publish, claiming the name. Correct but minimal: the full type set and
-its guarantees, with the tests that prove them, and nothing else yet.
+Initial publish.
 
 - `IRule`, `FunctionRule`, `AndRule`, `OrRule`, `RulesEngine`, `RuleResult`,
   `RunResult`.
@@ -35,6 +34,3 @@ its guarantees, with the tests that prove them, and nothing else yet.
 - `[DebuggerDisplay]` and a debugger type proxy so a nested result tree is
   legible while stepping; SourceLink and `.snupkg` symbols so stepping into the
   package reaches real source.
-
-Not yet included: the shared graduation fixture that every language must pass,
-and the documentation set. Those arrive before `0.1.0`.

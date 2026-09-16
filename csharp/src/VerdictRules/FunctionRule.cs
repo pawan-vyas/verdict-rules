@@ -4,9 +4,9 @@ namespace VerdictRules;
 /// Wraps a plain asynchronous predicate as an <see cref="IRule"/>.
 /// </summary>
 /// <remarks>
-/// The shape most rules should be: no new type, no ceremony. This matters more
-/// in C# than in the SDKs with structural typing, where an object literal can
-/// satisfy the contract directly.
+/// The shape most rules should be: no new type, no ceremony. C# has no free
+/// structural typing for a multi-member interface like <see cref="IRule"/>,
+/// so this is the escape hatch that keeps most rules from needing one.
 /// </remarks>
 public sealed class FunctionRule : IRule
 {
