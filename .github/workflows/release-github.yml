@@ -53,7 +53,14 @@ jobs:
       - name: Refuse to release a tag that already exists elsewhere
         run: |
           set -euo pipefail
-          if existing="$(git rev-parse -q --verify "refs/tags/${{ inputs.tag }}")"; then
+          # ^{commit} dereferences an annotated tag to the commit it points
+          # at. Without it, rev-parse on an annotated tag (git tag -a, which
+          # every caller that pre-pushes a tag uses) returns the TAG OBJECT's
+          # own SHA -- never equal to any commit SHA -- so this check would
+          # reject every annotated tag as "a different commit" even when it
+          # points at exactly the right one. Lightweight tags already resolve
+          # straight to a commit, so ^{commit} is a no-op for those.
+          if existing="$(git rev-parse -q --verify "refs/tags/${{ inputs.tag }}^{commit}")"; then
             if [ "$existing" = "$(git rev-parse HEAD)" ]; then
               echo "Tag ${{ inputs.tag }} already exists and points at this exact commit — a caller pushed it ahead of calling this workflow. Continuing."
             else
