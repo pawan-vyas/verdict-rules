@@ -31,7 +31,7 @@ public sealed class RulesEngine
 
             if (!_byGroup.TryGetValue(rule.Group!, out var bucket))
             {
-                bucket = new List<IRule>();
+                bucket = [];
                 _byGroup[rule.Group!] = bucket;
             }
 
@@ -110,12 +110,7 @@ public sealed class RulesEngine
     public async Task<RuleResult> RunNamedAsync(string name, IReadOnlyDictionary<string, object?> context)
     {
         var result = await TryRunNamedAsync(name, context).ConfigureAwait(false);
-        if (result is null)
-        {
-            throw new KeyNotFoundException($"No rule named '{name}' in this engine");
-        }
-
-        return result;
+        return result ?? throw new KeyNotFoundException($"No rule named '{name}' in this engine");
     }
 
     /// <summary>
@@ -166,11 +161,6 @@ public sealed class RulesEngine
     public async Task<RunResult> RunGroupAsync(string group, IReadOnlyDictionary<string, object?> context)
     {
         var result = await TryRunGroupAsync(group, context).ConfigureAwait(false);
-        if (result is null)
-        {
-            throw new KeyNotFoundException($"No rules in group '{group}' in this engine");
-        }
-
-        return result;
+        return result ?? throw new KeyNotFoundException($"No rules in group '{group}' in this engine");
     }
 }

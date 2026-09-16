@@ -50,6 +50,6 @@ public sealed class RunResult
         public RunResultDebugView(RunResult result) => _result = result;
 
         [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-        public RuleResult[] Results => _result.Results.ToArray();
+        public RuleResult[] Results => [.. _result.Results];
     }
 }
