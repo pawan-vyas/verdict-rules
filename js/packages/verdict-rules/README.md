@@ -9,7 +9,11 @@
 npm install verdict-rules
 ```
 
-## Use
+```ts
+import { AndRule, FunctionRule, RulesEngine } from "verdict-rules";
+```
+
+## A first rule
 
 ```ts
 import { AndRule, FunctionRule, RulesEngine, type Context } from "verdict-rules";
@@ -58,7 +62,7 @@ without tooling. **Always pinned, always with an integrity hash:**
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/verdict-rules@0.0.2/dist/verdict-rules.global.js"
+  src="https://cdn.jsdelivr.net/npm/verdict-rules@0.0.5/dist/verdict-rules.global.js"
   integrity="sha384-8UUn2T+f6wOMdw/f8XSZN9acZmqxSjQnfzSkXsZz8V05rPEl62oCYhpEw3wsYKEb"
   crossorigin="anonymous"></script>
 <script>
@@ -85,7 +89,7 @@ on the fly and so have no stable bytes to hash:
 
 ```html
 <script type="module">
-  import { AndRule } from "https://cdn.jsdelivr.net/npm/verdict-rules@0.0.2/+esm";
+  import { AndRule } from "https://cdn.jsdelivr.net/npm/verdict-rules@0.0.5/+esm";
 </script>
 ```
 
@@ -155,9 +159,9 @@ one everybody thinks of first.
 
 | Doc | For |
 | --- | --- |
-| [`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.5/js/packages/verdict-rules/docs/quickstart.md) | The quickstart — core concepts and a full worked example |
-| [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.5/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
-| [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.5/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
-| [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.5/docs/maintenance/README.md) | Changing this package itself |
-| [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.5/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
-| [`docs/samples/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.5/docs/samples/README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
+| [`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.6/js/packages/verdict-rules/docs/quickstart.md) | The quickstart — core concepts and a full worked example |
+| [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.6/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
+| [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.6/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
+| [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.6/docs/maintenance/README.md) | Changing this package itself |
+| [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.6/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
+| [`docs/samples/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.6/docs/samples/README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |

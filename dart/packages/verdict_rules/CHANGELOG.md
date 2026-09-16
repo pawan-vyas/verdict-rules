@@ -11,6 +11,32 @@ than that convention's bracketed, dated one.
 
 Tagged `dart-vX.Y.Z`.
 
+## 0.0.3
+
+- **`## Install`'s dependency constraint now reads `^0.0.2`**, matching
+  the version this package was actually at since `0.0.2` shipped -- it
+  had been left at the original `^0.0.1` and never bumped alongside.
+- **`## Install` now also shows the bare import statement**
+  (`import 'package:verdict_rules/verdict_rules.dart';`), matching the
+  Python package page's own Install section.
+- **The first-example heading is now "A first rule"**, not the generic
+  "Use" -- the shared package-README template explicitly names a
+  generic "Usage"-style heading as the thing to avoid.
+- **"Shape-based rules, within what Dart allows" now comes before
+  "What it guarantees"**, not after -- it had been placed last,
+  contradicting both the template's own section order and where
+  Python's and JS's equivalent highlight sections sit on their own
+  pages.
+- **The `tryRunNamed`/`tryRunGroup` code example moved out of the
+  "Emptiness is not absence" guarantee bullet into its own section**
+  ("Absence returns null, not a thrown error"), placed alongside the
+  other highlight sections before "What it guarantees" -- it had been a
+  multi-paragraph, code-containing digression inside what is meant to
+  be a short, skimmable bullet list. The guarantee bullet itself is now
+  a short pointer to both `ruleNames`/`groupNames` and
+  `tryRunNamed`/`tryRunGroup`, matching the length and shape of
+  Python's and JS's own equivalent bullets.
+
 ## 0.0.2
 
 - Fixed `pubspec.yaml`'s `repository` field: pointed at this package's
