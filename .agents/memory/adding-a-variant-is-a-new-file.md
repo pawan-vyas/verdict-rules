@@ -60,12 +60,24 @@ The root [`README.md`](../../README.md) is the one deliberate exception that
 still obeys the same rule at a finer grain: it repeats a worked example per
 language on purpose, because it is the landing page and has to explain the
 library "in one shot" without sending a first-time reader elsewhere. A landed
-language adds its own `### <Language>` subsection under **Quickstart** and
-**Development** — new subsections, appended, never an edit to an existing
-language's own — and a new row in **Where to go next**'s table. Same dispatch
+language adds its own collapsible `<details>` block under **Quickstart**
+(collapsed by default — only Python, the canonical example, stays open) and a
+new row each in **Status** and **Where to go next**'s tables — new blocks and
+rows, appended, never an edit to an existing language's own. Same dispatch
 rule, applied at the sub-file level instead of across files, precisely because
 this one file is intentionally not split into a directory the way every other
 multi-language doc in this repo is.
+
+Setup commands used to be duplicated a third time in a `## Development`
+section here too, one `### <Language>` subsection per language — removed once
+it became clear each language's own `AGENTS.md` already carries the identical
+commands under its "Before calling a change done" section, and
+[`CONTRIBUTING.md`](../../CONTRIBUTING.md) already pointed there. Three places
+that should say the same thing is exactly the drift this file warns about;
+`CONTRIBUTING.md` now names the pattern generically ("each language keeps its
+own setup commands in its own `AGENTS.md`") and needs no edit at all when a
+language lands, which is a stronger form of this rule than an appended
+row — zero edits, not just an additive one.
 
 Related: [`features-land-in-every-language`](features-land-in-every-language.md),
 [`verdict-is-a-protocol-spec`](verdict-is-a-protocol-spec.md).

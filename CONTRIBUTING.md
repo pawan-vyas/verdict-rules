@@ -2,9 +2,9 @@
 
 > How to set up a change, what a contribution needs to prove before it's
 > mergeable, and where a given kind of change actually belongs. Verdict
-> is a polyglot design, so this doc covers what's true across every
-> language, with a per-language section below for the concrete
-> commands.
+> is a polyglot design, and this doc stays language-invariant on
+> purpose — the concrete commands live beside each language's own code,
+> never duplicated here.
 
 ## Before you start
 
@@ -18,16 +18,16 @@ issue first, not a surprise in the diff — see [`docs/extending/`](docs/extendi
 where that logic belongs instead, and [`docs/future_plan.md`](docs/future_plan.md) for the
 test used to decide whether something belongs in the core at all.
 
-## Python
+## Setting up a change
 
-```bash
-cd python/
-uv sync
-uv run pytest
-```
+Each language keeps its own concrete setup commands in its own
+`AGENTS.md`, under "Before calling a change done" — `python/AGENTS.md`,
+`js/AGENTS.md`, `dart/AGENTS.md`, and so on for any later one. A new
+language adds its own file there; nothing here changes for it to do so.
+None of them need external services or environment variables — every
+language's test suite is as standalone as its own package.
 
-No external services or environment variables needed — the test suite
-is as standalone as the package itself. Before opening a PR:
+Before opening a PR, regardless of language:
 
 - **Every new concrete `Rule` shape** needs, at minimum, a plain
   delegation test, and if it's a composite: short-circuit behavior in
@@ -40,9 +40,8 @@ is as standalone as the package itself. Before opening a PR:
   ripples outward to every consumer — see
   [`docs/maintenance/before-merging-checklists.md`](docs/maintenance/before-merging-checklists.md)'s
   consumer-impact checklist before touching either.
-- Run `uv run pytest` from `python/` (covers the core suite plus
-  `examples/graduation_verdict/`'s own 523 tests) — all of it needs to
-  stay green, not just the file you touched.
+- Run that language's full suite via its own `AGENTS.md` command — all
+  of it needs to stay green, not just the file you touched.
 - If your change touches anything documented, update that doc in the
   same PR — a stale doc is worse than no doc.
   [`docs/maintenance/README.md`](docs/maintenance/README.md)'s
@@ -50,9 +49,7 @@ is as standalone as the package itself. Before opening a PR:
 
 ## Opening an issue
 
-- **Bug report**: repro steps, expected vs. actual, and which language
-  (today: always Python, but the template asks explicitly so it still
-  makes sense once a second language ships).
+- **Bug report**: repro steps, expected vs. actual, and which language.
 - **Feature request**: before writing it up, run it through
   [`docs/future_plan.md`'s own evaluation test](docs/future_plan.md#the-actual-test-not-does-it-sound-useful) — most "convenience"
   additions are a one-line [`docs/extending/`](docs/extending/README.md) scenario in your own code,
@@ -71,11 +68,11 @@ is as standalone as the package itself. Before opening a PR:
   push. [`AGENTS.md`'s "Cross-language coding & doc conventions" section](AGENTS.md#cross-language-coding--doc-conventions)
   covers the full list.
 
-## A second language
+## A new language
 
-If you're building the first JS/TS or C# SDK: read [`AGENTS.md`'s "What
-this repo is" section](AGENTS.md#what-this-repo-is) first — a new language lands as its own top-level
-directory alongside `python/`, with its own `AGENTS.md` for that
+Read [`AGENTS.md`'s "What this repo is" section](AGENTS.md#what-this-repo-is)
+first — a new language lands as its own top-level directory alongside
+`python/`, `js/`, and `dart/`, with its own `AGENTS.md` for that
 language's conventions, and its own reference set under
 `skills/verdict/references/<language>/`. Open an issue before starting
 a large port — this is exactly the kind of change worth agreeing on

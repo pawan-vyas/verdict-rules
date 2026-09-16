@@ -4,13 +4,6 @@
   // a house-style choice, not a defect, so it's disabled repo-wide rather
   // than suppressed file-by-file.
   "MD013": false,
-  // The root README.md repeats a "### <Language>" subheading once under
-  // Quickstart and once under Development, by design -- see
-  // .agents/memory/adding-a-variant-is-a-new-file.md. siblings_only limits
-  // the duplicate-heading check to headings sharing the same parent, so this
-  // deliberate repeat doesn't need a per-file suppression, and a genuine
-  // duplicate under the same parent still gets caught.
-  "MD024": { "siblings_only": true },
   // The root README.md's Quickstart wraps each language in a collapsible
   // <details>/<summary> pair (Python open by default, the rest collapsed) so
   // a reader lands on one language, not three stacked code blocks. This is

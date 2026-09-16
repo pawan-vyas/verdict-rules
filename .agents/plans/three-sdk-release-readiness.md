@@ -88,10 +88,15 @@ Same shape for csharp and dart; js gets the extra Stage-4 rows.
       badge, Supply Chain — check whether Socket.dev supports NuGet
       before reusing its badge, it does not cover every registry
       equally), Where-to-go-next rows (`csharp/README.md` +
-      quickstart), Development subsection, release-history changelog
-      link, and a `<details>` block in Quickstart alongside
-      Python/JS/Dart (collapsed, matching JS/Dart — Python alone stays
-      `open` as the canonical example).
+      quickstart), release-history changelog link, and a `<details>`
+      block in Quickstart alongside Python/JS/Dart (collapsed, matching
+      JS/Dart — Python alone stays `open` as the canonical example).
+      **No `## Development` section anymore** — PR #71 removed it
+      entirely as a third duplicate of commands already in
+      `CONTRIBUTING.md` and each language's own `AGENTS.md`;
+      `CONTRIBUTING.md`'s generic pointer needs no edit for C# either,
+      since `csharp/AGENTS.md` already carries its own "Before calling
+      a change done" section.
 
 ### `plan/dart-sdk` — [PR #7](https://github.com/pawan-vyas/verdict-rules/pull/7), Stage 2/3 done, CI green
 
