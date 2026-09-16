@@ -29,7 +29,7 @@ Initial publish.
   than throwing when nothing matches — the primitives the throwing forms are
   built on. `null` means absent, never failed.
 - `RulesEngine.RuleNames` / `GroupNames` for enumerating an engine.
-- `net8.0` and `netstandard2.1`, trimmable, AOT-compatible, zero runtime
+- `net10.0` and `netstandard2.1`, trimmable, AOT-compatible, zero runtime
   dependencies.
 - `[DebuggerDisplay]` and a debugger type proxy so a nested result tree is
   legible while stepping; SourceLink and `.snupkg` symbols so stepping into the

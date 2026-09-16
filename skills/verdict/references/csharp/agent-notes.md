@@ -21,7 +21,7 @@ unlike npm's `verdict-rules`. There is no naming split the way Python
 has (`pip install verdict-rules` → `import verdict`): the NuGet ID and
 the namespace are the same word.
 
-`net8.0` and `netstandard2.1`, trimmable and AOT-compatible on `net8.0`.
+`net10.0` and `netstandard2.1`, trimmable and AOT-compatible on `net10.0`.
 
 ## The API, in one screen
 

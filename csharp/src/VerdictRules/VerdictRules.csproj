@@ -1,14 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net8.0;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>net10.0;netstandard2.1</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <IsTrimmable>true</IsTrimmable>
-    <IsAotCompatible Condition="'$(TargetFramework)' == 'net8.0'">true</IsAotCompatible>
+    <!-- Denylist by TFM family, not an allowlist of specific versions: both
+         flags are on for every modern net5.0+ target and off only for
+         netstandard2.1, which has no runtime of its own to be trimmed or
+         AOT-compiled with. IsTargetFrameworkCompatible checks family
+         membership (net10.0, net11.0, net12.0, ... are all "compatible with"
+         net5.0), so a future modern TFM lands with both already true and
+         netstandard2.1 stays excluded, with zero edits to either line. A
+         plain string check ('$(TargetFramework)' != 'netstandard2.1') looks
+         equivalent today but is the wrong tool: it would incorrectly turn
+         both on for any future non-net5+-family TFM (a hypothetical
+         netstandard2.2, or a net-prefixed OS-specific TFM this package
+         doesn't use), where IsTargetFrameworkCompatible correctly stays off. -->
+    <IsTrimmable Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net5.0'))">true</IsTrimmable>
+    <IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net5.0'))">true</IsAotCompatible>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -41,7 +53,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.401" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>

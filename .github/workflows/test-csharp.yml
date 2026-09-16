@@ -62,11 +62,11 @@ jobs:
       - name: Install .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "8.0.x"
+          dotnet-version: "10.0.x"
 
-      # Builds both TargetFrameworks (net8.0, netstandard2.1) declared in
+      # Builds both TargetFrameworks (net10.0, netstandard2.1) declared in
       # VerdictRules.csproj, so a netstandard2.1-only regression fails here
-      # even though the test project itself only runs against net8.0.
+      # even though the test project itself only runs against net10.0.
       - name: Build (both target frameworks)
         working-directory: csharp
         run: dotnet build src/VerdictRules/VerdictRules.csproj -c Release
