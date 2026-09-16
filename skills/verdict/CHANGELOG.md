@@ -6,6 +6,18 @@ Release history for the verdict AI-agent skill. Format follows
 This versions **the guidance**, not any language's API, so it moves on its own
 cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skill-vX.Y.Z`.
 
+## [0.5.7] - 2026-09-16
+
+- **`MANIFEST.toml` gains two `fetch_group` entries**, for two new
+  sample scenarios demonstrating UI-side capability --
+  `docs/samples/signup-form-readiness/` (an `AndRule` gating a form's
+  submit control, re-evaluated live) and
+  `docs/samples/premium-upsell-panel/` (an `OrRule` gating a UI panel,
+  with a genuinely async branch and a visible short-circuit saving).
+  Both are JS/TS and Dart only today -- the same "an unresolved fetch
+  404s, expected, not an error" handling as any other per-language
+  gap, no special-case needed.
+
 ## [0.5.6] - 2026-09-15
 
 - **Dart lands as a shipped language.** `references/dart/agent-notes.md`

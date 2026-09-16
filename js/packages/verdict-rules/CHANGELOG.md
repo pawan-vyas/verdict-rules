@@ -5,6 +5,25 @@ Release history for the `verdict-rules` JS/TS package. Format follows
 [semantic versioning](https://semver.org/), scoped to this package — it
 releases independently of the other language SDKs and of the AI-agent skill.
 
+## [0.0.6] - 2026-09-16
+
+- **`## Install` now also shows the bare import statement**
+  (`import { AndRule, FunctionRule, RulesEngine } from "verdict-rules"`),
+  matching the Python package page's own Install section -- previously
+  the import only appeared inside the first-example code block further
+  down the page.
+- **The first-example heading is now "A first rule"**, not the generic
+  "Use" -- the shared package-README template explicitly names a
+  generic "Usage"-style heading as the thing to avoid, and Python's own
+  page already used the correct idiom.
+- **Fixed the CDN example's stale version pin**: `verdict-rules@0.0.2`
+  in both the `<script src>` and the `+esm` import -- three releases
+  behind the package's actual current version. The integrity hash was
+  already correct (verified against the live CDN for real): every
+  release between `0.0.2` and `0.0.5` was documentation/metadata-only,
+  so the bundle's own bytes never changed, only the version number
+  needed updating.
+
 ## [0.0.5] - 2026-09-16
 
 - **The structural-typing example swaps `overEighteen`/`age` for

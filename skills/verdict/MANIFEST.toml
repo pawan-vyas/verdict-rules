@@ -166,6 +166,16 @@ pattern = "docs/samples/data-driven-rule-sets/{lang}.md"
 readme = "docs/samples/admin-eligibility-lookup/README.md"
 pattern = "docs/samples/admin-eligibility-lookup/{lang}.md"
 
+# JS/Dart only today, same "expected 404, not an error" handling as any other
+# language gap — see commands/verdict-fetch-docs.md.
+[[fetch_group]]
+readme = "docs/samples/signup-form-readiness/README.md"
+pattern = "docs/samples/signup-form-readiness/{lang}.md"
+
+[[fetch_group]]
+readme = "docs/samples/premium-upsell-panel/README.md"
+pattern = "docs/samples/premium-upsell-panel/{lang}.md"
+
 # Python-only by design, tied to python/examples/graduation_verdict/ — no
 # other language has a matching file, so this fetch_group's expansion
 # against `languages` above naturally emits only the README and python.md,

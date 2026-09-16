@@ -97,6 +97,24 @@ Same shape for csharp and dart; js gets the extra Stage-4 rows.
       `CONTRIBUTING.md`'s generic pointer needs no edit for C# either,
       since `csharp/AGENTS.md` already carries its own "Before calling
       a change done" section.
+- [ ] **`RuleResult.cs` holds two public types** (`RuleResult` and
+      `RunResult`, plus a private nested `RunResultDebugView`) —
+      C#'s own real community convention (StyleCop's `SA1402`, widely
+      adopted, reflecting Microsoft's own guidance) is one public type
+      per file, unlike Python/JS/Dart, all three of which have their
+      own ecosystem's explicit blessing to group tightly related
+      classes in one module/library (Google's Python and TypeScript
+      style guides, and Effective Dart's own design doc, each
+      explicitly contrast this against Java's one-class-per-file habit
+      — see `.agents/memory/research-the-ecosystem-before-deciding-its-idiom.md`
+      for the general principle this confirms again). Every other file
+      on this branch already follows `SA1402` correctly, including
+      splitting `RulePredicate.cs` out on its own even where `SA1402`'s
+      own exception would have allowed bundling it with `FunctionRule`.
+      Split `RunResult` into its own `RunResult.cs` as part of this
+      branch's full pre-release audit, once common
+      fixes/restructuring elsewhere in the repo have settled — not
+      urgent enough to interrupt other in-flight work for.
 
 ### `plan/dart-sdk` — [PR #7](https://github.com/pawan-vyas/verdict-rules/pull/7), Stage 2/3 done, CI green
 

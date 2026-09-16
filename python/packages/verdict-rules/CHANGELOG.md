@@ -8,6 +8,16 @@ which keeps its own changelog beside its own manifest.
 
 Tagged `python-vX.Y.Z`.
 
+## [0.2.8] - 2026-09-16
+
+### Changed
+
+- **The "Emptiness is not absence" guarantee now also names
+  `try_run_named`/`try_run_group`** -- the PyPI landing page previously
+  never mentioned either primitive anywhere, unlike the JS/TS and Dart
+  package pages, which both cover the equivalent try-prefixed lookup.
+  Package identical to `0.2.7` otherwise.
+
 ## [0.2.7] - 2026-09-16
 
 ### Changed
