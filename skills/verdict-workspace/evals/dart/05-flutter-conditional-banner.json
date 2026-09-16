@@ -1,0 +1,17 @@
+{
+  "eval_name": "flutter-conditional-banner",
+  "prompt": "We're building a Flutter app's profile screen. I want to show a 'You're all set!' banner only when all three of these are true: the user has verified their email, has set a display name, and has agreed to the latest terms version. Can you help me wire this up with verdict_rules inside a StatefulWidget, showing or hiding the banner based on the result?",
+  "expected_output": "A solution that evaluates the three-condition rule outside build() -- via initState()/setState(), a FutureBuilder, or an equivalent state-management approach -- rather than trying to await inside build() itself, since Widget build(BuildContext context) must stay synchronous. The banner's visibility is driven by the RuleResult's passed field, and the response states plainly that verdict_rules needs no Flutter-specific adapter since it is a pure Dart package.",
+  "files": [
+    "files/pubspec_flutter.yaml",
+    "files/pubspec_flutter.lock"
+  ],
+  "expectations": [
+    "Each of the three conditions (email verified, display name set, terms agreed) is represented as its own independent, named rule",
+    "The response recognizes that evaluate()/runAll() returns a Future and cannot be called synchronously, or awaited directly, inside build()",
+    "The rule is evaluated outside build() -- via initState() plus setState(), a FutureBuilder, or an equivalent state-management layer -- rather than making build() itself async or blocking it",
+    "The banner's visibility is driven by the RuleResult's (or composite RunResult's) passed field, not a separately re-derived boolean",
+    "The response states or otherwise treats verdict_rules as a plain Dart package requiring no Flutter-specific fork or adapter -- pubspec.yaml's own addition is a bare verdict_rules dependency, nothing wrapping it",
+    "The state before the async evaluation completes is handled explicitly (e.g. a FutureBuilder's loading branch, or an initial false/null value before initState finishes) rather than the banner briefly rendering an unstated default"
+  ]
+}
