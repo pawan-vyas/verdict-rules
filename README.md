@@ -23,7 +23,8 @@ Verdict is a polyglot design.
 
 ## Quickstart
 
-### Python
+<details open>
+<summary>Python</summary>
 
 ```bash
 pip install verdict-rules
@@ -49,7 +50,10 @@ verdict.passed   # False
 verdict.detail   # "'resource_is_available' failed"
 ```
 
-### JavaScript/TypeScript
+</details>
+
+<details>
+<summary>JavaScript/TypeScript</summary>
 
 ```bash
 npm install verdict-rules
@@ -77,7 +81,10 @@ verdict.passed;   // false
 verdict.detail;   // "'resource_is_available' failed"
 ```
 
-### Dart
+</details>
+
+<details>
+<summary>Dart</summary>
 
 ```yaml
 dependencies:
@@ -103,6 +110,8 @@ final verdict = await engine.runNamed('can_proceed', {'permission': true, 'avail
 verdict.passed;   // false
 verdict.detail;   // "'resource_is_available' failed"
 ```
+
+</details>
 
 That is the whole library in one screen. What it buys you is not the
 composition — you could write that yourself in an afternoon — but the
@@ -184,6 +193,8 @@ graph LR
 | [`python/packages/verdict-rules/docs/quickstart.md`](python/packages/verdict-rules/docs/quickstart.md) | Core concepts and a full worked example |
 | [`js/README.md`](js/packages/verdict-rules/README.md) | JS/TS quickstart — `npm install verdict-rules`, first rule |
 | [`js/packages/verdict-rules/docs/quickstart.md`](js/packages/verdict-rules/docs/quickstart.md) | Core concepts and a full worked example |
+| [`dart/README.md`](dart/packages/verdict_rules/README.md) | Dart quickstart — add `verdict_rules` to `pubspec.yaml`, first rule |
+| [`dart/packages/verdict_rules/doc/quickstart.md`](dart/packages/verdict_rules/doc/quickstart.md) | Core concepts and a full worked example |
 | [`docs/architecture/`](docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
 | [`docs/extending/`](docs/extending/README.md) | Building on top of it from your own code, with no changes here |
 | [`docs/maintenance/`](docs/maintenance/README.md) | Changing this package itself |
@@ -212,6 +223,15 @@ npm run build   # tests import from dist/, not src/
 npm test
 ```
 
+### Dart
+
+```bash
+cd dart/packages/verdict_rules/
+dart pub get
+dart analyze
+dart test
+```
+
 ## Contributing
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for how to set up a change and
@@ -220,6 +240,8 @@ Licensed under [MIT](LICENSE).
 Release history:
 
 - [`python/packages/verdict-rules/CHANGELOG.md`](python/packages/verdict-rules/CHANGELOG.md)
+- [`js/packages/verdict-rules/CHANGELOG.md`](js/packages/verdict-rules/CHANGELOG.md)
+- [`dart/packages/verdict_rules/CHANGELOG.md`](dart/packages/verdict_rules/CHANGELOG.md)
 - [`skills/verdict/CHANGELOG.md`](skills/verdict/CHANGELOG.md)
 
 ## Status
@@ -228,4 +250,5 @@ Release history:
 | :-- | :-- | :-- | :-- | :-- | :-- |
 | Python | [PyPI](https://pypi.org/project/verdict-rules/) | [![PyPI](https://img.shields.io/pypi/v/verdict-rules.svg)](https://pypi.org/project/verdict-rules/) | [![Python Versions](https://img.shields.io/pypi/pyversions/verdict-rules.svg)](https://pypi.org/project/verdict-rules/) | [![Tests](https://github.com/pawan-vyas/verdict-rules/actions/workflows/test-python.yml/badge.svg)](https://github.com/pawan-vyas/verdict-rules/actions/workflows/test-python.yml) | [Socket.dev](https://socket.dev/pypi/package/verdict-rules) |
 | JS/TS | [npm](https://www.npmjs.com/package/verdict-rules) | [![npm](https://img.shields.io/npm/v/verdict-rules.svg)](https://www.npmjs.com/package/verdict-rules) | [![Node](https://img.shields.io/node/v/verdict-rules.svg)](https://www.npmjs.com/package/verdict-rules) `<script>`/CDN | [![Tests](https://github.com/pawan-vyas/verdict-rules/actions/workflows/test-js.yml/badge.svg)](https://github.com/pawan-vyas/verdict-rules/actions/workflows/test-js.yml) | [Socket.dev](https://socket.dev/npm/package/verdict-rules) |
+| Dart | [pub.dev](https://pub.dev/packages/verdict_rules) | [![pub](https://img.shields.io/pub/v/verdict_rules.svg)](https://pub.dev/packages/verdict_rules) | `>=3.0.0 <4.0.0` | [![Tests](https://github.com/pawan-vyas/verdict-rules/actions/workflows/test-dart.yml/badge.svg)](https://github.com/pawan-vyas/verdict-rules/actions/workflows/test-dart.yml) | — |
 | Verdict-Rules Skill | [GitHub](skills/verdict/) | [![Skill](https://img.shields.io/github/v/tag/pawan-vyas/verdict-rules?filter=skill-v*&label=skill)](skills/verdict/CHANGELOG.md) | Any [Agent Skills](https://agentskills.io/home)-conformant harness | [![Skill Check](https://github.com/pawan-vyas/verdict-rules/actions/workflows/check-skill-version.yml/badge.svg)](https://github.com/pawan-vyas/verdict-rules/actions/workflows/check-skill-version.yml) | — |
