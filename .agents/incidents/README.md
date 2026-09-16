@@ -50,3 +50,4 @@ note; an incident with one is an improvement.
 | [005](005-valid-yaml-invalid-shell.md) | A release workflow shipped with an unterminated quote | `bash -n` over every `run:` block |
 | [006](006-deleting-a-base-branch-closes-a-stacked-pr.md) | Merging a PR with `--delete-branch` permanently closed a PR stacked on it | Check what's based on a branch before deleting it |
 | [007](007-edited-on-the-wrong-branch.md) | A repo-wide fix was drafted directly on an SDK branch left checked out from earlier verification | Check the branch before the first edit, not after |
+| [008](008-dart-tag-push-never-triggered-phase-2.md) | `release-dart.yml`'s own tag push, made with the default `GITHUB_TOKEN`, never re-triggered the workflow into its publish phase | A PAT on the tag-pushing checkout step; `workflow_dispatch` as the non-destructive recovery path |

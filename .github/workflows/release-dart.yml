@@ -17,6 +17,16 @@
 #      tail (which recognizes the tag already exists at this exact commit and
 #      skips re-creating it -- see release-github.yml's own idempotency note).
 #
+# Phase 2 only fires because push-tag's checkout step authenticates with a
+# PAT (VERDICT_RULES_DART_RELEASE_TAG_TOKEN), not the default GITHUB_TOKEN.
+# GitHub's anti-recursion rule silently drops any trigger caused by a push
+# made with the default token -- dart-v0.0.2's own first real run hit exactly
+# this: the tag pushed fine, but phase 2 never started, and the release had
+# to be recovered by hand via workflow_dispatch. permissions: contents: write
+# only grants the ability to push, not trigger-eligibility -- only a
+# differently-authenticated push (a PAT, or a GitHub App token) avoids the
+# suppression.
+#
 # paths: is not evaluated for tag pushes at all (GitHub's own documented
 # behavior), so phase 2 always runs regardless of the filter below.
 name: Release (Dart)
@@ -115,7 +125,16 @@ jobs:
     permissions:
       contents: write
     steps:
+      # A tag pushed with the default GITHUB_TOKEN is documented, intentional
+      # GitHub behavior to never re-trigger a workflow run -- it exists to
+      # stop a workflow from re-triggering itself in a loop, but it also means
+      # phase 2 below would never start. A PAT tied to a real account isn't
+      # subject to that suppression, so the push below genuinely fires the
+      # tag-push event. Scope: fine-grained, this repo only, Contents:
+      # Read and write.
       - uses: actions/checkout@v7
+        with:
+          token: ${{ secrets.VERDICT_RULES_DART_RELEASE_TAG_TOKEN }}
       - name: Tag
         run: |
           set -euo pipefail
