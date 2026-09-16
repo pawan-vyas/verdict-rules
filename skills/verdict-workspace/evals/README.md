@@ -78,12 +78,27 @@ wrong *and* silent when it is:
   step. Probes whether the pinned-version-plus-integrity-hash guidance
   in the package's own README actually gets followed when there's no
   npm-based manifest to establish the language from in the first place.
-- `python/05-fetch-docs-completeness` and `js/06-fetch-docs-completeness`
-  — added alongside `MANIFEST.toml`'s `[[fetch_group]]` restructuring, to
-  catch the failure that change actually could have shipped with: an
-  agent reading `references/<lang>/agent-notes.md`'s two illustrative
-  curl examples as the *complete* fetch list, rather than as examples of
-  a pattern that covers fourteen topics. Each prompt names two scenarios
+  This is JS-native — no other language ships a browser-global bundle —
+  so it has no counterpart in another target's numbering by design.
+- `dart/05-flutter-conditional-banner` — the "UI" role `js/05` plays for
+  JS/TS, filled by Dart's own dominant UI framework rather than a
+  language-native mechanism like JS's CDN script tag (Dart has no
+  equivalent — pub.dev packages don't ship a browser global). Probes
+  whether the response respects that `Widget build()` must stay
+  synchronous, so `evaluate()`'s `Future` has to be resolved outside it
+  (`initState`/`setState`, a `FutureBuilder`), and states that
+  `verdict_rules` needs no Flutter-specific adapter since it is a pure
+  Dart package. Also the one scenario using `pubspec.lock` rather than
+  `pubspec.yaml`'s own caret constraint to establish the installed
+  version — the same distinction `06-fetch-docs-completeness` relies on
+  for every other Dart eval.
+- `python/05-fetch-docs-completeness`, `js/06-fetch-docs-completeness`,
+  and `dart/06-fetch-docs-completeness` — added alongside
+  `MANIFEST.toml`'s `[[fetch_group]]` restructuring, to catch the
+  failure that change actually could have shipped with: an agent
+  reading `references/<lang>/agent-notes.md`'s two illustrative curl
+  examples as the *complete* fetch list, rather than as examples of a
+  pattern that covers fourteen topics. Each prompt names two scenarios
   deliberately not among those two examples, so getting the eval right
   means the agent expanded a `fetch_group` pattern for itself rather
   than pattern-matching on what it was shown literally.
@@ -92,9 +107,8 @@ wrong *and* silent when it is:
 tag, over the real network, against a real released tag. Measuring that
 needs network access inside the eval sandbox, which would make the
 result depend on GitHub being reachable rather than on the skill being
-right — `python/05-fetch-docs-completeness` and `js/06-fetch-docs-completeness`
-measure whether the agent identifies the *correct set* of documents to
-fetch, not whether the `curl` itself succeeded. `scripts/check_skill_bundle.py`
-covers the one fetch-path failure that was actually reachable without a
-network round trip — a documented fetch path drifting away from the
-manifest.
+right — the three `fetch-docs-completeness` evals measure whether the
+agent identifies the *correct set* of documents to fetch, not whether
+the `curl` itself succeeded. `scripts/check_skill_bundle.py` covers the
+one fetch-path failure that was actually reachable without a network
+round trip — a documented fetch path drifting away from the manifest.
