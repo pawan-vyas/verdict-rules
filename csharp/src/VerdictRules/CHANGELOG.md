@@ -34,3 +34,4 @@ Initial publish.
 - `[DebuggerDisplay]` and a debugger type proxy so a nested result tree is
   legible while stepping; SourceLink and `.snupkg` symbols so stepping into the
   package reaches real source.
+- `PackageTags` is `rules-engine;rule-evaluation;eligibility;decision;decision-engine;async`.

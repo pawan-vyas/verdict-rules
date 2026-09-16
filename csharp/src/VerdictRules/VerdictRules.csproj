@@ -16,7 +16,7 @@
     <Version>0.0.1</Version>
     <Authors>Pawan Vyas</Authors>
     <Description>A small, zero-dependency, async-native rule-evaluation engine. Compose conditions into one explainable pass/fail verdict, with sequential evaluation and real short-circuiting as a guarantee.</Description>
-    <PackageTags>rules-engine;rule-evaluation;eligibility;policy;decision</PackageTags>
+    <PackageTags>rules-engine;rule-evaluation;eligibility;decision;decision-engine;async</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://github.com/pawan-vyas/verdict-rules</PackageProjectUrl>

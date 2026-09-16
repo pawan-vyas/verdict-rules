@@ -79,12 +79,14 @@ a near-duplicate of a term already carried.
 
 ## NuGet, once C# actually publishes
 
-`VerdictRules.csproj`'s `<PackageTags>` already exists, currently
-`rules-engine;rule-evaluation;eligibility;policy;decision` — predating
-this policy, not yet reconciled since C# hasn't published. Needs the
-same fix the reasoning above already covers: drop `policy` entirely,
-keep the rest, land on the full 6-term union. The fix belongs on
-`plan/csharp-sdk` itself, not here.
+`VerdictRules.csproj`'s `<PackageTags>` is
+`rules-engine;rule-evaluation;eligibility;decision;decision-engine;async`
+— the same full 6-term union PyPI's and npm's own fields already carry,
+with no structural cap the way pub.dev's `topics` has. `policy` was
+dropped on `plan/csharp-sdk` itself before that branch's first release,
+same reasoning as every other language: it names a rule together with
+what happens when it's enforced, and this package only ever evaluates,
+never acts on the result.
 
 The one real syntactic difference from PyPI/npm: `PackageTags` is an
 MSBuild property, so it's **semicolon-delimited**
