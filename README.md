@@ -204,38 +204,11 @@ graph LR
 | [`python/examples/`](python/examples/README.md) | Full, tested mini-projects behind the more comprehensive samples — real code, real tests, real docs |
 | [`skills/verdict/SKILL.md`](skills/verdict/SKILL.md) | The AI-agent skill for building with Verdict |
 
-## Development
-
-### Python
-
-```bash
-cd python/
-uv sync
-uv run pytest
-```
-
-### JavaScript/TypeScript
-
-```bash
-cd js/
-npm install
-npm run build   # tests import from dist/, not src/
-npm test
-```
-
-### Dart
-
-```bash
-cd dart/packages/verdict_rules/
-dart pub get
-dart analyze
-dart test
-```
-
 ## Contributing
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for how to set up a change and
-what it needs to prove before it's mergeable.  
+what it needs to prove before it's mergeable — it names where each
+language keeps its own concrete dev-setup commands.  
 Licensed under [MIT](LICENSE).  
 Release history:
 
