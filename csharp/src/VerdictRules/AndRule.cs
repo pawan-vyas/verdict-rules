@@ -16,23 +16,19 @@ namespace VerdictRules;
 /// which is deliberate and easy to get backwards.
 /// </para>
 /// </remarks>
-public sealed class AndRule : IRule
+/// <param name="name">See <see cref="Name"/>.</param>
+/// <param name="rules">Sub-rules, evaluated in this order.</param>
+/// <param name="group">See <see cref="Group"/>.</param>
+public sealed class AndRule(string name, IReadOnlyList<IRule> rules, string? group = null) : IRule
 {
-    private readonly IReadOnlyList<IRule> _rules;
+    /// <summary>Sub-rules, evaluated in order until one fails or all pass.</summary>
+    private readonly IReadOnlyList<IRule> _rules = rules;
 
     /// <inheritdoc />
-    public string Name { get; }
+    public string Name { get; } = name;
 
     /// <inheritdoc />
-    public string? Group { get; }
-
-    /// <summary>Creates a composite from ordered sub-rules.</summary>
-    public AndRule(string name, IReadOnlyList<IRule> rules, string? group = null)
-    {
-        Name = name;
-        _rules = rules;
-        Group = group;
-    }
+    public string? Group { get; } = group;
 
     /// <inheritdoc />
     public async Task<RuleResult> EvaluateAsync(IReadOnlyDictionary<string, object?> context)

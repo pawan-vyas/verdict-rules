@@ -8,23 +8,19 @@ namespace VerdictRules;
 /// vacuously: nothing to pass on. The opposite of <see cref="AndRule"/>, and
 /// the asymmetry is the point.
 /// </remarks>
-public sealed class OrRule : IRule
+/// <param name="name">See <see cref="Name"/>.</param>
+/// <param name="rules">Sub-rules, evaluated in this order.</param>
+/// <param name="group">See <see cref="Group"/>.</param>
+public sealed class OrRule(string name, IReadOnlyList<IRule> rules, string? group = null) : IRule
 {
-    private readonly IReadOnlyList<IRule> _rules;
+    /// <summary>Sub-rules, evaluated in order until one passes or all fail.</summary>
+    private readonly IReadOnlyList<IRule> _rules = rules;
 
     /// <inheritdoc />
-    public string Name { get; }
+    public string Name { get; } = name;
 
     /// <inheritdoc />
-    public string? Group { get; }
-
-    /// <summary>Creates a composite from ordered sub-rules.</summary>
-    public OrRule(string name, IReadOnlyList<IRule> rules, string? group = null)
-    {
-        Name = name;
-        _rules = rules;
-        Group = group;
-    }
+    public string? Group { get; } = group;
 
     /// <inheritdoc />
     public async Task<RuleResult> EvaluateAsync(IReadOnlyDictionary<string, object?> context)

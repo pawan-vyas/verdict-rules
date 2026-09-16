@@ -35,5 +35,7 @@ public interface IRule
     string? Group { get; }
 
     /// <summary>Evaluates this rule against <paramref name="context"/>.</summary>
+    /// <param name="context">The facts this rule's predicate reads from.</param>
+    /// <returns>The outcome, attributed back to this rule by <see cref="Name"/>.</returns>
     Task<RuleResult> EvaluateAsync(IReadOnlyDictionary<string, object?> context);
 }

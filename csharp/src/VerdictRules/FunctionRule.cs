@@ -8,30 +8,25 @@ namespace VerdictRules;
 /// structural typing for a multi-member interface like <see cref="IRule"/>,
 /// so this is the escape hatch that keeps most rules from needing one.
 /// </remarks>
-public sealed class FunctionRule : IRule
+/// <param name="name">See <see cref="Name"/>.</param>
+/// <param name="predicate">The wrapped predicate <see cref="EvaluateAsync"/> delegates to.</param>
+/// <param name="group">See <see cref="Group"/>.</param>
+public sealed class FunctionRule(string name, RulePredicate predicate, string? group = null) : IRule
 {
-    private readonly RulePredicate _predicate;
+    /// <summary>The wrapped predicate, run unchanged by <see cref="EvaluateAsync"/>.</summary>
+    private readonly RulePredicate _predicate = predicate;
 
     /// <inheritdoc />
-    public string Name { get; }
+    public string Name { get; } = name;
 
     /// <inheritdoc />
-    public string? Group { get; }
-
-    /// <summary>Creates a rule from a predicate.</summary>
-    public FunctionRule(
-        string name,
-        RulePredicate predicate,
-        string? group = null)
-    {
-        Name = name;
-        _predicate = predicate;
-        Group = group;
-    }
+    public string? Group { get; } = group;
 
     /// <summary>
     /// Runs the wrapped predicate and returns whatever it returns, unchanged.
     /// </summary>
+    /// <param name="context">Forwarded to the wrapped predicate as-is.</param>
+    /// <returns>Whatever the wrapped predicate returns, unchanged.</returns>
     public Task<RuleResult> EvaluateAsync(IReadOnlyDictionary<string, object?> context) =>
         _predicate(context);
 }

@@ -26,4 +26,6 @@ namespace VerdictRules;
 /// or method group is unaffected either way.
 /// </para>
 /// </remarks>
+/// <param name="context">The facts this predicate reads from.</param>
+/// <returns>The outcome of the one condition this predicate decides.</returns>
 public delegate Task<RuleResult> RulePredicate(IReadOnlyDictionary<string, object?> context);

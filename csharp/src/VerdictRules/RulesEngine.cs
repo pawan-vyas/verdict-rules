@@ -10,11 +10,17 @@ namespace VerdictRules;
 /// </remarks>
 public sealed class RulesEngine
 {
+    /// <summary>Every registered rule, in registration order.</summary>
     private readonly IReadOnlyList<IRule> _rules;
+
+    /// <summary>Registered rules, indexed by <see cref="IRule.Name"/> for <see cref="TryRunNamedAsync"/>.</summary>
     private readonly Dictionary<string, IRule> _byName;
+
+    /// <summary>Registered rules, bucketed by <see cref="IRule.Group"/> for <see cref="TryRunGroupAsync"/>.</summary>
     private readonly Dictionary<string, List<IRule>> _byGroup;
 
     /// <summary>Creates an engine over the given rules, in order.</summary>
+    /// <param name="rules">Rules this engine holds, indexed by name and group.</param>
     public RulesEngine(IReadOnlyList<IRule> rules)
     {
         _rules = rules;
@@ -54,6 +60,8 @@ public sealed class RulesEngine
     public IReadOnlyCollection<string> GroupNames => _byGroup.Keys;
 
     /// <summary>Evaluates every registered rule. Never short-circuits.</summary>
+    /// <param name="context">The facts every registered rule's predicate reads from.</param>
+    /// <returns>One aggregate result carrying every rule's own outcome, in registration order.</returns>
     public async Task<RunResult> RunAllAsync(IReadOnlyDictionary<string, object?> context)
     {
         var results = new List<RuleResult>();
@@ -89,6 +97,9 @@ public sealed class RulesEngine
     /// <see cref="RuleResult.Passed"/> false.
     /// </para>
     /// </remarks>
+    /// <param name="name">The rule name to look up, matching some <see cref="IRule.Name"/>.</param>
+    /// <param name="context">The facts the matched rule's predicate reads from.</param>
+    /// <returns>The rule's outcome, or <c>null</c> if <paramref name="name"/> matches no rule.</returns>
     public async Task<RuleResult?> TryRunNamedAsync(string name, IReadOnlyDictionary<string, object?> context)
     {
         if (!_byName.TryGetValue(name, out var rule))
@@ -106,6 +117,9 @@ public sealed class RulesEngine
     /// immediately. Use <see cref="TryRunNamedAsync"/> when absence is a state
     /// your own domain has an answer for.
     /// </remarks>
+    /// <param name="name">The rule name to look up, matching some <see cref="IRule.Name"/>.</param>
+    /// <param name="context">The facts the matched rule's predicate reads from.</param>
+    /// <returns>The rule's outcome.</returns>
     /// <exception cref="KeyNotFoundException">No rule has this name.</exception>
     public async Task<RuleResult> RunNamedAsync(string name, IReadOnlyDictionary<string, object?> context)
     {
@@ -132,6 +146,9 @@ public sealed class RulesEngine
     /// a misspelled group silently approves.
     /// </para>
     /// </remarks>
+    /// <param name="group">The group label to look up, matching some <see cref="IRule.Group"/>.</param>
+    /// <param name="context">The facts every rule in the matched group reads from.</param>
+    /// <returns>The group's aggregate result, or <c>null</c> if <paramref name="group"/> matches no rule.</returns>
     public async Task<RunResult?> TryRunGroupAsync(string group, IReadOnlyDictionary<string, object?> context)
     {
         if (!_byGroup.TryGetValue(group, out var rules) || rules.Count == 0)
@@ -157,6 +174,9 @@ public sealed class RulesEngine
     /// has an answer for. This is the one place the package is strict:
     /// emptiness folds to an identity, absence is an error.
     /// </remarks>
+    /// <param name="group">The group label to look up, matching some <see cref="IRule.Group"/>.</param>
+    /// <param name="context">The facts every rule in the matched group reads from.</param>
+    /// <returns>The group's aggregate result.</returns>
     /// <exception cref="KeyNotFoundException">No rule carries this label.</exception>
     public async Task<RunResult> RunGroupAsync(string group, IReadOnlyDictionary<string, object?> context)
     {
