@@ -91,7 +91,7 @@ Same shape for csharp and dart; js gets the extra Stage-4 rows.
       quickstart), release-history changelog link, and a `<details>`
       block in Quickstart alongside Python/JS/Dart (collapsed, matching
       JS/Dart — Python alone stays `open` as the canonical example).
-      **No `## Development` section anymore** — PR #71 removed it
+      **No `## Development` section anymore** — PR #70 removed it
       entirely as a third duplicate of commands already in
       `CONTRIBUTING.md` and each language's own `AGENTS.md`;
       `CONTRIBUTING.md`'s generic pointer needs no edit for C# either,
