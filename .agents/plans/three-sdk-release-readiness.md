@@ -79,42 +79,72 @@ Same shape for csharp and dart; js gets the extra Stage-4 rows.
       table — surfaced and fixed a real pre-existing regex bug there
       (a link followed immediately by an XML closing tag)
 - [x] Pushed; PR #5 (pre-existing draft) updated, all CI green
-- [ ] **Sweep the root `README.md` for C# once it lands on `main`** —
-      Dart's own equivalent sweep (PR #69) was done as a follow-up
-      *after* merge, not as part of Dart's own landing PR, and was
-      only caught because the user noticed the gap by eye. Do it as
-      part of cutting C#'s first release instead of after: Status
-      table row (NuGet registry, version badge, `test-csharp.yml`
-      badge, Supply Chain — check whether Socket.dev supports NuGet
-      before reusing its badge, it does not cover every registry
-      equally), Where-to-go-next rows (`csharp/README.md` +
-      quickstart), release-history changelog link, and a `<details>`
-      block in Quickstart alongside Python/JS/Dart (collapsed, matching
-      JS/Dart — Python alone stays `open` as the canonical example).
-      **No `## Development` section anymore** — PR #70 removed it
-      entirely as a third duplicate of commands already in
-      `CONTRIBUTING.md` and each language's own `AGENTS.md`;
-      `CONTRIBUTING.md`'s generic pointer needs no edit for C# either,
-      since `csharp/AGENTS.md` already carries its own "Before calling
-      a change done" section.
-- [ ] **`RuleResult.cs` holds two public types** (`RuleResult` and
-      `RunResult`, plus a private nested `RunResultDebugView`) —
-      C#'s own real community convention (StyleCop's `SA1402`, widely
-      adopted, reflecting Microsoft's own guidance) is one public type
-      per file, unlike Python/JS/Dart, all three of which have their
-      own ecosystem's explicit blessing to group tightly related
-      classes in one module/library (Google's Python and TypeScript
-      style guides, and Effective Dart's own design doc, each
-      explicitly contrast this against Java's one-class-per-file habit
-      — see `.agents/memory/research-the-ecosystem-before-deciding-its-idiom.md`
-      for the general principle this confirms again). Every other file
-      on this branch already follows `SA1402` correctly, including
-      splitting `RulePredicate.cs` out on its own even where `SA1402`'s
-      own exception would have allowed bundling it with `FunctionRule`.
-      Split `RunResult` into its own `RunResult.cs` as part of this
-      branch's full pre-release audit, once common
-      fixes/restructuring elsewhere in the repo have settled — not
-      urgent enough to interrupt other in-flight work for.
+- [x] **Root `README.md` swept for C#** — Status row (NuGet, version
+      badge, `test-csharp.yml` badge, a real Socket.dev NuGet link
+      confirmed against Socket's own .NET-support announcement),
+      Where-to-go-next rows, release-history changelog link, and a
+      collapsed `<details>` block in Quickstart, verified for real via
+      `dotnet run` against the actual built package. No `## Development`
+      section to add — PR #70 removed it repo-wide.
+- [x] **`RuleResult.cs`'s SA1402 split** — `RunResult` moved into its
+      own `RunResult.cs`; the private `RunResultDebugView` stays nested
+      inside it, since `SA1402` only restricts public top-level types.
+      Verified: `dotnet build -warnaserror` clean, `dotnet test` 26/26.
+- [x] **Full skill-routing doc parity with Dart's own onboarding** —
+      `docs/architecture/csharp.md`, `docs/testing/csharp.md`, one
+      `csharp.md` per extending scenario (7) and per language-agnostic
+      sample (6), `references/csharp/agent-notes.md`,
+      `MANIFEST.toml`'s `languages` list + quickstart fetch entry,
+      skill bumped to `skill-v0.5.8`, and `skills/verdict-workspace/evals/csharp/`
+      (5 evals, written and validated against the real assembler, not
+      yet run — waits for a real published `0.0.1`).
+- [x] **`PackageTags` fixed** — was still `...;policy;decision`,
+      predating the repo-wide policy drop; now matches Python's/JS's
+      own converged 6-term set, verified in the real packed `.nuspec`.
+- [ ] **Add `"C# tests passed or were not needed"` to branch
+      protection's required status checks, at merge time — not
+      before.** JS's and Dart's own gates were live and running on
+      every PR unconditionally but had never actually been marked
+      required; that gap is already fixed directly (see
+      [#73](https://github.com/pawan-vyas/verdict-rules/issues/73)).
+      C#'s own gate can't be added the same way yet: `test-csharp.yml`
+      only exists on this branch, not on `main`, so marking its check
+      name required now would show every other open PR as permanently
+      "waiting for status to be reported." The moment this branch
+      merges and the workflow lands on `main`, run:
+      ```bash
+      gh api repos/pawan-vyas/verdict-rules/branches/main/protection/required_status_checks \
+        --method PATCH \
+        --field strict=true \
+        --field 'contexts[]=Python tests passed or were not needed' \
+        --field 'contexts[]=Skill version bumped or not needed' \
+        --field 'contexts[]=JS/TS tests passed or were not needed' \
+        --field 'contexts[]=Dart tests passed or were not needed' \
+        --field 'contexts[]=C# tests passed or were not needed'
+      ```
+      then close #73.
+- [ ] **NuGet setup gaps found while auditing `release-csharp.yml`,
+      need the user's action, not automatable from here**: the `nuget`
+      GitHub environment doesn't exist yet (repo has `github-pages`/
+      `npm`/`pub.dev`/`pypi` only — `release-csharp.yml` references
+      `environment: nuget`); `NUGET_USER` isn't set anywhere (repo- or
+      environment-level) — needed by the `NuGet/login@v1` step's
+      `user:` input; whether nuget.org's own Trusted Publishing policy
+      has actually been registered yet is unverifiable from here (needs
+      the user's nuget.org login) — see
+      `.agents/plans/csharp-sdk/PLAN.md` §3 for the documented steps.
+- [ ] **Confirm the `.snupkg` symbol package actually lands on
+      nuget.org** right after the manual `0.0.1` push — the mechanism
+      (`dotnet nuget push "dist/*.nupkg"` auto-detecting and pushing
+      the sibling `.snupkg`, same API key) is confirmed against
+      Microsoft's own `.NET` blog, but that's a blog post, not the
+      formal API reference, and one lower-confidence secondary source
+      claimed the opposite. Check the package's own page on nuget.org
+      for its "Symbols" indicator before considering the release done
+      — required per `csharp/AGENTS.md`'s "Debuggability is part of
+      the API surface": SourceLink/`.snupkg` "must be set *before* a
+      version ships — released versions cannot be made debuggable
+      retroactively."
 
 ### `plan/dart-sdk` — [PR #7](https://github.com/pawan-vyas/verdict-rules/pull/7), Stage 2/3 done, CI green
 
