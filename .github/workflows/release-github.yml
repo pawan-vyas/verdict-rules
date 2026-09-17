@@ -169,12 +169,23 @@ jobs:
           done
 
       - name: Verify scripts/get.sh can still resolve the skill
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           # get.sh pulls verdict-tools.zip from whatever GitHub calls the latest
           # release. If a release of either kind omits it, the curl-pipe
           # installer breaks outright — so this is checked after every one.
-          url="$(curl -fsSL "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest" \
+          #
+          # Authenticated, not just for good practice: an unauthenticated call
+          # to this same endpoint hit GitHub's own 60/hour rate limit when two
+          # releases (JS and the skill) fired from the same push and both ran
+          # this exact check within seconds of each other -- confirmed by
+          # reproducing the identical unauthenticated call from outside CI
+          # moments later and getting a clean 200, so it wasn't a real outage.
+          # GITHUB_TOKEN raises that ceiling to 1000/hour, which no plausible
+          # number of concurrent releases from this repo will ever approach.
+          url="$(curl -fsSL -H "Authorization: Bearer ${GH_TOKEN}" "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest" \
             | grep '"browser_download_url"' \
             | grep 'verdict-tools\.zip' \
             | sed -E 's/.*"browser_download_url": *"([^"]+)".*/\1/' \
