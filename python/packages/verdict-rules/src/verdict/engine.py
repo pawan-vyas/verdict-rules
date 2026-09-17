@@ -7,12 +7,13 @@ grouped), resolved via plain dict lookups rather than an if/elif chain.
 from __future__ import annotations
 
 from collections import defaultdict
+from typing import Generic
 
 from verdict.result import RuleResult, RunResult
-from verdict.rule import Rule
+from verdict.rule import Rule, TContext
 
 
-class RulesEngine:
+class RulesEngine(Generic[TContext]):
     """Holds a set of rules and runs them against a context.
 
     Unlike :class:`~verdict.rule.AndRule`/:class:`~verdict.rule.OrRule`
@@ -22,9 +23,18 @@ class RulesEngine:
     a full diagnostic picture (every rule's outcome), not the fastest
     path to one boolean. Compose rules with ``AndRule``/``OrRule``
     first if short-circuiting is what a particular call site wants.
+
+    Generic over ``TContext``, the same way :class:`~verdict.rule.Rule`
+    is: an untyped ``RulesEngine([...])`` serves a heterogeneous catalog
+    of unrelated dict-context rules exactly as it always has (erasure
+    means this is not a behavior change), while
+    ``RulesEngine[OrderContext]([...])`` documents that every rule
+    registered here shares one cohesive context type. Neither form
+    replaces the other — see docs/architecture/ for when each is the
+    right shape.
     """
 
-    def __init__(self, rules: list[Rule]) -> None:
+    def __init__(self, rules: list[Rule[TContext]]) -> None:
         """Initialise with the full rule set this engine will serve.
 
         Args:
@@ -35,13 +45,13 @@ class RulesEngine:
                 literal would.
         """
         self._rules = rules
-        self._by_name: dict[str, Rule] = {r.name: r for r in rules}
-        self._by_group: dict[str, list[Rule]] = defaultdict(list)
+        self._by_name: dict[str, Rule[TContext]] = {r.name: r for r in rules}
+        self._by_group: dict[str, list[Rule[TContext]]] = defaultdict(list)
         for rule in rules:
             if rule.group:
                 self._by_group[rule.group].append(rule)
 
-    async def run_all(self, context: dict) -> RunResult:
+    async def run_all(self, context: TContext) -> RunResult:
         """Evaluate every rule in this engine against ``context``.
 
         Args:
@@ -57,7 +67,7 @@ class RulesEngine:
         results = [await rule.evaluate(context) for rule in self._rules]
         return RunResult(passed=all(r.passed for r in results), results=results)
 
-    async def try_run_named(self, name: str, context: dict) -> RuleResult | None:
+    async def try_run_named(self, name: str, context: TContext) -> RuleResult | None:
         """Evaluate one rule by name, or return ``None`` if no such rule exists.
 
         This is the primitive; :meth:`run_named` is a two-line assertion on
@@ -87,7 +97,7 @@ class RulesEngine:
             return None
         return await rule.evaluate(context)
 
-    async def run_named(self, name: str, context: dict) -> RuleResult:
+    async def run_named(self, name: str, context: TContext) -> RuleResult:
         """Evaluate exactly one rule, looked up by name.
 
         The strict form, and the one to reach for by default: if a name is
@@ -111,7 +121,7 @@ class RulesEngine:
         return result
 
     async def try_run_group(
-        self, group: str, context: dict
+        self, group: str, context: TContext
     ) -> RunResult | None:
         """Evaluate a group, or return ``None`` if no such group exists.
 
@@ -145,7 +155,7 @@ class RulesEngine:
         results = [await rule.evaluate(context) for rule in rules]
         return RunResult(passed=all(r.passed for r in results), results=results)
 
-    async def run_group(self, group: str, context: dict) -> RunResult:
+    async def run_group(self, group: str, context: TContext) -> RunResult:
         """Evaluate every rule sharing a given group label.
 
         The strict form, and the one to reach for by default. Use

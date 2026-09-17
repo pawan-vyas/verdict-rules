@@ -15,7 +15,7 @@ structure, the execution model, and why it's shaped this way).
 
 from verdict.engine import RulesEngine
 from verdict.result import RuleResult, RunResult
-from verdict.rule import AndRule, FunctionRule, OrRule, Rule
+from verdict.rule import AndRule, FunctionRule, OrRule, Rule, TContext
 
 __all__ = [
     "AndRule",
@@ -25,4 +25,5 @@ __all__ = [
     "RuleResult",
     "RulesEngine",
     "RunResult",
+    "TContext",
 ]

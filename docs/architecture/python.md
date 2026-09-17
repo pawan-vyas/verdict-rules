@@ -28,32 +28,32 @@ ordinary `Rule` that happens to delegate to a plain function.
 
 ```mermaid
 classDiagram
-    class Rule {
-        <<Interface>>
+    class Rule~TContext~ {
+        <<Protocol>>
         +name: str
         +group: str|None
-        +evaluate(context: dict)* RuleResult
+        +evaluate(context: TContext)* RuleResult
     }
-    class FunctionRule {
-        -predicate: Callable~dict, Awaitable~RuleResult~~
-        +evaluate(context: dict) RuleResult
+    class FunctionRule~TContext~ {
+        -predicate: Callable~TContext, Awaitable~RuleResult~~
+        +evaluate(context: TContext) RuleResult
     }
-    class AndRule {
-        -rules: list~Rule~
-        +evaluate(context: dict) RuleResult
+    class AndRule~TContext~ {
+        -rules: list~Rule~TContext~~
+        +evaluate(context: TContext) RuleResult
     }
-    class OrRule {
-        -rules: list~Rule~
-        +evaluate(context: dict) RuleResult
+    class OrRule~TContext~ {
+        -rules: list~Rule~TContext~~
+        +evaluate(context: TContext) RuleResult
     }
-    class RulesEngine {
-        -_by_name: dict~str, Rule~
-        -_by_group: dict~str, list~Rule~~
-        +run_all(context: dict) RunResult
-        +run_named(name: str, context: dict) RuleResult
-        +run_group(group: str, context: dict) RunResult
-        +try_run_named(name: str, context: dict) RuleResult|None
-        +try_run_group(group: str, context: dict) RunResult|None
+    class RulesEngine~TContext~ {
+        -_by_name: dict~str, Rule~TContext~~
+        -_by_group: dict~str, list~Rule~TContext~~~
+        +run_all(context: TContext) RunResult
+        +run_named(name: str, context: TContext) RuleResult
+        +run_group(group: str, context: TContext) RunResult
+        +try_run_named(name: str, context: TContext) RuleResult|None
+        +try_run_group(group: str, context: TContext) RunResult|None
         +rule_names tuple~str~
         +group_names tuple~str~
     }
@@ -82,6 +82,73 @@ classDiagram
 See [`README.md`](README.md)'s "Type structure" section for why each of
 these relationships is shaped the way it is — the reasoning applies
 here unchanged; this diagram is just Python's own type syntax for it.
+`RuleResult`/`RunResult` are deliberately not generic — see "Generic
+context, concretely" below for why `Data`/`data` stays opaque rather
+than following `TContext`.
+
+## Generic context, concretely
+
+`Rule` is generic over the context it reads from (`TContext`), declared
+as `Protocol[TContext]`. This is purely a typing-level addition —
+Python erases generics at runtime, so nothing about how a rule executes
+changes, and every existing structural rule keeps satisfying `Rule`
+unconditionally whether or not it names a type argument:
+
+```python
+from dataclasses import dataclass
+from verdict import AndRule, FunctionRule, Rule, RuleResult, RulesEngine
+
+@dataclass(frozen=True)
+class OrderContext:
+    total: float
+    is_member: bool
+
+async def order_total_met(context: OrderContext) -> RuleResult:
+    return RuleResult(rule_name="order_total_met", passed=context.total >= 50.0)
+
+# TContext is inferred from order_total_met's own annotation -- no
+# explicit type argument needed at the call site.
+rule: FunctionRule[OrderContext] = FunctionRule("order_total_met", order_total_met)
+
+# A cohesive family of rules sharing one context can now say so:
+engine: RulesEngine[OrderContext] = RulesEngine([rule])
+```
+
+**Dict-context stays first-class, permanently — not an "escape hatch."**
+`Rule[dict[str, Any]]` is exactly as valid a type argument as any
+dataclass, and an untyped `Rule`/`FunctionRule`/`RulesEngine` (erasing to
+`Rule[Any]`) works exactly as it always has. A rule meant to be reused
+across genuinely different aggregate shapes — an `is_verified_user`
+check wanted inside both a checkout flow and an onboarding flow, where
+the fact lives at a different nesting path in each — is naturally
+served by dict-context; a strictly-typed rule would need an explicit
+projecting adapter at every reuse site (see
+[`../extending/reusing-a-rule-across-contexts/`](../extending/reusing-a-rule-across-contexts/README.md)).
+
+**`AndRule[TContext]`/`OrRule[TContext]` require every sub-rule to share
+the exact same `TContext`** — enforced by a type checker (mypy, pyright)
+once a caller names a type argument, though Python itself doesn't
+enforce it at runtime. This is the same boundary every Python generic
+has: naming `Rule[OrderContext]` and then handing `evaluate` an
+unrelated object still runs, and fails wherever the predicate's own body
+first touches a missing attribute, not with a type-system error. A type
+checker is what actually catches the mismatch before that point.
+
+**Why `RuleResult`/`RunResult` stay non-generic.** Context is input,
+read at every predicate call site; `Data`/`data` is output, written once
+and already documented as opaque — a caller already expects to
+runtime-check its shape. Genericizing `Data` would force every rule that
+might ever compose under one `AndRule` to share one `TData`, which a
+composite's own `data` (a `list[RuleResult]` of sub-results, each
+possibly carrying an unrelated domain object in its own `data`) already
+contradicts — see
+[`domain-adapter-module/python.md`](../extending/domain-adapter-module/python.md)
+for the real shipped example this is proven against.
+
+**Recommended for consumers who want the same strictness this gave
+before generics existed**: pyright's `reportMissingTypeArgument` or
+mypy's `disallow_any_generics`, since `verdict` itself can't force a
+caller's own lint configuration to require an explicit type argument.
 
 ## Execution model, concretely
 
