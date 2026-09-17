@@ -8,8 +8,8 @@
 
 ## Status
 
-**Test-suite parity underway; everything past it is still planning only.**
-Every PR described below requires explicit sign-off before merging — no
+**Core migration implemented, on its own PR, awaiting sign-off.** Every PR
+described below requires explicit sign-off before merging — no
 `gh pr merge --admin` autonomy on this effort, regardless of how green CI is.
 That's a deliberate departure from this repo's usual merge pattern, because
 this is large enough, and foundational enough, to warrant it.
@@ -21,11 +21,27 @@ Real progress, confirmed against the actual repo rather than assumed:
   ([PR #89](https://github.com/pawan-vyas/verdict-rules/pull/89)) and Dart
   ([PR #90](https://github.com/pawan-vyas/verdict-rules/pull/90)) open and
   green, awaiting sign-off.
+- `graduation_verdict` fixture port (this plan's phase 2) — JS
+  ([PR #91](https://github.com/pawan-vyas/verdict-rules/pull/91)), C#
+  ([PR #92](https://github.com/pawan-vyas/verdict-rules/pull/92)), and Dart
+  ([PR #93](https://github.com/pawan-vyas/verdict-rules/pull/93)) all open
+  and green, awaiting sign-off.
+- **The core `Rule<TContext>` migration itself is implemented, tested, and
+  documented across all four languages, on a single PR**
+  ([PR #94](https://github.com/pawan-vyas/verdict-rules/pull/94)) — cut from
+  `main` before the six PRs above had merged, so it will need a rebase once
+  they land. Comprehensive per-language tests (17 Python, 8 JS, 13 C#, 9
+  Dart, on top of each language's own idiom coverage), each language's own
+  architecture-doc section, the shared `docs/architecture/README.md`
+  addition, the new `docs/extending/reusing-a-rule-across-contexts/`
+  scenario (one page per language, every code sample compiled/run-verified),
+  each language's own changelog, and the skill's version bump are all in
+  that PR already — see its own description for the full breakdown.
 - **The release shape below has changed from what was originally planned** —
   see "Release shape," which now reflects the sequencing actually confirmed,
   not the four-language-PRs-plus-shared-docs shape this plan started with.
-- Nothing else (fixture ports, the new cross-language fixture, the core
-  migration itself) has started.
+- The new cross-language fixture (step 4 below) has not started — by design,
+  it waits for PR #94 to merge and prove the design out first.
 
 ## What this release actually is
 
