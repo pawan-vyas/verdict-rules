@@ -332,51 +332,60 @@ to subtle-correctness contracts, not a complete enumeration of Python's test
 suite — confirmed by the real counts, checked directly rather than inferred
 from the summary tables:
 
-| | Test count |
+**The formula, confirmed: `4 × N + Σ(languageᵢ × Mᵢ)`** — one universal
+baseline `N`, ported 1:1 into every language, plus however many `M`
+language-idiom-specific tests each language legitimately needs (a
+`CancellationToken` propagation test in C#, a structural-typing demonstration
+in JS, whatever each language's own idiom calls for — none of which are
+gaps, and none of which get ported anywhere else).
+
+`N = 40`, not 41 — corrected directly, not assumed. The first pass at this
+audit found that Python's own `test_results_are_always_truthy` (in
+`test_engine.py`) proves a Python-only idiom (the `x or default` fallback
+pattern, meaningless in a language without implicit truthiness) with no
+universal counterpart — it was never actually part of the reference other
+languages port against, just miscounted as if it were. Already fixed:
+extracted into Python's own `tests/test_python_idioms.py`, its own `Mᵢ` of
+1, alongside `test_rule.py` (16) + `test_engine.py` (24) = 40. Every other
+language's own idiom file follows the same pattern.
+
+| | Baseline suite ported 1:1 (target: `N` = 40) |
 |---|---|
-| Python | **41** (`test_rule.py`: 16, `test_engine.py`: 25) |
-| JS | 32 |
-| C# | 29 |
-| Dart | 27 |
+| Python | 40 (`test_rule.py`: 16, `test_engine.py`: 24) — reference, done |
+| JS | 32 today, not yet re-audited against the corrected `N` |
+| C# | 29 today, not yet re-audited against the corrected `N` |
+| Dart | 27 today, not yet re-audited against the corrected `N` |
 
-Against the nine subtle-correctness contracts specifically, the picture is as
-already found: JS is at full parity there, C# and Dart both specifically
-lack a duplicate-rule-name test and a predicate-exception-propagation test
-(C#'s own `docs/testing/csharp.md` self-documents this in these words: *"Not
-yet covered: a duplicate-rule-name registration... and a predicate's own
-thrown exception propagating uncaught... both real contracts... worth
-porting before this package leaves 0.0.x"* — Dart's contract table omits the
-same two rows). But the raw count gap (41 vs. 32/29/27) is wider than those
-two named items account for — a first pass already surfaced likely
-additional gaps by name-matching against Python's full list, not yet
-confirmed by reading test bodies:
+**Approach, confirmed: rebuild each non-Python language's test suite from
+scratch as a strict, file-for-file, test-for-test port of `test_rule.py`/
+`test_engine.py`, rather than auditing the existing suite for gaps and
+patching them.** Considered and rejected: diffing Python's full test list
+against each language's existing file by name, then patching in whatever's
+missing (an early pass at this did surface real gaps this way — a missing
+context-delivery test, a missing engine-level empty-vacuous-pass test — both
+now moot). Rebuilding from the reference is simpler and more reliable than
+auditing an independently-evolved suite for drift: if it doesn't exist in
+the new file, there's nothing to have drifted. Concretely, per language:
 
-- **`test_predicate_receives_the_context`** — an explicit test that the
-  context object passed to `evaluate()` reaches the predicate unchanged.
-  Not obviously present by name in JS's or C#'s test files.
-- **Engine-level vacuous-truth on an empty `RulesEngine`**
-  (`test_empty_engine_run_all_vacuously_passes`) — distinct from `AndRule`'s
-  own empty-list test, which the other languages do have. JS/C# have
-  `AnEmptyEngineReportsNothing` (introspection: no names/groups exist) but
-  not obviously a dedicated test that `run_all` on an empty engine still
-  returns `passed: true`.
-- **`test_results_are_always_truthy`** — worth checking what this actually
-  asserts before deciding whether it's a real cross-language contract or a
-  Python-idiom-specific check.
+1. Delete the existing test file(s) entirely.
+2. Recreate a strict 1:1 mirror of `test_rule.py`/`test_engine.py` — same
+   file split, same test classes, same tests, same assertions, translated
+   into that language's own idiom. This is `Rulesᵢ` = 40, by construction,
+   not by audit.
+3. Recreate a **separate**, clearly-labeled idiom file holding exactly the
+   tests that have no Python counterpart on purpose (a `CancellationToken`
+   test in C#, whatever JS's and Dart's own idioms call for) — never
+   ported anywhere else, never counted against `N`.
+4. This structure is what makes the whole thing auditable forever: the 1:1
+   files are the ones to check against Python; the idiom file is
+   explicitly not part of that check.
 
-**This name-matching pass is not the audit — it's evidence the audit is
-needed.** Each language's own plan (`python.md` confirming the baseline;
-`typescript.md`/`csharp.md`/`dart.md`) now requires a real, test-body-level
-diff against Python's full 41-test suite as the *first* action item of that
-language's parity phase, not an assumption that the summary tables already
-captured everything.
-
-**The pass criteria is coverage, not a raw count.** 41 is a sanity anchor —
-evidence something might be missing when a language's count sits well below
-it — not a literal target. A language's own idiom can legitimately express
-the same coverage in fewer or more test functions (a C# `[Theory]` covering
-several of Python's separate `test_` functions in one parameterized case is
-*full* parity, not a shortfall) — this repo's own principle already says so
+**The pass criteria is still coverage, not a literal count.** `N = 40` is
+the reference every language mirrors 1:1, but a language's own idiom can
+still express one of those 40 contracts differently (a C# `[Theory]`
+covering several of Python's separate `test_` functions in one
+parameterized case is full parity, not a shortfall) — this repo's own
+principle already says so
 ("each language may use idiomatic mechanisms... must implement the same
 semantic contracts"). The actual done-criteria for this phase is: every
 contract Python's suite proves is proven *somewhere* in the other language's

@@ -6,28 +6,30 @@
 > from three already-completed, working precedents (Python, TS, C#) before
 > its own harder mechanics land.
 
-## 1. Test-suite parity — two known gaps, plus a real count-vs-coverage check
+## 1. Test-suite parity — drop and recreate, 1:1 against Python, plus a preserved idiom file
 
-Per `README.md`'s corrected scope: parity means Python's *whole* suite (41
-tests, 27 here today), not just the 9-contract checklist. The two items
-below are the *known, self-documented* gaps (same as C#'s) — confirm they're
-the complete picture by diffing Python's full test list against
-`verdict_rules_test.dart` directly, rather than assuming nothing else is
-missing once these two land. The target is coverage, not literally reaching
-41 — Dart's own idiom may express the same contract differently and still be
-at full parity.
+Per `README.md`'s corrected, confirmed approach (see `csharp.md` §1 for the
+worked example): **do not audit `verdict_rules_test.dart` for gaps and
+patch them in — delete it and recreate from Python's own `test_rule.py`/
+`test_engine.py` as a strict, file-for-file, test-for-test port.**
 
-Dart's own `docs/testing/dart.md` contract table omits the same two rows
-C#'s does. Add, mirroring JS's own test structure and naming conventions:
+1. A 1:1 port of `test_rule.py` (16 tests) and `test_engine.py` (24 tests,
+   `N = 40` total — see `README.md` for why not 41) — same test classes,
+   same tests, same assertions, in Dart idiom. This automatically resolves
+   Dart's two known, self-documented gaps (duplicate-rule-name,
+   predicate-exception-propagation) as a byproduct of the port, without
+   needing to identify and patch them separately.
+2. A **separate**, clearly-labeled idiom file for whatever Dart-specific
+   coverage the existing suite has that has no Python counterpart on
+   purpose — the existing suite's "a rule shape needs no import from this
+   package" tests (a top-level function, a plain class satisfying the
+   contract without subclassing) are the likely candidates, given Dart's
+   own `agent-notes.md` already frames structural typing as a
+   Dart-specific story worth demonstrating. Check the existing suite before
+   deleting it, so nothing genuinely idiomatic gets lost.
 
-- A duplicate-rule-name test: two rules sharing a name, registered in one
-  `RulesEngine`, and the by-name lookup resolves to the *last* one.
-- A predicate-exception-propagation test, covering `runAll`, `runGroup`,
-  `AndRule`, `OrRule` individually — each its own case, not one shared
-  assertion.
-
-Update `docs/testing/dart.md`'s own contract table in the same step each
-test lands, not as a separate later pass.
+Update `docs/testing/dart.md` to match: test count, contract table, and
+test-layout diagram, reflecting the new structure.
 
 ## 2. `graduation_verdict` fixture — port
 

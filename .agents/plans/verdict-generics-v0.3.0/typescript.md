@@ -7,22 +7,31 @@
 > languages, and implements the new fixture against the spec Python's PR
 > wrote (never inventing its own variant of it).
 
-## 1. Test-suite parity
+## 1. Test-suite parity — drop and recreate, 1:1 against Python, plus a preserved idiom file
 
-Per `README.md`'s corrected scope: parity means Python's *whole* suite (41
-tests), not just the 9-contract checklist. JS is confirmed at full parity
-against that narrower checklist (32 tests, `docs/testing/js.md`'s own
-table), but the raw count gap against Python's 41 hasn't been closed out by
-name-matching test bodies yet — `README.md`'s own pass flagged
-`test_predicate_receives_the_context` and
-`test_empty_engine_run_all_vacuously_passes` as not obviously present by
-name; confirm directly against the actual test file, add whatever's
-genuinely missing.
+Per `README.md`'s corrected, confirmed approach (see `csharp.md` §1 for the
+worked example of applying this to a language's existing suite): **do not
+audit the existing test file for gaps and patch them in — delete it and
+recreate from Python's own `test_rule.py`/`test_engine.py` as a strict,
+file-for-file, test-for-test port.**
 
-**The target is coverage, not the number 41 itself** — if JS's own idiom
-already proves the same contract via a different test shape, that's parity,
-not a gap. Update `docs/testing/js.md`'s own contract table in the same
-step as each test you add, not as a separate later pass.
+1. A 1:1 port of `test_rule.py` (16 tests) and `test_engine.py` (24 tests,
+   `N = 40` total — see `README.md` for why not 41) — same test classes,
+   same tests, same assertions, in TS idiom. JS's own contract-checklist
+   parity (already confirmed at 32/32 against the narrower 9-contract list)
+   doesn't change this: the 1:1 port is built fresh from Python's file, not
+   patched onto the existing one.
+2. A **separate**, clearly-labeled idiom file for whatever JS-specific
+   coverage the existing suite has that has no Python counterpart on
+   purpose (structural typing demonstrated on a bare object literal is the
+   likely candidate, given `rule.ts`'s own doc comment already frames this
+   as JS-specific — check the existing suite for what else qualifies before
+   deleting it, so nothing genuinely idiomatic gets lost, not because
+   anything is being audited for parity gaps).
+
+Update `docs/testing/js.md` to match: test count, contract table, and
+test-layout diagram, reflecting the new two-file (or two-plus-idiom-file)
+structure.
 
 ## 2. `graduation_verdict` fixture — port
 

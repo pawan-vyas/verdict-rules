@@ -6,37 +6,42 @@
 > pattern (not a port of either prior language's mechanics), implementing
 > the new fixture against Python's already-fixed spec.
 
-## 1. Test-suite parity — two known gaps, plus a real count-vs-coverage check
+## 1. Test-suite parity — drop and recreate, 1:1 against Python, plus a preserved idiom file
 
-Per `README.md`'s corrected scope: parity means Python's *whole* suite (41
-tests, 29 here today), not just the 9-contract checklist. The two items
-below are the *known, self-documented* gaps — confirm they're the complete
-picture by diffing Python's full test list against `EngineTests.cs`
-directly, rather than assuming nothing else is missing once these two land.
-The target is coverage, not literally reaching 41 — a `[Theory]` covering
-several of Python's separate test functions in one parameterized case is
-full parity, not a shortfall.
+Per `README.md`'s corrected, confirmed approach: **do not audit
+`EngineTests.cs` for gaps and patch them in.** Delete it. Recreate from
+Python's own `test_rule.py`/`test_engine.py` as a strict, file-for-file,
+test-for-test port — three resulting files, not one:
 
-Per `csharp/docs/testing/csharp.md`'s own words: *"Not yet covered: a
-duplicate-rule-name registration (which name wins the by-name lookup) and a
-predicate's own thrown exception propagating uncaught through
-`RunAllAsync`/`RunGroupAsync`/`AndRule`/`OrRule` — both real contracts, both
-covered in JS's... suites. Worth porting before this package leaves 0.0.x."*
+1. **`RuleTests.cs`** — a 1:1 port of `test_rule.py` (16 tests): the same
+   four test classes (`FunctionRuleTests`, `AndRuleTests`, `OrRuleTests`, a
+   rule-level exception-propagation class), same tests, same assertions, in
+   C# idiom.
+2. **`EngineTests.cs`** — a 1:1 port of `test_engine.py` (24 tests, after
+   Python's own `test_results_are_always_truthy` was extracted as a
+   Python-only idiom — see `README.md`'s corrected `N = 40`): the same
+   seven test classes (run-all, run-named, run-group, try-lookups,
+   introspection, construction, engine-level exception-propagation), same
+   tests, same assertions.
+3. **`CSharpIdiomTests.cs`** — everything from the existing `EngineTests.cs`
+   that has **no Python counterpart on purpose**: `CancellationToken`
+   propagation (`AndRule`/`OrRule`/`RulesEngine.RunAllAsync` each stopping
+   mid-run, not just checking once at entry), C#'s structural typing for
+   delegates only (`AMethodGroupIsARuleWithNothingDeclared`), and an
+   explicit `IRule` implementation composing like any other
+   (`CustomRuleTests`). None of these get deleted — they move here, with a
+   file-level doc comment explaining why this file is *not* part of the
+   Python-parity audit.
 
-Add, mirroring JS's own test structure and naming conventions
-(`EngineTests.cs`):
+The old `EngineTests.cs`'s duplicate-rule-name gap and predicate-
+exception-propagation gap (both self-documented in `docs/testing/csharp.md`
+today) are resolved automatically by this port — they're both part of
+Python's own `test_engine.py`, so a faithful 1:1 mirror includes them
+without needing to be separately identified and patched in.
 
-- A duplicate-rule-name test: two rules sharing a name, registered in one
-  `RulesEngine`, and the by-name lookup resolves to the *last* one — the
-  same "last one wins, like a dict/map literal" contract every other
-  language already tests.
-- A predicate-exception-propagation test, covering all four call sites JS's
-  own suite covers individually: `RunAllAsync`, `RunGroupAsync`, `AndRule`,
-  `OrRule` — each gets its own case proving a thrown exception is never
-  caught, not one shared test asserting only one of the four.
-
-Update `docs/testing/csharp.md`'s own "Not yet covered" note and contract
-table once these land — that note is stale the moment these tests exist.
+Update `docs/testing/csharp.md` to match: its "Current state" test count,
+its "Not yet covered" note (removed — no longer true), its contract table,
+and its test-layout diagram, all reflecting the new three-file structure.
 
 ## 2. `graduation_verdict` fixture — port
 
