@@ -156,6 +156,41 @@ Same shape for csharp and dart; js gets the extra Stage-4 rows.
       after the SDK itself rejected the naive string-inequality version.
       Full record in `csharp/AGENTS.md`'s "Decision record: target-framework
       reach" and `.agents/plans/csharp-sdk/PLAN.md` §8.
+- [x] **Real `dotnet format style`/`analyzers` lint pass** — StyleCop's
+      157 analyzers found nothing; 3 of 7 style suggestions applied
+      (verified safe in a throwaway copy first: `IDE0270`'s
+      null-coalescing throw, `IDE0028`/`IDE0305`'s collection
+      expressions). The other 4 (`IDE0290`, primary constructors)
+      deliberately deferred and folded into the doc-comment pass below,
+      since the raw auto-fix's `<param>` handling was wrong.
+- [x] **Full XML doc-comment pass** — every public/private member now
+      carries one, including previously-bare ones (`IRule.EvaluateAsync`,
+      `RulePredicate`'s own signature, `RunResult`'s `DebuggerDisplay`
+      and its entire `RunResultDebugView` nested type). `AndRule`,
+      `OrRule`, `FunctionRule`, `RuleResult`, `RunResult`, and
+      `RunResultDebugView` converted to primary constructors with
+      `<param>` tags on the class's own doc comment. `RulesEngine`'s
+      constructor deliberately left as an explicit constructor (real
+      loop logic in its body). Verified: 0 warnings including CS1591
+      even without `TreatWarningsAsErrors`.
+- [x] **`CancellationToken` support added across the whole core lib**,
+      before the first publish specifically because this is the one
+      moment it's free (no compiled consumer exists yet to break).
+      Every public async method gained a trailing
+      `CancellationToken cancellationToken = default`; `AndRule`/
+      `OrRule`/`RulesEngine`'s looping methods call
+      `ThrowIfCancellationRequested()` between sub-rules, proven by 3
+      new tests (26 -> 29) using the same call-log pattern
+      short-circuiting is proven with. Every doc showing a predicate's
+      full signature needed the same fix and was re-verified against
+      the real built package — both READMEs' headline examples, the
+      quickstart, `architecture.md`, `testing.md`, `agent-notes.md`, and
+      12 extending/samples pages.
+- [x] **check_shipped_links.py**: Dart's and C#'s version lookups now
+      route through the file's own guarded `_regex_version` helper
+      instead of an unguarded `re.search(...).group(1)` (a real,
+      pre-existing inconsistency the file's own docstring already
+      argued against).
 
 ### `plan/dart-sdk` — [PR #7](https://github.com/pawan-vyas/verdict-rules/pull/7), Stage 2/3 done, CI green
 

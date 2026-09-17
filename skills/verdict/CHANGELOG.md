@@ -9,16 +9,21 @@ cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skil
 ## [0.5.8] - 2026-09-16
 
 - **C# lands as a shipped language.** `references/csharp/agent-notes.md`
-  -- install/import, the full API in one screen, mistakes specific to
-  C# (forgetting `: IRule`, `Task.WhenAll` in a composite, catching
+  -- install/import, the full API in one screen (including the
+  `CancellationToken cancellationToken = default` every async method
+  carries, checked between sub-rules by every composite and by
+  `RulesEngine`'s own run methods), mistakes specific to C# (forgetting
+  `: IRule`, `Task.WhenAll` in a composite, catching
   `KeyNotFoundException` where `RuleNames`/`GroupNames` should be
   reached for instead, an already-`Func<...>`-typed value not
-  implicitly converting to `RulePredicate`), testing checklist, and the
-  fetch recipe. `MANIFEST.toml` gains `"csharp"` in `languages` (every
-  existing `fetch_group` topic becomes fetchable for C# now that its
-  own `<topic>/csharp.md` exists for every topic except the
-  Python-only `graduation-requirement-verdict` sample) and C#'s own
-  quickstart `[[fetch]]` entry.
+  implicitly converting to `RulePredicate`, a method group or lambda
+  missing the trailing `CancellationToken` parameter needed to satisfy
+  `RulePredicate`'s arity), testing checklist, and the fetch recipe.
+  `MANIFEST.toml` gains `"csharp"` in `languages` (every existing
+  `fetch_group` topic becomes fetchable for C# now that its own
+  `<topic>/csharp.md` exists for every topic except the Python-only
+  `graduation-requirement-verdict` sample) and C#'s own quickstart
+  `[[fetch]]` entry.
 
 ## [0.5.7] - 2026-09-16
 

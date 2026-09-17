@@ -50,6 +50,15 @@ than duplicating it.
 ## Conventions
 
 - `ConfigureAwait(false)` on every `await` in library code.
+- `CancellationToken cancellationToken = default` as the trailing parameter
+  on every public async method — `IRule.EvaluateAsync`, the `RulePredicate`
+  delegate, and every `RulesEngine` run method. A new composite or engine
+  method that loops over sub-rules calls
+  `cancellationToken.ThrowIfCancellationRequested()` at the top of every
+  iteration, not just once before the loop — checked between sub-rules, so
+  cancellation raised mid-run stops before the next one starts rather than
+  only whenever whichever sub-rule is currently running happens to observe
+  it internally.
 - `Nullable` enabled, `TreatWarningsAsErrors` on. Warnings are build failures.
 - Targets `net10.0` and `netstandard2.1`; `IsTrimmable` on both,
   `IsAotCompatible` on every TFM except `netstandard2.1` (a denylist, not an

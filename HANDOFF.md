@@ -222,7 +222,7 @@ bash scripts/build.sh && ls dist/   # verdict-plugin.zip  verdict-tools.zip  ver
   **`uv`**. Zero runtime dependencies.
 - **Node** 18+ for JS/TS (`npm`, workspace-rooted at `js/`); also needed for the mermaid diagram
   validator regardless of language.
-- **.NET SDK** (targets `net8.0`/`netstandard2.1`) for C#.
+- **.NET SDK** (targets `net10.0`/`netstandard2.1`) for C#.
 - **Dart SDK** ≥3.0.0 for Dart. **`pana`** (pub.dev's own package analyzer —
   `dart pub global activate pana`) reproduces pub.dev's real scoring locally, no publish required;
   used this session to find and fix a real formatting deficit before it ever shipped.
