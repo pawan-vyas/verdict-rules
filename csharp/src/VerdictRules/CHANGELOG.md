@@ -10,6 +10,34 @@ from this file, so the csproj points here instead of carrying a copy.
 
 Tagged `csharp-vX.Y.Z`.
 
+## [0.0.2] - 2026-09-17
+
+### Added
+
+- **`IRule<TContext>`, generic over the context a rule reads from**,
+  alongside new generic siblings `FunctionRule<TContext>`,
+  `AndRule<TContext>`, `OrRule<TContext>`, and `RulesEngine<TContext>`.
+  `IRule` (and its non-generic siblings) are unchanged in every respect
+  except one new fact: `IRule` is now the closed specialization
+  `IRule : IRule<IReadOnlyDictionary<string, object?>>`, so any existing
+  `: IRule` implementation keeps compiling unchanged and additionally
+  satisfies `IRule<IReadOnlyDictionary<string, object?>>` for free. Every
+  generic type is a fresh, independent implementation at a different
+  generic arity -- not a wrapper around the non-generic one -- matching
+  `IComparer`/`IComparer<T>`'s real relationship in the BCL. Fully
+  additive; zero breaking changes.
+- `RulePredicate<TContext>`, the generic sibling of `RulePredicate`, for
+  `FunctionRule<TContext>`'s predicate shape.
+
+### Changed
+
+- `docs/architecture/csharp.md` gained a "Generic context, concretely"
+  section covering the arity-coexistence design, why the alternative
+  inheritance direction doesn't work, why dict-context stays permanently
+  first-class, and why `RuleResult`/`RunResult` stay non-generic
+  (including the `out TData` covariance asymmetry between reference and
+  value types that ruled out a generic `RuleResult<TData>`).
+
 ## [0.0.1] - 2026-09-17
 
 Initial publish.
