@@ -571,14 +571,6 @@
     background: var(--page);
   }
 
-  .gen-tag.planned {
-    color: var(--ink-40);
-    border-style: dashed;
-    background: transparent;
-    font-weight: 400;
-    font-style: italic;
-  }
-
   .gen-note-sub { font-size: 0.875rem; font-weight: 300; color: var(--ink-40); line-height: 1.65; }
   .gen-note-sub strong { font-weight: 600; color: var(--ink-dim); }
   .gen-note-sub code { font-family: 'IBM Plex Mono', monospace; font-size: 0.9em; color: var(--accent-dk); }
@@ -927,15 +919,9 @@
   <a href="#" class="nav-logo">Verdict<span class="dim"> rules</span></a>
   <ul class="nav-links">
     <li>
-      <a href="https://github.com/pawan-vyas/verdict-rules/blob/main/python/packages/verdict-rules/docs/quickstart.md" target="_blank" rel="noopener noreferrer">
+      <a href="https://github.com/pawan-vyas/verdict-rules#quickstart" target="_blank" rel="noopener noreferrer">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v18H6.5A2.5 2.5 0 0 0 4 22.5V4.5z"/><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/></svg>
         <span>Docs</span>
-      </a>
-    </li>
-    <li>
-      <a href="https://pypi.org/project/verdict-rules/" target="_blank" rel="noopener noreferrer">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
-        <span>PyPI</span>
       </a>
     </li>
     <li>
@@ -1096,8 +1082,9 @@
         <p class="gen-note-label">Ships today</p>
         <div class="gen-tags">
           <span class="gen-tag">Python</span>
-          <span class="gen-tag planned">JS / TS — planned</span>
-          <span class="gen-tag planned">C# — planned</span>
+          <span class="gen-tag">JS / TS</span>
+          <span class="gen-tag">Dart</span>
+          <span class="gen-tag">C#</span>
         </div>
         <p class="gen-note-sub">Same <code>Rule</code>/<code>Engine</code>/<code>Result</code> design, <strong>every language it ever ships for.</strong></p>
       </div>
@@ -1147,7 +1134,7 @@ result = <span class="c-kw">await</span> engine.run_named(<span class="c-str">"c
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Install Verdict
         </a>
-        <a href="https://github.com/pawan-vyas/verdict-rules/blob/main/python/packages/verdict-rules/docs/quickstart.md" class="btn-ghost" target="_blank" rel="noopener noreferrer">
+        <a href="https://github.com/pawan-vyas/verdict-rules#quickstart" class="btn-ghost" target="_blank" rel="noopener noreferrer">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v18H6.5A2.5 2.5 0 0 0 4 22.5V4.5z"/><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/></svg>
           Read the quickstart
         </a>
@@ -1228,12 +1215,6 @@ result = <span class="c-kw">await</span> engine.run_named(<span class="c-str">"c
           </div>
         </div>
       </div>
-      <p class="install-note">
-        The PyPI distribution is named <strong>verdict-rules</strong> (the plain name
-        <code>verdict</code> was already taken) — the import name stays <code>verdict</code>,
-        unchanged.
-      </p>
-
       <div class="install-langs">
         <span class="install-langs-label">Also shipped for:</span>
         <a href="https://www.nuget.org/packages/VerdictRules/" target="_blank" rel="noopener noreferrer">C#</a>
@@ -1277,7 +1258,7 @@ result = <span class="d-kw">await</span> engine.run_named(<span class="d-str">"c
 <section class="doubts">
   <p class="doubts-q">Having doubts?</p>
   <div class="doubts-links">
-    <a href="https://github.com/pawan-vyas/verdict-rules/blob/main/python/packages/verdict-rules/docs/quickstart.md" class="doubts-link" target="_blank" rel="noopener noreferrer">
+    <a href="https://github.com/pawan-vyas/verdict-rules#quickstart" class="doubts-link" target="_blank" rel="noopener noreferrer">
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v18H6.5A2.5 2.5 0 0 0 4 22.5V4.5z"/><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/></svg>
       Read the quickstart
     </a>
