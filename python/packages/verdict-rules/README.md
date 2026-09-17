@@ -87,10 +87,10 @@ async function.
 
 | Doc | For |
 | --- | --- |
-| [`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.9/python/packages/verdict-rules/docs/quickstart.md) | The quickstart — core concepts and a full worked example |
-| [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.9/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
-| [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.9/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
-| [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.9/docs/maintenance/README.md) | Changing this package itself |
-| [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.9/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
-| [`docs/samples/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.9/docs/samples/README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
-| [`examples/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.9/python/examples/README.md) | Full, tested mini-projects behind the more comprehensive samples — real code, real tests, real docs |
+| [`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.3.0/python/packages/verdict-rules/docs/quickstart.md) | The quickstart — core concepts and a full worked example |
+| [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.3.0/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
+| [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.3.0/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
+| [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.3.0/docs/maintenance/README.md) | Changing this package itself |
+| [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.3.0/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
+| [`docs/samples/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.3.0/docs/samples/README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
+| [`examples/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.3.0/python/examples/README.md) | Full, tested mini-projects behind the more comprehensive samples — real code, real tests, real docs |
