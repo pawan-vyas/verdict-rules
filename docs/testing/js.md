@@ -44,9 +44,9 @@ gated anywhere. That's a real gap shared with every language SDK here,
 not a JS/TS-specific decision; see [`../future_plan.md`](../future_plan.md)
 if it's ever picked up.
 
-This SDK does not yet have the second testing layer every other shipped
-language has — a full, tested example project checked against the
-shared graduation fixture (see
+This SDK does not yet have the second testing layer only Python has so
+far — a full, tested example project checked against the shared
+graduation fixture (see
 [`../../fixtures/graduation_verdict/README.md`](../../fixtures/graduation_verdict/README.md)).
 That arrives at Stage 4 ("Prove") of
 [`../maintenance/adding-a-language.md`](../maintenance/adding-a-language.md),
