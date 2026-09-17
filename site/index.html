@@ -789,6 +789,11 @@
 
   .install-note { margin-top: 1rem; font-size: 0.8125rem; color: var(--ink-40); line-height: 1.7; }
   .install-note strong { color: var(--ink-dim); font-weight: 500; }
+
+  .install-langs { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--line); display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap; }
+  .install-langs-label { font-size: 0.75rem; color: var(--ink-40); }
+  .install-langs a { font-size: 0.8125rem; font-weight: 500; color: var(--ink-dim); text-decoration: none; border-bottom: 1px solid var(--line-2); transition: color 0.15s, border-color 0.15s; }
+  .install-langs a:hover { color: var(--accent-dk); border-color: var(--accent); }
   .install-note code { font-family: 'IBM Plex Mono', monospace; font-size: 0.9em; color: var(--accent-dk); }
 
   .demo-window { background: var(--code-bg); border: 1px solid var(--code-line); border-radius: 5px; overflow: hidden; }
@@ -864,7 +869,7 @@
   .footer-brand { font-family: 'Playfair Display', serif; font-size: 0.9375rem; font-weight: 700; letter-spacing: -0.01em; color: var(--ink); }
   .footer-brand .dim { font-weight: 400; font-style: italic; color: var(--ink-40); }
 
-  .footer-links { display: flex; gap: 2rem; }
+  .footer-links { display: flex; gap: 2rem; flex-wrap: wrap; row-gap: 0.75rem; }
   .footer-links a {
     font-size: 0.8125rem;
     font-weight: 300;
@@ -1228,6 +1233,13 @@ result = <span class="c-kw">await</span> engine.run_named(<span class="c-str">"c
         <code>verdict</code> was already taken) — the import name stays <code>verdict</code>,
         unchanged.
       </p>
+
+      <div class="install-langs">
+        <span class="install-langs-label">Also shipped for:</span>
+        <a href="https://www.nuget.org/packages/VerdictRules/" target="_blank" rel="noopener noreferrer">C#</a>
+        <a href="https://www.npmjs.com/package/verdict-rules" target="_blank" rel="noopener noreferrer">JS/TS</a>
+        <a href="https://pub.dev/packages/verdict_rules" target="_blank" rel="noopener noreferrer">Dart</a>
+      </div>
     </div>
 
     <div class="install-seq">
@@ -1296,9 +1308,21 @@ result = <span class="d-kw">await</span> engine.run_named(<span class="d-str">"c
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
       PyPI
     </a>
-    <a href="https://github.com/pawan-vyas/verdict-rules/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">
+    <a href="https://www.npmjs.com/package/verdict-rules" target="_blank" rel="noopener noreferrer">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+      npm
+    </a>
+    <a href="https://www.nuget.org/packages/VerdictRules/" target="_blank" rel="noopener noreferrer">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+      NuGet
+    </a>
+    <a href="https://pub.dev/packages/verdict_rules" target="_blank" rel="noopener noreferrer">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+      pub.dev
+    </a>
+    <a href="https://github.com/pawan-vyas/verdict-rules#status" target="_blank" rel="noopener noreferrer">
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      Changelog
+      Changelogs
     </a>
     <a href="https://github.com/pawan-vyas/verdict-rules/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18"/><path d="M8 21h8"/><path d="M5 7h14"/><path d="M5 7 2 13a3 3 0 0 0 6 0L5 7z"/><path d="M19 7l-3 6a3 3 0 0 0 6 0l-3-6z"/></svg>
