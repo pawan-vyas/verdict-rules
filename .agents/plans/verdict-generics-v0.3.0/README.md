@@ -28,9 +28,17 @@ they're the same kind of change:
    long-parked design question — resolved and implemented across all four
    languages, on top of the now-equal-depth test suites from (1).
 
-All four languages land at **v0.3.0** together, in the changelog sense — the
-version bump itself documents that this is a deliberate joint jump, not
-routine incrementing.
+All four languages land at **v0.3.0** — a fact for *this plan* to track, not
+something any public-facing text ever states. Each language's own
+`CHANGELOG.md` describes only that language's own change, as a standalone
+fact, exactly as if it shipped independently — no mention of the other three
+languages, no "coordinated release," no "joint jump" language, no
+cross-language narration anywhere public (changelogs, docs, code comments,
+commit messages included). This repo's own `AGENTS.md` already states the
+principle this follows: *"Public surfaces are not working surfaces... state a
+decision as a fact."* The shared version number across four independent,
+factual changelog entries is a coincidence a careful reader could notice —
+it is never something the text itself points out.
 
 ## The resolved design (canonical reference)
 
@@ -315,29 +323,53 @@ Each of the four language PRs is one complete, self-contained unit covering
    sweep (its own `<lang>.md` files only — shared, non-language-suffixed
    docs are `shared-docs.md`'s job, last).
 
-## The real, documented test-suite-parity gap (audited, not assumed)
+## The real test-suite-parity gap — confirmed scope: Python's *whole* suite, not just the subtle-contract subset
 
-Checked every language's own `docs/testing/<lang>.md` — each already
-maintains a "which test proves which contract" table against the canonical
-9-contract checklist in `docs/testing/README.md`. The actual gap is much
-smaller than "bring three languages up to Python's depth" sounds:
+**Parity means JS/C#/Dart's unit test suites match Python's, in full** — every
+baseline case Python tests, not only the nine "easy to get subtly wrong"
+contracts `docs/testing/README.md` names. That checklist is explicitly scoped
+to subtle-correctness contracts, not a complete enumeration of Python's test
+suite — confirmed by the real counts, checked directly rather than inferred
+from the summary tables:
 
-| | Short-circuit | Vacuous-truth | Absence (both forms) | Fallback matrix | Engine never short-circuits | No flattening | Duplicate name → last wins | Predicate exception never caught | `graduation_verdict` fixture |
-|---|---|---|---|---|---|---|---|---|---|
-| Python | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (baseline) |
-| JS | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ **missing** |
-| C# | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ **missing** | ❌ **missing** | ❌ **missing** |
-| Dart | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ **missing** | ❌ **missing** | ❌ **missing** |
+| | Test count |
+|---|---|
+| Python | **41** (`test_rule.py`: 16, `test_engine.py`: 25) |
+| JS | 32 |
+| C# | 29 |
+| Dart | 27 |
 
-JS is already at full contract parity — its own doc explicitly says so, and
-its only gap is the fixture. C#'s own `docs/testing/csharp.md` already
-self-documents its two missing tests in these exact words: *"Not yet
-covered: a duplicate-rule-name registration... and a predicate's own thrown
-exception propagating uncaught... both real contracts, both covered in JS's
-and (once ported) Dart's own suites. Worth porting before this package
-leaves 0.0.x."* Dart has the same two gaps (its own doc's contract table
-also omits both rows). The real lift across all three is the fixture port,
-not the unit-test checklist.
+Against the nine subtle-correctness contracts specifically, the picture is as
+already found: JS is at full parity there, C# and Dart both specifically
+lack a duplicate-rule-name test and a predicate-exception-propagation test
+(C#'s own `docs/testing/csharp.md` self-documents this in these words: *"Not
+yet covered: a duplicate-rule-name registration... and a predicate's own
+thrown exception propagating uncaught... both real contracts... worth
+porting before this package leaves 0.0.x"* — Dart's contract table omits the
+same two rows). But the raw count gap (41 vs. 32/29/27) is wider than those
+two named items account for — a first pass already surfaced likely
+additional gaps by name-matching against Python's full list, not yet
+confirmed by reading test bodies:
+
+- **`test_predicate_receives_the_context`** — an explicit test that the
+  context object passed to `evaluate()` reaches the predicate unchanged.
+  Not obviously present by name in JS's or C#'s test files.
+- **Engine-level vacuous-truth on an empty `RulesEngine`**
+  (`test_empty_engine_run_all_vacuously_passes`) — distinct from `AndRule`'s
+  own empty-list test, which the other languages do have. JS/C# have
+  `AnEmptyEngineReportsNothing` (introspection: no names/groups exist) but
+  not obviously a dedicated test that `run_all` on an empty engine still
+  returns `passed: true`.
+- **`test_results_are_always_truthy`** — worth checking what this actually
+  asserts before deciding whether it's a real cross-language contract or a
+  Python-idiom-specific check.
+
+**This name-matching pass is not the audit — it's evidence the audit is
+needed.** Each language's own plan (`python.md` confirming the baseline;
+`typescript.md`/`csharp.md`/`dart.md`) now requires a real, test-body-level
+diff against Python's full 41-test suite as the *first* action item of that
+language's parity phase, not an assumption that the summary tables already
+captured everything.
 
 **No CI pipeline runs any of these suites today, for any language** — a
 pre-existing, shared gap tracked in `docs/future_plan.md`. Out of scope for

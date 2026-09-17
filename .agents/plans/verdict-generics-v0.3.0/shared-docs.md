@@ -119,11 +119,17 @@ languages to check the words against.
 
 ### Every package's `CHANGELOG.md`
 
-- Each language's own `0.3.0` entry was written in that language's PR —
-  this PR's job is confirming all four actually describe the same release
-  consistently (same fixture name, same feature description, no drifted
-  wording) rather than reading like four independent, uncoordinated changes
-  that happen to share a version number.
+- Each language's own `0.3.0` entry was written in that language's PR. This
+  PR's job is confirming **each one reads as a standalone, factual
+  description of that language's own change** — no reference to the other
+  three languages, no "coordinated release" or "joint" language, no
+  cross-language narration of any kind (`README.md`'s own principle,
+  restated here because it's the one thing this PR could accidentally
+  undo while trying to make the four entries "consistent"). Facts that
+  should genuinely match across all four (the fixture's actual name, the
+  feature itself) may coincide because they describe the same real change —
+  that's different from the *text* referencing the other languages, which
+  it never should.
 
 ## Verification, before calling this PR done
 
@@ -138,7 +144,8 @@ languages to check the words against.
 
 - Every item above is checked against what the four language PRs actually
   shipped, not what this plan predicted they would ship.
-- All four package CHANGELOGs read as one coordinated release, not four
-  independent ones.
+- All four package CHANGELOGs read as standalone, factual, independent
+  entries — none referencing the other three languages or this release's
+  own coordination.
 - Explicit approval received before merge — and only after this PR merges
   does any language's `v0.3.0` tag get cut.
