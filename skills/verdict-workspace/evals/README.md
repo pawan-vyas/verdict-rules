@@ -93,21 +93,25 @@ wrong *and* silent when it is:
   version — the same distinction `06-fetch-docs-completeness` relies on
   for every other Dart eval.
 - `python/05-fetch-docs-completeness`, `js/06-fetch-docs-completeness`,
-  and `dart/06-fetch-docs-completeness` — added alongside
-  `MANIFEST.toml`'s `[[fetch_group]]` restructuring, to catch the
-  failure that change actually could have shipped with: an agent
-  reading `references/<lang>/agent-notes.md`'s two illustrative curl
-  examples as the *complete* fetch list, rather than as examples of a
-  pattern that covers fourteen topics. Each prompt names two scenarios
+  `dart/06-fetch-docs-completeness`, and `csharp/05-fetch-docs-completeness`
+  — added alongside `MANIFEST.toml`'s `[[fetch_group]]` restructuring,
+  to catch the failure that change actually could have shipped with: an
+  agent reading `references/<lang>/agent-notes.md`'s two illustrative
+  curl examples as the *complete* fetch list, rather than as examples of
+  a pattern that covers fourteen topics. Each prompt names two scenarios
   deliberately not among those two examples, so getting the eval right
   means the agent expanded a `fetch_group` pattern for itself rather
-  than pattern-matching on what it was shown literally.
+  than pattern-matching on what it was shown literally. C#'s own fixture
+  has no lockfile-equivalent the way Dart's does — a `PackageReference`'s
+  `Version` attribute already names the exact resolved version directly
+  — so this eval also checks that the agent reads it from the one
+  manifest file rather than assuming a second file exists to check.
 
 **Not covered, and known**: that a fetch actually happens at the pinned
 tag, over the real network, against a real released tag. Measuring that
 needs network access inside the eval sandbox, which would make the
 result depend on GitHub being reachable rather than on the skill being
-right — the three `fetch-docs-completeness` evals measure whether the
+right — the four `fetch-docs-completeness` evals measure whether the
 agent identifies the *correct set* of documents to fetch, not whether
 the `curl` itself succeeded. `scripts/check_skill_bundle.py` covers the
 one fetch-path failure that was actually reachable without a network

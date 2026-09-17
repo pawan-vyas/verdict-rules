@@ -1,0 +1,192 @@
+# Releases C# when its version changes on main — nothing is tagged or
+# published by hand. Same shape as release-python.yml: bump
+# csharp/src/VerdictRules/VerdictRules.csproj's <Version>, add the changelog
+# entry, merge. It builds, tests, publishes, and only then tags.
+#
+# NuGet's Trusted Publishing is a token EXCHANGE, not a direct OIDC publish
+# like PyPI's: the workflow trades a short-lived GitHub OIDC token for a
+# temporary NuGet API key that lives one hour, via NuGet/login. Unlike npm and
+# pub.dev, NuGet's trusted publishing can perform the very first publish if the
+# policy on nuget.org is scoped to allow new package IDs — see
+# .agents/plans/csharp-sdk/PLAN.md §2-3 for the full research this trades on.
+# That policy is a one-time, human, registry-side setup this workflow cannot
+# perform for itself.
+name: Release (C#)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "csharp/**"
+      - ".github/workflows/release-csharp.yml"
+  workflow_dispatch: # escape hatch: re-run a release that failed after tagging
+
+concurrency:
+  group: release-csharp
+  cancel-in-progress: false # never interrupt a publish
+
+jobs:
+  detect:
+    name: Is there a new version to release?
+    runs-on: ubuntu-latest
+    outputs:
+      should-release: ${{ steps.check.outputs.should-release }}
+      version: ${{ steps.check.outputs.version }}
+      tag: ${{ steps.check.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Compare the manifest version against existing tags
+        id: check
+        run: |
+          set -euo pipefail
+          version="$(grep -m1 -oE '<Version>[^<]+</Version>' csharp/src/VerdictRules/VerdictRules.csproj | sed -E 's/<Version>(.*)<\/Version>/\1/')"
+          tag="csharp-v${version}"
+
+          if [ -z "$version" ]; then
+            echo "::error file=csharp/src/VerdictRules/VerdictRules.csproj::Could not read a version."
+            exit 1
+          fi
+
+          if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+            echo "Version ${version} is already released as ${tag}. Nothing to do."
+            echo "should-release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Version ${version} has no ${tag} tag yet — releasing."
+            echo "should-release=true" >> "$GITHUB_OUTPUT"
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+
+      # Validated here, before anything is published — see release-python.yml
+      # for why this runs before the publish rather than beside it.
+      - name: The changelog section exists before anything is published
+        if: steps.check.outputs.should-release == 'true'
+        run: python3 scripts/changelog_section.py csharp/src/VerdictRules/CHANGELOG.md "${{ steps.check.outputs.version }}" > /dev/null
+
+  test:
+    name: Full suite before anything is published
+    needs: detect
+    if: needs.detect.outputs.should-release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Build and test
+        working-directory: csharp
+        run: |
+          dotnet build src/VerdictRules/VerdictRules.csproj -c Release
+          dotnet test tests/VerdictRules.Tests/VerdictRules.Tests.csproj -c Release
+
+  build:
+    name: Pack the NuGet package
+    needs: [detect, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Pack
+        working-directory: csharp
+        run: dotnet pack src/VerdictRules/VerdictRules.csproj -c Release -o dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: csharp-dist
+          path: csharp/dist/
+
+  # This job must stay in THIS file, the same reason release-python.yml's
+  # publish-pypi does: publishing is the one genuinely per-registry step, with
+  # no shared step to factor out — only the tail after it, which is what
+  # release-github.yml holds.
+  publish-nuget:
+    name: Publish to NuGet
+    needs: [detect, build]
+    runs-on: ubuntu-latest
+    environment: nuget
+    permissions:
+      id-token: write # NuGet Trusted Publishing (OIDC token exchange)
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: csharp-dist
+          path: dist/
+
+      # Exchanges the GitHub OIDC token for a temporary NuGet API key that
+      # lives one hour. Requested immediately before the push, deliberately —
+      # nothing between this step and the push should be slow enough to risk
+      # the key expiring.
+      - name: Exchange for a temporary NuGet API key
+        uses: NuGet/login@v1
+        id: nuget-login
+        with:
+          user: ${{ vars.NUGET_USER }}
+
+      - name: Push
+        run: dotnet nuget push "dist/*.nupkg" --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+  release:
+    name: Tag and publish the GitHub release
+    needs: [detect, publish-nuget]
+    permissions:
+      contents: write
+    uses: ./.github/workflows/release-github.yml
+    with:
+      tag: ${{ needs.detect.outputs.tag }}
+      version: ${{ needs.detect.outputs.version }}
+      changelog-path: csharp/src/VerdictRules/CHANGELOG.md
+      title: C# v${{ needs.detect.outputs.version }}
+      artifact-name: csharp-dist
+
+  # Confirms what NuGet is actually serving, rather than trusting that the
+  # push step exiting zero means the right thing is there. See
+  # release-python.yml's own verify-published for why this queries the
+  # version-specific endpoint rather than a summary that may lag a publish.
+  verify-published:
+    name: Verify what NuGet is serving
+    needs: [detect, release]
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.detect.outputs.version }}
+      PACKAGE_ID_LOWER: verdictrules
+    steps:
+      - name: The version is live and resolvable
+        run: |
+          set -euo pipefail
+          url="https://api.nuget.org/v3-flatcontainer/${PACKAGE_ID_LOWER}/${VERSION}/${PACKAGE_ID_LOWER}.${VERSION}.nupkg"
+
+          code=000
+          for attempt in 1 2 3 4 5 6; do
+            code="$(curl -s -o package.nupkg -w '%{http_code}' "$url")"
+            [ "$code" = "200" ] && break
+            echo "Attempt ${attempt}: HTTP ${code} — waiting for propagation"
+            sleep 20
+          done
+
+          if [ "$code" != "200" ]; then
+            echo "::error::NuGet is not serving ${VERSION} after ~2 minutes. The push step reported success, so check the package page before assuming a false alarm."
+            exit 1
+          fi
+          echo "Downloaded $(du -h package.nupkg | cut -f1) package.nupkg"
+
+      # NuGet's only provenance mechanism, applied automatically by nuget.org
+      # on every accepted package — unlike PyPI's PEP 740 attestations or npm's
+      # dist.attestations, there is nothing a publish step could silently omit
+      # here, but the signature's presence is still what proves the package
+      # actually came through nuget.org's own pipeline rather than being
+      # tampered with in transit.
+      - name: The package carries nuget.org's repository signature
+        run: |
+          set -euo pipefail
+          unzip -o -q package.nupkg -d extracted
+          if [ ! -f extracted/.signature.p7s ]; then
+            echo "::error::No .signature.p7s at the package root. Check that the package actually went through nuget.org's publish pipeline, which counter-signs every accepted package."
+            exit 1
+          fi
+          echo "Repository signature present (.signature.p7s)."

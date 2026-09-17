@@ -32,7 +32,7 @@
 # row to is a rebase conflict waiting to happen — the same reasoning as
 # `scripts/check_shipped_links.py`'s own `SHIPPED` list, and
 # `.agents/memory/adding-a-variant-is-a-new-file.md` generally.
-languages = ["python", "js", "dart"]
+languages = ["python", "js", "dart", "csharp"]
 #              ^ add a language here once its own per-topic docs exist;
 #                nothing below needs a matching edit.
 
@@ -132,6 +132,10 @@ destination = "js/quickstart.md"
 [[fetch]]
 source = "dart/packages/verdict_rules/doc/quickstart.md"
 destination = "dart/quickstart.md"
+
+[[fetch]]
+source = "csharp/src/VerdictRules/docs/quickstart.md"
+destination = "csharp/quickstart.md"
 
 [[fetch]]
 source = "docs/samples/README.md"

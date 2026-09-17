@@ -133,6 +133,13 @@ language — not because a writer felt like adding color:
   `UnknownLookupError`, filling the gap where Python has `KeyError`,
   C# has `KeyNotFoundException`, Dart has `ArgumentError` — see the next
   section for why that comparison itself doesn't belong on this page).
+- **A debugger/tooling-integration highlight** — only where the
+  language's own ecosystem has a real, standard mechanism for it (C#'s
+  `[DebuggerDisplay]`/`[DebuggerTypeProxy]` plus SourceLink, both
+  genuinely .NET-specific conventions with no equivalent this package
+  could show in a language without one). Skip it where the language has
+  nothing comparable — this is not a section every package needs to
+  find something to say for.
 
 If a future package's own registry or language has a comparable, real
 fact none of the others share, it earns its own highlight section the
@@ -197,12 +204,29 @@ arrive. An expiring promise is exactly as wrong here as on the README,
 for the identical reason: the day the promised version actually ships,
 every already-tagged copy of the entry that named it is quietly wrong.
 
+## The same discipline extends to shipped code comments
+
+A language whose doc comments compile into the package itself — C#'s
+XML docs, TypeScript's JSDoc surfaced through `.d.ts`, any format a
+language server or IntelliSense reads straight out of the installed
+package — carries the identical permanence problem the README has,
+just in a place easier to forget to check: a comment on a public type
+ships with every version, is read by an IDE without a reader ever
+opening a browser, and is exactly as unfixable-after-the-fact as
+anything rendered on a registry page. The sibling-comparison leak in
+particular is tempting here, because explaining *why* a type is shaped
+the way it is often invites reaching for how another language's
+equivalent works — reach for the fact about this language on its own
+terms instead, the same rule as the README, checked against the same
+three leaks above.
+
 ## Adding a new package's README
 
 Follow the skeleton above exactly for the shared sections; add only the
 package/language-specific highlight sections that language's own idiom
 genuinely earns, per the list above. Check the result against the three
-leaks before calling it done.
+leaks before calling it done — including any doc comment that ships
+compiled into the package itself, not just the README's own prose.
 
 ## Related
 

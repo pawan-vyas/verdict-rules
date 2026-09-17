@@ -113,6 +113,41 @@ verdict.detail;   // "'resource_is_available' failed"
 
 </details>
 
+<details>
+<summary>C#</summary>
+
+```sh
+dotnet add package VerdictRules
+```
+
+```csharp
+using VerdictRules;
+
+static Task<RuleResult> HasPermission(IReadOnlyDictionary<string, object?> ctx, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new RuleResult("has_permission", (bool)ctx["permission"]!));
+
+static Task<RuleResult> ResourceIsAvailable(IReadOnlyDictionary<string, object?> ctx, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new RuleResult("resource_is_available", (bool)ctx["available"]!));
+
+var canProceed = new AndRule("can_proceed", new IRule[]
+{
+    new FunctionRule("has_permission", HasPermission),
+    new FunctionRule("resource_is_available", ResourceIsAvailable),
+});
+
+var engine = new RulesEngine(new IRule[] { canProceed });
+var verdict = await engine.RunNamedAsync("can_proceed", new Dictionary<string, object?>
+{
+    ["permission"] = true,
+    ["available"] = false,
+});
+
+Console.WriteLine(verdict.Passed); // false
+Console.WriteLine(verdict.Detail); // "'resource_is_available' failed"
+```
+
+</details>
+
 That is the whole library in one screen. What it buys you is not the
 composition — you could write that yourself in an afternoon — but the
 guarantee underneath it:
@@ -195,6 +230,8 @@ graph LR
 | [`js/packages/verdict-rules/docs/quickstart.md`](js/packages/verdict-rules/docs/quickstart.md) | Core concepts and a full worked example |
 | [`dart/README.md`](dart/packages/verdict_rules/README.md) | Dart quickstart — add `verdict_rules` to `pubspec.yaml`, first rule |
 | [`dart/packages/verdict_rules/doc/quickstart.md`](dart/packages/verdict_rules/doc/quickstart.md) | Core concepts and a full worked example |
+| [`csharp/README.md`](csharp/src/VerdictRules/README.md) | C# quickstart — `dotnet add package VerdictRules`, first rule |
+| [`csharp/src/VerdictRules/docs/quickstart.md`](csharp/src/VerdictRules/docs/quickstart.md) | Core concepts and a full worked example |
 | [`docs/architecture/`](docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
 | [`docs/extending/`](docs/extending/README.md) | Building on top of it from your own code, with no changes here |
 | [`docs/maintenance/`](docs/maintenance/README.md) | Changing this package itself |
@@ -215,6 +252,7 @@ Release history:
 - [`python/packages/verdict-rules/CHANGELOG.md`](python/packages/verdict-rules/CHANGELOG.md)
 - [`js/packages/verdict-rules/CHANGELOG.md`](js/packages/verdict-rules/CHANGELOG.md)
 - [`dart/packages/verdict_rules/CHANGELOG.md`](dart/packages/verdict_rules/CHANGELOG.md)
+- [`csharp/src/VerdictRules/CHANGELOG.md`](csharp/src/VerdictRules/CHANGELOG.md)
 - [`skills/verdict/CHANGELOG.md`](skills/verdict/CHANGELOG.md)
 
 ## Status
@@ -224,4 +262,5 @@ Release history:
 | Python | [PyPI](https://pypi.org/project/verdict-rules/) | [![PyPI](https://img.shields.io/pypi/v/verdict-rules.svg)](https://pypi.org/project/verdict-rules/) | [![Python Versions](https://img.shields.io/pypi/pyversions/verdict-rules.svg)](https://pypi.org/project/verdict-rules/) | [![Tests](https://github.com/pawan-vyas/verdict-rules/actions/workflows/test-python.yml/badge.svg)](https://github.com/pawan-vyas/verdict-rules/actions/workflows/test-python.yml) | [Socket.dev](https://socket.dev/pypi/package/verdict-rules) |
 | JS/TS | [npm](https://www.npmjs.com/package/verdict-rules) | [![npm](https://img.shields.io/npm/v/verdict-rules.svg)](https://www.npmjs.com/package/verdict-rules) | [![Node](https://img.shields.io/node/v/verdict-rules.svg)](https://www.npmjs.com/package/verdict-rules) `<script>`/CDN | [![Tests](https://github.com/pawan-vyas/verdict-rules/actions/workflows/test-js.yml/badge.svg)](https://github.com/pawan-vyas/verdict-rules/actions/workflows/test-js.yml) | [Socket.dev](https://socket.dev/npm/package/verdict-rules) |
 | Dart | [pub.dev](https://pub.dev/packages/verdict_rules) | [![pub](https://img.shields.io/pub/v/verdict_rules.svg)](https://pub.dev/packages/verdict_rules) | `>=3.0.0 <4.0.0` | [![Tests](https://github.com/pawan-vyas/verdict-rules/actions/workflows/test-dart.yml/badge.svg)](https://github.com/pawan-vyas/verdict-rules/actions/workflows/test-dart.yml) | — |
+| C# | [NuGet](https://www.nuget.org/packages/VerdictRules/) | [![NuGet](https://img.shields.io/nuget/v/VerdictRules.svg)](https://www.nuget.org/packages/VerdictRules/) | `net10.0`, `netstandard2.1` | [![Tests](https://github.com/pawan-vyas/verdict-rules/actions/workflows/test-csharp.yml/badge.svg)](https://github.com/pawan-vyas/verdict-rules/actions/workflows/test-csharp.yml) | [Socket.dev](https://socket.dev/nuget/package/verdictrules) |
 | Verdict-Rules Skill | [GitHub](skills/verdict/) | [![Skill](https://img.shields.io/github/v/tag/pawan-vyas/verdict-rules?filter=skill-v*&label=skill)](skills/verdict/CHANGELOG.md) | Any [Agent Skills](https://agentskills.io/home)-conformant harness | [![Skill Check](https://github.com/pawan-vyas/verdict-rules/actions/workflows/check-skill-version.yml/badge.svg)](https://github.com/pawan-vyas/verdict-rules/actions/workflows/check-skill-version.yml) | — |

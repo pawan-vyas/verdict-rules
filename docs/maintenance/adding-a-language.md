@@ -195,6 +195,65 @@ belongs in `.agents/scratch/`, not in the repo's public surfaces.
   Query the **version-specific** endpoint, not the package summary: the
   summary is usually CDN-cached and lags a publish by minutes, so
   asserting against it fails good releases.
+- [ ] `skills/verdict/references/<lang>/agent-notes.md` — **one file**,
+      and the only hand-written skill content a language needs. Everything
+      about what verdict *is* comes from the repository's own documents,
+      which `scripts/build.sh` copies into the bundle from
+      `skills/verdict/MANIFEST.toml`; a language restating them is how the
+      skill went stale twice. Keep it to what is specific to this SDK:
+      its idioms, its naming, the mistakes that show up in generated code
+      for this language, and the fetch recipe for the documents the
+      bundle does not carry.
+- [ ] Add this language to `skills/verdict/MANIFEST.toml`'s top-level
+      `languages` list. Every `[[fetch_group]]` (testing, each extending
+      scenario, each sample) expands against that list automatically —
+      landing there is what makes this language's own file for each
+      existing topic fetchable, with no edit to any of those blocks
+      themselves. Only the quickstart still needs its own new `[[fetch]]`
+      row — its path shape (`<lang>/packages/verdict-rules/docs/`,
+      `csharp/src/VerdictRules/docs/`, ...) is genuine per-ecosystem
+      variation a pattern can't describe, not the hand-duplicated shape
+      `fetch_group` exists to remove. The `bundled` tier is
+      language-agnostic and should not grow.
+- [ ] `.claude-plugin/plugin.json` bumped in the same commit, with a
+      `## skill-vX.Y.Z` changelog entry. **[`SKILL.md`](../../skills/verdict/SKILL.md)
+      needs no edit** — it routes to `references/<language>/` and names
+      no language, so adding one touches nothing another language's
+      branch also touches
+- [ ] `skills/verdict-workspace/evals/<lang>/` — this language's own
+      evals, as a **new directory**: one JSON file per eval plus a
+      minimal project manifest under `files/`, which is what lets an
+      agent answer the skill's first instruction by reading rather than
+      guessing. `scripts/build_evals.py` discovers the directory with no
+      edit, and ids are assigned there rather than written by hand, so
+      adding a language never renumbers another's. Port the Python
+      scenarios and add whatever this language gets wrong that the
+      others do not — `asyncio.gather` has an equivalent everywhere, and
+      each one is a different name. **Write these against the language as
+      it stands at this stage — do not wait for Stage 4.** They measure
+      whether the skill's guidance is right, which is testable the moment
+      a package exists to fetch docs against; running them (spawning the
+      grading agents) is the only part worth deferring until a real
+      version is actually live on the registry, since the evals'
+      own fixture manifests pin an installed version an agent needs to
+      be able to resolve
+- [ ] Documentation at the quality of the Python set: architecture
+      notes where the language diverges, extension scenarios in its own
+      idiom, one `<lang>.md` per existing sample under `docs/samples/`
+      (skip a sample already restricted to specific languages by
+      design — check its own spec before assuming every sample needs
+      every language)
+- [ ] The root [`README.md`](../../README.md) gets this language's own
+      collapsed `<details>` block under **Quickstart** (install command
+      plus the same minimal example every other language's block shows,
+      right after the existing ones — Python alone stays `open` as the
+      canonical example) and a row in **Status** and **Where to go
+      next**'s tables. There is no `Development` section to add to
+      anymore — see
+      [`../../.agents/memory/adding-a-variant-is-a-new-file.md`](../../.agents/memory/adding-a-variant-is-a-new-file.md)
+      for why this file still repeats a worked example per language
+      rather than linking out to it, and for the current shape of that
+      repetition
 - [ ] A `CHANGELOG.md` **beside that package's own manifest** — next to
       `pyproject.toml`, `package.json`, the `.csproj`, `pubspec.yaml` — not
       at the repo root and not at the language directory root if the manifest
@@ -241,57 +300,6 @@ to an identity, absence is an error.
 - [ ] An oracle/differential suite in the language's own idiom, with
       explicitly seeded generators so a failure reproduces from its seed
       alone
-- [ ] `skills/verdict/references/<lang>/agent-notes.md` — **one file**,
-      and the only hand-written skill content a language needs. Everything
-      about what verdict *is* comes from the repository's own documents,
-      which `scripts/build.sh` copies into the bundle from
-      `skills/verdict/MANIFEST.toml`; a language restating them is how the
-      skill went stale twice. Keep it to what is specific to this SDK:
-      its idioms, its naming, the mistakes that show up in generated code
-      for this language, and the fetch recipe for the documents the
-      bundle does not carry.
-- [ ] Add this language to `skills/verdict/MANIFEST.toml`'s top-level
-      `languages` list. Every `[[fetch_group]]` (testing, each extending
-      scenario, each sample) expands against that list automatically —
-      landing there is what makes this language's own file for each
-      existing topic fetchable, with no edit to any of those blocks
-      themselves. Only the quickstart still needs its own new `[[fetch]]`
-      row — its path shape (`<lang>/packages/verdict-rules/docs/`,
-      `csharp/src/VerdictRules/docs/`, ...) is genuine per-ecosystem
-      variation a pattern can't describe, not the hand-duplicated shape
-      `fetch_group` exists to remove. The `bundled` tier is
-      language-agnostic and should not grow.
-- [ ] `.claude-plugin/plugin.json` bumped in the same commit, with a
-      `## skill-vX.Y.Z` changelog entry. **[`SKILL.md`](../../skills/verdict/SKILL.md)
-      needs no edit** — it routes to `references/<language>/` and names
-      no language, so adding one touches nothing another language's
-      branch also touches
-- [ ] `skills/verdict-workspace/evals/<lang>/` — this language's own
-      evals, as a **new directory**: one JSON file per eval plus a
-      minimal project manifest under `files/`, which is what lets an
-      agent answer the skill's first instruction by reading rather than
-      guessing. `scripts/build_evals.py` discovers the directory with no
-      edit, and ids are assigned there rather than written by hand, so
-      adding a language never renumbers another's. Port the Python
-      scenarios and add whatever this language gets wrong that the
-      others do not — `asyncio.gather` has an equivalent everywhere, and
-      each one is a different name
-- [ ] Documentation at the quality of the Python set: architecture
-      notes where the language diverges, extension scenarios in its own
-      idiom
-- [ ] The root [`README.md`](../../README.md) gets this language's own
-      `### <Language>` subsection under **Quickstart** (install command
-      plus the same minimal example every other language's subsection
-      shows) and under **Development** (how to run that language's own
-      test suite) — appended after the existing subsections, never
-      editing one. A new row in **Where to go next**'s table points at
-      this language's own quickstart doc. This is the one file in the
-      repo that intentionally repeats a worked example per language
-      rather than linking out to it, precisely because it is the
-      landing page — see
-      [`../../.agents/memory/adding-a-variant-is-a-new-file.md`](../../.agents/memory/adding-a-variant-is-a-new-file.md)
-      for why every other doc in this repo avoids that repetition and
-      this one file does not
 - [ ] A real install from the registry exercised end to end
 
 ## Features land everywhere, or nowhere

@@ -79,42 +79,121 @@ Same shape for csharp and dart; js gets the extra Stage-4 rows.
       table — surfaced and fixed a real pre-existing regex bug there
       (a link followed immediately by an XML closing tag)
 - [x] Pushed; PR #5 (pre-existing draft) updated, all CI green
-- [ ] **Sweep the root `README.md` for C# once it lands on `main`** —
-      Dart's own equivalent sweep (PR #69) was done as a follow-up
-      *after* merge, not as part of Dart's own landing PR, and was
-      only caught because the user noticed the gap by eye. Do it as
-      part of cutting C#'s first release instead of after: Status
-      table row (NuGet registry, version badge, `test-csharp.yml`
-      badge, Supply Chain — check whether Socket.dev supports NuGet
-      before reusing its badge, it does not cover every registry
-      equally), Where-to-go-next rows (`csharp/README.md` +
-      quickstart), release-history changelog link, and a `<details>`
-      block in Quickstart alongside Python/JS/Dart (collapsed, matching
-      JS/Dart — Python alone stays `open` as the canonical example).
-      **No `## Development` section anymore** — PR #70 removed it
-      entirely as a third duplicate of commands already in
-      `CONTRIBUTING.md` and each language's own `AGENTS.md`;
-      `CONTRIBUTING.md`'s generic pointer needs no edit for C# either,
-      since `csharp/AGENTS.md` already carries its own "Before calling
-      a change done" section.
-- [ ] **`RuleResult.cs` holds two public types** (`RuleResult` and
-      `RunResult`, plus a private nested `RunResultDebugView`) —
-      C#'s own real community convention (StyleCop's `SA1402`, widely
-      adopted, reflecting Microsoft's own guidance) is one public type
-      per file, unlike Python/JS/Dart, all three of which have their
-      own ecosystem's explicit blessing to group tightly related
-      classes in one module/library (Google's Python and TypeScript
-      style guides, and Effective Dart's own design doc, each
-      explicitly contrast this against Java's one-class-per-file habit
-      — see `.agents/memory/research-the-ecosystem-before-deciding-its-idiom.md`
-      for the general principle this confirms again). Every other file
-      on this branch already follows `SA1402` correctly, including
-      splitting `RulePredicate.cs` out on its own even where `SA1402`'s
-      own exception would have allowed bundling it with `FunctionRule`.
-      Split `RunResult` into its own `RunResult.cs` as part of this
-      branch's full pre-release audit, once common
-      fixes/restructuring elsewhere in the repo have settled — not
-      urgent enough to interrupt other in-flight work for.
+- [x] **Root `README.md` swept for C#** — Status row (NuGet, version
+      badge, `test-csharp.yml` badge, a real Socket.dev NuGet link
+      confirmed against Socket's own .NET-support announcement),
+      Where-to-go-next rows, release-history changelog link, and a
+      collapsed `<details>` block in Quickstart, verified for real via
+      `dotnet run` against the actual built package. No `## Development`
+      section to add — PR #70 removed it repo-wide.
+- [x] **`RuleResult.cs`'s SA1402 split** — `RunResult` moved into its
+      own `RunResult.cs`; the private `RunResultDebugView` stays nested
+      inside it, since `SA1402` only restricts public top-level types.
+      Verified: `dotnet build -warnaserror` clean, `dotnet test` 26/26.
+- [x] **Full skill-routing doc parity with Dart's own onboarding** —
+      `docs/architecture/csharp.md`, `docs/testing/csharp.md`, one
+      `csharp.md` per extending scenario (7) and per language-agnostic
+      sample (6), `references/csharp/agent-notes.md`,
+      `MANIFEST.toml`'s `languages` list + quickstart fetch entry,
+      skill bumped to `skill-v0.5.8`, and `skills/verdict-workspace/evals/csharp/`
+      (5 evals, written and validated against the real assembler, not
+      yet run — waits for a real published `0.0.1`).
+- [x] **`PackageTags` fixed** — was still `...;policy;decision`,
+      predating the repo-wide policy drop; now matches Python's/JS's
+      own converged 6-term set, verified in the real packed `.nuspec`.
+- [ ] **Add `"C# tests passed or were not needed"` to branch
+      protection's required status checks, at merge time — not
+      before.** JS's and Dart's own gates were live and running on
+      every PR unconditionally but had never actually been marked
+      required; that gap is already fixed directly (see
+      [#73](https://github.com/pawan-vyas/verdict-rules/issues/73)).
+      C#'s own gate can't be added the same way yet: `test-csharp.yml`
+      only exists on this branch, not on `main`, so marking its check
+      name required now would show every other open PR as permanently
+      "waiting for status to be reported." The moment this branch
+      merges and the workflow lands on `main`, run:
+      ```bash
+      gh api repos/pawan-vyas/verdict-rules/branches/main/protection/required_status_checks \
+        --method PATCH \
+        --field strict=true \
+        --field 'contexts[]=Python tests passed or were not needed' \
+        --field 'contexts[]=Skill version bumped or not needed' \
+        --field 'contexts[]=JS/TS tests passed or were not needed' \
+        --field 'contexts[]=Dart tests passed or were not needed' \
+        --field 'contexts[]=C# tests passed or were not needed'
+      ```
+      then close #73.
+- [x] **NuGet setup gaps closed.** Trusted Publishing policy
+      `verdict-rules-github-publish-oidc` registered on nuget.org and
+      **Active** immediately (public repo, no 7-day pending window —
+      resolves the "don't assume either way" note in
+      `.agents/plans/csharp-sdk/PLAN.md` §3), scoped to `VerdictRules*`
+      (the glob covers future `VerdictRules.*` extension packages too,
+      not just the exact ID) with "Push new packages and package
+      versions" so it can perform the actual first publish, repository
+      `pawan-vyas/verdict-rules`, workflow `release-csharp.yml`,
+      environment `nuget`. The `nuget` GitHub environment was created
+      and `NUGET_USER=pawan-vyas` set as a repo variable — both
+      unrestricted (no branch policy, no protection rules), matching
+      `npm`/`pub.dev`/`pypi`'s own environments exactly.
+- [ ] **Confirm the `.snupkg` symbol package actually lands on
+      nuget.org** right after the manual `0.0.1` push — the mechanism
+      (`dotnet nuget push "dist/*.nupkg"` auto-detecting and pushing
+      the sibling `.snupkg`, same API key) is confirmed against
+      Microsoft's own `.NET` blog, but that's a blog post, not the
+      formal API reference, and one lower-confidence secondary source
+      claimed the opposite. Check the package's own page on nuget.org
+      for its "Symbols" indicator before considering the release done
+      — required per `csharp/AGENTS.md`'s "Debuggability is part of
+      the API surface": SourceLink/`.snupkg` "must be set *before* a
+      version ships — released versions cannot be made debuggable
+      retroactively."
+- [x] **Target-framework support surface — decided: `net10.0;netstandard2.1`.**
+      `net8.0` was the placeholder; replaced because `net8.0`/`net9.0` both
+      reach end of support November 10, 2026. `netstandard2.1` stays
+      (net8.0/net9.0/net10.0 all implement it, so nothing on the still-common
+      net8.0 install base is excluded); `netstandard2.0` (the actual door to
+      .NET Framework) was considered and deliberately deferred, not ruled
+      out. `IsTrimmable`/`IsAotCompatible` both moved to
+      `$([MSBuild]::IsTargetFrameworkCompatible(...))` denylist conditions
+      after the SDK itself rejected the naive string-inequality version.
+      Full record in `csharp/AGENTS.md`'s "Decision record: target-framework
+      reach" and `.agents/plans/csharp-sdk/PLAN.md` §8.
+- [x] **Real `dotnet format style`/`analyzers` lint pass** — StyleCop's
+      157 analyzers found nothing; 3 of 7 style suggestions applied
+      (verified safe in a throwaway copy first: `IDE0270`'s
+      null-coalescing throw, `IDE0028`/`IDE0305`'s collection
+      expressions). The other 4 (`IDE0290`, primary constructors)
+      deliberately deferred and folded into the doc-comment pass below,
+      since the raw auto-fix's `<param>` handling was wrong.
+- [x] **Full XML doc-comment pass** — every public/private member now
+      carries one, including previously-bare ones (`IRule.EvaluateAsync`,
+      `RulePredicate`'s own signature, `RunResult`'s `DebuggerDisplay`
+      and its entire `RunResultDebugView` nested type). `AndRule`,
+      `OrRule`, `FunctionRule`, `RuleResult`, `RunResult`, and
+      `RunResultDebugView` converted to primary constructors with
+      `<param>` tags on the class's own doc comment. `RulesEngine`'s
+      constructor deliberately left as an explicit constructor (real
+      loop logic in its body). Verified: 0 warnings including CS1591
+      even without `TreatWarningsAsErrors`.
+- [x] **`CancellationToken` support added across the whole core lib**,
+      before the first publish specifically because this is the one
+      moment it's free (no compiled consumer exists yet to break).
+      Every public async method gained a trailing
+      `CancellationToken cancellationToken = default`; `AndRule`/
+      `OrRule`/`RulesEngine`'s looping methods call
+      `ThrowIfCancellationRequested()` between sub-rules, proven by 3
+      new tests (26 -> 29) using the same call-log pattern
+      short-circuiting is proven with. Every doc showing a predicate's
+      full signature needed the same fix and was re-verified against
+      the real built package — both READMEs' headline examples, the
+      quickstart, `architecture.md`, `testing.md`, `agent-notes.md`, and
+      12 extending/samples pages.
+- [x] **check_shipped_links.py**: Dart's and C#'s version lookups now
+      route through the file's own guarded `_regex_version` helper
+      instead of an unguarded `re.search(...).group(1)` (a real,
+      pre-existing inconsistency the file's own docstring already
+      argued against).
 
 ### `plan/dart-sdk` — [PR #7](https://github.com/pawan-vyas/verdict-rules/pull/7), Stage 2/3 done, CI green
 

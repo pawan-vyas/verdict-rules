@@ -1,0 +1,46 @@
+namespace VerdictRules;
+
+/// <summary>
+/// The contract every rule satisfies.
+/// </summary>
+/// <remarks>
+/// <para>
+/// C# <i>does</i> have structural typing — for delegates. Any method or lambda
+/// matching the predicate signature is accepted by <see cref="FunctionRule"/>
+/// with nothing declared and no type to name, the "if it has the shape, it is
+/// a rule" property. A method group works directly:
+/// <c>new FunctionRule("check", MyCheck)</c>.
+/// </para>
+/// <para>
+/// What C# lacks is structural typing for a <i>multi-member</i> interface. An
+/// object that happens to carry <c>Name</c>, <c>Group</c> and
+/// <c>EvaluateAsync</c> is not thereby an <see cref="IRule"/>; a rule shape
+/// that owns its own name and group has to declare <c>: IRule</c> explicitly.
+/// That is why <see cref="FunctionRule"/> carries more weight here: it is the
+/// escape hatch back to shape-based rules, and most rules should use it
+/// rather than declaring a type.
+/// </para>
+/// </remarks>
+public interface IRule
+{
+    /// <summary>
+    /// Unique identifier for this rule, used for engine lookups and to
+    /// attribute a <see cref="RuleResult"/> back to its source.
+    /// </summary>
+    string Name { get; }
+
+    /// <summary>
+    /// Optional group label. Rules sharing one can be run together.
+    /// </summary>
+    string? Group { get; }
+
+    /// <summary>Evaluates this rule against <paramref name="context"/>.</summary>
+    /// <param name="context">The facts this rule's predicate reads from.</param>
+    /// <param name="cancellationToken">
+    /// Observed between sub-rules by every composite and by
+    /// <see cref="RulesEngine"/>'s own run methods; whether a leaf rule's own
+    /// predicate observes it depends on that predicate's implementation.
+    /// </param>
+    /// <returns>The outcome, attributed back to this rule by <see cref="Name"/>.</returns>
+    Task<RuleResult> EvaluateAsync(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default);
+}
