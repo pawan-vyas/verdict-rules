@@ -23,6 +23,17 @@ counterpart on purpose (`CancellationToken` propagation, structural typing
 for delegates only, an explicit `IRule` implementation) and is deliberately
 not part of that mirror.
 
+This SDK also has the second testing layer — a full, tested example
+project checked against the shared graduation fixture (see
+[`../../fixtures/graduation_verdict/README.md`](../../fixtures/graduation_verdict/README.md)),
+at [`../../csharp/examples/GraduationVerdict/`](../../csharp/examples/GraduationVerdict/README.md).
+That satisfies Stage 4 ("Prove") of
+[`../maintenance/adding-a-language.md`](../maintenance/adding-a-language.md),
+including an oracle/differential suite in this language's own idiom
+(500 generated cases, checked against an independent, verdict-rules-free
+re-implementation — see that project's own
+[`docs/testing.md`](../../csharp/examples/GraduationVerdict/docs/testing.md)).
+
 ## Test layout
 
 ```mermaid
