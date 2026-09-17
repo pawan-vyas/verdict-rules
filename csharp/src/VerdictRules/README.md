@@ -9,8 +9,6 @@
 dotnet add package VerdictRules
 ```
 
-`net10.0` and `netstandard2.1`. Trimmable and AOT-compatible.
-
 ```csharp
 using VerdictRules;
 ```
