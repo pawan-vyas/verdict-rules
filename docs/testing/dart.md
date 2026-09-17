@@ -11,10 +11,19 @@
 ```bash
 $ cd dart/packages/verdict_rules
 $ dart test
-00:00 +27: All tests passed!
+00:00 +44: All tests passed!
 ```
 
-27 tests, all in a single file. No coverage tool is wired in yet — see
+Three files, not one. `rule_test.dart` and `engine_test.dart` are a
+strict, 1:1 port of Python's own `test_rule.py`/`test_engine.py` — same
+`group` groupings, same tests, same assertions, in Dart idiom — and are
+the two files to check when auditing this package against Python's own
+suite. `dart_idioms_test.dart` holds exactly the coverage with no
+Python counterpart on purpose (structural typing for function types, an
+explicit `Rule` implementation) and is deliberately not part of that
+mirror.
+
+No coverage tool is wired in yet — see
 [`../maintenance/adding-a-language.md`](../maintenance/adding-a-language.md)'s
 Stage 4 for what arrives alongside the shared graduation fixture and an
 oracle/differential suite in Dart's own idiom, neither of which exist
@@ -33,34 +42,42 @@ graph LR
     RuleSrc["📄 lib/src/rule.dart"]
     EngineSrc["📄 lib/src/engine.dart"]
     ResultSrc["📄 lib/src/result.dart"]
-    EngineTest[["🧪 test/verdict_rules_test.dart"]]
+    RuleTest[["🧪 test/rule_test.dart"]]
+    EngineTest[["🧪 test/engine_test.dart"]]
+    IdiomTest[["🧪 test/dart_idioms_test.dart"]]
 
-    %% Link 0: RuleSrc -> EngineTest
-    RuleSrc -->|"[1]<br/>FunctionRule / AndRule / OrRule"| EngineTest
+    %% Link 0: RuleSrc -> RuleTest
+    RuleSrc -->|"[1]<br/>FunctionRule / AndRule / OrRule"| RuleTest
     %% Link 1: EngineSrc -> EngineTest
     EngineSrc -->|"[2]<br/>runAll / runNamed / runGroup"| EngineTest
-    %% Link 2: ResultSrc -> EngineTest
-    ResultSrc -.->|"[3]<br/>exercised indirectly,<br/>no dedicated test file"| EngineTest
+    %% Link 2: ResultSrc -> RuleTest
+    ResultSrc -.->|"[3]<br/>exercised indirectly,<br/>no dedicated test file"| RuleTest
+    %% Link 3: RuleSrc -> IdiomTest
+    RuleSrc -.->|"[4]<br/>structural typing for function types,<br/>not a portable contract"| IdiomTest
 
     style RuleSrc fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
     style EngineSrc fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
     style ResultSrc fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
+    style RuleTest fill:#FFB84D,stroke:#E69500,stroke-width:2px,color:#000
     style EngineTest fill:#FFB84D,stroke:#E69500,stroke-width:2px,color:#000
+    style IdiomTest fill:#B47EFF,stroke:#9654E8,stroke-width:2px,color:#000
 
     %% Link Index:
     %% 0: rule.dart's three concrete shapes are covered directly
     %% 1: engine.dart's five run modes are covered directly
     %% 2: result.dart is plain immutable data, exercised as a side effect of the above -- no behavior of its own to test in isolation
+    %% 3: structural typing for function types and an explicit Rule implementation are Dart-specific, not part of the Python-parity mirror
     linkStyle 0 stroke:#FFCB7A,stroke-width:2px
     linkStyle 1 stroke:#FFCB7A,stroke-width:2px
     linkStyle 2 stroke:#E0E0E0,stroke-width:2px,stroke-dasharray:5 5
+    linkStyle 3 stroke:#D0AFFF,stroke-width:2px,stroke-dasharray:5 5
 ```
 
 > **Why `result.dart` has no dedicated test file**: `RuleResult`/`RunResult`
 > are plain immutable classes with no methods beyond `toString()` and
 > no invariants beyond what the constructor's required parameters
 > already enforce — there's nothing to prove about them that isn't
-> already proven by every test in `verdict_rules_test.dart`
+> already proven by every test in `rule_test.dart` and `engine_test.dart`
 > constructing and reading one. Add a dedicated test file only if a
 > future change gives either type real behavior worth testing in
 > isolation.
@@ -69,21 +86,32 @@ graph LR
 
 | Contract ([`README.md`](README.md)) | Proven by |
 | --- | --- |
-| Short-circuiting, both directions | `AndRule` › `short-circuits: later sub-rules never run`, `OrRule` › `short-circuits on the first pass` |
-| Vacuous-truth polarity, both directions | `AndRule` › `empty passes vacuously`, `OrRule` › `empty fails vacuously` |
-| Absence throws (strict lookup) | `Emptiness is not absence` › `an unknown rule name throws`, `an unknown group throws rather than passing vacuously` |
-| Absence returns `null` (try-prefixed lookup) | `Try lookups` (whole `group` block) |
-| Fallback matrix — the present-failing row specifically | `Try lookups` › `fallback matrix: failing` |
-| `runAll`/`runGroup` never short-circuit | `RulesEngine run modes` › `runAll never short-circuits`, `runGroup evaluates only its own group, and never short-circuits` |
-| No flattening of a composite's own sub-results | `AndRule` › `data holds only what ran, never padded, never flattened` |
-| A rule shape needs no import from this package | `a top-level function is a rule with nothing declared`, `a plain class satisfying the contract works without subclassing` |
+| Short-circuiting, both directions | `AndRule` › `short-circuits after first failure`, `OrRule` › `short-circuits after first pass` (`rule_test.dart`) |
+| Vacuous-truth polarity, both directions | `AndRule` › `empty rule list vacuously passes`, `OrRule` › `empty rule list vacuously fails` (`rule_test.dart`) |
+| Absence throws (strict lookup) | `RunNamed` › `unknown name raises ArgumentError`, `RunGroup` › `unknown group raises ArgumentError` (`engine_test.dart`) |
+| Absence returns `null` (try-prefixed lookup) | `try lookups` (whole `group` block, `engine_test.dart`) |
+| Fallback matrix — the present-failing row specifically | `try lookups` › `fallback matrix: failing` (`engine_test.dart`) |
+| `runAll`/`runGroup` never short-circuit | `RunAll` › `does not short-circuit unlike AndRule` (`engine_test.dart`) |
+| No flattening of a composite's own sub-results | `AndRule` › `data carries sub-results up to failure` (`rule_test.dart`) |
+| Duplicate name, last one wins | `construction` › `duplicate names -- last one wins in by-name lookup` (`engine_test.dart`) |
+| A predicate's exception is never caught | `rule-level exception propagation` (`rule_test.dart`); `engine exception propagation` (`engine_test.dart`) |
+
+Not part of this table on purpose — `dart_idioms_test.dart` proves
+structural typing for function types (a plain top-level function,
+passed as a tear-off, is a `Rule` through `FunctionRule` with nothing
+declared) and that a plain class satisfying `Rule`'s multi-member
+interface needs an explicit `implements Rule` -- Dart has no structural
+typing there the way Python's `Protocol` or TypeScript would allow.
+Neither is a universal contract; neither gets ported to another
+language's own suite.
 
 Confirmed to actually bite, not just present: the fallback-matrix test
 is parametrized over the exact three-state table verdict's own design
 exists to keep straight (present-and-passing, present-and-failing,
 absent) — commented directly above the test with the reasoning, not
 left implicit. Reversing the vacuous-truth polarity of either composite
-makes its own `empty ...` test fail immediately, not silently pass.
+makes its own `empty rule list vacuously ...` test fail immediately,
+not silently pass.
 
 ## Running tests
 
