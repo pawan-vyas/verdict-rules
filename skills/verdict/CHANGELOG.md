@@ -6,6 +6,23 @@ Release history for the verdict AI-agent skill. Format follows
 This versions **the guidance**, not any language's API, so it moves on its own
 cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skill-vX.Y.Z`.
 
+## [0.6.0] - 2026-09-17
+
+- **`Rule<TContext>` generics land across all four languages.** Every
+  `references/<language>/agent-notes.md` updated: the API-in-one-screen
+  block now shows the generic signature, and each file's own mistakes
+  section covers that language's own generic gotchas (C#'s arity
+  coexistence between `IRule`/`IRule<TContext>`, TypeScript's
+  deliberate lack of a default type parameter, Dart's one real breaking
+  migration from a bare `implements Rule`, Python's erased-at-runtime
+  `Protocol[TContext]`). Dict-context stays first-class in every
+  language's own notes -- never framed as a fallback for the untyped.
+- **New shared extending scenario,
+  `references/docs/extending/reusing-a-rule-across-contexts/`** -- the
+  `ProjectingRule` adapter for reusing one typed rule across two
+  differently-shaped contexts, with a verified-runnable code sample per
+  language.
+
 ## [0.5.9] - 2026-09-17
 
 - **Dart's `references/dart/agent-notes.md` install snippet fixed** --
