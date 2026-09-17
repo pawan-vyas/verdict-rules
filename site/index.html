@@ -1230,9 +1230,16 @@ result = <span class="c-kw">await</span> engine.run_named(<span class="c-str">"c
             <span class="t-cmd">import { AndRule } from "…verdict-rules@latest/+esm"</span>
             <span class="t-copy">Copy</span>
           </div>
+          <div class="term-row" onclick="copyLine(this, '&lt;script src=&quot;https://cdn.jsdelivr.net/npm/verdict-rules@latest/dist/verdict-rules.global.js&quot;&gt;&lt;/script&gt;')">
+            <span class="t-dollar">&gt;</span>
+            <span class="t-cmd">&lt;script src="…verdict-rules@latest/dist/verdict-rules.global.js"&gt;</span>
+            <span class="t-copy">Copy</span>
+          </div>
           <p class="install-note">
-            No build step. In production, pin the exact version and its
-            integrity hash instead of <code>@latest</code> — see the
+            No build step either way — a module import or a plain global
+            <code>&lt;script&gt;</code> tag exposing <code>VerdictRules</code>.
+            In production, pin the exact version and, for the plain
+            <code>&lt;script&gt;</code> form, its integrity hash too — see the
             <a href="https://github.com/pawan-vyas/verdict-rules/blob/main/js/packages/verdict-rules/README.md#use-it-from-a-browser-with-no-build-step" target="_blank" rel="noopener noreferrer">package README</a>
             for why and where to get the real values.
           </p>
