@@ -10,25 +10,25 @@
 
 ```bash
 $ cd python/
-$ uv run pytest --cov=verdict --cov-report=term-missing -q
-........................                                             [100%]
-24 passed in 0.04s
-
-Name                      Stmts   Miss  Cover
--------------------------------------------------------
-src/verdict/__init__.py       4      0   100%
-src/verdict/engine.py        24      0   100%
-src/verdict/result.py        12      0   100%
-src/verdict/rule.py          41      0   100%
--------------------------------------------------------
-TOTAL                        81      0   100%
+$ uv run pytest -q
+...........................................                             [100%]
+43 passed in 0.03s
 ```
 
-24 tests, 100% line coverage, sub-tenth-of-a-second runtime. Line
-coverage alone doesn't prove the contracts in [`README.md`](README.md)
-are actually enforced (a test can execute every line and still assert
-the wrong thing) — see that doc for what the number above doesn't tell
-you.
+41 test functions (43 runtime cases once `test_fallback_matrix`'s three
+parametrized cases are counted individually), 100% line coverage,
+sub-tenth-of-a-second runtime. Line coverage alone doesn't prove the
+contracts in [`README.md`](README.md) are actually enforced (a test can
+execute every line and still assert the wrong thing) — see that doc for
+what the number above doesn't tell you.
+
+**`tests/test_rule.py` and `tests/test_engine.py` are the core contract
+suite — the reference every other language's own suite ports against
+1:1.** `tests/test_python_idioms.py` sits beside them, not inside them:
+it proves something true only because of how Python itself works (see
+its own module docstring), and has no counterpart to port anywhere
+else. Auditing this package's own suite against another language's
+means comparing against the first two files only.
 
 **No CI pipeline runs this suite today.** This suite is run manually,
 by whoever is making a change, before it's merged — not automatically
@@ -53,6 +53,7 @@ graph LR
     ResultSrc["📄 src/verdict/result.py"]
     RuleTest[["🧪 tests/test_rule.py"]]
     EngineTest[["🧪 tests/test_engine.py"]]
+    IdiomTest[["🧪 tests/test_python_idioms.py"]]
     ExampleTest[["🧪 examples/graduation_verdict/<br/>test_graduation_verdict.py"]]
 
     %% Link 0: RuleSrc -> RuleTest
@@ -65,12 +66,15 @@ graph LR
     RuleSrc -.->|"[4]<br/>exercised together,<br/>not in isolation"| ExampleTest
     %% Link 4: EngineSrc -> ExampleTest
     EngineSrc -.->|"[5]<br/>exercised together,<br/>not in isolation"| ExampleTest
+    %% Link 5: EngineSrc -> IdiomTest
+    EngineSrc -.->|"[6]<br/>a Python-only idiom,<br/>not a portable contract"| IdiomTest
 
     style RuleSrc fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
     style EngineSrc fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
     style ResultSrc fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
     style RuleTest fill:#FFB84D,stroke:#E69500,stroke-width:2px,color:#000
     style EngineTest fill:#FFB84D,stroke:#E69500,stroke-width:2px,color:#000
+    style IdiomTest fill:#B47EFF,stroke:#9654E8,stroke-width:2px,color:#000
     style ExampleTest fill:#51CF66,stroke:#37B24D,stroke-width:2px,color:#000
 
     %% Link Index:
@@ -78,11 +82,13 @@ graph LR
     %% 1: engine.py's three run modes are covered directly
     %% 2: result.py is a plain frozen dataclass, exercised as a side effect of the above — no behavior of its own to test in isolation
     %% 3-4: the example project exercises both modules together, as a real consumer would, not each in isolation
+    %% 5: test_python_idioms.py proves a Python-specific idiom against engine.py's own result types -- not part of the portable contract suite
     linkStyle 0 stroke:#FFCB7A,stroke-width:2px
     linkStyle 1 stroke:#FFCB7A,stroke-width:2px
     linkStyle 2 stroke:#E0E0E0,stroke-width:2px,stroke-dasharray:5 5
     linkStyle 3 stroke:#7EDB8F,stroke-width:2px,stroke-dasharray:5 5
     linkStyle 4 stroke:#7EDB8F,stroke-width:2px,stroke-dasharray:5 5
+    linkStyle 5 stroke:#D0AFFF,stroke-width:2px,stroke-dasharray:5 5
 ```
 
 > **Why `result.py` has no dedicated test file**: `RuleResult`/`RunResult`
@@ -100,7 +106,7 @@ graph LR
 | --- | --- |
 | Short-circuiting, both directions | `test_short_circuits_after_first_failure`, `test_short_circuits_after_first_pass` (`test_rule.py`) |
 | Vacuous-truth polarity, both directions | `test_empty_rule_list_vacuously_passes`, `test_empty_rule_list_vacuously_fails` (`test_rule.py`) |
-| Absence raises (strict lookup) | `test_unknown_group_raises`, `test_unknown_group_throws` (`test_engine.py`) |
+| Absence raises (strict lookup) | `test_unknown_name_raises_key_error`, `test_unknown_group_raises` (`test_engine.py`) |
 | Absence returns `None` (try-prefixed lookup) | `TestTryLookups` (`test_engine.py`) |
 | Fallback matrix — the present-failing row specifically | `test_fallback_matrix` (`test_engine.py`) |
 | `run_all`/`run_group` never short-circuit | `test_does_not_short_circuit_unlike_and_rule` (`test_engine.py`) |
