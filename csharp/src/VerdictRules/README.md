@@ -50,8 +50,10 @@ the predicate signature is a rule via `FunctionRule`, with nothing declared and
 no type to name. A method group works directly:
 
 ```csharp
-static Task<RuleResult> HasQuorum(IReadOnlyDictionary<string, object?> ctx, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("quorum", ctx.Count >= 3));
+static Task<RuleResult> HasQuorum(
+  IReadOnlyDictionary<string, object?> ctx,
+  CancellationToken cancellationToken = default)
+    => Task.FromResult(new RuleResult("quorum", ctx.Count >= 3));
 
 var rule = new FunctionRule("quorum", HasQuorum);
 ```
