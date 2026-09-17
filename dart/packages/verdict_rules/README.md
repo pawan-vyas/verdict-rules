@@ -5,10 +5,11 @@
 
 ## Install
 
-```yaml
-dependencies:
-  verdict_rules: ^0.0.2
+```sh
+dart pub add verdict_rules
 ```
+
+Works unchanged in a Flutter project too — `flutter pub add verdict_rules` there.
 
 ```dart
 import 'package:verdict_rules/verdict_rules.dart';

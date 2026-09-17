@@ -50,7 +50,7 @@ The decision itself — is this form ready? — is a plain function of a
 context object, with no DOM in it at all:
 
 ```js
-import { AndRule, FunctionRule } from "https://cdn.jsdelivr.net/npm/verdict-rules@0.0.6/+esm";
+import { AndRule, FunctionRule } from "https://cdn.jsdelivr.net/npm/verdict-rules@latest/+esm";
 
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -160,25 +160,24 @@ assert.equal(
 );
 ```
 
-### A pinned `<script>` tag works identically
+### A global `<script>` tag works identically
 
-The example above loads the ESM `+esm` CDN path, which has no stable
-bytes to hash (see the package README's own
-[CDN section](../../../js/packages/verdict-rules/README.md#use-it-from-a-browser-with-no-build-step)
-for why). The same rule construction works identically behind a
-pinned, integrity-checked global `<script>` tag instead, for a page
-that isn't using `type="module"` at all:
+The example above loads the ESM `+esm` CDN path. The same rule
+construction works identically behind a global `<script>` tag instead,
+for a page that isn't using `type="module"` at all:
 
 ```html
-<script
-  src="https://cdn.jsdelivr.net/npm/verdict-rules@0.0.6/dist/verdict-rules.global.js"
-  integrity="sha384-8UUn2T+f6wOMdw/f8XSZN9acZmqxSjQnfzSkXsZz8V05rPEl62oCYhpEw3wsYKEb"
-  crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/verdict-rules@latest/dist/verdict-rules.global.js"></script>
 <script>
   const { AndRule, FunctionRule } = VerdictRules;
   // ...the same emailValid/passwordStrong/termsAgreed/formReady as above.
 </script>
 ```
+
+In production, pin the exact version and its integrity hash instead of
+`@latest` — see the package README's own
+[CDN section](../../../js/packages/verdict-rules/README.md#use-it-from-a-browser-with-no-build-step)
+for why that matters and where to get the correct values.
 
 ## Related
 

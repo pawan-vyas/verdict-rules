@@ -86,9 +86,8 @@ verdict.detail;   // "'resource_is_available' failed"
 <details>
 <summary>Dart</summary>
 
-```yaml
-dependencies:
-  verdict_rules: ^0.0.2
+```sh
+dart pub add verdict_rules
 ```
 
 ```dart

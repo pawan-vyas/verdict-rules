@@ -5,6 +5,23 @@ Release history for the `verdict-rules` JS/TS package. Format follows
 [semantic versioning](https://semver.org/), scoped to this package — it
 releases independently of the other language SDKs and of the AI-agent skill.
 
+## [0.0.7] - 2026-09-17
+
+- **The CDN section no longer hardcodes a version+hash pair for the
+  pinned `<script>` example** — the exact problem the `0.0.6` fix
+  itself only patched, not removed (this same pin went stale twice
+  now). The ESM import switches to `@latest`, which never needed the
+  integrity hash in the first place (documented in the same section:
+  the CDN's on-the-fly transform has no stable bytes to hash, so there
+  was nothing for a hash to protect there). The pinned `<script>` +
+  `integrity` example is now an explicit placeholder pointing at
+  [jsdelivr's own package page](https://www.jsdelivr.com/package/npm/verdict-rules),
+  which generates the exact tag with the correct hash for whichever
+  version is picked — a static value here would only ever be correct
+  for the version that existed when it was written.
+- **unpkg and esm.sh are now linked directly**, alongside jsdelivr,
+  rather than named without a link.
+
 ## [0.0.6] - 2026-09-16
 
 - **`## Install` now also shows the bare import statement**
