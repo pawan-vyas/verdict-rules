@@ -1,6 +1,6 @@
 {
   "name": "verdict-rules",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "A small, zero-dependency, async-native rule-evaluation engine. Compose conditions into one explainable pass/fail verdict, with sequential evaluation and real short-circuiting as a guarantee.",
   "keywords": [
     "rules-engine",

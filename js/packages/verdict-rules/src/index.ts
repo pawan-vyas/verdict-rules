@@ -5,15 +5,19 @@
  * verdict. Evaluation is sequential and never concurrent, which is what makes
  * short-circuiting a real contract rather than a best-effort optimisation.
  *
- * ```ts
- * import { AndRule, FunctionRule } from "verdict-rules";
+ * `Rule<TContext>`/`RulesEngine<TContext>` are generic over the context they
+ * read from, with no default type parameter — dict-context is
+ * `FunctionRule<Context>`/`RulesEngine<Context>`, written out explicitly.
  *
- * const overEighteen = new FunctionRule("over_18", async (ctx) => ({
+ * ```ts
+ * import { AndRule, FunctionRule, type Context } from "verdict-rules";
+ *
+ * const overEighteen = new FunctionRule<Context>("over_18", async (ctx) => ({
  *   ruleName: "over_18",
  *   passed: (ctx.age as number) >= 18,
  * }));
  *
- * const verdict = await new AndRule("eligible", [overEighteen]).evaluate({ age: 21 });
+ * const verdict = await new AndRule<Context>("eligible", [overEighteen]).evaluate({ age: 21 });
  * console.log(verdict.passed); // true
  * ```
  */

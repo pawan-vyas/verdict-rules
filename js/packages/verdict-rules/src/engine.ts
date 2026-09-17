@@ -1,5 +1,5 @@
 import { UnknownLookupError } from "./errors.js";
-import type { Context, RuleResult, RunResult } from "./result.js";
+import type { RuleResult, RunResult } from "./result.js";
 import type { Rule } from "./rule.js";
 
 /**
@@ -8,13 +8,19 @@ import type { Rule } from "./rule.js";
  * Distinct from a composite: a composite returns one verdict and stops early,
  * whereas the engine's run modes are diagnostic and never short-circuit. They
  * exist to produce a full picture, not the fastest path to one boolean.
+ *
+ * Generic over `TContext`, the same way {@link Rule} is, with the same
+ * no-default-type-parameter rule — dict-context is `RulesEngine<Context>`,
+ * written out explicitly. An engine holding a heterogeneous catalog of
+ * unrelated dict-context rules and an engine holding one cohesive family of
+ * typed rules use the exact same class; neither form replaces the other.
  */
-export class RulesEngine {
-  readonly #rules: readonly Rule[];
-  readonly #byName: Map<string, Rule>;
-  readonly #byGroup: Map<string, Rule[]>;
+export class RulesEngine<TContext> {
+  readonly #rules: readonly Rule<TContext>[];
+  readonly #byName: Map<string, Rule<TContext>>;
+  readonly #byGroup: Map<string, Rule<TContext>[]>;
 
-  constructor(rules: readonly Rule[]) {
+  constructor(rules: readonly Rule<TContext>[]) {
     this.#rules = [...rules];
     this.#byName = new Map(rules.map((r) => [r.name, r]));
     this.#byGroup = new Map();
@@ -47,7 +53,7 @@ export class RulesEngine {
   }
 
   /** Evaluate every registered rule. Never short-circuits. */
-  async runAll(context: Context): Promise<RunResult> {
+  async runAll(context: TContext): Promise<RunResult> {
     const results: RuleResult[] = [];
     for (const rule of this.#rules) {
       results.push(await rule.evaluate(context));
@@ -75,7 +81,7 @@ export class RulesEngine {
    */
   async tryRunNamed(
     name: string,
-    context: Context,
+    context: TContext,
   ): Promise<RuleResult | undefined> {
     const rule = this.#byName.get(name);
     if (rule === undefined) return undefined;
@@ -92,7 +98,7 @@ export class RulesEngine {
    *
    * @throws {UnknownLookupError} if no rule has this name.
    */
-  async runNamed(name: string, context: Context): Promise<RuleResult> {
+  async runNamed(name: string, context: TContext): Promise<RuleResult> {
     const result = await this.tryRunNamed(name, context);
     if (result === undefined) {
       throw new UnknownLookupError("rule", name);
@@ -117,7 +123,7 @@ export class RulesEngine {
    */
   async tryRunGroup(
     group: string,
-    context: Context,
+    context: TContext,
   ): Promise<RunResult | undefined> {
     const rules = this.#byGroup.get(group);
     if (rules === undefined || rules.length === 0) return undefined;
@@ -142,7 +148,7 @@ export class RulesEngine {
    * an error. Use {@link groupNames} to enumerate, or {@link tryRunGroup} to
    * ask in a single call.
    */
-  async runGroup(group: string, context: Context): Promise<RunResult> {
+  async runGroup(group: string, context: TContext): Promise<RunResult> {
     const result = await this.tryRunGroup(group, context);
     if (result === undefined) {
       throw new UnknownLookupError("group", group);
