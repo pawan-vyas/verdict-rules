@@ -11,9 +11,9 @@
 ```bash
 $ cd js/packages/verdict-rules
 $ npm run test:coverage
-ℹ tests 32
-ℹ suites 11
-ℹ pass 32
+ℹ tests 46
+ℹ suites 14
+ℹ pass 46
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
@@ -30,13 +30,24 @@ $ npm run test:coverage
 ℹ end of coverage report
 ```
 
-32 tests (30 covering the engine itself, 2 covering the CDN
-documentation — see below), 100% line/branch/function coverage via
-Node's own built-in test runner and `--experimental-test-coverage`, no
-external coverage tool needed. Line coverage alone doesn't prove the
-contracts in [`README.md`](README.md) are actually enforced (a test can
-execute every line and still assert the wrong thing) — see that doc for
-what the number above doesn't tell you.
+Three files, not one. `rule.test.js` and `engine.test.js` are a strict,
+1:1 port of Python's own `test_rule.py`/`test_engine.py` — same
+`describe` groupings, same tests, same assertions, in JS/TS idiom — and
+are the two files to check when auditing this package against Python's
+own suite. `js-idioms.test.js` holds exactly the coverage with no
+Python counterpart on purpose (structural typing on a bare object
+literal, `UnknownLookupError`'s own shape) and is deliberately not part
+of that mirror. `docs-cdn.test.js` is unrelated to either — a
+documentation-integrity check, not an engine test — see below.
+
+46 tests total (44 covering the engine itself across the three files
+above, 2 covering the CDN documentation), 100% line/branch/function
+coverage via Node's own built-in test runner and
+`--experimental-test-coverage`, no external coverage tool needed. Line
+coverage alone doesn't prove the contracts in [`README.md`](README.md)
+are actually enforced (a test can execute every line and still assert
+the wrong thing) — see that doc for what the number above doesn't tell
+you.
 
 **No CI pipeline runs this suite today.** This suite is run manually,
 by whoever is making a change, before it's merged — not automatically
@@ -60,25 +71,33 @@ graph LR
     EngineSrc["📄 src/engine.ts"]
     ResultSrc["📄 src/result.ts"]
     ErrorsSrc["📄 src/errors.ts"]
-    EngineTest[["🧪 test/verdict-rules.test.js"]]
+    RuleTest[["🧪 test/rule.test.js"]]
+    EngineTest[["🧪 test/engine.test.js"]]
+    IdiomTest[["🧪 test/js-idioms.test.js"]]
     CdnTest[["🧪 test/docs-cdn.test.js"]]
 
-    %% Link 0: RuleSrc -> EngineTest
-    RuleSrc -->|"[1]<br/>FunctionRule / AndRule / OrRule"| EngineTest
+    %% Link 0: RuleSrc -> RuleTest
+    RuleSrc -->|"[1]<br/>FunctionRule / AndRule / OrRule"| RuleTest
     %% Link 1: EngineSrc -> EngineTest
     EngineSrc -->|"[2]<br/>runAll / runNamed / runGroup"| EngineTest
     %% Link 2: ErrorsSrc -> EngineTest
     ErrorsSrc -->|"[3]<br/>UnknownLookupError"| EngineTest
-    %% Link 3: ResultSrc -> EngineTest
-    ResultSrc -.->|"[4]<br/>exercised indirectly,<br/>no dedicated test file"| EngineTest
-    %% Link 4: CdnTest -> CdnTest (documentation, not source)
-    CdnTest -.->|"[5]<br/>checks the markdown<br/>files themselves"| CdnTest
+    %% Link 3: ResultSrc -> RuleTest
+    ResultSrc -.->|"[4]<br/>exercised indirectly,<br/>no dedicated test file"| RuleTest
+    %% Link 4: RuleSrc -> IdiomTest
+    RuleSrc -.->|"[5]<br/>structural typing,<br/>not a portable contract"| IdiomTest
+    %% Link 5: ErrorsSrc -> IdiomTest
+    ErrorsSrc -.->|"[6]<br/>UnknownLookupError's own shape,<br/>not a portable contract"| IdiomTest
+    %% Link 6: CdnTest -> CdnTest (documentation, not source)
+    CdnTest -.->|"[7]<br/>checks the markdown<br/>files themselves"| CdnTest
 
     style RuleSrc fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
     style EngineSrc fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
     style ResultSrc fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
     style ErrorsSrc fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
+    style RuleTest fill:#FFB84D,stroke:#E69500,stroke-width:2px,color:#000
     style EngineTest fill:#FFB84D,stroke:#E69500,stroke-width:2px,color:#000
+    style IdiomTest fill:#B47EFF,stroke:#9654E8,stroke-width:2px,color:#000
     style CdnTest fill:#B47EFF,stroke:#9654E8,stroke-width:2px,color:#000
 
     %% Link Index:
@@ -86,19 +105,22 @@ graph LR
     %% 1: engine.ts's three run modes are covered directly
     %% 2: errors.ts's one exported type is covered directly
     %% 3: result.ts is a plain readonly interface, exercised as a side effect of the above — no behavior of its own to test in isolation
-    %% 4: docs-cdn.test.js is a documentation-integrity check, not an engine test — see its own doc comment
+    %% 4-5: structural typing and UnknownLookupError's own field shape are JS/TS-specific, not part of the Python-parity mirror
+    %% 6: docs-cdn.test.js is a documentation-integrity check, not an engine test — see its own doc comment
     linkStyle 0 stroke:#FFCB7A,stroke-width:2px
     linkStyle 1 stroke:#FFCB7A,stroke-width:2px
     linkStyle 2 stroke:#FFCB7A,stroke-width:2px
     linkStyle 3 stroke:#E0E0E0,stroke-width:2px,stroke-dasharray:5 5
     linkStyle 4 stroke:#D0AFFF,stroke-width:2px,stroke-dasharray:5 5
+    linkStyle 5 stroke:#D0AFFF,stroke-width:2px,stroke-dasharray:5 5
+    linkStyle 6 stroke:#D0AFFF,stroke-width:2px,stroke-dasharray:5 5
 ```
 
 > **Why `result.ts` has no dedicated test file**: `RuleResult`/`RunResult`
 > are plain readonly interfaces with no methods and no invariants beyond
 > what the type checker already enforces — there's nothing to prove
-> about them that isn't already proven by every test in
-> `verdict-rules.test.js` constructing and reading one. Add a dedicated
+> about them that isn't already proven by every test in `rule.test.js`
+> and `engine.test.js` constructing and reading one. Add a dedicated
 > test file only if a future change gives either type real behavior (a
 > computed property, a validator) worth testing in isolation.
 >
@@ -113,15 +135,23 @@ graph LR
 
 | Contract ([`README.md`](README.md)) | Proven by |
 | --- | --- |
-| Short-circuiting, both directions | `AndRule` › `short-circuits: later sub-rules never run`, `OrRule` › `short-circuits on the first pass` |
-| Vacuous-truth polarity, both directions | `AndRule` › `empty passes vacuously`, `OrRule` › `empty fails vacuously` |
-| Absence throws (strict lookup) | `emptiness is not absence` › `an unknown rule name throws a typed error`, `an unknown group throws rather than passing vacuously` |
-| Absence returns `undefined` (try-prefixed lookup) | `try lookups` (whole `describe` block) |
-| Fallback matrix — the present-failing row specifically | `try lookups` › `fallback matrix: failing` |
-| `runAll`/`runGroup` never short-circuit | `RulesEngine run modes` › `runAll never short-circuits` |
-| No flattening of a composite's own sub-results | `AndRule` › `data holds only what ran, never padded, never flattened` |
-| Duplicate name, last one wins | `duplicate rule names` › `the last registered rule wins the by-name lookup` |
-| A predicate's exception is never caught | `a predicate's own exception is never caught` (whole `describe` block — `AndRule`, `OrRule`, `runAll`, `runGroup` each get their own case) |
+| Short-circuiting, both directions | `AndRule` › `short-circuits after first failure`, `OrRule` › `short-circuits after first pass` (`rule.test.js`) |
+| Vacuous-truth polarity, both directions | `AndRule` › `empty rule list vacuously passes`, `OrRule` › `empty rule list vacuously fails` (`rule.test.js`) |
+| Absence throws (strict lookup) | `RunNamed` › `unknown name raises UnknownLookupError`, `RunGroup` › `unknown group raises UnknownLookupError` (`engine.test.js`) |
+| Absence returns `undefined` (try-prefixed lookup) | `try lookups` (whole `describe` block, `engine.test.js`) |
+| Fallback matrix — the present-failing row specifically | `try lookups` › `fallback matrix: failing` (`engine.test.js`) |
+| `runAll`/`runGroup` never short-circuit | `RunAll` › `does not short-circuit unlike AndRule` (`engine.test.js`) |
+| No flattening of a composite's own sub-results | `AndRule` › `data carries sub-results up to failure` (`rule.test.js`) |
+| Duplicate name, last one wins | `construction` › `duplicate names -- last one wins in by-name lookup` (`engine.test.js`) |
+| A predicate's exception is never caught | `rule-level exception propagation` (`rule.test.js`); `engine exception propagation` (`engine.test.js`) |
+
+Not part of this table on purpose — `js-idioms.test.js` proves
+structural typing on a bare object literal (no class, no `implements`,
+shape alone is enough) and `UnknownLookupError`'s own field shape
+(`kind`/`key`/`name`, the type JavaScript exports because it has no
+built-in equivalent to Python's `KeyError` or C#'s
+`KeyNotFoundException`). Neither is a universal contract; neither gets
+ported to another language's own suite.
 
 Confirmed to actually bite, not just present: wrapping any of the four
 exception-propagation paths above in a `try`/`catch` that swallows the
