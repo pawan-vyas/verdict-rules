@@ -161,16 +161,27 @@ jobs:
           set -euo pipefail
           url="https://api.nuget.org/v3-flatcontainer/${PACKAGE_ID_LOWER}/${VERSION}/${PACKAGE_ID_LOWER}.${VERSION}.nupkg"
 
+          # csharp-v0.0.1's real publish exposed a real gap: the old 6x20s
+          # (~2min) budget assumed nuget.org's own indexing was as fast for a
+          # brand-new package ID as for a routine new version. Confirmed
+          # genuinely successful throughout (the push step's own log showed
+          # both the .nupkg and .snupkg reaching "Created" from nuget.org's
+          # API), it just took nuget.org close to 5 minutes to actually serve
+          # it -- same shape as the gap release-js.yml's own verify-published
+          # hit and widened for (js-v0.0.4, ~20min that time).
+          #
+          # 20x30s (~10min) gives real headroom for a repeat of this without
+          # turning a genuinely broken publish into an indefinite hang.
           code=000
-          for attempt in 1 2 3 4 5 6; do
+          for attempt in $(seq 1 20); do
             code="$(curl -s -o package.nupkg -w '%{http_code}' "$url")"
             [ "$code" = "200" ] && break
             echo "Attempt ${attempt}: HTTP ${code} — waiting for propagation"
-            sleep 20
+            sleep 30
           done
 
           if [ "$code" != "200" ]; then
-            echo "::error::NuGet is not serving ${VERSION} after ~2 minutes. The push step reported success, so check the package page before assuming a false alarm."
+            echo "::error::NuGet is not serving ${VERSION} after ~10 minutes. The push step reported success, so check the package page before assuming a false alarm."
             exit 1
           fi
           echo "Downloaded $(du -h package.nupkg | cut -f1) package.nupkg"
