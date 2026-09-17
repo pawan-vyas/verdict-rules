@@ -9,10 +9,20 @@
 
 ## 1. Test-suite parity
 
-**None needed for the 9-contract checklist** — per the audit in `README.md`,
-`docs/testing/js.md` already documents full coverage (32 tests, all 9
-contracts). Verify this is still true (re-run `npm run test:coverage`, diff
-the table against the actual test file) rather than assuming no drift.
+Per `README.md`'s corrected scope: parity means Python's *whole* suite (41
+tests), not just the 9-contract checklist. JS is confirmed at full parity
+against that narrower checklist (32 tests, `docs/testing/js.md`'s own
+table), but the raw count gap against Python's 41 hasn't been closed out by
+name-matching test bodies yet — `README.md`'s own pass flagged
+`test_predicate_receives_the_context` and
+`test_empty_engine_run_all_vacuously_passes` as not obviously present by
+name; confirm directly against the actual test file, add whatever's
+genuinely missing.
+
+**The target is coverage, not the number 41 itself** — if JS's own idiom
+already proves the same contract via a different test shape, that's parity,
+not a gap. Update `docs/testing/js.md`'s own contract table in the same
+step as each test you add, not as a separate later pass.
 
 ## 2. `graduation_verdict` fixture — port
 

@@ -6,7 +6,16 @@
 > pattern (not a port of either prior language's mechanics), implementing
 > the new fixture against Python's already-fixed spec.
 
-## 1. Test-suite parity — two real, self-documented gaps
+## 1. Test-suite parity — two known gaps, plus a real count-vs-coverage check
+
+Per `README.md`'s corrected scope: parity means Python's *whole* suite (41
+tests, 29 here today), not just the 9-contract checklist. The two items
+below are the *known, self-documented* gaps — confirm they're the complete
+picture by diffing Python's full test list against `EngineTests.cs`
+directly, rather than assuming nothing else is missing once these two land.
+The target is coverage, not literally reaching 41 — a `[Theory]` covering
+several of Python's separate test functions in one parameterized case is
+full parity, not a shortfall.
 
 Per `csharp/docs/testing/csharp.md`'s own words: *"Not yet covered: a
 duplicate-rule-name registration (which name wins the by-name lookup) and a

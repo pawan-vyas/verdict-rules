@@ -371,6 +371,26 @@ diff against Python's full 41-test suite as the *first* action item of that
 language's parity phase, not an assumption that the summary tables already
 captured everything.
 
+**The pass criteria is coverage, not a raw count.** 41 is a sanity anchor —
+evidence something might be missing when a language's count sits well below
+it — not a literal target. A language's own idiom can legitimately express
+the same coverage in fewer or more test functions (a C# `[Theory]` covering
+several of Python's separate `test_` functions in one parameterized case is
+*full* parity, not a shortfall) — this repo's own principle already says so
+("each language may use idiomatic mechanisms... must implement the same
+semantic contracts"). The actual done-criteria for this phase is: every
+contract Python's suite proves is proven *somewhere* in the other language's
+suite, confirmed by reading test bodies against Python's, not by comparing
+counts.
+
+**Each language's own `docs/testing/<lang>.md` gets updated in the same
+step that adds the test it describes, not deferred to a later docs pass.**
+As each contract gap closes during the parity audit, that language's own
+"which test proves which contract" table gains the new row immediately —
+letting doc updates pile up until a later "docs sweep" is exactly how they'd
+turn into an untracked backlog instead of landing alongside the work that
+made them true.
+
 **No CI pipeline runs any of these suites today, for any language** — a
 pre-existing, shared gap tracked in `docs/future_plan.md`. Out of scope for
 this release unless explicitly pulled in; not assumed included.

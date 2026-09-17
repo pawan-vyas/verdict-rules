@@ -6,11 +6,19 @@
 > from three already-completed, working precedents (Python, TS, C#) before
 > its own harder mechanics land.
 
-## 1. Test-suite parity — the same two gaps as C#
+## 1. Test-suite parity — two known gaps, plus a real count-vs-coverage check
 
-Per the audit in `README.md`: Dart's own `docs/testing/dart.md` contract
-table omits the same two rows C#'s does. Add, mirroring JS's own test
-structure and naming conventions:
+Per `README.md`'s corrected scope: parity means Python's *whole* suite (41
+tests, 27 here today), not just the 9-contract checklist. The two items
+below are the *known, self-documented* gaps (same as C#'s) — confirm they're
+the complete picture by diffing Python's full test list against
+`verdict_rules_test.dart` directly, rather than assuming nothing else is
+missing once these two land. The target is coverage, not literally reaching
+41 — Dart's own idiom may express the same contract differently and still be
+at full parity.
+
+Dart's own `docs/testing/dart.md` contract table omits the same two rows
+C#'s does. Add, mirroring JS's own test structure and naming conventions:
 
 - A duplicate-rule-name test: two rules sharing a name, registered in one
   `RulesEngine`, and the by-name lookup resolves to the *last* one.
@@ -18,7 +26,8 @@ structure and naming conventions:
   `AndRule`, `OrRule` individually — each its own case, not one shared
   assertion.
 
-Update `docs/testing/dart.md`'s own contract table once these land.
+Update `docs/testing/dart.md`'s own contract table in the same step each
+test lands, not as a separate later pass.
 
 ## 2. `graduation_verdict` fixture — port
 
