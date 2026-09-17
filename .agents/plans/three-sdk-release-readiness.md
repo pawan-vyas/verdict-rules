@@ -123,16 +123,19 @@ Same shape for csharp and dart; js gets the extra Stage-4 rows.
         --field 'contexts[]=C# tests passed or were not needed'
       ```
       then close #73.
-- [ ] **NuGet setup gaps found while auditing `release-csharp.yml`,
-      need the user's action, not automatable from here**: the `nuget`
-      GitHub environment doesn't exist yet (repo has `github-pages`/
-      `npm`/`pub.dev`/`pypi` only — `release-csharp.yml` references
-      `environment: nuget`); `NUGET_USER` isn't set anywhere (repo- or
-      environment-level) — needed by the `NuGet/login@v1` step's
-      `user:` input; whether nuget.org's own Trusted Publishing policy
-      has actually been registered yet is unverifiable from here (needs
-      the user's nuget.org login) — see
-      `.agents/plans/csharp-sdk/PLAN.md` §3 for the documented steps.
+- [x] **NuGet setup gaps closed.** Trusted Publishing policy
+      `verdict-rules-github-publish-oidc` registered on nuget.org and
+      **Active** immediately (public repo, no 7-day pending window —
+      resolves the "don't assume either way" note in
+      `.agents/plans/csharp-sdk/PLAN.md` §3), scoped to `VerdictRules*`
+      (the glob covers future `VerdictRules.*` extension packages too,
+      not just the exact ID) with "Push new packages and package
+      versions" so it can perform the actual first publish, repository
+      `pawan-vyas/verdict-rules`, workflow `release-csharp.yml`,
+      environment `nuget`. The `nuget` GitHub environment was created
+      and `NUGET_USER=pawan-vyas` set as a repo variable — both
+      unrestricted (no branch policy, no protection rules), matching
+      `npm`/`pub.dev`/`pypi`'s own environments exactly.
 - [ ] **Confirm the `.snupkg` symbol package actually lands on
       nuget.org** right after the manual `0.0.1` push — the mechanism
       (`dotnet nuget push "dist/*.nupkg"` auto-detecting and pushing
