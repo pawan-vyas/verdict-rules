@@ -4,8 +4,8 @@
 > The problem, the design, and what a solution must demonstrate are
 > language-agnostic and live in [`README.md`](README.md) — read that
 > first. This page is the JS/TS implementation of it, loaded straight
-> from a CDN with no build step — the pinned global `<script>` variant
-> this time, rather than [`signup-form-readiness/js.md`](../signup-form-readiness/js.md)'s
+> from a CDN with no build step — the global `<script>` variant this
+> time, rather than [`signup-form-readiness/js.md`](../signup-form-readiness/js.md)'s
 > ESM import, to show both work identically.
 
 ## The naive way (and why it breaks down)
@@ -37,10 +37,7 @@ what that costs beyond the wasted call itself.
 ## The `verdict-rules` way
 
 ```html
-<script
-  src="https://cdn.jsdelivr.net/npm/verdict-rules@0.0.6/dist/verdict-rules.global.js"
-  integrity="sha384-8UUn2T+f6wOMdw/f8XSZN9acZmqxSjQnfzSkXsZz8V05rPEl62oCYhpEw3wsYKEb"
-  crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/verdict-rules@latest/dist/verdict-rules.global.js"></script>
 <script>
   const { OrRule, FunctionRule } = VerdictRules;
 
@@ -148,10 +145,7 @@ A minimal, deliberately plain page wiring all of it together:
       <p>Upgrade to Premium and unlock unlimited usage.</p>
     </div>
 
-    <script
-      src="https://cdn.jsdelivr.net/npm/verdict-rules@0.0.6/dist/verdict-rules.global.js"
-      integrity="sha384-8UUn2T+f6wOMdw/f8XSZN9acZmqxSjQnfzSkXsZz8V05rPEl62oCYhpEw3wsYKEb"
-      crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/verdict-rules@latest/dist/verdict-rules.global.js"></script>
     <script src="./upsell.js"></script>
   </body>
 </html>
@@ -165,4 +159,4 @@ A minimal, deliberately plain page wiring all of it together:
   `OrRule` shape in a backend checkout decision.
 - [`signup-form-readiness/js.md`](../signup-form-readiness/js.md) — the
   `AndRule` mirror image, loaded via the ESM `+esm` CDN path instead of
-  this page's pinned global `<script>` — both variants work identically.
+  this page's global `<script>` — both variants work identically.

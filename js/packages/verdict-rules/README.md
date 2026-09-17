@@ -58,12 +58,39 @@ predicate.
 ## Use it from a browser, with no build step
 
 Published as ESM, CommonJS, and a plain global bundle, so a vanilla page works
-without tooling. **Always pinned, always with an integrity hash:**
+without tooling.
+
+As a module, with no bundler — no `integrity` needed here, since these
+transform on the fly and so have no stable bytes to hash:
+
+```html
+<script type="module">
+  import { AndRule } from "https://cdn.jsdelivr.net/npm/verdict-rules@latest/+esm";
+</script>
+```
+
+`require("verdict-rules")` works too. The global build targets ES2019, so it
+runs in browsers that never learned private class fields.
+
+As a plain `<script>` tag, **pin the exact version and its integrity hash —
+never `@latest` here.** Unpinned means the next release reaches every page
+using it with nobody editing anything; no `integrity` means the browser
+executes whatever the CDN returns, with full access to the page's cookies,
+DOM, and network — a `<script src>` from a CDN is the one distribution path
+where a third party sits inside your runtime trust boundary, and the hash is
+what stops a compromised CDN from injecting into the page rather than only
+being able to break it.
+
+> [jsdelivr's own package page](https://www.jsdelivr.com/package/npm/verdict-rules)
+> generates the exact `<script>` tag, with the correct hash, for whichever
+> version you pick — copy it from there. A static example here would only be
+> correct for whichever version existed when this page was written, and
+> silently wrong for every release after it.
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/verdict-rules@0.0.5/dist/verdict-rules.global.js"
-  integrity="sha384-8UUn2T+f6wOMdw/f8XSZN9acZmqxSjQnfzSkXsZz8V05rPEl62oCYhpEw3wsYKEb"
+  src="https://cdn.jsdelivr.net/npm/verdict-rules@X.Y.Z/dist/verdict-rules.global.js"
+  integrity="sha384-<the hash jsdelivr's package page shows for that version>"
   crossorigin="anonymous"></script>
 <script>
   const rule = new VerdictRules.FunctionRule("ok", async () => ({
@@ -74,29 +101,9 @@ without tooling. **Always pinned, always with an integrity hash:**
 </script>
 ```
 
-Neither half of that is optional, and both failures are silent:
-
-- **Unpinned** (`/verdict-rules/` with no `@version`) means the next release
-  reaches every page using it, with nobody editing anything.
-- **No `integrity`** means the browser executes whatever the CDN returns, with
-  full access to the page — cookies, DOM, network. A `<script src>` from a CDN
-  is the one distribution path where a third party sits inside your runtime
-  trust boundary. The hash makes a compromised CDN able to break the page but
-  never to inject into it.
-
-Or as a module, with no bundler — no `integrity` here, since these transform
-on the fly and so have no stable bytes to hash:
-
-```html
-<script type="module">
-  import { AndRule } from "https://cdn.jsdelivr.net/npm/verdict-rules@0.0.5/+esm";
-</script>
-```
-
-`require("verdict-rules")` works too. The global build targets ES2019, so it
-runs in browsers that never learned private class fields.
-
-Also available via unpkg and esm.sh — same package, same integrity hash.
+Also available via [jsdelivr](https://www.jsdelivr.com/package/npm/verdict-rules),
+[unpkg](https://unpkg.com/verdict-rules/), and [esm.sh](https://esm.sh/verdict-rules)
+— same package, same integrity guarantee.
 
 ## Unknown lookups throw a typed error
 
@@ -159,9 +166,9 @@ one everybody thinks of first.
 
 | Doc | For |
 | --- | --- |
-| [`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.6/js/packages/verdict-rules/docs/quickstart.md) | The quickstart — core concepts and a full worked example |
-| [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.6/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
-| [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.6/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
-| [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.6/docs/maintenance/README.md) | Changing this package itself |
-| [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.6/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
-| [`docs/samples/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.6/docs/samples/README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
+| [`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.7/js/packages/verdict-rules/docs/quickstart.md) | The quickstart — core concepts and a full worked example |
+| [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.7/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
+| [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.7/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
+| [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.7/docs/maintenance/README.md) | Changing this package itself |
+| [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.7/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
+| [`docs/samples/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.7/docs/samples/README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |

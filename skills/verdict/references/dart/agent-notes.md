@@ -7,10 +7,11 @@ specific to the Dart SDK, and to writing Dart that uses it.
 
 ## Install and import
 
-```yaml
-dependencies:
-  verdict_rules: ^0.0.2
+```sh
+dart pub add verdict_rules
 ```
+
+Works unchanged in a Flutter project too -- `flutter pub add verdict_rules` there.
 
 ```dart
 import 'package:verdict_rules/verdict_rules.dart';

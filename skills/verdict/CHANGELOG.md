@@ -6,6 +6,18 @@ Release history for the verdict AI-agent skill. Format follows
 This versions **the guidance**, not any language's API, so it moves on its own
 cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skill-vX.Y.Z`.
 
+## [0.5.9] - 2026-09-17
+
+- **Dart's `references/dart/agent-notes.md` install snippet fixed** --
+  was a caret-pinned `pubspec.yaml` dependency block (`^0.0.2`, already
+  stale by the time this was caught -- Dart had shipped 0.0.3), matching
+  a real staleness risk found live in three places this same day. Now
+  `dart pub add verdict_rules`, matching pub.dev's own real "Installing"
+  tab for this package (checked directly), which resolves to whatever
+  is current automatically -- removing the drift risk instead of just
+  fixing this one instance of it. Also notes it works unchanged in a
+  Flutter project (`flutter pub add verdict_rules` there).
+
 ## [0.5.8] - 2026-09-16
 
 - **C# lands as a shipped language.** `references/csharp/agent-notes.md`
