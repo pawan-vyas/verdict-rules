@@ -9,10 +9,6 @@
 pip install verdict-rules
 ```
 
-The distribution on PyPI is named `verdict-rules` (the name `verdict`
-was already taken by an unrelated package), but the import name is
-plain `verdict`:
-
 ```python
 from verdict import Rule, FunctionRule, AndRule, OrRule, RulesEngine
 ```
