@@ -1,11 +1,11 @@
 ---
 kind: session-handoff
 handoff_schema: 1
-updated_utc: 2026-09-15T08:33:35Z
-updated_local: 2026-09-15T14:03:35+05:30
+updated_utc: 2026-09-17T17:12:58Z
+updated_local: 2026-09-17T22:42:58+05:30
 branch: main
-state_at_commit: 7d068aad3d5af884c0a26a8f7a51529d698db7dc
-state_at_commit_short: 7d068aa
+state_at_commit: def163d294859c2a4fdedd384f3d0a73ef45cc6a
+state_at_commit_short: def163d
 # Freshness: run `git log --oneline "$(git log -1 --format=%H -- HANDOFF.md)"..HEAD`. Empty (+ clean
 # tree) = current. Non-empty = stale — reconcile per §0.1 before trusting §2–§3. (Comparing against
 # state_at_commit directly always shows the handoff commit itself as "drift" — see §0.1.)
@@ -24,9 +24,10 @@ state_at_commit_short: 7d068aa
 You (the next agent) are continuing work on **verdict**. Read §1 for what it is, §2 for where we
 are, §3 for what to do next, §4 for known issues, §5 for how to verify.
 
-**`main` is at `7d068aa`, CI green. Four PRs are open** — see §2 and §3. This is not a "nothing in
-flight" state: three language SDKs and a doc-audit branch are mid-review, each independently
-mergeable.
+**`main` is at `def163d`, CI green, all four language SDKs merged.** A multi-PR generics effort
+(GitHub issue #33, `Rule<TContext>`) is in progress across a dedicated plan directory — see §2 and
+§3. Two test-suite-parity PRs are open right now, independently mergeable, each awaiting explicit
+merge approval.
 
 ## 0.1 · Freshness & alignment protocol (read before trusting §2–§3)
 
@@ -63,13 +64,11 @@ surface them.
 `Rule`/`FunctionRule`/`AndRule`/`OrRule`/`RulesEngine`/`RuleResult`/`RunResult` — designed to exist
 in more than one language with identical execution-model guarantees: sequential, never concurrent,
 evaluation so short-circuiting is a real contract rather than an optimization, and vacuous-truth
-polarity decided explicitly per composite shape. **Python is the only language merged to `main`**
-(PyPI `verdict-rules` at `0.2.3`, under `python/` — a workspace root; the package itself is in
-`python/packages/verdict-rules/`). **JS/TS, C#, and Dart each exist complete on their own open PR**
-(§2) — not yet on `main` — each with its own top-level directory (`js/`, `csharp/`, `dart/`), its
-own `AGENTS.md`, and its own `docs/maintenance/releases/<language>.md` documenting that registry's
-real first-publish mechanics. Cross-language docs are in `docs/`, the AI-agent skill in
-`skills/verdict/` (its own release cadence, currently `0.5.0` on `main`; vendored into other
+polarity decided explicitly per composite shape. **All four language SDKs are merged to `main`**:
+Python (PyPI `verdict-rules`, under `python/`), JS/TS (npm `verdict-rules`, under `js/`), C# (NuGet
+`VerdictRules`, under `csharp/`), and Dart (pub.dev `verdict_rules`, under `dart/`) — each with its
+own top-level directory, its own `AGENTS.md`, and its own `docs/maintenance/releases/<language>.md`.
+Cross-language docs are in `docs/`, the AI-agent skill in `skills/verdict/` (vendored into other
 projects by `scripts/install.sh`), the published site in `site/`, and agent working material in
 `.agents/`. Design source of truth: [`docs/architecture/`](docs/architecture/README.md).
 
@@ -81,119 +80,123 @@ follow either. Nothing a session needs lives outside the boundary.
 
 ## 2 · Where we are (this session's work)
 
-Starting point was `fcfb637` (the previous handoff). Everything since is the polyglot SDK buildout
-this handoff was written to capture — far more than fits as a commit list, so grouped by theme
-instead:
+The active effort is resolving [GitHub issue #33](https://github.com/pawan-vyas/verdict-rules/issues/33)
+— adding `Rule<TContext>` generics to every language while keeping the plain-dict context first-class
+permanently (not an "escape hatch"). This turned into a large, deliberately sequenced, multi-PR
+program. The full plan lives at
+[`.agents/plans/verdict-generics-v0.3.0/README.md`](.agents/plans/verdict-generics-v0.3.0/README.md)
+(master plan) with one file per language (`csharp.md`, `typescript.md`, `dart.md`) plus
+`shared-docs.md` for the cross-language sweep — **read the master plan before touching anything in
+this effort**, it has the full design rationale (why generics are scoped to context only, never
+`RuleResult`; C#'s arity-based `IRule`/`IRule<TContext>` coexistence; TypeScript's deliberate lack of
+a default type parameter; Dart's `implements Rule<Map<String, Object?>>` migration).
 
-- **Three language SDKs built out complete, each on its own open PR:**
-  - **JS/TS** — [PR #3](https://github.com/pawan-vyas/verdict-rules/pull/3), branch `plan/js-sdk`.
-    Full package under `js/packages/verdict-rules/` (source, tests, README, CHANGELOG, `docs/
-    quickstart.md`), `js/AGENTS.md`. npm Trusted Publishing bootstrapped by hand: a throwaway
-    `0.0.0` placeholder published manually (npm has no PyPI-style pending-publisher — see
-    `docs/maintenance/releases/js.md`), account 2FA enabled, Trusted Publisher configured against
-    `release-js.yml`. `0.0.1` (the real first version) will publish from CI once this PR merges and
-    the tag lands. The minified CDN/global build was dropped before that happens — Socket.dev
-    flagged it, and the transfer-size saving doesn't justify the ding for a library this size (see
-    `js/AGENTS.md`'s "Distribution shape is effectively permanent").
-  - **C#** — [PR #5](https://github.com/pawan-vyas/verdict-rules/pull/5), branch
-    `plan/csharp-sdk`. Full package under `csharp/src/VerdictRules/`, `csharp/AGENTS.md`. One
-    explicitly recorded open question not yet resolved: how far back `TargetFrameworks` should
-    reach (`netstandard2.0` for .NET Framework reach) — decide before `0.0.1` actually publishes to
-    NuGet, not before this PR merges.
-  - **Dart** — [PR #7](https://github.com/pawan-vyas/verdict-rules/pull/7), branch
-    `plan/dart-sdk`. Full package under `dart/packages/verdict_rules/`, `dart/AGENTS.md`. Verified
-    against `pana` (pub.dev's own analyzer, run locally — no publish needed): `150/160` pub points,
-    the one gap being a false negative of testing against this unmerged branch (`pana` clones the
-    `repository:` field at `main`, where `dart/` doesn't exist yet — resolves on merge).
-- **Python `0.2.3` cut and released** — a docs-only patch (package identical to `0.2.2`), confirmed
-  live on PyPI.
-- **Three new doc-authoring templates**, joining `package-readmes.md`:
-  `docs/maintenance/doc-authoring/language-agents.md` (every language's own `AGENTS.md`),
-  `skill-agent-notes.md` (`skills/verdict/references/<language>/agent-notes.md`),
-  `release-procedures.md` (`docs/maintenance/releases/<language>.md`) — each grounded in real
-  convergence across the languages that already existed, not invented from scratch.
-- **Two full doc audits**, resolved via interactive review (recommended fix presented, user
-  decided): bare-backtick doc references real-linked across all four `AGENTS.md` files; AGENTS.md
-  title suffix and section order standardized to the template (`# AGENTS.md — <Language> SDK`
-  everywhere, `csharp`/`dart`'s section order corrected to match); JS's initial CHANGELOG entry
-  rewritten to drop self-narration ("claiming the name", "arrives before 0.1.0") matching Python's
-  factual voice; `"only Python ships today"` dropped entirely (not updated) from `plugin.json`,
-  `marketplace.json`, `CONTRIBUTING.md`, and the root `README.md` — the Quickstart section and the
-  new Status table (below) are the actual source of truth now, so the sentence never needs editing
-  again as a language ships.
-- **Root `README.md` restructured**: the top-of-file badge line became a `## Status` section at the
-  end — one row per language plus a standing last row for the AI-agent skill, live-queried badges
-  throughout (PyPI/npm version, GitHub Actions tests, a GitHub-tag-filtered skill version, Socket.dev
-  linked rather than embedded since its badge image sits behind a Cloudflare check that blocks
-  GitHub's own image proxy). `## Where to go next` gained JS/TS's own quickstart rows, mirroring
-  Python's.
-- **This handoff refresh** — the previous one was 47 commits stale.
+**Confirmed sequencing for the whole effort** (each step gated on explicit user sign-off before its
+PR merges — never auto-merge anything in this program):
 
-Currently open, independently mergeable: **PR #3** (JS/TS), **PR #5** (C#), **PR #7** (Dart), and
-**[PR #50](https://github.com/pawan-vyas/verdict-rules/pull/50)** (`docs/audit-fixes-round2` — the
-doc-audit fixes above that touch shared/root files, kept off the language branches on purpose to
-avoid conflicts between them).
+1. **Test-suite parity, one PR per language** — drop each non-Python language's existing test file
+   entirely and recreate it as a strict, file-for-file, test-for-test 1:1 port of Python's own
+   `test_rule.py`/`test_engine.py`, plus a separate, clearly-labeled idiom file for that language's
+   own non-portable coverage. Baseline is 4 × 40 (Python's `test_rule.py` + `test_engine.py` function
+   count) plus each language's own idiom-test count. Status:
+   - **C# — done, merged** ([PR #88](https://github.com/pawan-vyas/verdict-rules/pull/88)).
+     `csharp/tests/VerdictRules.Tests/RuleTests.cs` + `EngineTests.cs` (the 1:1 mirror) +
+     `CSharpIdiomTests.cs` (6 idiom tests: `CancellationToken` propagation, structural typing for
+     delegates, an explicit `IRule` implementation). 48 tests total.
+   - **JS/TS — open, CI green, awaiting merge approval**
+     ([PR #89](https://github.com/pawan-vyas/verdict-rules/pull/89), branch
+     `js/test-parity-1to1-python-port`). `test/rule.test.js` + `test/engine.test.js` (the mirror) +
+     `test/js-idioms.test.js` (2 idiom tests: structural typing on a bare object literal,
+     `UnknownLookupError`'s own field shape). 46 tests total (44 engine + 2 pre-existing CDN-doc
+     tests, untouched).
+   - **Dart — open, CI green, awaiting merge approval**
+     ([PR #90](https://github.com/pawan-vyas/verdict-rules/pull/90), branch
+     `dart/test-parity-1to1-python-port`). `test/rule_test.dart` + `test/engine_test.dart` (the
+     mirror) + `test/dart_idioms_test.dart` (2 idiom tests: structural typing for function types via
+     a tear-off, an explicit `Rule` implementation on a plain class). 44 tests total. Picked up two
+     gaps the old suite never covered as a byproduct of the port: duplicate-rule-name resolution,
+     predicate-exception propagation through all four call sites.
+   - Each language's own `docs/testing/<language>.md` was rewritten to match (test counts, a new
+     mermaid diagram showing the three-file layout with the idiom file styled purple, the contract
+     table pointing at new file/test names) and validated with the mermaid skill's validator.
+2. **`graduation_verdict` fixture port for JS/C#/Dart** (currently missing for all three — only
+   Python has it, under `python/examples/graduation_verdict/`) — **three separate per-language PRs**,
+   confirmed explicitly this session rather than bundled: it's additive fixture work, not the
+   cross-language source change that forces step 4 into one PR. Not started yet.
+3. **The new cross-language "production-grade" generics-showcase fixture** — design deliberately
+   deferred. Direction hints only: marketplace/onboarding-flow-inspired but fully generalized (never
+   naming a real consuming project or product), showcasing the typed+dict hybrid, `ProjectingRule`,
+   and both engine forms. Written first in Python, `fixtures/<name>/README.md`. **Resolved only after
+   step 4 lands and its own unit testing proves the design out** — this is the one open point in the
+   whole program, confirmed explicitly this session.
+4. **The core `Rule<TContext>` migration — a single PR spanning all four languages.** Confirmed
+   explicitly this session (previously each language's plan implied its own PR for this step too):
+   core generics implementation, comprehensive unit tests (including edge cases and per-language
+   idiom gotchas) for all four languages, each language's own docs/samples/quickstart/changelog/
+   skill-agent-notes sweep, **and** the shared cross-language docs sweep (root `README.md`,
+   `docs/architecture/`, `docs/testing/README.md`, `docs/extending/` shared READMEs,
+   `docs/maintenance/`, the skill's shared content plus a `plugin.json` version bump) all land and
+   merge together in one PR — confirmed to fold in rather than stay a separate trailing PR, so
+   nothing on `main` describes a stale non-generic reality even briefly. Work through this step
+   without stopping for interim check-ins once it starts; only the final merge itself needs sign-off.
+   Sample/doc content should showcase `Rule<TContext>` where a scenario is genuinely single-context,
+   and keep the plain-dict form where a scenario is genuinely heterogeneous (a registry-style,
+   runtime-string-keyed catalog) — without turning every doc into an exhaustive both-forms-always
+   demo; match doc weight to which form that example actually needs. **Not started yet** — steps 1–2
+   come first.
+
+Each of steps 1–2 is its own small, focused, independently-approved PR. Step 4 is deliberately the
+one place this program abandons the "one PR per language" pattern, because it changes source code
+that must land coherently across all four languages and their shared docs at once — a partial merge
+would leave `main` in a state no single language's docs accurately describe.
 
 ## 3 · What to do next (prioritized)
 
-1. **Merge PR #50 first** — small, green, touches only shared/root files
-   (`plugin.json`/`marketplace.json`/`CONTRIBUTING.md`/`README.md`/the doc-authoring templates).
-   After merging, rebase PRs #3/#5/#7 onto the new `main` (each has rebased cleanly every time so
-   far — no real conflicts across any of them).
-2. **Review and merge PR #3 (JS/TS)** when ready, then cut `js-v0.0.1`: bump
-   `js/packages/verdict-rules/package.json`'s version (already `0.0.1`), add the CHANGELOG entry
-   (already written), merge, tag. `release-js.yml` publishes over the already-configured Trusted
-   Publisher — no manual `npm publish` needed this time.
-3. **Review and merge PR #5 (C#) and PR #7 (Dart) independently**, whenever each is ready — read
-   that language's own `docs/maintenance/releases/<language>.md` before cutting its first release;
-   each registry's first-publish mechanics are genuinely different (NuGet can bootstrap over
-   Trusted Publishing directly; pub.dev cannot, same manual-first-publish trap npm had). C#'s target
-   -framework question (§2) needs an explicit decision before that first publish, not before merge.
-4. **Once a language actually ships its first real version**: add its keyword to `plugin.json`
-   (deferred on purpose — edit only after rebasing post-release, to avoid conflicts with an
-   in-flight branch) and confirm its `README.md` Status-table row's badges resolve for real (JS/TS's
-   row already exists, currently showing the `0.0.0` placeholder state since it's a live-queried
-   badge — it self-updates once `0.0.1` actually publishes, nothing to edit by hand).
-5. **`skills/verdict-workspace/evals/js/*.json`** (4 cases) exist, validate cleanly through
-   `scripts/build_evals.py`, and are meant to run via the **skill-creator** plugin (installed,
-   user-scope) against a local build of `verdict-rules` — not the generic `claude plugin eval` CLI
-   command, whose native `case.yaml`/`graders/*.md` format this repo's evals don't use. Check
-   whether they were actually run in this same session before assuming they still need it.
+1. **Get explicit sign-off on PR #89 (JS) and PR #90 (Dart), then merge both.** Both are green,
+   reviewed against this same session's own work. Confirm no release is cut on merge (already proven
+   for C# by watching `release-csharp.yml` skip every downstream job when the version tag already
+   exists — the same `detect`-gate pattern is identical across `release-js.yml`/`release-dart.yml`,
+   but JS's npm Trusted Publishing has its own nuances worth a real look before assuming).
+2. **Start step 2 — `graduation_verdict` fixture ports**, one PR each for JS, C#, and Dart, no
+   particular order between them. Use `python/examples/graduation_verdict/` as the reference to port
+   test-for-test, the same drop-and-recreate discipline as step 1 rather than inventing a new
+   structure per language.
+3. **Do not start step 4 (the single generics PR) until steps 1–2 are fully merged.** When it starts,
+   read `.agents/plans/verdict-generics-v0.3.0/README.md` in full first — it has the per-language
+   generics mechanics already researched and confirmed (C#'s arity-based interface coexistence
+   verified against real `IComparer`/`IComparer<T>` .NET source; TypeScript's no-default-type-param
+   decision; Dart's breaking-migration scope). Work through implementation, tests, and docs for all
+   four languages plus the shared sweep before asking for anything beyond the final merge approval.
+4. **Step 3 (the new cross-language fixture) stays unstarted until step 4 has landed and its own
+   tests have proven the design** — don't jump ahead to it opportunistically even if step 4 leaves
+   idle time in some language.
 
 ## 4 · Known issues / blockers
 
-- **Several links are transiently broken on `main` right now, all self-healing on their own PR's
-  merge** — confirmed via `.agents/scratch/check_links.py`, not a bug to chase down: `docs/
-  maintenance/releases/csharp.md` and `dart.md` each link to that SDK's own `CHANGELOG.md`, which
-  doesn't exist on `main` until `plan/csharp-sdk`/`plan/dart-sdk` merge; `README.md`'s new `js/`
-  rows under "Where to go next" likewise, until `plan/js-sdk` merges.
-- **Socket.dev's badge image cannot be embedded in `README.md`** — confirmed directly:
-  `badge.socket.dev` sits behind a Cloudflare bot check that returns the same 403 to GitHub's image
-  proxy as to a plain `curl`, regardless of pinned-vs-`latest` version. Every Supply Chain cell in
-  the Status table links to the live scorecard instead of an `<img>`.
-- **C#'s target-framework question is explicitly unresolved** (§2) — do not resolve it unprompted;
-  it's recorded with its full reasoning in `csharp/AGENTS.md`.
 - No open defect in any shipped package itself.
+- The `graduation_verdict` fixture exists only for Python — JS/C#/Dart's own testing docs each note
+  this gap explicitly (see `docs/testing/<language>.md`'s "Current state" section); step 2 above
+  closes it.
+- No CI pipeline gate exists yet for any language's test suite running on every PR touching that
+  language's path — see `docs/future_plan.md` if this is ever picked up. (This is distinct from the
+  *release* workflows, which do gate on the version-vs-tag check and are already verified working.)
 
 ## 5 · Verify (gate / test commands)
 
-Each language's SDK lives only on its own open PR's branch until merged — `main` only has `python/`
-today.
-
 ```bash
-# Python (on main)
+# Python
 cd python && uv sync && uv run pytest
 
-# JS/TS (checkout plan/js-sdk first)
-cd js && npm run typecheck && npm run build && npm test
+# JS/TS -- tests import from a built dist/, so build first
+cd js/packages/verdict-rules && npm install && npm run build && npm test
 
-# C# (checkout plan/csharp-sdk first) -- no solution file, name the project explicitly
+# C# -- no solution file, name the project explicitly
 cd csharp
 dotnet build src/VerdictRules/VerdictRules.csproj -warnaserror
 dotnet test tests/VerdictRules.Tests/VerdictRules.Tests.csproj
 
-# Dart (checkout plan/dart-sdk first)
-cd dart/packages/verdict_rules && dart analyze && dart test
+# Dart
+cd dart/packages/verdict_rules && dart pub get && dart analyze && dart test
 ```
 
 For a doc change, additionally validate every mermaid diagram touched:
@@ -222,10 +225,11 @@ bash scripts/build.sh && ls dist/   # verdict-plugin.zip  verdict-tools.zip  ver
   **`uv`**. Zero runtime dependencies.
 - **Node** 18+ for JS/TS (`npm`, workspace-rooted at `js/`); also needed for the mermaid diagram
   validator regardless of language.
-- **.NET SDK** (targets `net10.0`/`netstandard2.1`) for C#.
+- **.NET SDK** (targets `net10.0`/`netstandard2.1`) for C#. Test suite is **`xunit`** +
+  `Microsoft.NET.Test.Sdk` + `xunit.runner.visualstudio` only — no FluentAssertions/Moq, confirmed
+  and kept minimal/official on purpose.
 - **Dart SDK** ≥3.0.0 for Dart. **`pana`** (pub.dev's own package analyzer —
-  `dart pub global activate pana`) reproduces pub.dev's real scoring locally, no publish required;
-  used this session to find and fix a real formatting deficit before it ever shipped.
+  `dart pub global activate pana`) reproduces pub.dev's real scoring locally, no publish required.
 - **`jq`** only by CI workflows (preinstalled on `ubuntu-latest`).
 - **Vendored skills**, mirrored to both `.agents/skills/` and `.claude/skills/`:
   `mermaid-diagrams` (diagram standards + validator) and `context-fence` (the operations manual
@@ -233,29 +237,28 @@ bash scripts/build.sh && ls dist/   # verdict-plugin.zip  verdict-tools.zip  ver
 - `skills/verdict/` is the *shipped* skill; `skills/verdict-workspace/` is its eval working
   material — the per-target eval JSON files under `evals/<target>/` are tracked, the assembled
   `evals/evals.json` is gitignored. Evals run via the **skill-creator** plugin, not `claude plugin
-  eval` (see §3, item 5).
+  eval`.
 
 ## 6 · Key docs
 
 - [`AGENTS.md`](AGENTS.md) — standing rules for every agent (`CLAUDE.md` is just `@AGENTS.md`);
-  each language's own `AGENTS.md` (`python/AGENTS.md` on `main`; `js/AGENTS.md`, `csharp/AGENTS.md`,
-  `dart/AGENTS.md` on their own open PRs) adds that language's own layer.
+  each language's own `AGENTS.md` adds that language's own layer.
+- [`.agents/plans/verdict-generics-v0.3.0/README.md`](.agents/plans/verdict-generics-v0.3.0/README.md) —
+  the master plan for the active generics effort (§2–§3 above); read this before touching that
+  program at all.
 - [`docs/architecture/`](docs/architecture/README.md) — design source of truth: why evaluation is
   sequential, why `Rule` is structural, why `RuleResult.data` stays opaque.
+- [`docs/testing/`](docs/testing/README.md) — the testing checklist, shared across every language;
+  each language's own `docs/testing/<language>.md` names which test proves which contract.
 - [`docs/maintenance/doc-authoring/`](docs/maintenance/doc-authoring/README.md) — every doc-category
-  template this repo enforces by review: `package-readmes.md`, `language-agents.md`,
-  `skill-agent-notes.md`, `release-procedures.md`, and more.
+  template this repo enforces by review.
 - [`docs/maintenance/releases/`](docs/maintenance/releases/README.md) — the shared release pipeline
-  plus each registry's own real mechanics (`python.md`, and — once merged — `js.md`, `csharp.md`,
-  `dart.md`).
+  plus each registry's own real mechanics.
 - [`docs/extending/`](docs/extending/README.md) — the seven extension scenarios;
   `domain-adapter-module/`'s one-adapter-module boundary is the pattern to steer consumers toward.
-- [`docs/testing/`](docs/testing/README.md) — the testing checklist, shared across every language.
 - [`docs/future_plan.md`](docs/future_plan.md) — exploratory candidates, explicitly not a roadmap.
 - [`python/examples/graduation_verdict/`](python/examples/graduation_verdict/) — the worked example,
-  including the oracle/differential chaos suite worth re-deriving in any future language.
+  including the oracle/differential chaos suite worth re-deriving in any future language; the
+  reference for step 2 above.
 - [`.agents/README.md`](.agents/README.md) — the agent working-material layout, and
-  [`.agents/memory/`](.agents/memory/) — durable facts worth not re-deriving, including
-  [`adding-a-variant-is-a-new-file.md`](.agents/memory/adding-a-variant-is-a-new-file.md) (why
-  PR #50 stays off the language branches) and
-  [`research-the-ecosystem-before-deciding-its-idiom.md`](.agents/memory/research-the-ecosystem-before-deciding-its-idiom.md).
+  [`.agents/memory/`](.agents/memory/) — durable facts worth not re-deriving.
