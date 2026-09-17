@@ -4,7 +4,8 @@
   "description": "Workspace root for this repository's JavaScript/TypeScript distributions. Not published — see packages/ for what ships.",
   "license": "MIT",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "examples/*"
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
