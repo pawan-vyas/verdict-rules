@@ -63,6 +63,13 @@ dart/packages/*/.dart_tool/
 dart/packages/*/.packages
 dart/packages/*/pubspec.lock
 dart/packages/*/build/
+# Same leak, same fix, for dart/examples/ -- a standalone example package
+# (its own pubspec.yaml, a path: dependency on verdict_rules) rather than a
+# pub workspace member, for the same reason noted above.
+dart/examples/*/.dart_tool/
+dart/examples/*/.packages
+dart/examples/*/pubspec.lock
+dart/examples/*/build/
 # skills/verdict-workspace/evals/dart/files/ ships a real pubspec.yaml as an
 # eval fixture -- committing its pubspec.lock is deliberate (the eval itself
 # reads it), but a fourth instance of the same leak above: something in this

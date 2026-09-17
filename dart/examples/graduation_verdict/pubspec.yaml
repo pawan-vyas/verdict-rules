@@ -1,0 +1,17 @@
+name: graduation_verdict
+description: >-
+  A college graduation-eligibility check, built as real, tested code -- the
+  flagship example exercising the full breadth of verdict_rules at once.
+  Not published.
+publish_to: "none"
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  verdict_rules:
+    path: ../../packages/verdict_rules
+
+dev_dependencies:
+  test: ^1.24.0
+  lints: ^5.0.0
