@@ -35,7 +35,7 @@ for the rest of what this shape gets wrong.
 ```csharp
 using VerdictRules;
 
-static Task<RuleResult> ContainsBannedTerms(IReadOnlyDictionary<string, object?> context)
+static Task<RuleResult> ContainsBannedTerms(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
 {
     var text = ((string)context["text"]!).ToLowerInvariant();
     var bannedTerms = (IReadOnlyList<string>)context["banned_terms"]!;
@@ -43,13 +43,13 @@ static Task<RuleResult> ContainsBannedTerms(IReadOnlyDictionary<string, object?>
     return Task.FromResult(new RuleResult("contains_banned_terms", !hit));
 }
 
-static Task<RuleResult> FlaggedBySpamScore(IReadOnlyDictionary<string, object?> context) =>
+static Task<RuleResult> FlaggedBySpamScore(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
     Task.FromResult(new RuleResult("flagged_by_spam_score", (double)context["spam_score"]! < (double)context["spam_threshold"]!));
 
-static Task<RuleResult> MeetsLengthMinimum(IReadOnlyDictionary<string, object?> context) =>
+static Task<RuleResult> MeetsLengthMinimum(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
     Task.FromResult(new RuleResult("meets_length_minimum", ((string)context["text"]!).Length >= (double)context["min_length"]!));
 
-static Task<RuleResult> AuthorIsEstablished(IReadOnlyDictionary<string, object?> context) =>
+static Task<RuleResult> AuthorIsEstablished(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
     Task.FromResult(new RuleResult("author_is_established", (double)context["author_post_count"]! >= 10));
 
 var engine = new RulesEngine(new IRule[]

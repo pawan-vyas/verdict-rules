@@ -10,7 +10,7 @@ using VerdictRules;
 
 static FunctionRule MakeRule(RuleConfig config)
 {
-    Task<RuleResult> Predicate(IReadOnlyDictionary<string, object?> context)
+    Task<RuleResult> Predicate(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
     {
         context.TryGetValue(config.Field, out var actual);
         var passed = Equals(actual, config.Expected);

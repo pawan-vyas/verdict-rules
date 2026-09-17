@@ -11,10 +11,10 @@
 ```text
 $ cd csharp/
 $ dotnet test tests/VerdictRules.Tests/VerdictRules.Tests.csproj
-Passed!  - Failed: 0, Passed: 26, Skipped: 0, Total: 26, Duration: 14 ms
+Passed!  - Failed: 0, Passed: 29, Skipped: 0, Total: 29, Duration: 17 ms
 ```
 
-26 tests, one file (`EngineTests.cs`, despite the name — it covers
+29 tests, one file (`EngineTests.cs`, despite the name — it covers
 `FunctionRule`, `AndRule`, `OrRule`, and `RulesEngine` together, one
 `[Fact]`/`[Theory]`-decorated class per type), sub-millisecond-per-test
 runtime.
@@ -69,6 +69,7 @@ graph LR
 | A custom `IRule` implementation composes like any other | `CustomRuleTests.AnExplicitImplementationComposesLikeAnyOther` |
 | Introspection (`RuleNames`/`GroupNames`) | `IntrospectionTests.ReportsExactlyWhatTheLookupsAccept`, `AnEmptyEngineReportsNothing` |
 | Empty composites still fold to their identity, even with an empty group | `EmptinessIsNotAbsenceTests.ButEmptyCompositesStillFoldToTheirIdentity` |
+| Cancellation is checked between rules, not just once at entry | `AndRuleTests.CancellationStopsBeforeTheNextSubRuleEvenMidRun`, `OrRuleTests.CancellationStopsBeforeTheNextSubRuleEvenMidRun`, `RunModeTests.RunAllStopsBeforeTheNextRuleEvenMidRun` |
 
 ## Running tests
 

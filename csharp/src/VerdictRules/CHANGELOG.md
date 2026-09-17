@@ -29,6 +29,12 @@ Initial publish.
   than throwing when nothing matches — the primitives the throwing forms are
   built on. `null` means absent, never failed.
 - `RulesEngine.RuleNames` / `GroupNames` for enumerating an engine.
+- `CancellationToken cancellationToken = default` on every async method
+  (`IRule.EvaluateAsync`, `RulePredicate`, and all five `RulesEngine` run
+  methods), checked between sub-rules by every composite and by the engine's
+  own run methods, so a cancellation raised mid-run stops before the next
+  rule starts rather than only whenever the currently-running rule happens
+  to observe it internally.
 - `net10.0` and `netstandard2.1`, trimmable, AOT-compatible, zero runtime
   dependencies.
 - `[DebuggerDisplay]` and a debugger type proxy so a nested result tree is

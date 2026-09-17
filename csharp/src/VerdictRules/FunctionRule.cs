@@ -26,7 +26,8 @@ public sealed class FunctionRule(string name, RulePredicate predicate, string? g
     /// Runs the wrapped predicate and returns whatever it returns, unchanged.
     /// </summary>
     /// <param name="context">Forwarded to the wrapped predicate as-is.</param>
+    /// <param name="cancellationToken">Forwarded to the wrapped predicate as-is.</param>
     /// <returns>Whatever the wrapped predicate returns, unchanged.</returns>
-    public Task<RuleResult> EvaluateAsync(IReadOnlyDictionary<string, object?> context) =>
-        _predicate(context);
+    public Task<RuleResult> EvaluateAsync(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
+        _predicate(context, cancellationToken);
 }

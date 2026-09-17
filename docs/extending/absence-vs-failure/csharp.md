@@ -8,7 +8,7 @@
 ```csharp
 using VerdictRules;
 
-static Task<RuleResult> IsBetaTester(IReadOnlyDictionary<string, object?> context) =>
+static Task<RuleResult> IsBetaTester(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
     Task.FromResult(new RuleResult("is_beta_tester", context.TryGetValue("beta_tester", out var v) && v is true));
 
 var engine = new RulesEngine([new FunctionRule("is_beta_tester", IsBetaTester, "beta_checks")]);

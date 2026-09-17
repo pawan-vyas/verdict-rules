@@ -53,16 +53,16 @@ interface IPromoCodeService
     Task<bool> Validate(string? code);
 }
 
-static Task<RuleResult> OrderTotalOverThreshold(IReadOnlyDictionary<string, object?> context)
+static Task<RuleResult> OrderTotalOverThreshold(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
 {
     var passed = (double)context["orderTotal"]! >= (double)context["freeShippingThreshold"]!;
     return Task.FromResult(new RuleResult("order_total_over_threshold", passed));
 }
 
-static Task<RuleResult> HasPremiumMembership(IReadOnlyDictionary<string, object?> context) =>
+static Task<RuleResult> HasPremiumMembership(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
     Task.FromResult(new RuleResult("has_premium_membership", (bool)context["isPremiumMember"]!));
 
-static async Task<RuleResult> HasValidPromoCode(IReadOnlyDictionary<string, object?> context)
+static async Task<RuleResult> HasValidPromoCode(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
 {
     // The expensive path: only reached if both cheaper checks above failed.
     var service = (IPromoCodeService)context["promoCodeService"]!;

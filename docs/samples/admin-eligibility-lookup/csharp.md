@@ -70,7 +70,7 @@ static class EligibilityChecks
     internal static (IRule Rule, bool IsEmpty) BuildCheck(string name, IReadOnlyList<Condition> conditions)
     {
         var conditionRules = conditions
-            .Select((c, i) => (IRule)new FunctionRule($"{name}[{i}]", ctx => ConditionPredicate(c.Field, c.Expected, ctx)))
+            .Select((c, i) => (IRule)new FunctionRule($"{name}[{i}]", (ctx, cancellationToken) => ConditionPredicate(c.Field, c.Expected, ctx)))
             .ToArray();
         return (new AndRule(name, conditionRules), conditions.Count == 0);
     }

@@ -21,7 +21,7 @@ using VerdictRules;
 using VerdictRules;
 
 static FunctionRule AtLeast(string name, string field, double floor) =>
-    new(name, ctx =>
+    new(name, (ctx, cancellationToken) =>
     {
         var value = Convert.ToDouble(ctx[field]);
         return Task.FromResult(
@@ -52,17 +52,21 @@ the predicate signature is a rule via `FunctionRule`, with nothing declared and
 no type to name. A method group works directly:
 
 ```csharp
-static Task<RuleResult> HasQuorum(IReadOnlyDictionary<string, object?> ctx) =>
+static Task<RuleResult> HasQuorum(IReadOnlyDictionary<string, object?> ctx, CancellationToken cancellationToken = default) =>
     Task.FromResult(new RuleResult("quorum", ctx.Count >= 3));
 
 var rule = new FunctionRule("quorum", HasQuorum);
 ```
 
 `FunctionRule`'s predicate parameter is `RulePredicate`, a named delegate for
-`Func<IReadOnlyDictionary<string, object?>, Task<RuleResult>>` — spelled out
-once so a field, a stored variable, or a helper that wraps a predicate never
-has to repeat that signature. A lambda or method group converts to it exactly
-as shown above; nothing above changes. The one case worth knowing: an
+`Func<IReadOnlyDictionary<string, object?>, CancellationToken, Task<RuleResult>>`
+— spelled out once so a field, a stored variable, or a helper that wraps a
+predicate never has to repeat that signature. A lambda or method group
+converts to it exactly as shown above, as long as it carries both parameters
+(the trailing `CancellationToken` needs to be there even though the delegate
+gives it a default — matching arity is required for the conversion itself,
+unlike calling an existing delegate value, which can omit a trailing optional
+parameter as normal). The one case worth knowing: an
 already-`Func<...>`-typed value does not implicitly convert to `RulePredicate`
 even with an identical signature, because C# delegate types are nominal once a
 value has one — wrap it explicitly (`new RulePredicate(existing)`) if that

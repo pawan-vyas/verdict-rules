@@ -36,6 +36,11 @@ public interface IRule
 
     /// <summary>Evaluates this rule against <paramref name="context"/>.</summary>
     /// <param name="context">The facts this rule's predicate reads from.</param>
+    /// <param name="cancellationToken">
+    /// Observed between sub-rules by every composite and by
+    /// <see cref="RulesEngine"/>'s own run methods; whether a leaf rule's own
+    /// predicate observes it depends on that predicate's implementation.
+    /// </param>
     /// <returns>The outcome, attributed back to this rule by <see cref="Name"/>.</returns>
-    Task<RuleResult> EvaluateAsync(IReadOnlyDictionary<string, object?> context);
+    Task<RuleResult> EvaluateAsync(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default);
 }

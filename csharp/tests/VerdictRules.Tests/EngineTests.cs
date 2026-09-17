@@ -13,7 +13,7 @@ internal static class Rules
     /// evaluated concurrently would return the same boolean and fail only here.
     /// </summary>
     public static FunctionRule Counting(string name, bool passes, List<string> log, string? group = null) =>
-        new(name, ctx =>
+        new(name, (ctx, cancellationToken) =>
         {
             log.Add(name);
             return Task.FromResult(new RuleResult(name, passes));
@@ -26,7 +26,7 @@ internal static class Rules
 public class FunctionRuleTests
 {
     /// <summary>A plain static method — no lambda, no type declared.</summary>
-    private static Task<RuleResult> HasQuorum(IReadOnlyDictionary<string, object?> ctx) =>
+    private static Task<RuleResult> HasQuorum(IReadOnlyDictionary<string, object?> ctx, CancellationToken cancellationToken = default) =>
         Task.FromResult(new RuleResult("quorum", ctx.Count >= 3));
 
     [Fact]
@@ -47,7 +47,7 @@ public class FunctionRuleTests
     [Fact]
     public async Task ReturnsWhateverThePredicateReturnsUnchanged()
     {
-        var rule = new FunctionRule("r", _ =>
+        var rule = new FunctionRule("r", (_, _) =>
             Task.FromResult(new RuleResult("r", true, "why", new { K = 1 })));
 
         var result = await rule.EvaluateAsync(Rules.Empty);
@@ -113,6 +113,32 @@ public class AndRuleTests
         var result = await new AndRule("none", Array.Empty<IRule>()).EvaluateAsync(Rules.Empty);
         Assert.True(result.Passed);
     }
+
+    [Fact]
+    public async Task CancellationStopsBeforeTheNextSubRuleEvenMidRun()
+    {
+        // The token is cancelled by "b" itself, mid-run -- proving the check
+        // happens between every iteration, not just once before the loop
+        // starts. A naive "check once at entry" implementation would still
+        // let "c" run here.
+        var log = new List<string>();
+        using var cts = new CancellationTokenSource();
+        var rule = new AndRule("all", new IRule[]
+        {
+            Rules.Counting("a", true, log),
+            new FunctionRule("b", (_, _) =>
+            {
+                cts.Cancel();
+                log.Add("b");
+                return Task.FromResult(new RuleResult("b", true));
+            }),
+            Rules.Counting("c", true, log),
+        });
+
+        await Assert.ThrowsAsync<OperationCanceledException>(() => rule.EvaluateAsync(Rules.Empty, cts.Token));
+
+        Assert.Equal(new[] { "a", "b" }, log);
+    }
 }
 
 public class OrRuleTests
@@ -138,6 +164,30 @@ public class OrRuleTests
         var result = await new OrRule("none", Array.Empty<IRule>()).EvaluateAsync(Rules.Empty);
         Assert.False(result.Passed);
     }
+
+    [Fact]
+    public async Task CancellationStopsBeforeTheNextSubRuleEvenMidRun()
+    {
+        // See AndRuleTests's own version of this test for why the token is
+        // cancelled mid-run rather than up front.
+        var log = new List<string>();
+        using var cts = new CancellationTokenSource();
+        var rule = new OrRule("any", new IRule[]
+        {
+            Rules.Counting("a", false, log),
+            new FunctionRule("b", (_, _) =>
+            {
+                cts.Cancel();
+                log.Add("b");
+                return Task.FromResult(new RuleResult("b", false));
+            }),
+            Rules.Counting("c", false, log),
+        });
+
+        await Assert.ThrowsAsync<OperationCanceledException>(() => rule.EvaluateAsync(Rules.Empty, cts.Token));
+
+        Assert.Equal(new[] { "a", "b" }, log);
+    }
 }
 
 public class RunModeTests
@@ -158,6 +208,32 @@ public class RunModeTests
         Assert.False(result.Passed);
         Assert.Equal(3, result.Results.Count);
         Assert.Equal(new[] { "a", "b", "c" }, log);
+    }
+
+    [Fact]
+    public async Task RunAllStopsBeforeTheNextRuleEvenMidRun()
+    {
+        // Never-short-circuits is RunAllAsync's whole point, but cancellation
+        // is deliberately the one thing that still stops it early -- see
+        // AndRuleTests's own version of this test for why the token is
+        // cancelled mid-run rather than up front.
+        var log = new List<string>();
+        using var cts = new CancellationTokenSource();
+        var engine = new RulesEngine(new IRule[]
+        {
+            Rules.Counting("a", true, log),
+            new FunctionRule("b", (_, _) =>
+            {
+                cts.Cancel();
+                log.Add("b");
+                return Task.FromResult(new RuleResult("b", true));
+            }),
+            Rules.Counting("c", true, log),
+        });
+
+        await Assert.ThrowsAsync<OperationCanceledException>(() => engine.RunAllAsync(Rules.Empty, cts.Token));
+
+        Assert.Equal(new[] { "a", "b" }, log);
     }
 
     [Fact]
@@ -392,7 +468,7 @@ public class CustomRuleTests
     {
         public string Name => "custom";
         public string? Group => null;
-        public Task<RuleResult> EvaluateAsync(IReadOnlyDictionary<string, object?> context) =>
+        public Task<RuleResult> EvaluateAsync(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
             Task.FromResult(new RuleResult(Name, true));
     }
 

@@ -43,28 +43,28 @@ classDiagram
         <<Interface>>
         +Name: string
         +Group: string?
-        +EvaluateAsync(context: IReadOnlyDictionary~string, object?~)* Task~RuleResult~
+        +EvaluateAsync(context: IReadOnlyDictionary~string, object?~, cancellationToken: CancellationToken)* Task~RuleResult~
     }
     class FunctionRule {
         -_predicate: RulePredicate
-        +EvaluateAsync(context) Task~RuleResult~
+        +EvaluateAsync(context, cancellationToken) Task~RuleResult~
     }
     class AndRule {
         -_rules: IReadOnlyList~IRule~
-        +EvaluateAsync(context) Task~RuleResult~
+        +EvaluateAsync(context, cancellationToken) Task~RuleResult~
     }
     class OrRule {
         -_rules: IReadOnlyList~IRule~
-        +EvaluateAsync(context) Task~RuleResult~
+        +EvaluateAsync(context, cancellationToken) Task~RuleResult~
     }
     class RulesEngine {
         -_byName: Dictionary~string, IRule~
         -_byGroup: Dictionary~string, List~IRule~~
-        +RunAllAsync(context) Task~RunResult~
-        +RunNamedAsync(name, context) Task~RuleResult~
-        +RunGroupAsync(group, context) Task~RunResult~
-        +TryRunNamedAsync(name, context) Task~RuleResult?~
-        +TryRunGroupAsync(group, context) Task~RunResult?~
+        +RunAllAsync(context, cancellationToken) Task~RunResult~
+        +RunNamedAsync(name, context, cancellationToken) Task~RuleResult~
+        +RunGroupAsync(group, context, cancellationToken) Task~RunResult~
+        +TryRunNamedAsync(name, context, cancellationToken) Task~RuleResult?~
+        +TryRunGroupAsync(group, context, cancellationToken) Task~RunResult?~
         +RuleNames IReadOnlyCollection~string~
         +GroupNames IReadOnlyCollection~string~
     }
@@ -125,10 +125,15 @@ structural typing for a multi-member interface the way Python's
 `Protocol` and TypeScript's structural `interface` do. What it has
 instead is structural typing for *delegates*: any method or lambda
 matching `RulePredicate` (`Func<IReadOnlyDictionary<string, object?>,
-Task<RuleResult>>`) is a rule through `FunctionRule`, with nothing
-declared and no type to name — a method group works directly, as
-`new FunctionRule("quorum", HasQuorum)`. Most rules should reach for
-that rather than declaring a type at all.
+CancellationToken, Task<RuleResult>>`) is a rule through `FunctionRule`,
+with nothing declared and no type to name — a method group works
+directly, as `new FunctionRule("quorum", HasQuorum)`, as long as
+`HasQuorum` itself carries both parameters (a defaulted
+`CancellationToken cancellationToken = default` is enough; method-group
+and lambda conversion to a delegate type require matching arity exactly,
+unlike calling an existing delegate value, which can omit a trailing
+optional parameter as normal). Most rules should reach for that rather
+than declaring a type at all.
 
 ## Testing, concretely
 

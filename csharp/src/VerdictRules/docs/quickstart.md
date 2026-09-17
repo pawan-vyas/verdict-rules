@@ -12,8 +12,8 @@
 ## Core concepts
 
 - **`IRule`** — anything with a `Name`, an optional `Group`, and an
-  `EvaluateAsync(IReadOnlyDictionary<string, object?> context)` method
-  returning `Task<RuleResult>`. A custom rule shape declares
+  `EvaluateAsync(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)`
+  method returning `Task<RuleResult>`. A custom rule shape declares
   `: IRule` explicitly — C# has no free structural typing for a
   multi-member interface the way Python's `Protocol` does.
 - **`FunctionRule`** — wraps a plain delegate as an `IRule`. The common
@@ -46,16 +46,16 @@ decision above ever looked at each one:
 ```csharp
 using VerdictRules;
 
-static Task<RuleResult> InputsValid(IReadOnlyDictionary<string, object?> context) =>
+static Task<RuleResult> InputsValid(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
     Task.FromResult(new RuleResult("inputs_valid", (bool)context["has_required_fields"]!));
 
-static Task<RuleResult> AutoApproved(IReadOnlyDictionary<string, object?> context) =>
+static Task<RuleResult> AutoApproved(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
     Task.FromResult(new RuleResult("auto_approved", (bool)context["auto_approved"]!));
 
-static Task<RuleResult> ReviewerAssigned(IReadOnlyDictionary<string, object?> context) =>
+static Task<RuleResult> ReviewerAssigned(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
     Task.FromResult(new RuleResult("reviewer_assigned", (bool)context["reviewer_assigned"]!));
 
-static Task<RuleResult> ReviewCompleted(IReadOnlyDictionary<string, object?> context) =>
+static Task<RuleResult> ReviewCompleted(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
     Task.FromResult(new RuleResult("review_completed", (bool)context["review_completed"]!));
 
 var taskApproved = new AndRule("task_approved", new IRule[]

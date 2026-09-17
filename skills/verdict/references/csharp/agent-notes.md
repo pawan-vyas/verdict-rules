@@ -29,22 +29,27 @@ the namespace are the same word.
 public interface IRule {                            // nominal -- must `: IRule` explicitly
     string Name { get; }
     string? Group { get; }
-    Task<RuleResult> EvaluateAsync(IReadOnlyDictionary<string, object?> context);
+    Task<RuleResult> EvaluateAsync(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default);
 }
-public delegate Task<RuleResult> RulePredicate(IReadOnlyDictionary<string, object?> context);
+public delegate Task<RuleResult> RulePredicate(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default);
 
 new FunctionRule(name, predicate, group: null)       // wraps a plain async predicate
 new AndRule(name, rules, group: null)                // passes only if every sub-rule passes
 new OrRule(name, rules, group: null)                 // passes as soon as one does
 
 var engine = new RulesEngine(rules);
-await engine.RunAllAsync(context);                   // every rule, never short-circuits
-await engine.RunNamedAsync(name, context);            // one rule; throws KeyNotFoundException if absent
-await engine.RunGroupAsync(group, context);           // one group; throws KeyNotFoundException if absent
-await engine.TryRunNamedAsync(name, context);         // -> RuleResult?
-await engine.TryRunGroupAsync(group, context);        // -> RunResult?
+await engine.RunAllAsync(context, cancellationToken);          // every rule, never short-circuits
+await engine.RunNamedAsync(name, context, cancellationToken);  // one rule; throws KeyNotFoundException if absent
+await engine.RunGroupAsync(group, context, cancellationToken); // one group; throws KeyNotFoundException if absent
+await engine.TryRunNamedAsync(name, context, cancellationToken);  // -> RuleResult?
+await engine.TryRunGroupAsync(group, context, cancellationToken); // -> RunResult?
 engine.RuleNames, engine.GroupNames                   // IReadOnlyCollection<string> of what exists
 ```
+
+`cancellationToken` defaults to `default` everywhere above and is checked
+between rules by every composite and by `RulesEngine`'s own run methods —
+pass a real token when the caller has one (a request-scoped
+`HttpContext.RequestAborted`, for instance); omit it entirely otherwise.
 
 `RuleResult` and `RunResult` are plain immutable classes, not interfaces
 to satisfy — construct them directly:
@@ -61,8 +66,12 @@ to satisfy — construct them directly:
 - **Forgetting `: IRule`.** C# *does* have structural typing — for
   delegates. Any method or lambda matching `RulePredicate` is a rule
   through `FunctionRule`, with nothing declared and no type to name; a
-  method group works directly, as `new FunctionRule("quorum", HasQuorum)`.
-  What C# lacks is structural typing for a *multi-member* interface: an
+  method group works directly, as `new FunctionRule("quorum", HasQuorum)`
+  — as long as `HasQuorum` itself carries both parameters (a defaulted
+  `CancellationToken cancellationToken = default` is enough; method-group
+  and lambda conversion to a delegate type require matching arity
+  exactly, unlike calling an existing delegate value). What C# lacks is
+  structural typing for a *multi-member* interface: an
   object carrying `Name`, `Group` and `EvaluateAsync` is not thereby an
   `IRule`, where Python's `Protocol` and TypeScript's structural
   `interface` would accept it as-is. A rule shape owning its own name
@@ -76,8 +85,8 @@ to satisfy — construct them directly:
   `RulePredicate`.** C# delegate types are nominal once a value has one
   — a raw lambda or method group converts to `RulePredicate` exactly as
   if it were a bare `Func<...>`, but a variable already typed as
-  `Func<IReadOnlyDictionary<string, object?>, Task<RuleResult>>` needs
-  an explicit `new RulePredicate(existingFunc)`.
+  `Func<IReadOnlyDictionary<string, object?>, CancellationToken, Task<RuleResult>>`
+  needs an explicit `new RulePredicate(existingFunc)`.
 - **Catching `KeyNotFoundException` where a `Try*` method should be
   reached for instead.** Unlike JS's dedicated `UnknownLookupError` or
   Python's `KeyError`, C#'s unknown-lookup failure is the same generic

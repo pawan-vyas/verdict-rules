@@ -8,7 +8,7 @@
 ```csharp
 using VerdictRules;
 
-static Task<RuleResult> CartMeetsMinimum(IReadOnlyDictionary<string, object?> context)
+static Task<RuleResult> CartMeetsMinimum(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
 {
     var total = (double)context["cart_total"]!;
     var minimum = (double)context["minimum_for_offer"]!;

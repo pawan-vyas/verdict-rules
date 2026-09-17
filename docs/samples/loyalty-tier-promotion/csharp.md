@@ -33,25 +33,25 @@ rest of what this shape gets wrong.
 ```csharp
 using VerdictRules;
 
-static Task<RuleResult> MeetsSpendThreshold(IReadOnlyDictionary<string, object?> context)
+static Task<RuleResult> MeetsSpendThreshold(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
 {
     var passed = (double)context["trailing_12mo_spend"]! >= (double)context["gold_spend_threshold"]!;
     return Task.FromResult(new RuleResult("meets_spend_threshold", passed));
 }
 
-static Task<RuleResult> MeetsOrderCount(IReadOnlyDictionary<string, object?> context)
+static Task<RuleResult> MeetsOrderCount(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
 {
     var passed = (double)context["trailing_12mo_orders"]! >= (double)context["gold_order_threshold"]!;
     return Task.FromResult(new RuleResult("meets_order_count", passed));
 }
 
-static Task<RuleResult> ReturnRateBelowMax(IReadOnlyDictionary<string, object?> context)
+static Task<RuleResult> ReturnRateBelowMax(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
 {
     var passed = (double)context["return_rate"]! <= (double)context["gold_max_return_rate"]!;
     return Task.FromResult(new RuleResult("return_rate_below_max", passed));
 }
 
-static Task<RuleResult> AccountInGoodStanding(IReadOnlyDictionary<string, object?> context) =>
+static Task<RuleResult> AccountInGoodStanding(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
     Task.FromResult(new RuleResult("account_in_good_standing", (string)context["account_status"]! == "active"));
 
 // Registered as four independent named rules on one engine -- not nested

@@ -32,12 +32,12 @@ sealed class ThresholdRule : IRule
     public string Name { get; }
     public string? Group { get; }
 
-    public async Task<RuleResult> EvaluateAsync(IReadOnlyDictionary<string, object?> context)
+    public async Task<RuleResult> EvaluateAsync(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
     {
         var subResults = new List<RuleResult>();
         foreach (var rule in _rules)
         {
-            subResults.Add(await rule.EvaluateAsync(context));
+            subResults.Add(await rule.EvaluateAsync(context, cancellationToken));
         }
         var passedCount = subResults.Count(r => r.Passed);
         return new RuleResult(
@@ -62,13 +62,13 @@ The same case the spec's own diagram shows — 2 of 3 needed, the third
 sub-rule fails:
 
 ```csharp
-static Task<RuleResult> Rule1(IReadOnlyDictionary<string, object?> context) =>
+static Task<RuleResult> Rule1(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
     Task.FromResult(new RuleResult("rule_1", true));
 
-static Task<RuleResult> Rule2(IReadOnlyDictionary<string, object?> context) =>
+static Task<RuleResult> Rule2(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
     Task.FromResult(new RuleResult("rule_2", true));
 
-static Task<RuleResult> Rule3(IReadOnlyDictionary<string, object?> context) =>
+static Task<RuleResult> Rule3(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
     Task.FromResult(new RuleResult("rule_3", false));
 
 var atLeastTwo = new ThresholdRule("at_least_two", new IRule[]

@@ -23,13 +23,15 @@ public sealed class OrRule(string name, IReadOnlyList<IRule> rules, string? grou
     public string? Group { get; } = group;
 
     /// <inheritdoc />
-    public async Task<RuleResult> EvaluateAsync(IReadOnlyDictionary<string, object?> context)
+    public async Task<RuleResult> EvaluateAsync(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
     {
         var subResults = new List<RuleResult>(_rules.Count);
         // Sequential, for the same reason as AndRule.
         foreach (var rule in _rules)
         {
-            var result = await rule.EvaluateAsync(context).ConfigureAwait(false);
+            // Checked between sub-rules -- see AndRule's own EvaluateAsync.
+            cancellationToken.ThrowIfCancellationRequested();
+            var result = await rule.EvaluateAsync(context, cancellationToken).ConfigureAwait(false);
             subResults.Add(result);
             if (result.Passed)
             {

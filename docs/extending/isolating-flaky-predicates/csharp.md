@@ -11,11 +11,11 @@ using VerdictRules;
 // letting it propagate out of the run that contains it.
 static FunctionRule Defensive(string name, RulePredicate predicate)
 {
-    async Task<RuleResult> Wrapped(IReadOnlyDictionary<string, object?> context)
+    async Task<RuleResult> Wrapped(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
     {
         try
         {
-            return await predicate(context);
+            return await predicate(context, cancellationToken);
         }
         catch (Exception exc)
         {
@@ -26,7 +26,7 @@ static FunctionRule Defensive(string name, RulePredicate predicate)
 }
 
 // Stands in for a real network call that can time out.
-static Task<RuleResult> CheckPromoCodeAgainstExternalService(IReadOnlyDictionary<string, object?> context)
+static Task<RuleResult> CheckPromoCodeAgainstExternalService(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
 {
     if (context.TryGetValue("simulate_timeout", out var t) && t is true)
     {

@@ -29,7 +29,7 @@ sealed class VerdictRateLimiter : RateLimiter
     {
         IRule RuleFor(string window, int quota) => new FunctionRule(
             $"{window}_under_quota",
-            ctx =>
+            (ctx, cancellationToken) =>
             {
                 var used = (int)ctx[$"{window}_used"]!;
                 var status = new RateLimitStatus(window, used, quota);

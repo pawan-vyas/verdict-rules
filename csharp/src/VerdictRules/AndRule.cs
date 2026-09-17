@@ -31,7 +31,7 @@ public sealed class AndRule(string name, IReadOnlyList<IRule> rules, string? gro
     public string? Group { get; } = group;
 
     /// <inheritdoc />
-    public async Task<RuleResult> EvaluateAsync(IReadOnlyDictionary<string, object?> context)
+    public async Task<RuleResult> EvaluateAsync(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
     {
         var subResults = new List<RuleResult>(_rules.Count);
         // A plain sequential loop, never Task.WhenAll: short-circuiting only
@@ -41,7 +41,12 @@ public sealed class AndRule(string name, IReadOnlyList<IRule> rules, string? gro
         // breaks silently.
         foreach (var rule in _rules)
         {
-            var result = await rule.EvaluateAsync(context).ConfigureAwait(false);
+            // Checked between sub-rules, not just once at entry, so a
+            // cancellation raised mid-evaluation stops this before the next
+            // sub-rule starts rather than only whenever the current one
+            // happens to observe it internally.
+            cancellationToken.ThrowIfCancellationRequested();
+            var result = await rule.EvaluateAsync(context, cancellationToken).ConfigureAwait(false);
             subResults.Add(result);
             if (!result.Passed)
             {

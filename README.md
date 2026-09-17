@@ -123,10 +123,10 @@ dotnet add package VerdictRules
 ```csharp
 using VerdictRules;
 
-static Task<RuleResult> HasPermission(IReadOnlyDictionary<string, object?> ctx) =>
+static Task<RuleResult> HasPermission(IReadOnlyDictionary<string, object?> ctx, CancellationToken cancellationToken = default) =>
     Task.FromResult(new RuleResult("has_permission", (bool)ctx["permission"]!));
 
-static Task<RuleResult> ResourceIsAvailable(IReadOnlyDictionary<string, object?> ctx) =>
+static Task<RuleResult> ResourceIsAvailable(IReadOnlyDictionary<string, object?> ctx, CancellationToken cancellationToken = default) =>
     Task.FromResult(new RuleResult("resource_is_available", (bool)ctx["available"]!));
 
 var canProceed = new AndRule("can_proceed", new IRule[]

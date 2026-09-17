@@ -7,16 +7,16 @@
 ```csharp
 using VerdictRules;
 
-static Task<RuleResult> IsActiveAccount(IReadOnlyDictionary<string, object?> context) =>
+static Task<RuleResult> IsActiveAccount(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
     Task.FromResult(new RuleResult("is_active_account", (string)context["account_status"]! == "active"));
 
-static Task<RuleResult> IsPremiumMember(IReadOnlyDictionary<string, object?> context) =>
+static Task<RuleResult> IsPremiumMember(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
     Task.FromResult(new RuleResult("is_premium_member", (bool)context["is_premium_member"]!));
 
-static Task<RuleResult> HasPromoCode(IReadOnlyDictionary<string, object?> context) =>
+static Task<RuleResult> HasPromoCode(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
     Task.FromResult(new RuleResult("has_promo_code", context.TryGetValue("promo_code", out var v) && v is string { Length: > 0 }));
 
-static Task<RuleResult> MeetsSpendThreshold(IReadOnlyDictionary<string, object?> context) =>
+static Task<RuleResult> MeetsSpendThreshold(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
     Task.FromResult(new RuleResult("meets_spend_threshold", (double)context["spend"]! >= (double)context["spend_threshold"]!));
 
 // Nesting doesn't care what built its sub-rules -- each of the four leaves

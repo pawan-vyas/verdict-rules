@@ -7,7 +7,7 @@ namespace VerdictRules;
 /// <remarks>
 /// <para>
 /// A named delegate rather than the bare
-/// <c>Func&lt;IReadOnlyDictionary&lt;string, object?&gt;, Task&lt;RuleResult&gt;&gt;</c>
+/// <c>Func&lt;IReadOnlyDictionary&lt;string, object?&gt;, CancellationToken, Task&lt;RuleResult&gt;&gt;</c>
 /// it stands for — spelling that generic signature out at every field, stored
 /// variable, or helper parameter is exactly the ceremony <see cref="FunctionRule"/>
 /// exists to avoid. A lambda or method group converts to
@@ -19,7 +19,7 @@ namespace VerdictRules;
 /// One real difference to know about: C# delegate types are nominal once a
 /// value already carries one, not structural the way a bare lambda converting
 /// *to* a delegate type is. A variable already typed as
-/// <c>Func&lt;IReadOnlyDictionary&lt;string, object?&gt;, Task&lt;RuleResult&gt;&gt;</c>
+/// <c>Func&lt;IReadOnlyDictionary&lt;string, object?&gt;, CancellationToken, Task&lt;RuleResult&gt;&gt;</c>
 /// does not implicitly convert to <see cref="RulePredicate"/> even though the
 /// signatures are identical — wrap it explicitly
 /// (<c>new RulePredicate(existingFunc)</c>) if that case comes up. A raw lambda
@@ -27,5 +27,11 @@ namespace VerdictRules;
 /// </para>
 /// </remarks>
 /// <param name="context">The facts this predicate reads from.</param>
+/// <param name="cancellationToken">
+/// Forwarded from whichever <see cref="RulesEngine"/> run method or composite
+/// triggered this evaluation. Observing it is optional — a predicate with
+/// nothing cancellable to do may ignore it — but a predicate wrapping real
+/// I/O should pass it through to whatever it awaits.
+/// </param>
 /// <returns>The outcome of the one condition this predicate decides.</returns>
-public delegate Task<RuleResult> RulePredicate(IReadOnlyDictionary<string, object?> context);
+public delegate Task<RuleResult> RulePredicate(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default);
