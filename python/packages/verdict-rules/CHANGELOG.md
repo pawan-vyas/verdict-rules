@@ -8,6 +8,14 @@ which keeps its own changelog beside its own manifest.
 
 Tagged `python-vX.Y.Z`.
 
+## [0.2.9] - 2026-09-17
+
+### Changed
+
+- README formatting: removed a redundant aside about the PyPI/import
+  name split from the Install section -- the code sample right below
+  it already shows the import directly.
+
 ## [0.2.8] - 2026-09-16
 
 ### Changed
