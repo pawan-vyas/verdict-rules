@@ -1,11 +1,19 @@
 # TypeScript — v0.3.0 PR Plan
 
 > Read [`README.md`](README.md) first — the resolved design and release shape
-> live there. This file is TS's own complete, self-contained checklist. Goes
-> **second**, after Python — closest in risk profile to Python, sanity-checks
-> the resolved pattern actually transfers before the two higher-risk
-> languages, and implements the new fixture against the spec Python's PR
-> wrote (never inventing its own variant of it).
+> live there, **including a revision to that shape** superseding the
+> per-language PR ordering originally described below. §1 (test-suite
+> parity) already shipped as its own independent PR
+> ([#89](https://github.com/pawan-vyas/verdict-rules/pull/89), open), with no
+> ordering relative to the other languages. §2 (the `graduation_verdict`
+> port) is likewise its own independent PR, not yet started. §3 (the new
+> fixture) and §4 (the core migration) no longer land as "TS's own PR" at
+> all — §4 lands as part of the single cross-language migration PR described
+> in `README.md`'s revised "Release shape," and §3 comes *after* that PR,
+> not before it. §5 (docs) also folds into that single PR, for TS's own
+> files. The content of each section below is still the right checklist for
+> that section's own work; only which PR it lands in, and in what order,
+> has changed.
 
 ## 1. Test-suite parity — drop and recreate, 1:1 against Python, plus a preserved idiom file
 

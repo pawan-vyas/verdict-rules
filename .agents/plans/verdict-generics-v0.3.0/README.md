@@ -8,11 +8,24 @@
 
 ## Status
 
-**Planning only. No source, doc, or fixture file has been touched yet.** Every
-PR described below requires explicit sign-off before merging — no
+**Test-suite parity underway; everything past it is still planning only.**
+Every PR described below requires explicit sign-off before merging — no
 `gh pr merge --admin` autonomy on this effort, regardless of how green CI is.
 That's a deliberate departure from this repo's usual merge pattern, because
 this is large enough, and foundational enough, to warrant it.
+
+Real progress, confirmed against the actual repo rather than assumed:
+
+- Test-suite parity (this plan's phase 1) — C# done and merged
+  ([PR #88](https://github.com/pawan-vyas/verdict-rules/pull/88)); JS
+  ([PR #89](https://github.com/pawan-vyas/verdict-rules/pull/89)) and Dart
+  ([PR #90](https://github.com/pawan-vyas/verdict-rules/pull/90)) open and
+  green, awaiting sign-off.
+- **The release shape below has changed from what was originally planned** —
+  see "Release shape," which now reflects the sequencing actually confirmed,
+  not the four-language-PRs-plus-shared-docs shape this plan started with.
+- Nothing else (fixture ports, the new cross-language fixture, the core
+  migration itself) has started.
 
 ## What this release actually is
 
@@ -259,9 +272,10 @@ language is the concrete proof that dict-context really is just
 
 ### A new cross-language fixture, proving the generic path — design deferred, direction recorded
 
-**Not yet designed. This is a required step before any language's Phase 3
-(below) starts, and it should happen once, producing one language-agnostic
-spec, not four independent inventions.**
+**Not yet designed. Confirmed to come *after* the core migration (Release
+shape, step 3, below) lands and its own unit tests prove the design out —
+not before it, as originally planned here.** It should still happen once,
+producing one language-agnostic spec, not four independent inventions.
 
 Direction, as discussed, to ground that design session rather than starting
 from nothing:
@@ -281,47 +295,62 @@ from nothing:
   `fixtures/graduation_verdict/README.md`'s own structure (policies,
   test subjects, edge cases, expected outcomes) — exact name TBD in that
   same design session.
-- **Python's PR is where this spec gets written** (Python goes first) —
-  every subsequent language's PR implements against that already-fixed
-  spec, never invents its own variant.
+- Written once, in Python first, producing the fixed spec every other
+  language then implements against rather than inventing its own variant —
+  this stays true even though it now happens as its own step after the
+  single core-migration PR (Release shape, step 4), not inside a
+  per-language PR.
 
-## Release shape: sequenced, gated PRs — not one PR
+## Release shape: revised — small parity/fixture PRs, then one single PR for the migration itself
 
-Considered and rejected: one PR spanning all four languages. The
-counter-argument that won: a diff this size (source, tests, two fixtures ×4,
-docs, changelogs, skill notes, per language) is easier to review carefully as
-four-plus-one focused units than as one bundle where the lowest-risk
-languages sit gated behind the highest-risk one, and where a single red CI
-check in any language blocks review of all four. Resolution: **sequenced
-PRs, each independently reviewed and approved, but nothing tagged or
-published to any registry until the full set has merged** — "features land
-everywhere or nowhere" (this repo's own stated rule) preserved at the level
-that actually matters, consumer-visible releases, without forcing one
-unreviewable mega-diff.
+**This section originally proposed one PR per language, each bundling all
+five steps below internally, plus a trailing shared-docs PR.** That shape is
+superseded — confirmed explicitly, not re-derived from first principles —
+by the sequencing in this section. The reasoning for *why* four separate
+per-language PRs made sense for test-suite parity specifically still holds
+(smaller, independently reviewable, no language gated behind another's
+red CI); what changed is that the core migration itself cannot honestly be
+split the same way, because it is one coherent source change across four
+languages plus the shared docs describing it, and a partial merge of that
+particular change would leave `main` in a state no single language's docs
+accurately describe.
 
-**Order:**
+**Confirmed order:**
 
-1. **Python** — sets the reference pattern, is the litmus-test language, and
-   is where the new fixture's spec gets written.
-2. **TypeScript** — closest in risk profile to Python; sanity-checks the
-   pattern transfers before the two higher-risk languages.
-3. **C#** — the new coexistence pattern, own risk shape (arity coexistence,
-   `IRule : IRule<...>`).
-4. **Dart** — highest risk, the one real breaking migration; goes last so it
-   benefits from three completed, working precedents.
-5. **Shared docs** — the final PR; see `shared-docs.md`.
+1. **Test-suite parity — four independent PRs, one per language**, each a
+   small, focused, drop-and-recreate rebuild against Python's own
+   `test_rule.py`/`test_engine.py` (see "The real test-suite-parity gap,"
+   below, for the full approach). No particular order between JS/C#/Dart;
+   Python's own suite is already the done reference.
+2. **`graduation_verdict` fixture port — three independent PRs, one each for
+   JS, C#, Dart.** Confirmed to stay separate rather than folding into the
+   single migration PR below: this is additive fixture work using the
+   *existing*, dict-based design (see "Fixtures," below) — none of it
+   touches `TContext` anywhere, so none of it carries the "must land
+   coherently across all four languages" constraint that forces step 4 into
+   one PR. No particular order between the three.
+3. **The core `Rule<TContext>` migration — a single PR spanning all four
+   languages.** Contains, for all four languages together: the generics
+   implementation itself; comprehensive unit tests including edge cases and
+   each language's own idiom gotchas; each language's own
+   docs/samples/quickstart/changelog/skill-agent-notes sweep; **and** the
+   shared cross-language docs sweep that was originally planned as a
+   trailing fifth PR (`shared-docs.md` — root `README.md`,
+   `docs/architecture/`, `docs/testing/README.md`, `docs/extending/` shared
+   READMEs, `docs/maintenance/`, the skill's shared content plus a
+   `plugin.json` version bump). All of it lands and merges together. Once
+   this step starts, work through implementation, tests, and docs without
+   stopping for interim check-ins — only the final merge needs sign-off.
+4. **The new cross-language fixture (see "Fixtures," below) — resolved only
+   after step 3 has landed and its own unit tests have proven the design
+   out.** This reverses the original plan's internal ordering, which had the
+   new fixture implemented *before* the core migration in each language's
+   own PR. It is the one open point left in this whole program on purpose.
 
-Each of the four language PRs is one complete, self-contained unit covering
-*everything* for that language, in this internal order:
-
-1. Test-suite parity fixes (from the real, documented gap below).
-2. Port `graduation_verdict` (JS/C#/Dart only — Python's already exists,
-   untouched).
-3. Implement the new cross-language fixture (against the spec Python wrote).
-4. The core `Rule<TContext>` migration itself.
-5. That language's own docs/samples/quickstart/changelog/skill-agent-notes
-   sweep (its own `<lang>.md` files only — shared, non-language-suffixed
-   docs are `shared-docs.md`'s job, last).
+"Features land everywhere or nowhere" (this repo's own stated rule) is still
+honored at the level that actually matters — nothing tags or publishes to
+any registry until the full set for that step has merged — it now applies
+per-step rather than describing one single release train end to end.
 
 ## The real test-suite-parity gap — confirmed scope: Python's *whole* suite, not just the subtle-contract subset
 
@@ -406,10 +435,10 @@ this release unless explicitly pulled in; not assumed included.
 
 ## Merge gate
 
-Every PR in this plan — all four language PRs and the final shared-docs PR —
-requires explicit approval before merging. No autonomous merging on this
-effort under any circumstance, including green CI, until the author says so
-for that specific PR.
+Every PR in this plan — every test-parity PR, every fixture-port PR, and the
+single core-migration PR — requires explicit approval before merging. No
+autonomous merging on this effort under any circumstance, including green
+CI, until the author says so for that specific PR.
 
 ## Per-language and shared plans
 
@@ -417,4 +446,6 @@ for that specific PR.
 - [`typescript.md`](typescript.md)
 - [`csharp.md`](csharp.md)
 - [`dart.md`](dart.md)
-- [`shared-docs.md`](shared-docs.md) — the final PR
+- [`shared-docs.md`](shared-docs.md) — no longer a trailing fifth PR; its
+  content lands as part of the single core-migration PR (Release shape,
+  step 3, above)

@@ -1,11 +1,18 @@
 # Python — v0.3.0 PR Plan
 
 > Read [`README.md`](README.md) first — the resolved design and release shape
-> live there. This file is Python's own complete, self-contained checklist.
-> Python goes **first**: it sets the reference pattern, is the litmus-test
-> language for "did the migration actually break anything" (via the untouched
-> `graduation_verdict`), and is where the new cross-language fixture's
-> language-agnostic spec gets written.
+> live there, **including a revision to that shape** superseding the
+> per-language PR ordering originally described below. §1 (test-suite
+> parity) is **done**: `test_rule.py`/`test_engine.py` are the reference
+> every other language's own suite ports against 1:1, and
+> `test_python_idioms.py` was split out to hold the one Python-only idiom
+> test (merged). §2 (`graduation_verdict`) already exists and stays
+> untouched — Python's own port is the litmus test, not new work. §3 (the
+> new fixture) and §4 (the core migration) no longer land as "Python's own
+> PR" at all — §4 lands as part of the single cross-language migration PR
+> described in `README.md`'s revised "Release shape," and §3 comes *after*
+> that PR, not before it, even though it's still written in Python first.
+> §5 (docs) also folds into that single PR, for Python's own files.
 
 ## 1. Test-suite parity
 

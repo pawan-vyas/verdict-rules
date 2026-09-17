@@ -1,10 +1,19 @@
 # Dart — v0.3.0 PR Plan
 
 > Read [`README.md`](README.md) first — the resolved design and release shape
-> live there. This file is Dart's own complete, self-contained checklist.
-> Goes **last**, deliberately — the one real breaking migration, benefiting
-> from three already-completed, working precedents (Python, TS, C#) before
-> its own harder mechanics land.
+> live there, **including a revision to that shape** superseding the
+> per-language PR ordering originally described below. §1 (test-suite
+> parity) already shipped as its own independent PR
+> ([#90](https://github.com/pawan-vyas/verdict-rules/pull/90), open), with no
+> ordering relative to the other languages. §2 (the `graduation_verdict`
+> port) is likewise its own independent PR, not yet started. §3 (the new
+> fixture) and §4 (the core migration) no longer land as "Dart's own PR" at
+> all — §4 lands as part of the single cross-language migration PR described
+> in `README.md`'s revised "Release shape," and §3 comes *after* that PR,
+> not before it. §5 (docs) also folds into that single PR, for Dart's own
+> files. The content of each section below is still the right checklist for
+> that section's own work; only which PR it lands in, and in what order,
+> has changed.
 
 ## 1. Test-suite parity — drop and recreate, 1:1 against Python, plus a preserved idiom file
 

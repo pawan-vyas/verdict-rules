@@ -1,11 +1,17 @@
-# Shared Docs — v0.3.0 Final PR Plan
+# Shared Docs — v0.3.0 Plan
 
-> Read [`README.md`](README.md) first. This is the **fifth and final** PR in
-> this release, landing only after all four language PRs are merged — it
-> touches the files no single language owns: the language-agnostic READMEs,
-> the architecture docs, the root README, and the skill's shared (non-
-> per-language) content. Nothing here is safe to write correctly before the
-> four language PRs exist, since it describes what they actually built.
+> Read [`README.md`](README.md) first — **this checklist no longer lands as
+> its own trailing PR.** The release shape described below (a fifth PR,
+> after four independent language PRs) is superseded: this content now
+> lands as part of the single cross-language core-migration PR described in
+> `README.md`'s revised "Release shape," alongside all four languages' own
+> generics implementation, tests, and per-language docs sweeps, in the same
+> merge. The reasoning below for *why* this sweep can't be written before
+> the real implementation exists still holds — it just means "before the
+> single migration PR's own implementation work is done," not "before four
+> separate language PRs exist." It touches the files no single language
+> owns: the language-agnostic READMEs, the architecture docs, the root
+> README, and the skill's shared (non-per-language) content.
 
 ## Why this is last, not first
 
