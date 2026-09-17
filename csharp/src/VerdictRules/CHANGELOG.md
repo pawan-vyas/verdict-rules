@@ -10,7 +10,7 @@ from this file, so the csproj points here instead of carrying a copy.
 
 Tagged `csharp-vX.Y.Z`.
 
-## [0.0.1] - 2026-09-12
+## [0.0.1] - 2026-09-17
 
 Initial publish.
 
