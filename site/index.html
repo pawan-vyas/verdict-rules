@@ -1198,7 +1198,6 @@ result = <span class="c-kw">await</span> engine.run_named(<span class="c-str">"c
         <button class="tab active" onclick="switchTab('pip', this)">pip</button>
         <button class="tab" onclick="switchTab('uv', this)">uv</button>
         <button class="tab" onclick="switchTab('npm', this)">npm</button>
-        <button class="tab" onclick="switchTab('cdn', this)">cdn</button>
         <button class="tab" onclick="switchTab('nuget', this)">nuget</button>
         <button class="tab" onclick="switchTab('pubdev', this)">pub.dev</button>
       </div>
@@ -1223,25 +1222,9 @@ result = <span class="c-kw">await</span> engine.run_named(<span class="c-str">"c
             <span class="t-cmd">npm install verdict-rules</span>
             <span class="t-copy">Copy</span>
           </div>
-        </div>
-        <div class="panel" id="panel-cdn">
-          <div class="term-row" onclick="copyLine(this, 'import { AndRule } from &quot;https://cdn.jsdelivr.net/npm/verdict-rules@latest/+esm&quot;;')">
-            <span class="t-dollar">&gt;</span>
-            <span class="t-cmd">import { AndRule } from "…verdict-rules@latest/+esm"</span>
-            <span class="t-copy">Copy</span>
-          </div>
-          <div class="term-row" onclick="copyLine(this, '&lt;script src=&quot;https://cdn.jsdelivr.net/npm/verdict-rules@latest/dist/verdict-rules.global.js&quot;&gt;&lt;/script&gt;')">
-            <span class="t-dollar">&gt;</span>
-            <span class="t-cmd">&lt;script src="…verdict-rules@latest/dist/verdict-rules.global.js"&gt;</span>
-            <span class="t-copy">Copy</span>
-          </div>
           <p class="install-note">
-            No build step either way — a module import or a plain global
-            <code>&lt;script&gt;</code> tag exposing <code>VerdictRules</code>.
-            In production, pin the exact version and, for the plain
-            <code>&lt;script&gt;</code> form, its integrity hash too — see the
-            <a href="https://github.com/pawan-vyas/verdict-rules/blob/main/js/packages/verdict-rules/README.md#use-it-from-a-browser-with-no-build-step" target="_blank" rel="noopener noreferrer">package README</a>
-            for why and where to get the real values.
+            Also available as <code>script</code>/<code>cdn</code> —
+            <a href="https://github.com/pawan-vyas/verdict-rules/blob/main/js/packages/verdict-rules/README.md#use-it-from-a-browser-with-no-build-step" target="_blank" rel="noopener noreferrer">see the README</a>.
           </p>
         </div>
         <div class="panel" id="panel-nuget">
@@ -1413,10 +1396,10 @@ Future&lt;RuleResult&gt; inGoodStanding(Map&lt;String, Object?&gt; ctx) <span cl
 </footer>
 
 <script>
-  // Each install tab belongs to one language's own demo -- pip/uv both
-  // show the same Python demo, npm/cdn both show the same JS demo, since
-  // it's the install mechanism that differs, not the language underneath.
-  var DEMO_FOR_TAB = { pip: 'python', uv: 'python', npm: 'js', cdn: 'js', nuget: 'csharp', pubdev: 'dart' };
+  // Each install tab belongs to one language's own demo -- pip and uv
+  // both show the same Python demo, since it's the install mechanism
+  // that differs, not the language underneath.
+  var DEMO_FOR_TAB = { pip: 'python', uv: 'python', npm: 'js', nuget: 'csharp', pubdev: 'dart' };
   var WINTITLE_FOR_DEMO = { python: 'first_rule.py', js: 'first_rule.ts', csharp: 'FirstRule.cs', dart: 'first_rule.dart' };
 
   function switchTab(id, btn) {
