@@ -6,8 +6,9 @@ import 'test_helpers.dart';
 /// A strict, 1:1 port of Python's `test_rule.py` -- FunctionRule, AndRule,
 /// OrRule. Every test here has an exact Python counterpart. Dart-specific
 /// coverage (structural typing for function types, an explicit `Rule`
-/// implementation) lives in `dart_idioms_test.dart` instead, so this file
-/// stays auditable against Python's own suite test-for-test.
+/// implementation, the generic context migration) lives in
+/// `dart_idioms_test.dart`/`generics_test.dart` instead, so this file stays
+/// auditable against Python's own suite test-for-test.
 void main() {
   group('FunctionRule', () {
     // Mirrors test_wraps_a_passing_predicate.
@@ -28,8 +29,8 @@ void main() {
 
     // Mirrors test_predicate_receives_the_context.
     test('predicate receives the context', () async {
-      Map<String, Object?>? seen;
-      final rule = FunctionRule('r1', (ctx) async {
+      Context? seen;
+      final rule = FunctionRule<Context>('r1', (ctx) async {
         seen = ctx;
         return RuleResult(ruleName: 'r1', passed: true);
       });
@@ -54,7 +55,7 @@ void main() {
   group('AndRule', () {
     // Mirrors test_all_pass_yields_pass.
     test('all pass yields pass', () async {
-      final rule = AndRule('and1', [pass('a'), pass('b')]);
+      final rule = AndRule<Context>('and1', [pass('a'), pass('b')]);
       final result = await rule.evaluate({});
       expect(result.passed, isTrue);
       expect(result.ruleName, 'and1');
@@ -62,7 +63,8 @@ void main() {
 
     // Mirrors test_one_failure_yields_fail.
     test('one failure yields fail', () async {
-      final rule = AndRule('and1', [pass('a'), failing('b', detail: 'bad')]);
+      final rule =
+          AndRule<Context>('and1', [pass('a'), failing('b', detail: 'bad')]);
       final result = await rule.evaluate({});
       expect(result.passed, isFalse);
       expect(result.detail, contains('b'));
@@ -72,9 +74,9 @@ void main() {
     // Mirrors test_short_circuits_after_first_failure.
     test('short-circuits after first failure', () async {
       final log = <String>[];
-      final rule = AndRule('and1', [
+      final rule = AndRule<Context>('and1', [
         failing('a'),
-        FunctionRule('c', (ctx) async {
+        FunctionRule<Context>('c', (ctx) async {
           log.add('c');
           return RuleResult(ruleName: 'c', passed: true);
         }),
@@ -85,7 +87,8 @@ void main() {
 
     // Mirrors test_data_carries_sub_results_up_to_failure.
     test('data carries sub-results up to failure', () async {
-      final rule = AndRule('and1', [pass('a'), failing('b'), pass('c')]);
+      final rule =
+          AndRule<Context>('and1', [pass('a'), failing('b'), pass('c')]);
       final result = await rule.evaluate({});
       final data = result.data! as List<RuleResult>;
       expect(data.map((r) => r.ruleName), ['a', 'b']);
@@ -93,7 +96,7 @@ void main() {
 
     // Mirrors test_empty_rule_list_vacuously_passes.
     test('empty rule list vacuously passes', () async {
-      final result = await AndRule('and1', []).evaluate({});
+      final result = await AndRule<Context>('and1', []).evaluate({});
       expect(result.passed, isTrue);
     });
   });
@@ -101,14 +104,14 @@ void main() {
   group('OrRule', () {
     // Mirrors test_any_pass_yields_pass.
     test('any pass yields pass', () async {
-      final rule = OrRule('or1', [failing('a'), pass('b')]);
+      final rule = OrRule<Context>('or1', [failing('a'), pass('b')]);
       final result = await rule.evaluate({});
       expect(result.passed, isTrue);
     });
 
     // Mirrors test_all_fail_yields_fail.
     test('all fail yields fail', () async {
-      final rule = OrRule('or1', [failing('a'), failing('b')]);
+      final rule = OrRule<Context>('or1', [failing('a'), failing('b')]);
       final result = await rule.evaluate({});
       expect(result.passed, isFalse);
       expect(result.detail, 'no sub-rule passed');
@@ -117,9 +120,9 @@ void main() {
     // Mirrors test_short_circuits_after_first_pass.
     test('short-circuits after first pass', () async {
       final log = <String>[];
-      final rule = OrRule('or1', [
+      final rule = OrRule<Context>('or1', [
         pass('a'),
-        FunctionRule('c', (ctx) async {
+        FunctionRule<Context>('c', (ctx) async {
           log.add('c');
           return RuleResult(ruleName: 'c', passed: false);
         }),
@@ -130,7 +133,7 @@ void main() {
 
     // Mirrors test_empty_rule_list_vacuously_fails.
     test('empty rule list vacuously fails', () async {
-      final result = await OrRule('or1', []).evaluate({});
+      final result = await OrRule<Context>('or1', []).evaluate({});
       expect(result.passed, isFalse);
     });
   });
@@ -142,22 +145,22 @@ void main() {
   group('rule-level exception propagation', () {
     // Mirrors test_and_rule_does_not_catch_a_sub_rule_s_exception.
     test("AndRule does not catch a sub-rule's exception", () async {
-      final flaky = FunctionRule('flaky', (ctx) async {
+      final flaky = FunctionRule<Context>('flaky', (ctx) async {
         throw StateError('boom');
       });
       expect(
-        () => AndRule('and1', [pass('a'), flaky]).evaluate({}),
+        () => AndRule<Context>('and1', [pass('a'), flaky]).evaluate({}),
         throwsStateError,
       );
     });
 
     // Mirrors test_or_rule_does_not_catch_a_sub_rule_s_exception.
     test("OrRule does not catch a sub-rule's exception", () async {
-      final flaky = FunctionRule('flaky', (ctx) async {
+      final flaky = FunctionRule<Context>('flaky', (ctx) async {
         throw StateError('boom');
       });
       expect(
-        () => OrRule('or1', [failing('a'), flaky]).evaluate({}),
+        () => OrRule<Context>('or1', [failing('a'), flaky]).evaluate({}),
         throwsStateError,
       );
     });

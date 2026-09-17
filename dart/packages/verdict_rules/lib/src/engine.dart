@@ -6,22 +6,29 @@ import 'rule.dart';
 /// Distinct from a composite: a composite returns one verdict and stops early,
 /// whereas the engine's run modes are diagnostic and never short-circuit. They
 /// exist to produce a full picture, not the fastest path to one boolean.
-class RulesEngine {
-  final List<Rule> _rules;
-  final Map<String, Rule> _byName;
-  final Map<String, List<Rule>> _byGroup;
+///
+/// Generic over `TContext`, the same way [Rule] is: `RulesEngine<Context>`
+/// serves a heterogeneous catalog of unrelated dict-context rules exactly as
+/// it always has, while `RulesEngine<OrderContext>` documents that every
+/// rule registered here shares one cohesive context type. Neither form
+/// replaces the other.
+class RulesEngine<TContext> {
+  final List<Rule<TContext>> _rules;
+  final Map<String, Rule<TContext>> _byName;
+  final Map<String, List<Rule<TContext>>> _byGroup;
 
-  RulesEngine(List<Rule> rules)
+  RulesEngine(List<Rule<TContext>> rules)
       : _rules = List.unmodifiable(rules),
         _byName = {for (final r in rules) r.name: r},
         _byGroup = _indexByGroup(rules);
 
-  static Map<String, List<Rule>> _indexByGroup(List<Rule> rules) {
-    final byGroup = <String, List<Rule>>{};
+  static Map<String, List<Rule<TContext>>> _indexByGroup<TContext>(
+      List<Rule<TContext>> rules) {
+    final byGroup = <String, List<Rule<TContext>>>{};
     for (final rule in rules) {
       final group = rule.group;
       if (group != null && group.isNotEmpty) {
-        byGroup.putIfAbsent(group, () => <Rule>[]).add(rule);
+        byGroup.putIfAbsent(group, () => <Rule<TContext>>[]).add(rule);
       }
     }
     return byGroup;
@@ -40,7 +47,7 @@ class RulesEngine {
   Iterable<String> get groupNames => _byGroup.keys;
 
   /// Evaluate every registered rule. Never short-circuits.
-  Future<RunResult> runAll(Map<String, Object?> context) async {
+  Future<RunResult> runAll(TContext context) async {
     final results = <RuleResult>[];
     for (final rule in _rules) {
       results.add(await rule.evaluate(context));
@@ -66,7 +73,7 @@ class RulesEngine {
   /// returns a [RuleResult] with `passed` false.
   Future<RuleResult?> tryRunNamed(
     String name,
-    Map<String, Object?> context,
+    TContext context,
   ) async {
     final rule = _byName[name];
     if (rule == null) return null;
@@ -81,7 +88,7 @@ class RulesEngine {
   /// has an answer for.
   ///
   /// Throws [ArgumentError] if no rule has this name.
-  Future<RuleResult> runNamed(String name, Map<String, Object?> context) async {
+  Future<RuleResult> runNamed(String name, TContext context) async {
     final result = await tryRunNamed(name, context);
     if (result == null) {
       throw ArgumentError.value(name, 'name', 'No rule with this name');
@@ -104,7 +111,7 @@ class RulesEngine {
   /// group silently approves.
   Future<RunResult?> tryRunGroup(
     String group,
-    Map<String, Object?> context,
+    TContext context,
   ) async {
     final rules = _byGroup[group];
     if (rules == null || rules.isEmpty) return null;
@@ -123,7 +130,7 @@ class RulesEngine {
   /// happened to be empty — still folds to its identity; absence is an error.
   ///
   /// Throws [ArgumentError] if no rule carries this label.
-  Future<RunResult> runGroup(String group, Map<String, Object?> context) async {
+  Future<RunResult> runGroup(String group, TContext context) async {
     final result = await tryRunGroup(group, context);
     if (result == null) {
       throw ArgumentError.value(group, 'group', 'No rules in this group');
