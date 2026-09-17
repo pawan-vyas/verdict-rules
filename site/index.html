@@ -781,12 +781,9 @@
 
   .install-note { margin-top: 1rem; font-size: 0.8125rem; color: var(--ink-40); line-height: 1.7; }
   .install-note strong { color: var(--ink-dim); font-weight: 500; }
-
-  .install-langs { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--line); display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap; }
-  .install-langs-label { font-size: 0.75rem; color: var(--ink-40); }
-  .install-langs a { font-size: 0.8125rem; font-weight: 500; color: var(--ink-dim); text-decoration: none; border-bottom: 1px solid var(--line-2); transition: color 0.15s, border-color 0.15s; }
-  .install-langs a:hover { color: var(--accent-dk); border-color: var(--accent); }
   .install-note code { font-family: 'IBM Plex Mono', monospace; font-size: 0.9em; color: var(--accent-dk); }
+  .install-note a { color: var(--ink-dim); text-decoration: none; border-bottom: 1px solid var(--line-2); transition: color 0.15s, border-color 0.15s; }
+  .install-note a:hover { color: var(--accent-dk); border-color: var(--accent); }
 
   .demo-window { background: var(--code-bg); border: 1px solid var(--code-line); border-radius: 5px; overflow: hidden; }
 
@@ -803,6 +800,7 @@
   .demo-wintitle { font-family: 'IBM Plex Mono', monospace; font-size: 0.625rem; color: var(--code-dim); letter-spacing: 0.06em; margin: 0 auto; }
 
   .demo-body {
+    display: none;
     padding: 1.25rem 1.5rem;
     font-family: 'IBM Plex Mono', monospace;
     font-size: 0.8125rem;
@@ -810,6 +808,7 @@
     white-space: pre-wrap;
     color: var(--code-text);
   }
+  .demo-body.active { display: block; }
 
   .d-kw { color: var(--code-kw); }
   .d-str { color: var(--code-str); }
@@ -1190,7 +1189,7 @@ result = <span class="c-kw">await</span> engine.run_named(<span class="c-str">"c
       <p class="install-kicker">Start in one minute</p>
       <h2 class="install-heading">Install Verdict.</h2>
     </div>
-    <p class="install-sub">Pure Python. No compiled extensions, no runtime services.</p>
+    <p class="install-sub">Zero dependencies, in every language it ships for.</p>
   </div>
 
   <div class="install-body">
@@ -1198,6 +1197,10 @@ result = <span class="c-kw">await</span> engine.run_named(<span class="c-str">"c
       <div class="tab-group">
         <button class="tab active" onclick="switchTab('pip', this)">pip</button>
         <button class="tab" onclick="switchTab('uv', this)">uv</button>
+        <button class="tab" onclick="switchTab('npm', this)">npm</button>
+        <button class="tab" onclick="switchTab('cdn', this)">cdn</button>
+        <button class="tab" onclick="switchTab('nuget', this)">nuget</button>
+        <button class="tab" onclick="switchTab('pubdev', this)">pub.dev</button>
       </div>
       <div class="tab-panels">
         <div class="panel active" id="panel-pip">
@@ -1214,12 +1217,41 @@ result = <span class="c-kw">await</span> engine.run_named(<span class="c-str">"c
             <span class="t-copy">Copy</span>
           </div>
         </div>
-      </div>
-      <div class="install-langs">
-        <span class="install-langs-label">Also shipped for:</span>
-        <a href="https://www.nuget.org/packages/VerdictRules/" target="_blank" rel="noopener noreferrer">C#</a>
-        <a href="https://www.npmjs.com/package/verdict-rules" target="_blank" rel="noopener noreferrer">JS/TS</a>
-        <a href="https://pub.dev/packages/verdict_rules" target="_blank" rel="noopener noreferrer">Dart</a>
+        <div class="panel" id="panel-npm">
+          <div class="term-row" onclick="copyLine(this, 'npm install verdict-rules')">
+            <span class="t-dollar">$</span>
+            <span class="t-cmd">npm install verdict-rules</span>
+            <span class="t-copy">Copy</span>
+          </div>
+        </div>
+        <div class="panel" id="panel-cdn">
+          <div class="term-row" onclick="copyLine(this, 'import { AndRule } from &quot;https://cdn.jsdelivr.net/npm/verdict-rules@latest/+esm&quot;;')">
+            <span class="t-dollar">&gt;</span>
+            <span class="t-cmd">import { AndRule } from "…verdict-rules@latest/+esm"</span>
+            <span class="t-copy">Copy</span>
+          </div>
+          <p class="install-note">
+            No build step. In production, pin the exact version and its
+            integrity hash instead of <code>@latest</code> — see the
+            <a href="https://github.com/pawan-vyas/verdict-rules/blob/main/js/packages/verdict-rules/README.md#use-it-from-a-browser-with-no-build-step" target="_blank" rel="noopener noreferrer">package README</a>
+            for why and where to get the real values.
+          </p>
+        </div>
+        <div class="panel" id="panel-nuget">
+          <div class="term-row" onclick="copyLine(this, 'dotnet add package VerdictRules')">
+            <span class="t-dollar">$</span>
+            <span class="t-cmd">dotnet add package VerdictRules</span>
+            <span class="t-copy">Copy</span>
+          </div>
+        </div>
+        <div class="panel" id="panel-pubdev">
+          <div class="term-row" onclick="copyLine(this, 'dart pub add verdict_rules')">
+            <span class="t-dollar">$</span>
+            <span class="t-cmd">dart pub add verdict_rules</span>
+            <span class="t-copy">Copy</span>
+          </div>
+          <p class="install-note">Works unchanged in a Flutter project too — <code>flutter pub add verdict_rules</code> there.</p>
+        </div>
       </div>
     </div>
 
@@ -1227,9 +1259,9 @@ result = <span class="c-kw">await</span> engine.run_named(<span class="c-str">"c
       <div class="demo-window">
         <div class="demo-titlebar">
           <span class="demo-dot"></span><span class="demo-dot"></span><span class="demo-dot"></span>
-          <span class="demo-wintitle">first_rule.py</span>
+          <span class="demo-wintitle" id="demo-wintitle">first_rule.py</span>
         </div>
-        <div class="demo-body"><span class="d-kw">from</span> verdict <span class="d-kw">import</span> FunctionRule, AndRule, RuleResult, RulesEngine
+        <div class="demo-body active" id="demo-python"><span class="d-kw">from</span> verdict <span class="d-kw">import</span> FunctionRule, AndRule, RuleResult, RulesEngine
 
 <span class="d-kw">async def</span> under_limit(ctx):
     <span class="d-kw">return</span> RuleResult(rule_name=<span class="d-str">"under_limit"</span>,
@@ -1249,6 +1281,66 @@ result = <span class="d-kw">await</span> engine.run_named(<span class="d-str">"c
 })
 <span class="d-cmt"># result.passed</span>
 <span class="d-ok">True</span></div>
+        <div class="demo-body" id="demo-js"><span class="d-kw">import</span> { FunctionRule, AndRule, RulesEngine } <span class="d-kw">from</span> <span class="d-str">"verdict-rules"</span>;
+
+<span class="d-kw">async function</span> underLimit(ctx) {
+  <span class="d-kw">return</span> { ruleName: <span class="d-str">"under_limit"</span>, passed: ctx.requestsThisMinute &lt; ctx.limit };
+}
+
+<span class="d-kw">async function</span> inGoodStanding(ctx) {
+  <span class="d-kw">return</span> { ruleName: <span class="d-str">"in_good_standing"</span>, passed: ctx.accountStatus === <span class="d-str">"active"</span> };
+}
+
+<span class="d-kw">const</span> canProceed = <span class="d-kw">new</span> AndRule(<span class="d-str">"can_proceed"</span>, [
+  <span class="d-kw">new</span> FunctionRule(<span class="d-str">"under_limit"</span>, underLimit),
+  <span class="d-kw">new</span> FunctionRule(<span class="d-str">"in_good_standing"</span>, inGoodStanding),
+]);
+<span class="d-kw">const</span> engine = <span class="d-kw">new</span> RulesEngine([canProceed]);
+<span class="d-kw">const</span> result = <span class="d-kw">await</span> engine.runNamed(<span class="d-str">"can_proceed"</span>, {
+  requestsThisMinute: 3, limit: 10, accountStatus: <span class="d-str">"active"</span>,
+});
+<span class="d-cmt">// result.passed</span>
+<span class="d-ok">true</span></div>
+        <div class="demo-body" id="demo-csharp"><span class="d-kw">using</span> VerdictRules;
+
+<span class="d-kw">static</span> Task&lt;RuleResult&gt; UnderLimit(IReadOnlyDictionary&lt;string, object?&gt; ctx, CancellationToken cancellationToken = <span class="d-kw">default</span>) =&gt;
+    Task.FromResult(<span class="d-kw">new</span> RuleResult(<span class="d-str">"under_limit"</span>, (<span class="d-kw">double</span>)ctx[<span class="d-str">"requests_this_minute"</span>]! &lt; (<span class="d-kw">double</span>)ctx[<span class="d-str">"limit"</span>]!));
+
+<span class="d-kw">static</span> Task&lt;RuleResult&gt; InGoodStanding(IReadOnlyDictionary&lt;string, object?&gt; ctx, CancellationToken cancellationToken = <span class="d-kw">default</span>) =&gt;
+    Task.FromResult(<span class="d-kw">new</span> RuleResult(<span class="d-str">"in_good_standing"</span>, (<span class="d-kw">string</span>)ctx[<span class="d-str">"account_status"</span>]! == <span class="d-str">"active"</span>));
+
+<span class="d-kw">var</span> canProceed = <span class="d-kw">new</span> AndRule(<span class="d-str">"can_proceed"</span>, <span class="d-kw">new</span> IRule[]
+{
+    <span class="d-kw">new</span> FunctionRule(<span class="d-str">"under_limit"</span>, UnderLimit),
+    <span class="d-kw">new</span> FunctionRule(<span class="d-str">"in_good_standing"</span>, InGoodStanding),
+});
+<span class="d-kw">var</span> engine = <span class="d-kw">new</span> RulesEngine(<span class="d-kw">new</span> IRule[] { canProceed });
+<span class="d-kw">var</span> result = <span class="d-kw">await</span> engine.RunNamedAsync(<span class="d-str">"can_proceed"</span>, <span class="d-kw">new</span> Dictionary&lt;string, object?&gt;
+{
+    [<span class="d-str">"requests_this_minute"</span>] = 3.0,
+    [<span class="d-str">"limit"</span>] = 10.0,
+    [<span class="d-str">"account_status"</span>] = <span class="d-str">"active"</span>,
+});
+<span class="d-cmt">// result.Passed</span>
+<span class="d-ok">True</span></div>
+        <div class="demo-body" id="demo-dart"><span class="d-kw">import</span> <span class="d-str">'package:verdict_rules/verdict_rules.dart'</span>;
+
+Future&lt;RuleResult&gt; underLimit(Map&lt;String, Object?&gt; ctx) <span class="d-kw">async</span> =&gt;
+    RuleResult(ruleName: <span class="d-str">'under_limit'</span>, passed: (ctx[<span class="d-str">'requests_this_minute'</span>]! <span class="d-kw">as</span> num) &lt; (ctx[<span class="d-str">'limit'</span>]! <span class="d-kw">as</span> num));
+
+Future&lt;RuleResult&gt; inGoodStanding(Map&lt;String, Object?&gt; ctx) <span class="d-kw">async</span> =&gt;
+    RuleResult(ruleName: <span class="d-str">'in_good_standing'</span>, passed: ctx[<span class="d-str">'account_status'</span>] == <span class="d-str">'active'</span>);
+
+<span class="d-kw">final</span> canProceed = AndRule(<span class="d-str">'can_proceed'</span>, [
+  FunctionRule(<span class="d-str">'under_limit'</span>, underLimit),
+  FunctionRule(<span class="d-str">'in_good_standing'</span>, inGoodStanding),
+]);
+<span class="d-kw">final</span> engine = RulesEngine([canProceed]);
+<span class="d-kw">final</span> result = <span class="d-kw">await</span> engine.runNamed(<span class="d-str">'can_proceed'</span>, {
+  <span class="d-str">'requests_this_minute'</span>: 3, <span class="d-str">'limit'</span>: 10, <span class="d-str">'account_status'</span>: <span class="d-str">'active'</span>,
+});
+<span class="d-cmt">// result.passed</span>
+<span class="d-ok">true</span></div>
       </div>
     </div>
   </div>
@@ -1314,11 +1406,22 @@ result = <span class="d-kw">await</span> engine.run_named(<span class="d-str">"c
 </footer>
 
 <script>
+  // Each install tab belongs to one language's own demo -- pip/uv both
+  // show the same Python demo, npm/cdn both show the same JS demo, since
+  // it's the install mechanism that differs, not the language underneath.
+  var DEMO_FOR_TAB = { pip: 'python', uv: 'python', npm: 'js', cdn: 'js', nuget: 'csharp', pubdev: 'dart' };
+  var WINTITLE_FOR_DEMO = { python: 'first_rule.py', js: 'first_rule.ts', csharp: 'FirstRule.cs', dart: 'first_rule.dart' };
+
   function switchTab(id, btn) {
     document.querySelectorAll('.tab').forEach(function (t) { t.classList.remove('active'); });
     document.querySelectorAll('.panel').forEach(function (p) { p.classList.remove('active'); });
     btn.classList.add('active');
     document.getElementById('panel-' + id).classList.add('active');
+
+    var demo = DEMO_FOR_TAB[id];
+    document.querySelectorAll('.demo-body').forEach(function (d) { d.classList.remove('active'); });
+    document.getElementById('demo-' + demo).classList.add('active');
+    document.getElementById('demo-wintitle').textContent = WINTITLE_FOR_DEMO[demo];
   }
 
   function copyLine(row, text) {
