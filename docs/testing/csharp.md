@@ -11,65 +11,78 @@
 ```text
 $ cd csharp/
 $ dotnet test tests/VerdictRules.Tests/VerdictRules.Tests.csproj
-Passed!  - Failed: 0, Passed: 29, Skipped: 0, Total: 29, Duration: 17 ms
+Passed!  - Failed: 0, Passed: 48, Skipped: 0, Total: 48, Duration: 7 ms
 ```
 
-29 tests, one file (`EngineTests.cs`, despite the name — it covers
-`FunctionRule`, `AndRule`, `OrRule`, and `RulesEngine` together, one
-`[Fact]`/`[Theory]`-decorated class per type), sub-millisecond-per-test
-runtime.
-
-**Not yet covered**: a duplicate-rule-name registration (which name
-wins the by-name lookup) and a predicate's own thrown exception
-propagating uncaught through `RunAllAsync`/`RunGroupAsync`/`AndRule`/
-`OrRule` — both real contracts, both covered in JS's and (once ported)
-Dart's own suites. Worth porting before this package leaves `0.0.x`.
+Three files, not one. `RuleTests.cs` and `EngineTests.cs` are a strict,
+1:1 port of Python's own `test_rule.py`/`test_engine.py` — same test
+classes, same tests, same assertions, in C# idiom — and are the two files
+to check when auditing this package against Python's own suite.
+`CSharpIdiomTests.cs` holds exactly the coverage with no Python
+counterpart on purpose (`CancellationToken` propagation, structural typing
+for delegates only, an explicit `IRule` implementation) and is deliberately
+not part of that mirror.
 
 ## Test layout
 
 ```mermaid
 graph LR
-    RuleSrc["📄 IRule.cs / FunctionRule.cs / AndRule.cs / OrRule.cs"]
+    RuleSrc["📄 FunctionRule.cs / AndRule.cs / OrRule.cs"]
     EngineSrc["📄 RulesEngine.cs"]
     ResultSrc["📄 RuleResult.cs / RunResult.cs"]
-    Test[["🧪 EngineTests.cs"]]
+    RuleTest[["🧪 RuleTests.cs"]]
+    EngineTest[["🧪 EngineTests.cs"]]
+    IdiomTest[["🧪 CSharpIdiomTests.cs"]]
 
-    %% Link 0: RuleSrc -> Test
-    RuleSrc -->|"[1]<br/>FunctionRule / AndRule / OrRule"| Test
-    %% Link 1: EngineSrc -> Test
-    EngineSrc -->|"[2]<br/>RunAllAsync / RunNamedAsync / RunGroupAsync"| Test
-    %% Link 2: ResultSrc -> Test
-    ResultSrc -.->|"[3]<br/>exercised indirectly,<br/>no dedicated test class"| Test
+    %% Link 0: RuleSrc -> RuleTest
+    RuleSrc -->|"[1]<br/>FunctionRule / AndRule / OrRule"| RuleTest
+    %% Link 1: EngineSrc -> EngineTest
+    EngineSrc -->|"[2]<br/>RunAllAsync / RunNamedAsync / RunGroupAsync"| EngineTest
+    %% Link 2: ResultSrc -> RuleTest
+    ResultSrc -.->|"[3]<br/>exercised indirectly,<br/>no dedicated test class"| RuleTest
+    %% Link 3: RuleSrc -> IdiomTest
+    RuleSrc -.->|"[4]<br/>CancellationToken, structural typing,<br/>not a portable contract"| IdiomTest
+    %% Link 4: EngineSrc -> IdiomTest
+    EngineSrc -.->|"[5]<br/>CancellationToken,<br/>not a portable contract"| IdiomTest
 
     style RuleSrc fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
     style EngineSrc fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
     style ResultSrc fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
-    style Test fill:#FFB84D,stroke:#E69500,stroke-width:2px,color:#000
+    style RuleTest fill:#FFB84D,stroke:#E69500,stroke-width:2px,color:#000
+    style EngineTest fill:#FFB84D,stroke:#E69500,stroke-width:2px,color:#000
+    style IdiomTest fill:#B47EFF,stroke:#9654E8,stroke-width:2px,color:#000
 
     %% Link Index:
-    %% 0: the four rule types are covered directly, one test class each
+    %% 0: the three rule types are covered directly, one test class each
     %% 1: the engine's run modes are covered directly
     %% 2: RuleResult/RunResult are plain immutable classes, exercised as a side effect of the above -- no behavior of their own to test in isolation
+    %% 3-4: CancellationToken propagation and structural typing for delegates only are C#-specific, not part of the Python-parity mirror
     linkStyle 0 stroke:#FFCB7A,stroke-width:2px
     linkStyle 1 stroke:#FFCB7A,stroke-width:2px
     linkStyle 2 stroke:#E0E0E0,stroke-width:2px,stroke-dasharray:5 5
+    linkStyle 3 stroke:#D0AFFF,stroke-width:2px,stroke-dasharray:5 5
+    linkStyle 4 stroke:#D0AFFF,stroke-width:2px,stroke-dasharray:5 5
 ```
 
 ## Which test proves which contract
 
 | Contract ([`README.md`](README.md)) | Proven by |
 | --- | --- |
-| Short-circuiting, both directions | `AndRuleTests.ShortCircuitsSoLaterSubRulesNeverRun`, `OrRuleTests.ShortCircuitsOnTheFirstPass` |
-| Vacuous-truth polarity, both directions | `AndRuleTests.EmptyPassesVacuously`, `OrRuleTests.EmptyFailsVacuouslyTheOppositePolarityToAndRule` |
-| Absence throws (strict lookup) | `EmptinessIsNotAbsenceTests.UnknownRuleNameThrows`, `UnknownGroupThrowsRatherThanPassingVacuously` |
-| Absence returns `null` (try-prefixed lookup) | `TryLookupTests.ReturnsNullWhenAbsent`, `NullMeansAbsentNeverFailed` |
-| Fallback matrix — the present-failing row specifically | `TryLookupTests.FallbackMatrix` (`[Theory]`, one row per present/absent × pass/fail combination) |
-| `RunAllAsync`/`RunGroupAsync` never short-circuit | `RunModeTests.RunAllNeverShortCircuits` |
-| No flattening of a composite's own sub-results | `AndRuleTests.DataHoldsOnlyWhatRanNeverPaddedNeverFlattened` |
-| A custom `IRule` implementation composes like any other | `CustomRuleTests.AnExplicitImplementationComposesLikeAnyOther` |
-| Introspection (`RuleNames`/`GroupNames`) | `IntrospectionTests.ReportsExactlyWhatTheLookupsAccept`, `AnEmptyEngineReportsNothing` |
-| Empty composites still fold to their identity, even with an empty group | `EmptinessIsNotAbsenceTests.ButEmptyCompositesStillFoldToTheirIdentity` |
-| Cancellation is checked between rules, not just once at entry | `AndRuleTests.CancellationStopsBeforeTheNextSubRuleEvenMidRun`, `OrRuleTests.CancellationStopsBeforeTheNextSubRuleEvenMidRun`, `RunModeTests.RunAllStopsBeforeTheNextRuleEvenMidRun` |
+| Short-circuiting, both directions | `AndRuleTests.ShortCircuitsAfterFirstFailure`, `OrRuleTests.ShortCircuitsAfterFirstPass` (`RuleTests.cs`) |
+| Vacuous-truth polarity, both directions | `AndRuleTests.EmptyRuleListVacuouslyPasses`, `OrRuleTests.EmptyRuleListVacuouslyFails` (`RuleTests.cs`) |
+| Absence throws (strict lookup) | `RunNamedTests.UnknownNameRaisesKeyNotFound`, `RunGroupTests.UnknownGroupRaises` (`EngineTests.cs`) |
+| Absence returns `null` (try-prefixed lookup) | `TryLookupTests` (`EngineTests.cs`) |
+| Fallback matrix — the present-failing row specifically | `TryLookupTests.FallbackMatrix` (`[Theory]`, one case per present/absent × pass/fail combination) |
+| `RunAllAsync`/`RunGroupAsync` never short-circuit | `RunAllTests.DoesNotShortCircuitUnlikeAndRule` (`EngineTests.cs`) |
+| No flattening of a composite's own sub-results | `AndRuleTests.DataCarriesSubResultsUpToFailure` (`RuleTests.cs`) |
+| Duplicate name, last one wins | `ConstructionTests.DuplicateNamesLastOneWinsInByNameLookup` (`EngineTests.cs`) |
+| A predicate's exception is never caught | `EngineExceptionPropagationTests.RunAllDoesNotCatchAPredicatesException`, `RunGroupDoesNotCatchAPredicatesException` (`EngineTests.cs`); `RuleExceptionPropagationTests.AndRuleDoesNotCatchASubRulesException`, `OrRuleDoesNotCatchASubRulesException` (`RuleTests.cs`) |
+
+Not part of this table on purpose — `CSharpIdiomTests.cs` proves
+`CancellationToken` propagation (checked between sub-rules, not just once
+at entry), C#'s structural typing for delegates only, and an explicit
+`IRule` implementation composing like any other. None of these are
+universal contracts; none get ported to another language's own suite.
 
 ## Running tests
 
