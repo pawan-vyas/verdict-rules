@@ -190,16 +190,25 @@ jobs:
           set -euo pipefail
           url="https://pub.dev/api/packages/verdict_rules/versions/${VERSION}"
 
+          # Widened preemptively, not because a Dart release has hit this
+          # yet: both release-js.yml's own verify-published (js-v0.0.4,
+          # ~20min) and release-csharp.yml's (csharp-v0.0.1, ~5min) needed
+          # more than the old 6x20s (~2min) budget for a registry's own
+          # indexing lag, genuinely successful publish both times. Same risk
+          # applies here even without a real incident yet.
+          #
+          # 20x30s (~10min) gives real headroom for that without turning a
+          # genuinely broken publish into an indefinite hang.
           code=000
-          for attempt in 1 2 3 4 5 6; do
+          for attempt in $(seq 1 20); do
             code="$(curl -s -o version.json -w '%{http_code}' "$url")"
             [ "$code" = "200" ] && break
             echo "Attempt ${attempt}: HTTP ${code} -- waiting for propagation"
-            sleep 20
+            sleep 30
           done
 
           if [ "$code" != "200" ]; then
-            echo "::error::pub.dev is not serving ${VERSION} after ~2 minutes. The publish step reported success, so check the package page before assuming a false alarm."
+            echo "::error::pub.dev is not serving ${VERSION} after ~10 minutes. The publish step reported success, so check the package page before assuming a false alarm."
             exit 1
           fi
           echo "Serving $(jq -r '.version' version.json)"
