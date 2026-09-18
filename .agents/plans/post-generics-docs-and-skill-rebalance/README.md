@@ -94,6 +94,17 @@
   confirmed genuinely dict-appropriate and left untouched
   (`data-driven-rule-construction`, `domain-adapter-module`). See §6
   for the per-scenario reasoning.
+- §7 (second full-repo audit, requested after §6): every shipped/
+  fetched doc tree swept for both open problems. Found and fixed one
+  more real dict-bias gap (`content-moderation-routing`, never
+  triaged, converted to `SubmissionContext`) and one more real
+  comment-trim gap (12 test files across all four languages' examples,
+  never touched by the original trim pass — module docstrings and
+  inline comments carrying the same narration pattern as the
+  implementation files did). Maintainer-facing framing swept clean
+  beyond §5's own fix. See §7 for the full per-area findings,
+  including what was checked and confirmed clean, not just what
+  changed.
 
 **Not yet done, still in this PR's scope (no deferring, per explicit
 instruction):**
@@ -474,6 +485,82 @@ an explicit "stays dict on purpose" note for `data-driven-rule-sets`/
   dict/mapping-shaped; constraining `TContext` to a `Mapping` bound
   would just be dict-typing with extra ceremony, not a real
   generalization. Confirmed by attempting it, not by inspection alone.
+
+## 7 · Scope addition: a second full-repo audit, requested after §6
+
+Requested directly ("this got missed, warrants 1 more full repo audit")
+after §6 surfaced that the extending audit itself had been incomplete.
+Swept every doc tree actually shipped or fetched by the skill
+(`docs/samples/`, `docs/extending/`, `docs/architecture/`,
+`docs/testing/`, the quickstarts, the two one-off `python/examples/`
+fetches) for both open problems — dict-vs-typed bias and the
+maintainer-facing framing leak §5 found — rather than re-checking only
+the files already touched.
+
+**Confirmed out of scope, checked not assumed**: `docs/maintenance/`
+and `docs/future_plan.md` are not in `MANIFEST.toml` at all — never
+shipped, never fetched, correctly contributor-only by design. No work
+needed there.
+
+**Dict-bias audit, `docs/samples/` — one real gap found:**
+
+- **`content-moderation-routing`** was never triaged during §1 at all
+  (unlike `admin-eligibility-lookup`/`data-driven-rule-sets`, which got
+  explicit dict reasoning at the time) — a genuine miss, the same class
+  of gap §6 found in `docs/extending/`. Its own context — one content
+  submission's fixed fields (text, banned terms, spam score/threshold,
+  length minimum, author post count) — is a knowable-ahead-of-time
+  shape, the same test §1 already applies elsewhere. Independent
+  evidence it wanted typing: three of its four languages' own
+  naive-way code already used a typed class (`Submission`/`Content`)
+  while the verdict-way regressed to dict — the naive-way's own author
+  had already reached for typing here before generics existed in the
+  verdict-way conversions. Converted to `SubmissionContext`, all four
+  languages, every sample compiled/run-verified.
+- **`premium-upsell-panel`** and **`signup-form-readiness`** — two
+  samples with no `python.md`/`csharp.md` at all, only `js.md`/`dart.md`
+  (a real, load-bearing asymmetry: both are no-build-step CDN/global-
+  script demos, deliberately vanilla JS with no TypeScript compiler in
+  play — dict-context isn't a choice here, there is no type system to
+  choose typed with). Confirmed by reading both `js.md` pages in full,
+  not by the file-listing alone. Correctly excluded from the
+  typed-vs-dict question entirely; left untouched.
+- `graduation-requirement-verdict` (flagship dict, by design) and
+  `marketplace-eligibility` (flagship typed, by design) reconfirmed as
+  already-settled, not gaps.
+
+**Maintainer-facing framing leak audit — clean beyond §5's own fix**:
+swept `docs/architecture/`, `docs/testing/`, `docs/samples/`,
+`docs/extending/`, all four quickstarts, and both fetched
+`python/examples/graduation_verdict/` files for the same vocabulary §5
+grepped `SKILL.md`'s own authored files for. Two "note from the
+author" callouts (`domain-adapter-module/README.md`,
+`isolating-flaky-predicates/README.md`) were re-examined in full rather
+than pattern-matched on the phrase alone — both read in full and
+confirmed legitimate: consumer-facing design-rationale asides (the
+same genre every `docs/extending/` scenario is, explaining *why*
+verdict is shaped this way), not maintainer-only content addressed to
+the wrong audience. One explicitly self-scopes: *"a preference, not a
+requirement this package imposes or expects a skill-driven agent to
+enforce."* Left unchanged.
+
+**Comment-trim mandate — a real gap found and closed**: the earlier
+trim passes covered core lib and example *implementation* files
+(`graduation_check.py`, `oracle.py`, `chaos_data.py`,
+`marketplace_eligibility.py`, and each language's equivalents) but
+never touched the *test* files alongside them
+(`test_chaos.py`/`chaos.test.js`/`ChaosTests.cs`/`chaos_test.dart`,
+`test_graduation_verdict.py` and its three siblings,
+`test_marketplace_eligibility.py` and its three siblings — 12 files,
+3 per language × 4 languages). These carried the identical narration
+pattern — module docstrings justifying *why* a chaos suite exists
+rather than stating what it does, test docstrings explaining "this is
+what proves X" instead of naming the behavior. Trimmed to the same
+current-behavior-facts bar as the implementation files, matching
+wording across all four languages' equivalents the same way the
+original core-lib pass did. Verified: Python 650, JS 55+557+33, C# 61
++557+32, Dart 54+557+32 tests all still pass; `tsc --noEmit`,
+`dotnet build -warnaserror`, and `dart analyze` all clean.
 
 ## Related
 
