@@ -23,11 +23,18 @@ Python counterpart on purpose (structural typing for function types, an
 explicit `Rule` implementation) and is deliberately not part of that
 mirror.
 
-No coverage tool is wired in yet — see
-[`../maintenance/adding-a-language.md`](../maintenance/adding-a-language.md)'s
-Stage 4 for what arrives alongside the shared graduation fixture and an
-oracle/differential suite in Dart's own idiom, neither of which exist
-here yet.
+No coverage tool is wired in yet.
+
+This SDK also has the second testing layer — a full, tested example
+project checked against the shared graduation fixture (see
+[`../../fixtures/graduation_verdict/README.md`](../../fixtures/graduation_verdict/README.md)),
+at [`../../dart/examples/graduation_verdict/`](../../dart/examples/graduation_verdict/README.md).
+That satisfies Stage 4 ("Prove") of
+[`../maintenance/adding-a-language.md`](../maintenance/adding-a-language.md),
+including an oracle/differential suite in this language's own idiom
+(500 generated cases, checked against an independent, verdict_rules-free
+re-implementation — see that project's own
+[`docs/testing.md`](../../dart/examples/graduation_verdict/docs/testing.md)).
 
 **No CI pipeline runs this suite today.** This suite is run manually,
 by whoever is making a change, before it's merged — not automatically
