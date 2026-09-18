@@ -13,14 +13,6 @@ dotnet add package VerdictRules
 using VerdictRules;
 ```
 
-The NuGet package ID is **`VerdictRules`** (PascalCase, no hyphen) —
-NuGet package IDs commonly follow .NET's own PascalCase convention,
-unlike npm's `verdict-rules`. There is no naming split the way Python
-has (`pip install verdict-rules` → `import verdict`): the NuGet ID and
-the namespace are the same word.
-
-`net10.0` and `netstandard2.1`, trimmable and AOT-compatible on `net10.0`.
-
 ## The API, in one screen
 
 ```csharp
@@ -67,9 +59,7 @@ to satisfy — construct them directly:
 above — a different generic arity, an independent implementation from
 the dict-context forms, not a wrapper. `TContext` is usually inferred
 from the predicate's own parameter type, so the type argument is rarely
-spelled out at the constructor call site. Every sub-rule inside one
-`AndRule<TContext>`/`OrRule<TContext>` must implement `IRule<TContext>`
-for the exact same `TContext` — the compiler rejects mixing contexts.
+spelled out at the constructor call site.
 
 ## Which run mode
 
@@ -79,18 +69,3 @@ for the exact same `TContext` — the compiler rejects mixing contexts.
 | Every rule's own outcome (a status page, an audit trail) | `engine.RunAllAsync()` |
 | One named rule/group; absence would be a bug | The strict lookup — throws |
 | One named rule/group; absence is expected, your domain decides what it means | The non-raising `Try*` lookup |
-
-## Testing what matters
-
-`docs/testing/` in the source repository is the full checklist (see
-`references/REPOSITORY-MAP.md`). The parts that are easy to skip:
-
-- Prove short-circuiting with a **call log**, not the final boolean. A
-  composite that evaluates everything still returns the right answer.
-- For a rule set **built from stored/config data at runtime** rather
-  than hand-written, hand-picked fixtures stop scaling as the
-  configuration space grows — reach for property-based testing (e.g.
-  FsCheck) or an oracle/differential approach (an independent,
-  deliberately simpler reference implementation checked against many
-  random configurations) instead of adding fixtures one at a time as
-  bugs are found.

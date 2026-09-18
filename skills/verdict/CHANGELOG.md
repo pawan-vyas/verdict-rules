@@ -77,17 +77,35 @@ cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skil
 - Each language's own `agent-notes.md` gained a "Which run mode" table
   (one fast pass/fail verdict vs. every rule's own outcome vs. a strict
   vs. non-raising lookup) — the one genuinely load-bearing table that
-  used to live only in the now-removed `docs/architecture/` copy. Its
-  "Testing what matters" section shrank from five bullets to two, for
-  the same reason as the removed Mistakes sections: a bullet that only
-  reminds a reader to test what a guarantee already says ("they're
-  asymmetric, so test both polarities"; "two lookup forms exist, so
-  test both") adds nothing an agent that already read the guarantee
-  doesn't already know to do. What remains teaches an actual technique
-  instead of restating a guarantee: proving short-circuiting needs a
-  call log because the return value is identical either way, and an
-  oracle/differential approach for a rule set built from runtime data
-  rather than hand-picked fixtures.
+  used to live only in the now-removed `docs/architecture/` copy.
+- **JS/TS's `UnknownLookupError` now appears in that SDK's own "API in
+  one screen" block**, with its `kind` (`"rule"`/`"group"`) and `key`
+  fields. It is the only custom error type any SDK defines — Python
+  raises `KeyError`, Dart throws `ArgumentError`, C# throws
+  `KeyNotFoundException`, all built-ins already named inline in their
+  own API blocks — and its two discriminating fields were not
+  discoverable from anywhere else in the notes, so a consumer catching
+  it had no way to tell a missing rule from a missing group without
+  parsing the message string. Verified against the real published
+  package, not read off the source.
+- **Each language's own "Testing what matters" section is removed
+  entirely.** Recommending a specific testing methodology (a call log,
+  property-based testing, an oracle/differential approach, a named
+  example project) is this repository's own opinion about how to test
+  well, not an objective fact about the SDK's surface the way the
+  rest of `agent-notes.md` is. `references/REPOSITORY-MAP.md` already
+  names `docs/testing/` in the source repository as the real checklist,
+  so nothing is orphaned — it is simply no longer duplicated, narrowed,
+  and re-opinionated inside a file meant to stay a plain reference.
+  Each `agent-notes.md` is now exactly three sections: install/import,
+  the API in one screen, and which run mode to reach for.
+- Two follow-on cleanups from the above: `SKILL.md`'s own opening
+  paragraphs no longer restate the frontmatter description in different
+  words, and the three SDKs that restated the new context-homogeneity
+  guarantee in their own prose ("every sub-rule must share the same
+  `TContext`") no longer do, now that `SKILL.md` states it once for
+  every language. JS/TS also lost a pointer to a "mistake below" that
+  no longer exists.
 - **`install.sh`'s dev-repo layout vendored an incomplete skill** —
   `skills/verdict/`'s own source tree carries only hand-written
   content; the generated `REPOSITORY-MAP.md` is produced by
