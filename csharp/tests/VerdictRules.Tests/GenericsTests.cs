@@ -182,11 +182,12 @@ public class TypedContextEndToEndTests
 }
 
 /// <summary>
-/// CancellationToken propagation for the generic composites -- proven
-/// separately from the non-generic idiom test because AndRule&lt;TContext&gt;/
-/// OrRule&lt;TContext&gt; are independent implementations, not wrappers
-/// around the non-generic classes, so nothing guarantees they inherited the
-/// same behavior without their own test.
+/// CancellationToken propagation for the generic composites -- where the
+/// behavior is actually implemented. AndRule&lt;TContext&gt;/OrRule&lt;TContext&gt;
+/// hold the evaluation logic, and the non-generic AndRule/OrRule are closed
+/// specializations that forward to them, so these are the tests that prove the
+/// semantics; the non-generic counterparts in CSharpIdiomTests.cs prove the
+/// forwarding is really there.
 /// </summary>
 public class GenericCancellationTests
 {

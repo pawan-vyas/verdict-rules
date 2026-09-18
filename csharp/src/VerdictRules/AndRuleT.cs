@@ -27,6 +27,11 @@ public sealed class AndRule<TContext>(string name, IReadOnlyList<IRule<TContext>
     /// <inheritdoc />
     public async Task<RuleResult> EvaluateAsync(TContext context, CancellationToken cancellationToken = default)
     {
+        // Checked here as well as in the loop below: an already-cancelled token
+        // must evaluate nothing, including when there is nothing to evaluate and
+        // the loop would otherwise fall straight through to a vacuous pass.
+        cancellationToken.ThrowIfCancellationRequested();
+
         var subResults = new List<RuleResult>(_rules.Count);
         // Sequential, not Task.WhenAll.
         foreach (var rule in _rules)

@@ -154,3 +154,140 @@ public class CustomRuleTests
         Assert.True(result.Passed);
     }
 }
+
+/// <summary>
+/// The cancellation contract: no rule evaluation begins on an already-cancelled
+/// token. Every public method here takes a <see cref="CancellationToken"/>, so
+/// a caller handing over a cancelled one expects no predicate to run and an
+/// <see cref="OperationCanceledException"/> instead — including on the paths
+/// that evaluate nothing at all (an empty composite, an empty engine, a lookup
+/// that matches no rule), where a vacuous result would otherwise come back as
+/// though the cancellation never happened.
+///
+/// These check *entry*; <see cref="AndRuleIdiomTests.CancellationStopsBeforeTheNextSubRuleEvenMidRun"/>
+/// checks between iterations. Both matter, and an entry check alone would not
+/// satisfy that one.
+/// </summary>
+public class CancellationContractTests
+{
+    private static CancellationToken Cancelled()
+    {
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+        return cts.Token;
+    }
+
+    private sealed record Ctx(int Value);
+
+    [Fact]
+    public async Task RunNamedRunsNoPredicateOnACancelledToken()
+    {
+        var log = new List<string>();
+        var engine = new RulesEngine(new IRule[] { Rules.Counting("a", true, log) });
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => engine.RunNamedAsync("a", Rules.Empty, Cancelled()));
+
+        Assert.Empty(log);
+    }
+
+    [Fact]
+    public async Task TryRunNamedRunsNoPredicateOnACancelledToken()
+    {
+        var log = new List<string>();
+        var engine = new RulesEngine(new IRule[] { Rules.Counting("a", true, log) });
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => engine.TryRunNamedAsync("a", Rules.Empty, Cancelled()));
+
+        Assert.Empty(log);
+    }
+
+    [Fact]
+    public async Task TryRunGroupThrowsOnACancelledTokenEvenWhenTheGroupIsAbsent() =>
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => new RulesEngine(Array.Empty<IRule>()).TryRunGroupAsync("nope", Rules.Empty, Cancelled()));
+
+    [Fact]
+    public async Task TryRunNamedThrowsOnACancelledTokenEvenWhenTheRuleIsAbsent() =>
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => new RulesEngine(Array.Empty<IRule>()).TryRunNamedAsync("nope", Rules.Empty, Cancelled()));
+
+    [Fact]
+    public async Task RunAllThrowsOnACancelledTokenEvenWithNoRules() =>
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => new RulesEngine(Array.Empty<IRule>()).RunAllAsync(Rules.Empty, Cancelled()));
+
+    [Fact]
+    public async Task AnEmptyAndRuleThrowsOnACancelledTokenRatherThanPassingVacuously() =>
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => new AndRule("none", Array.Empty<IRule>()).EvaluateAsync(Rules.Empty, Cancelled()));
+
+    [Fact]
+    public async Task AnEmptyOrRuleThrowsOnACancelledTokenRatherThanFailingVacuously() =>
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => new OrRule("none", Array.Empty<IRule>()).EvaluateAsync(Rules.Empty, Cancelled()));
+
+    [Fact]
+    public async Task FunctionRuleRunsNoPredicateOnACancelledToken()
+    {
+        var log = new List<string>();
+        var rule = Rules.Counting("a", true, log);
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => rule.EvaluateAsync(Rules.Empty, Cancelled()));
+
+        Assert.Empty(log);
+    }
+
+    // The generic arity holds the implementation and the dict-context one forwards
+    // to it, so these repeat the cases above against the generic form directly --
+    // proving the contract at its source, not only through the specialization.
+
+    [Fact]
+    public async Task GenericRunNamedRunsNoPredicateOnACancelledToken()
+    {
+        var log = new List<string>();
+        var engine = new RulesEngine<Ctx>(new IRule<Ctx>[]
+        {
+            new FunctionRule<Ctx>("a", (_, _) => { log.Add("a"); return Task.FromResult(new RuleResult("a", true)); }),
+        });
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => engine.RunNamedAsync("a", new Ctx(1), Cancelled()));
+
+        Assert.Empty(log);
+    }
+
+    [Fact]
+    public async Task GenericRunAllThrowsOnACancelledTokenEvenWithNoRules() =>
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => new RulesEngine<Ctx>(Array.Empty<IRule<Ctx>>()).RunAllAsync(new Ctx(1), Cancelled()));
+
+    [Fact]
+    public async Task GenericTryRunGroupThrowsOnACancelledTokenEvenWhenTheGroupIsAbsent() =>
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => new RulesEngine<Ctx>(Array.Empty<IRule<Ctx>>()).TryRunGroupAsync("nope", new Ctx(1), Cancelled()));
+
+    [Fact]
+    public async Task AnEmptyGenericAndRuleThrowsOnACancelledToken() =>
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => new AndRule<Ctx>("none", Array.Empty<IRule<Ctx>>()).EvaluateAsync(new Ctx(1), Cancelled()));
+
+    [Fact]
+    public async Task AnEmptyGenericOrRuleThrowsOnACancelledToken() =>
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => new OrRule<Ctx>("none", Array.Empty<IRule<Ctx>>()).EvaluateAsync(new Ctx(1), Cancelled()));
+
+    [Fact]
+    public async Task GenericFunctionRuleRunsNoPredicateOnACancelledToken()
+    {
+        var log = new List<string>();
+        var rule = new FunctionRule<Ctx>("a", (_, _) => { log.Add("a"); return Task.FromResult(new RuleResult("a", true)); });
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => rule.EvaluateAsync(new Ctx(1), Cancelled()));
+
+        Assert.Empty(log);
+    }
+}

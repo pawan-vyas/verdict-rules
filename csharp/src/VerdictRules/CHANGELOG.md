@@ -10,6 +10,67 @@ from this file, so the csproj points here instead of carrying a copy.
 
 Tagged `csharp-vX.Y.Z`.
 
+## [0.3.2] - 2026-09-19
+
+### Fixed
+
+- **An already-cancelled `CancellationToken` was ignored on every path
+  that did not loop over more than one rule.** `ThrowIfCancellationRequested`
+  was only called *inside* the `foreach` of the composites and of
+  `RunAllAsync`/`TryRunGroupAsync`, so:
+  - `RunNamedAsync`/`TryRunNamedAsync` invoked the rule's predicate --
+    arbitrary consumer code, possibly a database or HTTP call -- with a
+    token that was already cancelled. A single rule has no "between
+    rules", so there was no check anywhere on that path.
+  - An empty `AndRule`/`OrRule` returned its vacuous result, and
+    `RunAllAsync` on an engine holding no rules returned a vacuous
+    `RunResult`, as though the cancellation had never happened.
+  - `TryRunNamedAsync`/`TryRunGroupAsync` returned `null` for an absent
+    name or group, which a caller reads as "no such rule" rather than
+    "cancelled".
+  - `FunctionRule`/`FunctionRule<TContext>` forwarded straight to the
+    predicate with no check of its own.
+
+  The contract is now uniform and stated as such: **no rule evaluation
+  begins on an already-cancelled token.** Every composite and every
+  engine run method checks once on entry, *in addition to* the existing
+  per-iteration check -- the mid-run check is what stops the next
+  sub-rule when a token is cancelled *during* a run, and is deliberately
+  kept. `FunctionRule` throws synchronously, being a guard on a method
+  that is intentionally not `async`.
+
+  Fourteen tests in `CancellationContractTests` cover this across both
+  arities; each one fails against 0.3.1 with "No exception was thrown".
+
+### Changed
+
+- **`FunctionRule`, `AndRule`, `OrRule` and `RulesEngine` are now closed
+  specializations of their own generic siblings, by composition.** Each
+  holds an instance of `FunctionRule<TContext>`/`AndRule<TContext>`/
+  `OrRule<TContext>`/`RulesEngine<TContext>` closed over
+  `IReadOnlyDictionary<string, object?>` and forwards to it, rather than
+  carrying a second, independent copy of the same logic. No public
+  signature changes, and no behavior changes beyond the cancellation fix
+  above.
+
+  This is what the fix exposed: the two arities were duplicate
+  implementations, and the cancellation gap existed identically in both
+  because it had to be written twice. Every evaluation guarantee --
+  sequential sub-rule evaluation, short-circuit polarity, vacuous truth,
+  name/group indexing, lookup strictness, cancellation -- is now defined
+  exactly once and cannot drift between arities.
+
+  Composition rather than inheritance, deliberately: `IRule` already
+  *is* `IRule<IReadOnlyDictionary<string, object?>>` at the interface
+  level, so no base class is needed for substitutability, and each
+  non-generic type stays `sealed` with its own constructor signature
+  instead of inheriting a generic one that would leak `TContext` into
+  its public surface. `IReadOnlyList<T>` covariance carries
+  `IReadOnlyList<IRule>` into the generic constructor unchanged;
+  `RulePredicate`, being a nominal delegate type rather than a closure
+  of `RulePredicate<TContext>`, is rewrapped in `FunctionRule` -- the
+  one place the two delegate types meet.
+
 ## [0.3.1] - 2026-09-18
 
 ### Changed

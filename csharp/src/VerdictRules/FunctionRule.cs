@@ -8,21 +8,20 @@ namespace VerdictRules;
 /// <param name="group">See <see cref="Group"/>.</param>
 public sealed class FunctionRule(string name, RulePredicate predicate, string? group = null) : IRule
 {
-    /// <summary>The wrapped predicate, run unchanged by <see cref="EvaluateAsync"/>.</summary>
-    private readonly RulePredicate _predicate = predicate;
+    /// <summary>The generic rule this type is a closed specialization of.</summary>
+    private readonly FunctionRule<IReadOnlyDictionary<string, object?>> _inner =
+        new(
+            name,
+            new RulePredicate<IReadOnlyDictionary<string, object?>>(predicate.Invoke),
+            group);
 
     /// <inheritdoc />
-    public string Name { get; } = name;
+    public string Name => _inner.Name;
 
     /// <inheritdoc />
-    public string? Group { get; } = group;
+    public string? Group => _inner.Group;
 
-    /// <summary>
-    /// Runs the wrapped predicate and returns whatever it returns, unchanged.
-    /// </summary>
-    /// <param name="context">Forwarded to the wrapped predicate as-is.</param>
-    /// <param name="cancellationToken">Forwarded to the wrapped predicate as-is.</param>
-    /// <returns>Whatever the wrapped predicate returns, unchanged.</returns>
+    /// <inheritdoc cref="FunctionRule{TContext}.EvaluateAsync" />
     public Task<RuleResult> EvaluateAsync(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
-        _predicate(context, cancellationToken);
+        _inner.EvaluateAsync(context, cancellationToken);
 }

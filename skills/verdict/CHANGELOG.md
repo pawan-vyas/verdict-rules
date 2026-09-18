@@ -114,6 +114,15 @@ cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skil
   between rules in every composite and in each engine run that evaluates
   more than one rule — not in the single-rule lookups, where there is
   nothing in between. The four files are now 46 to 62 lines.
+- **The C# notes' cancellation and arity statements are corrected against
+  `VerdictRules` 0.3.2.** Compressing the prose into the API block meant
+  re-verifying it against source, which surfaced a real library bug: an
+  already-cancelled token was ignored on every path that did not loop
+  over more than one rule. Fixing it (see that package's own changelog)
+  also made the two arities one implementation plus a specialization, so
+  the note no longer claims the generic forms are an independent
+  implementation -- they are now where the behaviour lives, and the
+  dict-context forms forward to them.
 - Two follow-on cleanups from the above: `SKILL.md`'s own opening
   paragraphs no longer restate the frontmatter description in different
   words, and the three SDKs that restated the new context-homogeneity

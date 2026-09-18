@@ -186,14 +186,32 @@ the mechanism that would let a `RuleResult<Cat>` substitute for a
 creating an asymmetry between value-typed and reference-typed payloads
 that a consumer would hit without warning.
 
-**Fully additive, independently implemented — not a wrapper.** Each
-generic sibling (`FunctionRule<TContext>`, `AndRule<TContext>`, etc.) is
-a fresh implementation with its own internals; the non-generic classes'
-own bodies are completely untouched. `CancellationToken` propagation
-(checked between sub-rules, not just once at entry) is proven
-separately for both arities in the test suite for exactly this reason —
-nothing guarantees the generic siblings inherited the non-generic ones'
-behavior, because they don't share any code.
+**The generic form is the implementation; the non-generic one is a
+specialization of it, by composition.** `FunctionRule`, `AndRule`,
+`OrRule` and `RulesEngine` each hold an instance of their own generic
+sibling closed over `IReadOnlyDictionary<string, object?>` and forward
+to it. Nothing is reimplemented, so every evaluation guarantee —
+sequential sub-rule evaluation, short-circuit polarity, vacuous truth,
+name/group indexing, lookup strictness, and the cancellation contract
+below — is defined exactly once and cannot drift between the two
+arities.
+
+Composition rather than inheritance, deliberately: `IRule` already
+*is* `IRule<IReadOnlyDictionary<string, object?>>` at the interface
+level, so the specialization needs no base class to be substitutable,
+and each non-generic type stays `sealed` with its own constructor
+signature (`IReadOnlyList<IRule>`, `RulePredicate`) rather than
+inheriting a generic one that would leak `TContext` into its public
+surface. `IReadOnlyList<T>` covariance is what lets
+`IReadOnlyList<IRule>` be handed to the generic constructor unchanged;
+`RulePredicate` is the one exception, being a nominal delegate type
+rather than a closure of `RulePredicate<TContext>`, so `FunctionRule`
+rewraps it — the single place the two delegate types meet.
+
+Both arities are still tested directly rather than assumed, but for the
+opposite reason to before: the tests now pin that the delegation is
+actually in place, rather than checking two separate implementations
+agree.
 
 ## Execution model, concretely
 
