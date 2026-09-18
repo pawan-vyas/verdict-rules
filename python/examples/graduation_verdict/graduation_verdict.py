@@ -1,14 +1,8 @@
-"""Graduation requirement verdict — the flagship verdict example, as real code.
+"""Graduation requirement verdict, implemented with `verdict`.
 
-See docs/samples/graduation-requirement-verdict/README.md for the full
-design — the naive-way contrast, both diagrams, and the reasoning
-behind every choice below. See fixtures/graduation_verdict/README.md
-for how to extend this project, and docs/testing/README.md for why its
-own test suite doubles as a regression net for `verdict` itself.
-
-Nothing here is illustrative pseudocode: every function is imported and
-exercised by test_graduation_verdict.py, and the __main__ block at the
-bottom is a real, runnable demo.
+See docs/samples/graduation-requirement-verdict/README.md for the
+design and fixtures/graduation_verdict/README.md for the fixture
+contract. Every function is exercised by test_graduation_verdict.py.
 """
 
 from __future__ import annotations
@@ -55,11 +49,8 @@ class SubjectPolicy:
 class AtLeastNRule:
     """Passes if at least `minimum` of the given sub-rules pass.
 
-    Same shape as verdict's docs/extending/new-rule-shape/ (`ThresholdRule`)
-    — not part of `verdict` itself, a consumer-defined combinator for a
-    requirement `AndRule`/`OrRule` can't express directly. Evaluates
-    every sub-rule unconditionally (no short-circuit is possible for a
-    threshold count), unlike `AndRule`/`OrRule`.
+    Not part of `verdict` itself; see docs/extending/new-rule-shape/.
+    Evaluates every sub-rule unconditionally.
     """
 
     def __init__(
@@ -152,9 +143,7 @@ def rule_for_subject(policy: SubjectPolicy) -> Rule[dict[str, Any]]:
         exemption path, or a plain `FunctionRule` otherwise.
 
     Raises:
-        ValueError: `policy.subject_type` isn't one of the known types —
-            deliberately loud rather than silently building a
-            vacuously-passing rule for an unrecognized policy.
+        ValueError: `policy.subject_type` isn't one of the known types.
     """
     group = "elective" if policy.is_elective else "core"
     sid = policy.subject_id
@@ -185,11 +174,9 @@ def load_curriculum(path: Path) -> tuple[list[SubjectPolicy], int]:
 
     Returns:
         A `(policies, elective_minimum)` pair — one `SubjectPolicy` per
-        entry (missing optional fields filled with their dataclass
-        defaults, the same way a real database row's NULL columns would
-        be handled), and the minimum number of electives required to
-        graduate. Both come from data — neither is a Python literal
-        anywhere in this module.
+        entry, missing optional fields filled with their dataclass
+        defaults, and the minimum number of electives required to
+        graduate.
     """
     curriculum = json.loads(path.read_text())
     policies = [
@@ -213,10 +200,9 @@ def load_students(path: Path) -> dict[str, dict]:
         path: Path to a JSON object keyed by student id.
 
     Returns:
-        The parsed dict as-is — each value's own shape already *is* the
-        `context` dict `verdict` expects (plus a `note` and
-        `expected_passed` field the rules themselves never read, used
-        only by the demo and the test suite).
+        The parsed dict as-is — each value's own shape is the `context`
+        dict `verdict` expects, plus a `note` and `expected_passed`
+        field the rules themselves don't read.
     """
     return json.loads(path.read_text())
 
@@ -228,18 +214,13 @@ def build_graduation_check(
 
     Args:
         policies: Every subject's own policy.
-        elective_minimum: How many electives must pass — read from
-            `policies.json`'s own `elective_minimum` field, never
-            hardcoded here, so a curriculum change to this number is a
-            data edit like every other threshold in this project.
+        elective_minimum: How many electives must pass.
 
     Returns:
-        A `(engine, graduates)` pair built from the *same* underlying
+        A `(engine, graduates)` pair built from the same underlying
         `Rule` objects — `engine` serves `run_named`/`run_group`/
-        `run_all` lookups, `graduates` is the fast, short-circuiting
-        pass/fail composite. See
-        docs/samples/graduation-requirement-verdict/README.md's second
-        diagram.
+        `run_all` lookups, `graduates` is the short-circuiting
+        pass/fail composite.
     """
     subject_rules = [rule_for_subject(p) for p in policies]
     engine = RulesEngine(subject_rules)
