@@ -16,10 +16,33 @@ is a different, narrower concern this suite doesn't cover.
 from __future__ import annotations
 
 import random
+from typing import Callable
 
 from graduation_verdict import SubjectPolicy
 
 _SUBJECT_TYPES = ("academic", "vocational", "language")
+
+
+def _vocational_policy_extras(rng: random.Random) -> tuple[float | None, bool]:
+    return rng.uniform(0, 100), False
+
+
+def _language_policy_extras(rng: random.Random) -> tuple[float | None, bool]:
+    return None, rng.choice([True, False])
+
+
+def _academic_policy_extras(rng: random.Random) -> tuple[float | None, bool]:
+    return None, False
+
+
+# (practical_min_pct, exemption_allowed) per subject_type — the two policy
+# fields whose valid range depends on which type generated them. A new
+# subject type is a new function plus a new row here.
+_POLICY_EXTRAS_BY_SUBJECT_TYPE: dict[str, Callable[[random.Random], tuple[float | None, bool]]] = {
+    "vocational": _vocational_policy_extras,
+    "language": _language_policy_extras,
+    "academic": _academic_policy_extras,
+}
 
 
 def random_policy(rng: random.Random, subject_id: str) -> SubjectPolicy:
@@ -34,14 +57,36 @@ def random_policy(rng: random.Random, subject_id: str) -> SubjectPolicy:
         randomized independently.
     """
     subject_type = rng.choice(_SUBJECT_TYPES)
+    practical_min_pct, exemption_allowed = _POLICY_EXTRAS_BY_SUBJECT_TYPE[subject_type](rng)
     return SubjectPolicy(
         subject_id=subject_id,
         subject_type=subject_type,
         written_min_pct=rng.uniform(0, 100),
-        practical_min_pct=rng.uniform(0, 100) if subject_type == "vocational" else None,
-        exemption_allowed=rng.choice([True, False]) if subject_type == "language" else False,
+        practical_min_pct=practical_min_pct,
+        exemption_allowed=exemption_allowed,
         is_elective=rng.choice([True, False]),
     )
+
+
+def _vocational_context_extras(rng: random.Random) -> dict:
+    return {"practical_pct": rng.uniform(0, 100)}
+
+
+def _language_context_extras(rng: random.Random) -> dict:
+    return {"has_exemption": rng.choice([True, False])}
+
+
+def _academic_context_extras(rng: random.Random) -> dict:
+    return {}
+
+
+# Extra score-entry fields per subject_type, merged onto the shared
+# written_pct base below.
+_CONTEXT_EXTRAS_BY_SUBJECT_TYPE: dict[str, Callable[[random.Random], dict]] = {
+    "vocational": _vocational_context_extras,
+    "language": _language_context_extras,
+    "academic": _academic_context_extras,
+}
 
 
 def random_context(rng: random.Random, policies: list[SubjectPolicy]) -> dict:
@@ -59,10 +104,7 @@ def random_context(rng: random.Random, policies: list[SubjectPolicy]) -> dict:
     scores = {}
     for policy in policies:
         entry = {"written_pct": rng.uniform(0, 100)}
-        if policy.subject_type == "vocational":
-            entry["practical_pct"] = rng.uniform(0, 100)
-        if policy.subject_type == "language":
-            entry["has_exemption"] = rng.choice([True, False])
+        entry.update(_CONTEXT_EXTRAS_BY_SUBJECT_TYPE[policy.subject_type](rng))
         scores[policy.subject_id] = entry
 
     return {
