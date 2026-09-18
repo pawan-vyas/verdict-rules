@@ -10,9 +10,9 @@ namespace VerdictRules;
 /// <typeparamref name="TContext"/>.
 /// </remarks>
 /// <typeparam name="TContext">The context type every sub-rule shares.</typeparam>
-/// <param name="name">See <see cref="Name"/>.</param>
+/// <param name="name"><inheritdoc cref="IRule{TContext}.Name" path="/summary/node()" /></param>
 /// <param name="rules">Sub-rules, evaluated in this order.</param>
-/// <param name="group">See <see cref="Group"/>.</param>
+/// <param name="group"><inheritdoc cref="IRule{TContext}.Group" path="/summary/node()" /></param>
 public sealed class OrRule<TContext>(string name, IReadOnlyList<IRule<TContext>> rules, string? group = null) : IRule<TContext>
 {
     /// <summary>Sub-rules, evaluated in order until one passes or all fail.</summary>

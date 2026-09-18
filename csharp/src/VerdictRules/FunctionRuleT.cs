@@ -8,9 +8,9 @@ namespace VerdictRules;
 /// own parameter type.
 /// </remarks>
 /// <typeparam name="TContext">The type this rule's predicate reads from.</typeparam>
-/// <param name="name">See <see cref="Name"/>.</param>
+/// <param name="name"><inheritdoc cref="IRule{TContext}.Name" path="/summary/node()" /></param>
 /// <param name="predicate">The wrapped predicate <see cref="EvaluateAsync"/> delegates to.</param>
-/// <param name="group">See <see cref="Group"/>.</param>
+/// <param name="group"><inheritdoc cref="IRule{TContext}.Group" path="/summary/node()" /></param>
 public sealed class FunctionRule<TContext>(string name, RulePredicate<TContext> predicate, string? group = null) : IRule<TContext>
 {
     /// <summary>The wrapped predicate, run unchanged by <see cref="EvaluateAsync"/>.</summary>

@@ -6,8 +6,8 @@ namespace VerdictRules;
 /// <summary>
 /// Aggregate outcome of running a whole set of rules through the engine.
 /// </summary>
-/// <param name="passed">See <see cref="Passed"/>.</param>
-/// <param name="results">See <see cref="Results"/>.</param>
+/// <param name="passed"><inheritdoc cref="Passed" path="/summary/node()" /></param>
+/// <param name="results"><inheritdoc cref="Results" path="/summary/node()" /></param>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
 [DebuggerTypeProxy(typeof(RunResultDebugView))]
 public sealed class RunResult(bool passed, IReadOnlyList<RuleResult> results)
