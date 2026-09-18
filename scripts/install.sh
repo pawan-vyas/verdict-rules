@@ -53,19 +53,35 @@
 #
 # This script runs in two different layouts and resolves its own skill source accordingly, so the
 # same file works unmodified in both — no separate copy to keep in sync:
-#   - Dev repo:            scripts/install.sh, with ../skills/verdict/ as the source.
+#   - Dev repo:            scripts/install.sh, with no sibling ./skill/ dir. skills/verdict/ in git
+#     holds only hand-written content -- fetch-docs.sh's own fetch-catalog.tsv and the bundled
+#     docs/architecture/ are generated at build time (see scripts/build.sh) and are not present in
+#     that source tree. So this layout runs scripts/build.sh itself and vendors from its
+#     dist/verdict.skill output, never from skills/verdict/ directly -- vendoring straight from
+#     source once shipped an installed skill silently missing fetch-docs.sh's own catalog and the
+#     bundled architecture docs, caught only by testing a real downstream install end to end.
 #   - Standalone tools zip: install.sh at the package root, with ./skill/ as the source (see
 #     scripts/build.sh, which packages dist/verdict-tools.zip in exactly this shape — download that
 #     instead of cloning the whole repo if you only need the installer, not this repo's own docs/dev
-#     material).
+#     material). That skill/ directory is already a build.sh output, so no rebuild step here.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TEMPLATES_DIR="$SCRIPT_DIR/harness-templates"
+BUILD_TMP=""
+cleanup_build_tmp() { [ -n "$BUILD_TMP" ] && rm -rf "$BUILD_TMP"; return 0; }
+trap cleanup_build_tmp EXIT
+
 if [ -d "$SCRIPT_DIR/skill" ]; then
   SKILL_SRC="$SCRIPT_DIR/skill"                                # standalone tools package
 else
-  SKILL_SRC="$(cd "$SCRIPT_DIR/.." && pwd)/skills/verdict"     # dev repo
+  # Dev repo: build fresh (docs/architecture/, MANIFEST.toml, fetch-docs.sh, fetch-catalog.tsv)
+  # rather than vendoring skills/verdict/'s own hand-written-only source tree.
+  REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+  bash "$REPO_ROOT/scripts/build.sh" >&2
+  BUILD_TMP="$(mktemp -d)"
+  unzip -q "$REPO_ROOT/dist/verdict.skill" -d "$BUILD_TMP"
+  SKILL_SRC="$BUILD_TMP/verdict"
 fi
 MARKER="verdict:marker"
 
@@ -127,26 +143,29 @@ would() { if [ "$DRY_RUN" -eq 1 ]; then printf '[dry-run] %s\n' "$*"; fi; }
 # vendor_one() does the actual copy into one absolute destination path.
 vendor_one() {
   local dest="$1"
-  would "vendor SKILL.md + references/ into $dest/ (refreshed if already present)"
+  would "vendor SKILL.md + references/ + scripts/ into $dest/ (refreshed if already present)"
   if [ "$DRY_RUN" -eq 0 ]; then
     # references/ nests one subdirectory per language (today: references/python/), and that set of
     # languages changes as new SDKs ship -- a plain `cp -r` only ever adds or overwrites, it never
     # removes, so a stale destination accumulates orphaned files a source removal should have cleaned
     # up. rm -rf + recreate makes this a real sync, not a merge.
-    rm -rf "$dest/references"
-    mkdir -p "$dest/references"
+    rm -rf "$dest/references" "$dest/scripts"
+    mkdir -p "$dest/references" "$dest/scripts"
     cp "$SKILL_SRC/SKILL.md" "$dest/SKILL.md"
     cp -r "$SKILL_SRC/references/." "$dest/references/"
+    cp -r "$SKILL_SRC/scripts/." "$dest/scripts/"
     # cp preserves an existing destination file's permission bits rather than resetting them, so an
     # already-present, wrongly-permissioned destination (e.g. a stray 600) would otherwise survive a
     # refresh. Force it explicitly every time instead of relying on umask defaults for new files only.
-    # references/ nests real subdirectories -- a flat `chmod 644 references/*` would catch those
+    # references/ and scripts/ nest real subdirectories -- a flat `chmod 644 */*` would catch those
     # directories too and strip their execute/traverse bit (644 on a dir = not listable), so files and
     # directories need separate, recursive treatment, not one flat glob.
     chmod 644 "$dest/SKILL.md"
     find "$dest/references" -type d -exec chmod 755 {} +
     find "$dest/references" -type f -exec chmod 644 {} +
-    note "vendored $dest/ (SKILL.md + references/)"
+    find "$dest/scripts" -type f -name '*.sh' -exec chmod 755 {} +
+    find "$dest/scripts" -type f -not -name '*.sh' -exec chmod 644 {} +
+    note "vendored $dest/ (SKILL.md + references/ + scripts/)"
   fi
 }
 
