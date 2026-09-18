@@ -55,13 +55,16 @@ gated anywhere. That's a real gap shared with every language SDK here,
 not a JS/TS-specific decision; see [`../future_plan.md`](../future_plan.md)
 if it's ever picked up.
 
-This SDK does not yet have the second testing layer only Python has so
-far — a full, tested example project checked against the shared
-graduation fixture (see
-[`../../fixtures/graduation_verdict/README.md`](../../fixtures/graduation_verdict/README.md)).
-That arrives at Stage 4 ("Prove") of
+This SDK also has the second testing layer — a full, tested example
+project checked against the shared graduation fixture (see
+[`../../fixtures/graduation_verdict/README.md`](../../fixtures/graduation_verdict/README.md)),
+at [`../../js/examples/graduation_verdict/`](../../js/examples/graduation_verdict/README.md).
+That satisfies Stage 4 ("Prove") of
 [`../maintenance/adding-a-language.md`](../maintenance/adding-a-language.md),
-along with an oracle/differential suite in this language's own idiom.
+including an oracle/differential suite in this language's own idiom
+(500 generated cases, checked against an independent, verdict-rules-free
+re-implementation — see that project's own
+[`docs/testing.md`](../../js/examples/graduation_verdict/docs/testing.md)).
 
 ## Test layout
 
