@@ -1,23 +1,14 @@
-/// A second, independent, verdict_rules-free implementation of the graduation decision.
+/// A second, independent, verdict_rules-free implementation of the
+/// graduation decision, generalized to score any policy list rather than
+/// the fixed 7-subject curriculum. Ground truth for the chaos suite's
+/// differential testing.
 ///
-/// This is deliberately the "naive way" from
-/// docs/samples/graduation-requirement-verdict/README.md, generalized to
-/// score *any* policy list rather than the fixed 7-subject curriculum --
-/// its entire job is to be obviously correct by inspection, so it can
-/// serve as ground truth for the chaos suite's differential testing. See
-/// that suite's own doc comment and docs/testing/README.md for the full
-/// reasoning: two independently written implementations (this plain loop,
-/// and the verdict_rules-based engine in graduation_check.dart) must agree
-/// on every input, or one of them is wrong.
-///
-/// Never import package:verdict_rules here -- an oracle that shares a bug
-/// with the system it's checking proves nothing.
+/// Never import package:verdict_rules here.
 library;
 
 import 'subject_policy.dart';
 
-/// Whether one subject's own scores clear its policy's bar -- plain
-/// if/else, no rule involved.
+/// Whether one subject's own scores clear its policy's bar.
 bool _subjectPasses(SubjectPolicy policy, Map<String, Object?> context) {
   final scores = context['scores'] as Map<String, Object?>;
   final subject = scores[policy.subjectId] as Map<String, Object?>;
@@ -38,10 +29,9 @@ bool _subjectPasses(SubjectPolicy policy, Map<String, Object?> context) {
   return writtenPct >= policy.writtenMinPct;
 }
 
-/// Compute the graduation decision directly, with no verdict_rules involved at all.
-///
-/// Returns whether this student graduates, computed independently of
-/// `ruleForSubject`/`buildGraduationCheck` -- the two must always agree.
+/// Compute the graduation decision directly, with no verdict_rules
+/// involved. Computed independently of
+/// `ruleForSubject`/`buildGraduationCheck`.
 bool expectedGraduates(List<SubjectPolicy> policies,
     Map<String, Object?> context, int electiveMinimum) {
   final corePolicies = policies.where((p) => !p.isElective).toList();

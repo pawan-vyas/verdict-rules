@@ -1,10 +1,8 @@
-/// Graduation requirement verdict -- the flagship verdict_rules example, as real code.
+/// Graduation requirement verdict, implemented with verdict_rules.
 ///
-/// See docs/samples/graduation-requirement-verdict/README.md for the full
-/// design -- the naive-way contrast, both diagrams, and the reasoning
-/// behind every choice below. See fixtures/graduation_verdict/README.md
-/// for how to extend this project, and docs/testing/README.md for why its
-/// own test suite doubles as a regression net for verdict_rules itself.
+/// See docs/samples/graduation-requirement-verdict/README.md for the
+/// design and fixtures/graduation_verdict/README.md for the fixture
+/// contract.
 library;
 
 import 'dart:convert';
@@ -64,8 +62,7 @@ final _subjectRuleBuilders =
 /// exemption path, or a plain [FunctionRule] otherwise.
 ///
 /// Throws [ArgumentError] if [policy.subjectType] isn't one of the known
-/// types -- deliberately loud rather than silently building a
-/// vacuously-passing rule for an unrecognized policy.
+/// types.
 Rule<Context> ruleForSubject(SubjectPolicy policy) {
   final group = policy.isElective ? 'elective' : 'core';
   final sid = policy.subjectId;
@@ -127,19 +124,16 @@ Future<RuleResult> attendanceMet(Map<String, Object?> context) async =>
 /// Read the curriculum -- subject policies and the elective-count threshold
 /// -- from a JSON file.
 ///
-/// Returns one [SubjectPolicy] per entry (missing optional fields filled
-/// with their defaults, the same way a real database row's NULL columns
-/// would be handled), and the minimum number of electives required to
-/// graduate. Both come from data -- neither is a Dart literal anywhere in
-/// this project.
+/// Returns one [SubjectPolicy] per entry, with missing optional fields
+/// filled with their defaults, and the minimum number of electives
+/// required to graduate.
 (List<SubjectPolicy>, int) loadCurriculum(String path) => curriculumFromJson(
     jsonDecode(File(path).readAsStringSync()) as Map<String, Object?>);
 
 /// Convert an already-parsed curriculum map (the shared
-/// `{ elective_minimum, subjects }` shape) into `(policies, electiveMinimum)`
-/// -- the same row-conversion [loadCurriculum] applies to a file, exposed
-/// separately so the edge-case suite can apply it to edge_cases.json's own
-/// inline curricula without re-parsing anything from disk.
+/// `{ elective_minimum, subjects }` shape) into `(policies, electiveMinimum)`.
+/// Exposed separately from [loadCurriculum] so edge_cases.json's own inline
+/// curricula can be converted without re-parsing anything from disk.
 (List<SubjectPolicy>, int) curriculumFromJson(Map<String, Object?> curriculum) {
   final subjects = curriculum['subjects'] as List<Object?>;
   final policies = subjects.map((row) {
@@ -156,9 +150,7 @@ Future<RuleResult> attendanceMet(Map<String, Object?> context) async =>
   return (policies, curriculum['elective_minimum'] as int);
 }
 
-/// One student's context plus the shared fixture's own `expected` block,
-/// carried alongside as a raw JSON map so the test suite can read whichever
-/// field it needs without a matching Dart type for every fixture shape.
+/// One student's context plus the shared fixture's own `expected` block.
 class StudentRecord {
   final Map<String, Object?> context;
   final Map<String, Object?> expected;
@@ -168,10 +160,8 @@ class StudentRecord {
 
 /// Read the batch of student records from a JSON file.
 ///
-/// Returns one context per student -- each value's own shape already *is*
-/// the context map verdict_rules' rules read (plus a `note` and `expected`
-/// field the rules themselves never read, used only by the demo and the
-/// test suite).
+/// Returns one context per student, plus the `note`/`expected` fields the
+/// rules themselves never read.
 Map<String, StudentRecord> loadStudents(String path) {
   final raw = jsonDecode(File(path).readAsStringSync()) as Map<String, Object?>;
   return raw.map((studentId, row) {
@@ -186,8 +176,8 @@ Map<String, StudentRecord> loadStudents(String path) {
 /// Convert a bare, shared-fixture-shaped context map (the `scores`/`cgpa`/
 /// `attendance_*` fields the rules actually read, with no `note`/`expected`
 /// wrapper) into this project's context shape. Exposed separately from
-/// [loadStudents] so the edge-case suite can apply it directly to
-/// edge_cases.json's own inline `student` objects.
+/// [loadStudents] so edge_cases.json's own inline `student` objects can be
+/// converted directly.
 Map<String, Object?> contextFromJson(Map<String, Object?> row) {
   final rawScores = row['scores'] as Map<String, Object?>;
   final scores = rawScores.map((subjectId, s) {
@@ -213,12 +203,12 @@ Map<String, Object?> contextFromJson(Map<String, Object?> row) {
   };
 }
 
-/// Build both structures from one policy list: a diagnostic engine and a fast verdict.
+/// Build both structures from one policy list: a diagnostic engine and a
+/// fast verdict.
 ///
-/// Returns a `(engine, graduates)` pair built from the *same* underlying
+/// Returns a `(engine, graduates)` pair built from the same underlying
 /// rule objects -- `engine` serves runNamed/runGroup/runAll lookups,
-/// `graduates` is the fast, short-circuiting pass/fail composite. See
-/// docs/samples/graduation-requirement-verdict/README.md's second diagram.
+/// `graduates` is the short-circuiting pass/fail composite.
 (RulesEngine<Context>, AndRule<Context>) buildGraduationCheck(
     List<SubjectPolicy> policies, int electiveMinimum) {
   final subjectRules = policies.map(ruleForSubject).toList();

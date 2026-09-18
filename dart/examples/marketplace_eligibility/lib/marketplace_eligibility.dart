@@ -1,6 +1,7 @@
-/// A two-sided marketplace eligibility check exercising `Rule<TContext>`
-/// end to end. See docs/samples/marketplace-eligibility/README.md for the
-/// original framing question this project answers.
+/// A two-sided marketplace eligibility check, implemented with
+/// verdict_rules.
+///
+/// See docs/samples/marketplace-eligibility/README.md for the design.
 library;
 
 export 'src/contexts.dart';

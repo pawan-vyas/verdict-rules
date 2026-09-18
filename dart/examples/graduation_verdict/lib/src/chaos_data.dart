@@ -1,18 +1,9 @@
-/// Deterministic, randomized (policy, student) case generation for the chaos suite.
+/// Randomized (policy, student) case generation for the chaos suite.
 ///
-/// "Deterministic" is the load-bearing word: every function here takes a
-/// `Random` instance explicitly -- never a shared or ambient generator --
-/// so a case built from a given seed is exactly reproducible. The chaos
-/// suite seeds one `Random` per case from a pinned constant plus that
-/// case's own index, so any single failing case can be regenerated on its
-/// own without replaying every case before it. `dart:math`'s own `Random`
-/// is already seedable, so no custom generator is needed here, unlike
-/// JavaScript's `Math.random()`.
-///
-/// Every value generated stays within the schema's valid domain (a real
-/// percentage, a real subjectType, etc.) -- this generates a wide space of
-/// *valid* curricula and students, not malformed input. Garbage-input
-/// handling is a different, narrower concern this suite doesn't cover.
+/// Every function here takes a `Random` instance explicitly, never a shared
+/// or ambient generator, so a case built from a given seed is exactly
+/// reproducible. Every generated value stays within the schema's valid
+/// domain (a real percentage, a real subjectType, etc.).
 library;
 
 import 'dart:math';
@@ -30,8 +21,7 @@ extension RandomUniform on Random {
 }
 
 /// (practicalMinPct, exemptionAllowed) per subjectType -- the two policy
-/// fields whose valid range depends on which type generated them. A new
-/// subject type is a new entry here.
+/// fields whose valid range depends on which type generated them.
 final _policyExtrasBySubjectType = <String, (double?, bool) Function(Random)>{
   'vocational': (rng) => (rng.uniform(0, 100), false),
   'language': (rng) => (null, rng.choice([true, false])),
@@ -64,9 +54,6 @@ final _contextExtrasBySubjectType =
 };
 
 /// Build one randomized student context matching the given policies.
-///
-/// Returns a context in exactly the shape `graduation_check.dart`'s rules
-/// and `oracle.dart`'s `expectedGraduates` both expect.
 Map<String, Object?> randomContext(Random rng, List<SubjectPolicy> policies) {
   final scores = <String, Object?>{};
   for (final policy in policies) {
@@ -87,11 +74,8 @@ Map<String, Object?> randomContext(Random rng, List<SubjectPolicy> policies) {
 /// Build one complete, self-consistent randomized case.
 ///
 /// [rng] is the sole source of randomness, so the same `rng` state always
-/// produces the same case. Returns a record ready to hand to both
-/// `buildGraduationCheck` and `expectedGraduates`. The elective minimum is
-/// always achievable (bounded by how many electives were actually
-/// generated), so a mismatch between the two implementations is never
-/// explained away as "an impossible curriculum."
+/// produces the same case. The elective minimum is always achievable,
+/// bounded by how many electives were actually generated.
 (List<SubjectPolicy>, Map<String, Object?>, int) generateCase(Random rng,
     {int numSubjects = 7}) {
   final policies =

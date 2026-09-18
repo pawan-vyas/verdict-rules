@@ -28,9 +28,7 @@ class SubjectPolicy {
     this.isElective = false,
   });
 
-  /// Returns a copy with the given fields replaced -- used by the test suite
-  /// to build a deliberately-invalid policy for the "unknown subject type"
-  /// case without repeating every other field.
+  /// Returns a copy with the given fields replaced.
   SubjectPolicy copyWith({String? subjectType}) => SubjectPolicy(
         subjectId: subjectId,
         subjectType: subjectType ?? this.subjectType,

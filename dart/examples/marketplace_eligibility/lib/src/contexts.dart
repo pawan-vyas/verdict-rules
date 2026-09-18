@@ -1,8 +1,5 @@
 /// The narrow context `isVerifiedIdentity` is written against. Shares no
-/// fields with either [SellerListingContext] or [BuyerPurchaseContext] --
-/// the point being demonstrated is that a rule written against this alone
-/// can be reused against both, via `ProjectingRule`, without ever seeing
-/// either wider context directly.
+/// fields with either [SellerListingContext] or [BuyerPurchaseContext].
 class IdentityFlag {
   final bool verified;
   const IdentityFlag({required this.verified});
@@ -24,10 +21,7 @@ class SellerListingContext {
 }
 
 /// What a purchase-eligibility check reads. Shares no fields with
-/// [SellerListingContext] -- this is deliberate; the only thing the two
-/// sides have in common is that both need an identity-verification check,
-/// which is exactly what `ProjectingRule` exists to let them share without
-/// a common context.
+/// [SellerListingContext].
 class BuyerPurchaseContext {
   final String buyerId;
   final bool buyerVerified;
