@@ -11,28 +11,20 @@ than that convention's bracketed, dated one.
 
 Tagged `dart-vX.Y.Z`.
 
-## 0.0.4
+## 0.3.0
 
 **Breaking**: `Rule` is now generic over the context it reads from
 (`Rule<TContext>`), along with `FunctionRule`, `AndRule`, `OrRule`, and
-`RulesEngine`. An explicit `implements Rule` declaration from before
-this release no longer compiles on its own -- it becomes
-`implements Rule<Context>` (dict-context, using the new `Context`
-typedef for `Map<String, Object?>`, now exported from the package) or
-`implements Rule<SomeTypedContext>` explicitly. This is the one real
-break: constructor call sites (`FunctionRule(...)`, `AndRule(...)`,
-`RulesEngine(...)`) are unaffected, since `TContext` is inferred there
-via ordinary Dart type inference the same as before. An `implements
-Rule` declaration was already the rarer, discouraged pattern this
-package's own docs steered consumers away from -- most rules use
-`FunctionRule` instead, which needs no change at all.
+`RulesEngine`. An explicit `implements Rule` declaration no longer
+compiles on its own -- it becomes `implements Rule<Context>` (using the
+new `Context` typedef, now exported) or `implements
+Rule<SomeTypedContext>`. Constructor call sites (`FunctionRule(...)`,
+`AndRule(...)`, `RulesEngine(...)`) are unaffected.
 
 - **Added**: `Context`, a `typedef` for `Map<String, Object?>`, exported
-  from the package root as the dict-context spelling of `TContext`.
+  from the package root.
 - **Added**: every sub-rule inside one `AndRule<TContext>`/
-  `OrRule<TContext>` must now be a `Rule` of the exact same `TContext` --
-  the analyzer catches a mismatch that a pre-generic dict-context
-  composite could only fail on at runtime, via a missing key.
+  `OrRule<TContext>` must now be a `Rule` of the exact same `TContext`.
 
 ## 0.0.3
 

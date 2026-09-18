@@ -5,22 +5,15 @@ Release history for the `verdict-rules` JS/TS package. Format follows
 [semantic versioning](https://semver.org/), scoped to this package — it
 releases independently of the other language SDKs and of the AI-agent skill.
 
-## [0.0.8] - 2026-09-17
+## [0.3.0] - 2026-09-18
 
-- **`Rule<TContext>` is now generic over the context it reads from**,
-  along with `FunctionRule`, `AndRule`, `OrRule`, and `RulesEngine` —
-  with no default type parameter. A default was considered and
-  rejected: it would make "deliberately chose dict-context" and "forgot
-  to type this" look identical in source, a real inconsistency in a
-  codebase this strict elsewhere. Dict-context is `Rule<Context>`,
-  written out every time — exactly as first-class as any other type
-  argument, never a fallback for the untyped. `TContext` is inferred
-  from a predicate's own parameter type, so most call sites need no
-  explicit type argument at all.
+- `Rule<TContext>` is now generic over the context it reads from, along
+  with `FunctionRule`, `AndRule`, `OrRule`, and `RulesEngine` — no
+  default type parameter. Dict-context is `Rule<Context>`, written out
+  explicitly. `TContext` is inferred from a predicate's own parameter
+  type.
 - `docs/architecture/js.md` gained a "Generic context, concretely"
-  section covering the new type parameter, why dict-context stays
-  permanently first-class, and why `RuleResult`/`RunResult` stay
-  non-generic.
+  section.
 
 ## [0.0.7] - 2026-09-17
 

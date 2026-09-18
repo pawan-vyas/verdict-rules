@@ -3,7 +3,7 @@ description: >-
   A small, zero-dependency, async-native rule-evaluation engine. Compose
   conditions into one explainable pass/fail verdict, with real
   short-circuiting as a guarantee.
-version: 0.0.4
+version: 0.3.0
 repository: https://github.com/pawan-vyas/verdict-rules/tree/main/dart/packages/verdict_rules
 issue_tracker: https://github.com/pawan-vyas/verdict-rules/issues
 topics:

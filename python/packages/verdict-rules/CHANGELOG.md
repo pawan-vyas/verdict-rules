@@ -8,29 +8,20 @@ which keeps its own changelog beside its own manifest.
 
 Tagged `python-vX.Y.Z`.
 
-## [0.3.0] - 2026-09-17
+## [0.3.0] - 2026-09-18
 
 ### Added
 
-- **`Rule` is now generic over the context it reads from
-  (`Rule[TContext]`)**, along with `FunctionRule`, `AndRule`, `OrRule`,
-  and `RulesEngine`. Purely a typing-level addition -- Python erases
-  generics at runtime, so every existing structural rule keeps
-  satisfying `Rule` unconditionally whether or not it names a type
-  argument, and an untyped `dict` context stays exactly as first-class
-  as a typed one (`Rule[dict[str, Any]]`), never a fallback for the
-  untyped. `TContext` is inferred from a predicate's own annotation, so
-  `FunctionRule("x", predicate)` needs no explicit type argument as long
-  as `predicate` itself is annotated.
-- `TContext` exported from the package root for consumers writing their
-  own generic `Rule`-adjacent types.
+- `Rule` is now generic over the context it reads from
+  (`Rule[TContext]`), along with `FunctionRule`, `AndRule`, `OrRule`,
+  and `RulesEngine`. Erased at runtime. `TContext` is inferred from a
+  predicate's own annotation.
+- `TContext` exported from the package root.
 
 ### Changed
 
 - `docs/architecture/python.md` gained a "Generic context, concretely"
-  section covering the new type parameter, why dict-context stays
-  permanently first-class, and why `RuleResult`/`RunResult` stay
-  non-generic.
+  section.
 
 ## [0.2.9] - 2026-09-17
 
