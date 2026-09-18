@@ -7,59 +7,82 @@
 
 ## The naive way (and why it breaks down)
 
-The obvious first implementation ends up as *two* functions that have to
-be kept in sync by hand — one for the yes/no decision, one for the
-customer-facing checklist:
+The obvious first implementation is *two* functions, one for the
+customer-facing checklist and one for the actual yes/no decision, each
+with the four criteria's thresholds written inline:
 
 ```python
 async def gold_checklist(customer: dict) -> dict:
     return {
-        "spend": customer["trailing_12mo_spend"] >= customer["gold_spend_threshold"],
-        "orders": customer["trailing_12mo_orders"] >= customer["gold_order_threshold"],
-        "returns": customer["return_rate"] <= customer["gold_max_return_rate"],
+        "spend": customer["trailing_12mo_spend"] >= 5000,
+        "orders": customer["trailing_12mo_orders"] >= 15,
+        "returns": customer["return_rate"] <= 0.05,
         "standing": customer["account_status"] == "active",
     }
 
 
 async def is_eligible_for_gold(customer: dict) -> bool:
-    checklist = await gold_checklist(customer)
-    return all(checklist.values())
+    return (
+        customer["trailing_12mo_spend"] >= 5000
+        and customer["trailing_12mo_orders"] >= 20
+        and customer["return_rate"] <= 0.05
+        and customer["account_status"] == "active"
+    )
 ```
 
-Nothing enforces the coupling between the two functions — adding a
-fifth requirement to one without the other produces a promotion
-decision the UI's own checklist can't explain. See the spec for the
-rest of what this shape gets wrong.
+`gold_checklist` promotes at 15 orders; `is_eligible_for_gold` at 20 —
+visible by reading the two functions side by side, not a hypothetical
+future drift. See the spec for the rest of what this shape gets wrong.
 
 ## The `verdict` way
 
+A typed context, not a dict — each threshold has exactly one
+definition, read by name from every rule that needs it. That's what
+makes the naive version's drift structurally impossible here, not
+merely avoided by discipline:
+
 ```python
+from dataclasses import dataclass
+
 from verdict import FunctionRule, RuleResult, RulesEngine
 
 
-async def meets_spend_threshold(context: dict) -> RuleResult:
-    passed = context["trailing_12mo_spend"] >= context["gold_spend_threshold"]
+@dataclass(frozen=True)
+class LoyaltyContext:
+    trailing_12mo_spend: float
+    gold_spend_threshold: float
+    trailing_12mo_orders: int
+    gold_order_threshold: int
+    return_rate: float
+    gold_max_return_rate: float
+    account_status: str
+
+
+async def meets_spend_threshold(context: LoyaltyContext) -> RuleResult:
+    passed = context.trailing_12mo_spend >= context.gold_spend_threshold
     return RuleResult(rule_name="meets_spend_threshold", passed=passed)
 
 
-async def meets_order_count(context: dict) -> RuleResult:
-    passed = context["trailing_12mo_orders"] >= context["gold_order_threshold"]
+async def meets_order_count(context: LoyaltyContext) -> RuleResult:
+    passed = context.trailing_12mo_orders >= context.gold_order_threshold
     return RuleResult(rule_name="meets_order_count", passed=passed)
 
 
-async def return_rate_below_max(context: dict) -> RuleResult:
-    passed = context["return_rate"] <= context["gold_max_return_rate"]
+async def return_rate_below_max(context: LoyaltyContext) -> RuleResult:
+    passed = context.return_rate <= context.gold_max_return_rate
     return RuleResult(rule_name="return_rate_below_max", passed=passed)
 
 
-async def account_in_good_standing(context: dict) -> RuleResult:
-    return RuleResult(rule_name="account_in_good_standing", passed=context["account_status"] == "active")
+async def account_in_good_standing(context: LoyaltyContext) -> RuleResult:
+    return RuleResult(rule_name="account_in_good_standing", passed=context.account_status == "active")
 
 
 # Registered as four independent named rules on one engine — not nested
 # in an AndRule — precisely so run_all() reports every criterion's own
 # outcome, with no short-circuiting hiding a later criterion's result.
-engine = RulesEngine([
+# RulesEngine[LoyaltyContext] documents that every rule here shares this
+# one context type, the same way FunctionRule's own type argument does.
+engine = RulesEngine[LoyaltyContext]([
     FunctionRule("meets_spend_threshold", meets_spend_threshold),
     FunctionRule("meets_order_count", meets_order_count),
     FunctionRule("return_rate_below_max", return_rate_below_max),
@@ -67,8 +90,8 @@ engine = RulesEngine([
 ])
 
 
-async def promotion_checklist(customer_context: dict):
-    result = await engine.run_all(customer_context)
+async def promotion_checklist(context: LoyaltyContext):
+    result = await engine.run_all(context)
     # result.passed is True only if all four passed — the actual promotion decision.
     # result.results is one RuleResult per criterion, always all four — the UI checklist.
     return result
@@ -84,15 +107,15 @@ A customer meeting three of the four criteria — the same case the
 spec's own diagram shows:
 
 ```python
-customer = {
-    "trailing_12mo_spend": 6000,
-    "gold_spend_threshold": 5000,
-    "trailing_12mo_orders": 20,
-    "gold_order_threshold": 15,
-    "return_rate": 0.08,
-    "gold_max_return_rate": 0.05,
-    "account_status": "active",
-}
+customer = LoyaltyContext(
+    trailing_12mo_spend=6000,
+    gold_spend_threshold=5000,
+    trailing_12mo_orders=20,
+    gold_order_threshold=15,
+    return_rate=0.08,
+    gold_max_return_rate=0.05,
+    account_status="active",
+)
 
 checklist = await promotion_checklist(customer)
 checklist.passed
