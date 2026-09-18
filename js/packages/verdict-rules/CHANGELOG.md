@@ -5,6 +5,13 @@ Release history for the `verdict-rules` JS/TS package. Format follows
 [semantic versioning](https://semver.org/), scoped to this package — it
 releases independently of the other language SDKs and of the AI-agent skill.
 
+## [0.3.1] - 2026-09-18
+
+- Every doc comment and inline comment in the package's own source
+  trimmed to state current behavior only -- design rationale,
+  alternatives-considered framing, and cross-references to the deeper
+  docs for "the full reasoning" cut, not relocated.
+
 ## [0.3.0] - 2026-09-18
 
 - `Rule<TContext>` is now generic over the context it reads from, along

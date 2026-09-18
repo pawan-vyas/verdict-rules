@@ -10,6 +10,15 @@ from this file, so the csproj points here instead of carrying a copy.
 
 Tagged `csharp-vX.Y.Z`.
 
+## [0.3.1] - 2026-09-18
+
+### Changed
+
+- Every doc comment and inline comment in the package's own source
+  trimmed to state current behavior only -- design rationale,
+  alternatives-considered framing, and cross-references to the deeper
+  docs for "the full reasoning" cut, not relocated.
+
 ## [0.3.0] - 2026-09-18
 
 ### Added
