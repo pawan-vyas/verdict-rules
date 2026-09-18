@@ -8,30 +8,95 @@ cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skil
 
 ## [0.6.2] - 2026-09-18
 
-- **`fetch-docs.sh` no longer detects an installed version itself** — it
-  now only fetches, given an explicit `language=version` for every call
-  (`fetch-docs.sh python=0.3.1`, not `fetch-docs.sh python`). The
-  removed auto-detection logic was a per-language pile of shell
-  heuristics (parsing `pyproject.toml`, `node_modules`, `pubspec.lock`
-  or `pubspec.yaml`, a `.csproj`'s inline `PackageReference` or a
-  separate `Directory.Packages.props` for Central Package Management)
-  that could only ever cover the shapes it was written against, and
-  kept growing one edge case at a time as real projects were tested
-  against it. Determining the actual installed version is now the
-  agent's own job — each `references/<language>/agent-notes.md`'s
-  fetching section says so, without naming a specific command, so an
-  agent reaches for whatever tooling actually fits the project in
-  front of it.
+- **The fetch tier is gone.** `fetch-docs.sh`, its generated
+  `fetch-catalog.tsv`, `commands/verdict-fetch-docs.md`,
+  `MANIFEST.toml`, and `scripts/skill_manifest.py` are all removed —
+  along with the bundled `docs/architecture/` copy `scripts/build.sh`
+  used to assemble. Every relative link any of that machinery carried
+  was one design assumption (a vendored path resolving the same as its
+  source-repo path) away from silently breaking once vendored into a
+  real downstream project, which is exactly how this happened in
+  practice. In its place, `scripts/generate_repository_map.py` builds
+  `references/REPOSITORY-MAP.md` at build time — a one-line-per-entry
+  index of what exists in the source repository (design rationale,
+  worked samples, extension scenarios), for an agent to fetch itself if
+  a task warrants it. Nothing in the shipped skill links to it or to
+  anything else outside `references/`; the assembled bundle now
+  contains exactly one markdown link in total, an external one in this
+  file.
+- **Determining the installed version is entirely the agent's own job**
+  now, with no shipped script and no canned per-language command
+  examples — each `references/<language>/agent-notes.md` states the
+  requirement (the actual installed version, not a manifest range)
+  without naming a specific command, so an agent reaches for whatever
+  tooling actually fits the project in front of it.
+- **`SKILL.md` gained a "Step 3 — reach for extending" section** stating
+  `Rule`'s structural contract directly, so an agent recognizes when a
+  requirement calls for something `FunctionRule`/`AndRule`/`OrRule`
+  don't directly cover, rather than force-fitting one of them or
+  assuming verdict has no answer. `REPOSITORY-MAP.md` names real, worked
+  instances of the same idea.
+- **Repository links now name a tag, not a filename list** —
+  `SKILL.md`'s "Where to look next" section states the `<language>-v<version>`
+  tag convention explicitly, so an agent reads documentation matching
+  what a project has installed rather than defaulting to the current
+  default branch and describing an API the project does not have.
+- **Two real frontmatter/prose leaks of sample-specific vocabulary into
+  otherwise domain-agnostic language** were found and fixed in
+  `SKILL.md` and the per-language `agent-notes.md` files — phrasing
+  that mirrored this repository's own sample directory names rather
+  than describing an independently-recognizable general category,
+  which works against the library's own stated domain-agnostic ethos.
+- **Every language's "Mistakes that show up in generated `<language>`
+  specifically" section is removed entirely**, after re-auditing every
+  bullet against a stricter bar: specific to this library's own API,
+  not generic language trivia a capable model already has; not a
+  blanket prohibition that would incorrectly veto a legitimate
+  extension pattern; not already stated more generally in `SKILL.md`'s
+  own guarantees or visible two sections up in the same file's own "API
+  in one screen" block; and warning about a mistake that can actually
+  ship silently wrong — not one a compiler or an obvious runtime error
+  already surfaces immediately, which an agent resolves from the error
+  text alone with no verdict-specific context needed. Applied bullet by
+  bullet, nothing survived across all four languages: composite
+  concurrency (`asyncio.gather`/`Promise.all`/`Task.WhenAll`/
+  `Future.wait`) is now covered once, generally, by `SKILL.md`'s own
+  Step 2; context-type homogeneity across a composite's sub-rules is
+  now stated once, generally, as its own new Step 2 guarantee, instead
+  of a per-language note about which compiler happens to enforce it; a
+  predicate returning a bare boolean, a missing `implements`/`: IRule`
+  declaration, an inheritance direction, and a missing generic type
+  argument are all compiler or runtime errors an agent already resolves
+  from the diagnostic text; a nominal-vs-structural-typing explanation
+  duplicated what the API block's own inline comment already said; a
+  falsy-vs-nullish footgun and a `dynamic`-vs-`object?` typing note were
+  general language trivia, not verdict-specific; and a `RuleResult`
+  field misattribution and an exception-catching style preference were
+  real but ordinary implementation care, not a pattern distinctive to
+  generated code. `SKILL.md`'s Step 1 no longer promises this content.
+- Each language's own `agent-notes.md` gained a "Which run mode" table
+  (one fast pass/fail verdict vs. every rule's own outcome vs. a strict
+  vs. non-raising lookup) — the one genuinely load-bearing table that
+  used to live only in the now-removed `docs/architecture/` copy. Its
+  "Testing what matters" section shrank from five bullets to two, for
+  the same reason as the removed Mistakes sections: a bullet that only
+  reminds a reader to test what a guarantee already says ("they're
+  asymmetric, so test both polarities"; "two lookup forms exist, so
+  test both") adds nothing an agent that already read the guarantee
+  doesn't already know to do. What remains teaches an actual technique
+  instead of restating a guarantee: proving short-circuiting needs a
+  call log because the return value is identical either way, and an
+  oracle/differential approach for a rule set built from runtime data
+  rather than hand-picked fixtures.
 - **`install.sh`'s dev-repo layout vendored an incomplete skill** —
   `skills/verdict/`'s own source tree carries only hand-written
-  content; `fetch-docs.sh`'s own catalog and the bundled
-  `docs/architecture/` are generated by `scripts/build.sh` and were
-  never included. `install.sh` now builds fresh and vendors from that
-  output instead. Found by vendoring into a real downstream project and
-  testing the fetch path end to end, not by inspection.
-- The `SKILL.md`/command-doc instructions for identifying a project's
-  language, and which language(s) to fetch for in a polyglot repo, no
-  longer name a fixed list of manifest filenames — both now point at
+  content; the generated `REPOSITORY-MAP.md` is produced by
+  `scripts/build.sh` and was never included. `install.sh` now builds
+  fresh and vendors from that output instead. Found by vendoring into a
+  real downstream project and testing the fetch path end to end, not by
+  inspection.
+- The `SKILL.md` instructions for identifying a project's language no
+  longer name a fixed list of manifest filenames — they point at
   `references/` itself (whichever languages this skill actually ships
   for) rather than an enumerated list that would need editing every
   time a language is added.

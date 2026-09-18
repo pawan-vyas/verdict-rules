@@ -1,9 +1,7 @@
 # Dart — agent notes
 
-Short by design. Everything about *what verdict is* lives in
-`references/docs/`, which is the repository's own documentation rather
-than a summary that could drift from it. This file carries only what is
-specific to the Dart SDK, and to writing Dart that uses it.
+What is specific to the Dart SDK, and to writing Dart that uses it.
+The engine's own general guarantees are in `SKILL.md`, not repeated here.
 
 ## Install and import
 
@@ -63,91 +61,25 @@ context a rule reads from. Every sub-rule inside one `AndRule<TContext>`/
 `OrRule<TContext>` must be a `Rule` of the exact same `TContext` — the
 analyzer rejects mixing contexts once a type argument is named.
 
-## Mistakes that show up in generated Dart specifically
+## Which run mode
 
-- **`Future.wait` in a composite.** It starts every sub-rule's
-  coroutine before the first result returns and destroys the
-  short-circuit guarantee. `AndRule`/`OrRule` evaluate sub-rules in a
-  plain `for` loop with `await`, one at a time — the returned boolean
-  is identical either way, so this is the one mistake here that passes
-  its own tests.
-- **Forgetting `implements Rule<TContext>`.** Dart *does* have
-  structural typing — for function types. Any function matching
-  `RulePredicate` is a rule through `FunctionRule`, with nothing
-  declared and no type to name; a tear-off works directly, as
-  `FunctionRule('quorum', hasQuorum)`. What Dart lacks is structural
-  typing for a *multi-member* interface: an object carrying `name`,
-  `group` and `evaluate` is not thereby a `Rule`, where Python's
-  `Protocol` and TypeScript's structural `interface` would accept it
-  as-is. A rule shape owning its own name and group must say
-  `implements Rule<Context>` (or `implements Rule<SomeTypedContext>`)
-  explicitly — there is no default type parameter to fall back on, so
-  a bare `implements Rule` no longer compiles on its own. That's why
-  `FunctionRule` carries more weight in this SDK than in Python/JS —
-  it's the escape hatch back to shape-based rules, and most rules
-  should use it rather than declaring a type.
-- **`extends Rule<TContext>` instead of `implements Rule<TContext>`.**
-  `Rule` is declared `abstract interface class` specifically to forbid
-  extension — this is a compile error, so an agent won't get it
-  silently wrong, but it's worth knowing why: forbidding extension
-  means an instance method calling another method on `this` always
-  reaches a known implementation, never landing in a consumer's
-  override.
-- **Mixing sub-rules of different `TContext`s inside one
-  `AndRule<TContext>`/`OrRule<TContext>`.** The analyzer rejects this
-  once a type argument is named — reuse a rule across two shapes via an
-  explicit projecting adapter
-  (`docs/extending/reusing-a-rule-across-contexts/dart.md`) instead of
-  trying to loosen the composite's own type parameter.
-- **A predicate returning a bare `bool`.** `FunctionRule`'s predicate
-  must return `Future<RuleResult>`, not `true`/`false`.
-- **Checking `result.detail != null`.** `RuleResult.detail` is a
-  non-nullable `String`, defaulting to `''` — never `null`. The check
-  that means something is `result.detail.isEmpty`.
-- **Catching `ArgumentError` where a rule shape should be reached for
-  instead.** Unlike JS's dedicated `UnknownLookupError` or Python's
-  `KeyError`, Dart's unknown-lookup failure is a plain `ArgumentError`
-  — the same generic exception Dart's own standard library throws for
-  countless unrelated argument-validation failures elsewhere, so
-  catching it by type here is far less precise than in JS or Python.
-  Checking `engine.ruleNames.contains(name)` (or `groupNames`) before
-  calling is clearer, and is exactly what those two getters exist for.
-- **`Map<String, dynamic>` instead of `Map<String, Object?>`** for
-  context. `dynamic` disables type checking entirely; `Object?` still
-  accepts a map straight out of `jsonDecode` with no cast, while
-  keeping real type checking everywhere else the map is used.
-- **`ruleName` set to something other than the rule's own `name`.** A
-  caller walking a `RunResult` attributes outcomes by that field.
+| Need | Reach for |
+| --- | --- |
+| One fast pass/fail verdict | A composite's own `evaluate()` |
+| Every rule's own outcome (a status page, an audit trail) | `engine.runAll()` |
+| One named rule/group; absence would be a bug | The strict lookup — throws |
+| One named rule/group; absence is expected, your domain decides what it means | The non-raising lookup |
 
 ## Testing what matters
 
-[`references/docs/testing/`](../../../../docs/testing/README.md) (fetch it) is the full checklist,
-with [`references/docs/testing/dart.md`](../../../../docs/testing/dart.md)
-naming which test proves which contract. The parts that are easy to
-skip:
+`docs/testing/` in the source repository is the full checklist (see
+`references/REPOSITORY-MAP.md`). The parts that are easy to skip:
 
 - Prove short-circuiting with a **call log**, not the final boolean. A
   composite that evaluates everything still returns the right answer.
-- Give each **vacuous-truth polarity** its own test. They are asymmetric.
-- Test both halves of a lookup: the strict form throwing **and** the
-  `try` form returning `null`.
-- If code uses a fallback, test the **present-but-failing** case — not
-  just the absent one. That is the direction where a bug is silent.
 - For a rule set **built from stored/config data at runtime** rather
   than hand-written, hand-picked fixtures stop scaling as the
   configuration space grows — reach for property-based testing or an
   oracle/differential approach (an independent, deliberately simpler
   reference implementation checked against many random configurations)
   instead of adding fixtures one at a time as bugs are found.
-
-## Fetching the deeper documents
-
-Determine the actual installed version first — not a range from the
-manifest — using this ecosystem's own tooling, then:
-
-```bash
-scripts/fetch-docs.sh dart=<version>
-```
-
-If the tag doesn't exist, re-check the version before assuming the release
-is missing. See [`commands/verdict-fetch-docs.md`](../../commands/verdict-fetch-docs.md).

@@ -23,9 +23,9 @@ are working in.
 
 Then look for `references/<language>/agent-notes.md`:
 
-- **It exists** → read it first. It is short, and it carries what is
-  specific to that SDK: its idioms, its naming, and the mistakes that
-  show up in generated code for that language.
+- **It exists** → read it first. It is short and self-sufficient: it
+  carries what is specific to that SDK — install/import, the full API,
+  its idioms, its naming, and which run mode to reach for.
 - **It does not exist** → **verdict has no SDK for that language.** Say
   so plainly rather than improvising an API from another language's
   shape. The guarantees below hold everywhere, but a language without a
@@ -47,6 +47,14 @@ passes its own tests while being silently incorrect:
   elsewhere in a codebase.
 - **Vacuous truth is asymmetric.** Empty `AndRule` passes; empty
   `OrRule` fails.
+- **Every sub-rule inside one composite shares the exact same context
+  type.** `AndRule`/`OrRule`/`RulesEngine` hold one `TContext` for every
+  sub-rule they run — this is the engine's own contract, not an
+  artifact of a particular type system. A statically-typed SDK's
+  compiler happens to enforce it; that a language lacks static types
+  does not loosen the contract itself. Reuse a rule across two context
+  shapes with an explicit projecting adapter, never by loosening a
+  composite's own type.
 - **Emptiness is not absence.** An empty rule list is a valid input. An
   *unknown* name or group is absence — strict lookups raise,
   `try`-prefixed ones return the absent value.
@@ -55,43 +63,30 @@ passes its own tests while being silently incorrect:
 - **A predicate's exception is never caught.** It propagates uncaught,
   same as calling that code directly.
 
-## Step 3 — read what the task needs
+## Step 3 — reach for extending, don't force-fit
 
-**`references/docs/`** holds this engine's own documentation, verbatim.
-It is not a summary written for this skill; it is the same file the
-repository ships, so it cannot drift from the implementation.
+`Rule` is a structural contract (`name`, `group`,
+`evaluate(context) -> RuleResult`), not a fixed set of built-in types.
+Anything satisfying that shape — whatever form a requirement actually
+calls for — composes with `AndRule`/`OrRule`/`RulesEngine`
+automatically, with no registration and no change needed on verdict's
+own side. When `FunctionRule`/`AndRule`/`OrRule` don't directly fit,
+build whatever does, rather than contorting them to cover it.
 
-| Read | When |
-| :-- | :-- |
-| [`references/docs/architecture/README.md`](../../docs/architecture/README.md) | Understanding *why* it is shaped this way — the type structure, the execution model, and which run mode a caller needs. Each language's own concrete realization (real type/method names) is alongside it in the same directory. |
-| `references/<language>/agent-notes.md` | Always, first. Short and language-specific. |
+`references/REPOSITORY-MAP.md` names real, worked instances of this —
+read one that matches, or use the same structural fit to write a new,
+unnamed pattern when none of them do.
 
-Prefer a section over a document. This file carries headings and
-anchors, so `references/docs/architecture/README.md#type-structure` is
-a better read than the whole file.
+## Where to look next
 
-### Documents fetched on demand
+`references/REPOSITORY-MAP.md` names what else exists in the source
+repository — the design rationale, worked samples, and extension
+scenarios — each with a one-line description. Nothing there is
+vendored; decide whether something is worth reading, then get it
+yourself.
 
-Deeper material is not shipped, and is pulled only when a task needs
-it: the testing guide, the language quickstart, the extension scenarios
-(building anything *with* verdict — wrapping a predicate, a new rule
-shape, the one-adapter-module boundary, rules from stored
-configuration, choosing what an absent lookup should mean, isolating
-one flaky predicate from the rest of a run — see
-[`docs/extending/`](../../docs/extending/README.md) for the full
-index), the worked samples, and the full worked example.
-`references/<language>/agent-notes.md` carries the exact command.
-
-**Fetch at the version the project actually has installed**, never from
-the default branch. A project pinned to an older release that reads
-current documentation will be told about an API it does not have, which
-is worse than reading nothing. If the installed version has no matching
-tag, do not fetch — use what is bundled and say that the deeper
-documents were unavailable.
-
-### Following a link inside a fetched document
-
-Reference documents keep their original repository-relative links. A
-link that does not resolve locally resolves against the source
-repository at the pinned version:
-`https://github.com/pawan-vyas/verdict-rules/blob/<tag>/<path>`.
+Repository tags are `<language>-v<version>` (e.g. `python-v0.3.1`) —
+read at the tag matching what this project has installed, never the
+default branch. A project pinned to an older release shown current
+documentation is told about an API it does not have, which is worse
+than not reading it at all.
