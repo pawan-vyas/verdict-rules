@@ -45,6 +45,12 @@ rest of what this shape gets wrong.
 
 ## The `verdict-rules` way
 
+A typed context, not a dictionary — and unlike the other typed samples,
+one of its fields isn't order data at all: `PromoCodeService` is an
+injected dependency, typed as an interface rather than `object`, so
+every rule reading it gets the same compile-time checking as the plain
+fields:
+
 ```csharp
 using VerdictRules;
 
@@ -53,28 +59,31 @@ interface IPromoCodeService
     Task<bool> Validate(string? code);
 }
 
-static Task<RuleResult> OrderTotalOverThreshold(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
-{
-    var passed = (double)context["orderTotal"]! >= (double)context["freeShippingThreshold"]!;
-    return Task.FromResult(new RuleResult("order_total_over_threshold", passed));
-}
+record ShippingContext(
+    double OrderTotal,
+    double FreeShippingThreshold,
+    bool IsPremiumMember,
+    string? PromoCode,
+    IPromoCodeService PromoCodeService);
 
-static Task<RuleResult> HasPremiumMembership(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("has_premium_membership", (bool)context["isPremiumMember"]!));
+static Task<RuleResult> OrderTotalOverThreshold(ShippingContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new RuleResult("order_total_over_threshold", context.OrderTotal >= context.FreeShippingThreshold));
 
-static async Task<RuleResult> HasValidPromoCode(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
+static Task<RuleResult> HasPremiumMembership(ShippingContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new RuleResult("has_premium_membership", context.IsPremiumMember));
+
+static async Task<RuleResult> HasValidPromoCode(ShippingContext context, CancellationToken cancellationToken = default)
 {
     // The expensive path: only reached if both cheaper checks above failed.
-    var service = (IPromoCodeService)context["promoCodeService"]!;
-    var isValid = await service.Validate((string?)context["promoCode"]);
+    var isValid = await context.PromoCodeService.Validate(context.PromoCode);
     return new RuleResult("has_valid_promo_code", isValid);
 }
 
-var shipsFree = new OrRule("ships_free", new IRule[]
+var shipsFree = new OrRule<ShippingContext>("ships_free", new IRule<ShippingContext>[]
 {
-    new FunctionRule("order_total_over_threshold", OrderTotalOverThreshold),
-    new FunctionRule("has_premium_membership", HasPremiumMembership),
-    new FunctionRule("has_valid_promo_code", HasValidPromoCode), // cheapest-last, on purpose
+    new FunctionRule<ShippingContext>("order_total_over_threshold", OrderTotalOverThreshold),
+    new FunctionRule<ShippingContext>("has_premium_membership", HasPremiumMembership),
+    new FunctionRule<ShippingContext>("has_valid_promo_code", HasValidPromoCode), // cheapest-last, on purpose
 });
 ```
 
@@ -83,7 +92,8 @@ is now a stated decision at the point it matters, not something the
 next person to edit this file has to reconstruct from scratch.
 
 Proving the skip, not just asserting it — a call-counting fake stands
-in for the real service:
+in for the real service, and satisfies `IPromoCodeService` the same way
+the real implementation would:
 
 ```csharp
 sealed class FakePromoService : IPromoCodeService
@@ -97,14 +107,7 @@ sealed class FakePromoService : IPromoCodeService
 }
 
 var promoService = new FakePromoService();
-var order = new Dictionary<string, object?>
-{
-    ["orderTotal"] = 120.0,
-    ["freeShippingThreshold"] = 50.0,
-    ["isPremiumMember"] = false,
-    ["promoCode"] = null,
-    ["promoCodeService"] = promoService,
-};
+var order = new ShippingContext(120, 50, false, null, promoService);
 
 var result = await shipsFree.EvaluateAsync(order);
 result.Passed;

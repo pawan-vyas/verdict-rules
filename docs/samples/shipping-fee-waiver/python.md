@@ -32,26 +32,48 @@ rest of what this shape gets wrong.
 
 ## The `verdict` way
 
+A typed context, not a dict — and unlike the other typed samples, one
+of its fields isn't order data at all: `promo_code_service` is an
+injected dependency, typed as a `Protocol` rather than `Any`, so every
+rule reading it gets the same compile-time checking as the plain
+fields:
+
 ```python
+from dataclasses import dataclass
+from typing import Protocol
+
 from verdict import FunctionRule, OrRule, RuleResult
 
 
-async def order_total_over_threshold(context: dict) -> RuleResult:
-    passed = context["order_total"] >= context["free_shipping_threshold"]
+class PromoCodeService(Protocol):
+    async def validate(self, code: str | None) -> bool: ...
+
+
+@dataclass(frozen=True)
+class ShippingContext:
+    order_total: float
+    free_shipping_threshold: float
+    is_premium_member: bool
+    promo_code: str | None
+    promo_code_service: PromoCodeService
+
+
+async def order_total_over_threshold(context: ShippingContext) -> RuleResult:
+    passed = context.order_total >= context.free_shipping_threshold
     return RuleResult(rule_name="order_total_over_threshold", passed=passed)
 
 
-async def has_premium_membership(context: dict) -> RuleResult:
-    return RuleResult(rule_name="has_premium_membership", passed=context["is_premium_member"])
+async def has_premium_membership(context: ShippingContext) -> RuleResult:
+    return RuleResult(rule_name="has_premium_membership", passed=context.is_premium_member)
 
 
-async def has_valid_promo_code(context: dict) -> RuleResult:
+async def has_valid_promo_code(context: ShippingContext) -> RuleResult:
     # The expensive path: only reached if both cheaper checks above failed.
-    is_valid = await context["promo_code_service"].validate(context.get("promo_code"))
+    is_valid = await context.promo_code_service.validate(context.promo_code)
     return RuleResult(rule_name="has_valid_promo_code", passed=is_valid)
 
 
-ships_free = OrRule(
+ships_free: OrRule[ShippingContext] = OrRule(
     "ships_free",
     [
         FunctionRule("order_total_over_threshold", order_total_over_threshold),
@@ -66,7 +88,8 @@ is now a stated decision at the point it matters, not something the
 next person to edit this file has to reconstruct from scratch.
 
 Proving the skip, not just asserting it — a call-counting fake stands
-in for the real service:
+in for the real service, and satisfies `PromoCodeService` the same way
+the real implementation would:
 
 ```python
 class FakePromoService:
@@ -79,13 +102,13 @@ class FakePromoService:
 
 
 promo_service = FakePromoService()
-order = {
-    "order_total": 120,
-    "free_shipping_threshold": 50,
-    "is_premium_member": False,
-    "promo_code": None,
-    "promo_code_service": promo_service,
-}
+order = ShippingContext(
+    order_total=120,
+    free_shipping_threshold=50,
+    is_premium_member=False,
+    promo_code=None,
+    promo_code_service=promo_service,
+)
 
 result = await ships_free.evaluate(order)
 result.passed, promo_service.calls
