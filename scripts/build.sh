@@ -49,6 +49,13 @@ done < <(python3 scripts/skill_manifest.py bundled)
 
 [ "$bundled" -gt 0 ] || { echo "error: MANIFEST.toml declared no bundled documents." >&2; exit 1; }
 
+# The fetch catalog scripts/fetch-docs.sh reads at runtime: (language, source,
+# destination) rows, fully resolved -- no TOML parsing needed on the
+# consumer side. Derived, not hand-maintained; lives beside the script itself.
+mkdir -p "$skill_src/scripts"
+python3 scripts/skill_manifest.py fetch-catalog > "$skill_src/scripts/fetch-catalog.tsv"
+chmod +x "$skill_src/scripts/fetch-docs.sh"
+
 # Validate the assembled bundle before packaging it: SKILL.md must not route
 # to anything the manifest omitted, and links between bundled documents must
 # resolve where the manifest put them. A script rather than an inline block —

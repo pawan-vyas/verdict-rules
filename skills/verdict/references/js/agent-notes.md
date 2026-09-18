@@ -114,33 +114,9 @@ that are easy to skip:
 
 ## Fetching the deeper documents
 
-[`references/docs/architecture/README.md`](../../../../docs/architecture/README.md)
-ships bundled — the design rationale is always available with no fetch
-needed. [`references/docs/testing/`](../../../../docs/testing/README.md),
-`docs/extending/`, and `docs/samples/` are fetch-tier, same as for
-every language: too much to ship on every install, pulled at the
-version actually installed. This SDK's own quickstart is fetch-tier
-too, same as Python's:
-
 ```bash
 VERSION=$(node -p "require('verdict-rules/package.json').version")
-TAG="js-v${VERSION}"
-BASE="https://raw.githubusercontent.com/pawan-vyas/verdict-rules/${TAG}"
-
-curl -fsSL "${BASE}/docs/testing/README.md" -o references/docs/testing/README.md
-curl -fsSL "${BASE}/js/packages/verdict-rules/docs/quickstart.md" \
-     -o references/js/quickstart.md
+scripts/fetch-docs.sh js "$VERSION"
 ```
 
-The manifest at `MANIFEST.toml` lists every fetchable document: most as
-a literal `[[fetch]]` source/destination pair, the rest as a
-`[[fetch_group]]` whose `pattern` needs `{lang}` replaced with this
-language before fetching — see
-[`commands/verdict-fetch-docs.md`](../../commands/verdict-fetch-docs.md)
-for the exact expansion. Record the tag you fetched at in
-`references/js/.version` so a later reader can tell whether the
-documents still match what is installed.
-
-If `curl` fails because the tag does not exist, stop — do not fall back
-to the default branch. Documentation for a version the project does not
-have is worse than none.
+See [`commands/verdict-fetch-docs.md`](../../commands/verdict-fetch-docs.md).

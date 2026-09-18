@@ -5,45 +5,33 @@ description: Fetch verdict's deeper documentation at the version this project ha
 <!-- markdownlint-disable MD041 (a Claude Code command file's title is its own filename and description field; the body starts with the instruction, not a heading) -->
 
 Pull the documents the verdict skill does not bundle — the testing guide, the
-language quickstart, the worked samples, and the worked example — so they are
-available locally for the rest of this session and afterwards.
+language quickstart, the worked samples, and the worked example.
 
-Follow these steps exactly.
+1. **Determine which language(s) to fetch for.** Look for each language's own
+   manifest (`pyproject.toml`, `package.json`, `*.csproj`, `pubspec.yaml`) in
+   the project. If more than one is found (a polyglot monorepo), ask the user
+   which project(s) to fetch for rather than guessing — `scripts/fetch-docs.sh`
+   accepts any number of language/version pairs in one call. If no
+   `references/<language>/agent-notes.md` exists in this skill for a found
+   manifest, that language has no verdict SDK; skip it and inform the user.
 
-1. **Determine the language** from the project's own manifest
-   (`pyproject.toml`, `package.json`, `*.csproj`, `pubspec.yaml`). If no
-   `references/<language>/agent-notes.md` exists in this skill, stop: verdict
-   has no SDK for that language, and there is nothing to fetch.
+2. **Read each installed version** from that language's own manifest or
+   lockfile — not the latest release.
 
-2. **Read the installed version** of verdict from that manifest or its
-   lockfile — not the latest release. The tag is `<language>-v<version>`,
-   e.g. `python-v0.2.0`.
+3. **Run the script**, passing every confirmed language and its version:
 
-3. **If no matching tag exists, stop.** Do not fall back to the default
-   branch. Documentation for a version the project does not have describes an
-   API it does not have, which is worse than reading nothing. Say that the
-   deeper documents were unavailable and continue with what is bundled.
+   ```bash
+   scripts/fetch-docs.sh <language> <version> [<language> <version> ...]
+   ```
 
-4. **Fetch every document `MANIFEST.toml` names for this language.** Two
-   shapes:
-   - Each `[[fetch]]` entry, as-is: `source` and `destination` are already
-     the exact paths to use.
-   - Each `[[fetch_group]]` entry, twice: once for `readme` as-is, once for
-     `pattern` with `{lang}` replaced by the language determined in step 1
-     (e.g. `docs/testing/{lang}.md` → `docs/testing/python.md`). If that
-     substituted path 404s, that is expected, not an error — it means this
-     topic has no file for this language yet; skip it and continue, the
-     same as any other partial fetch.
+   It resolves each `<language>-v<version>` tag, fetches every document this
+   skill's manifest names for that language, and writes
+   `references/<language>/.version`. If a tag does not exist, it reports that
+   and continues with the rest — it never falls back to the default branch.
 
-   Fetch each resolved `source` from
-   `https://raw.githubusercontent.com/pawan-vyas/verdict-rules/<tag>/<source>`
-   into `references/<destination>`, creating directories as needed.
-
-5. **Record the tag** in `references/<language>/.version` so a later reader can
-   tell whether these documents still match what is installed.
-
-6. **Report** what was fetched and at which tag. If any fetch failed, say which
-   and leave the rest in place — a partial fetch is fine, a silent one is not.
+4. **Report** what the script printed — how many documents were fetched per
+   language, and which version. If a tag was missing, say so and continue
+   with what is bundled.
 
 Fetched documents keep their original repository-relative links. A link that
 does not resolve locally resolves against the source repository at the same

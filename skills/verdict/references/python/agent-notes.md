@@ -95,28 +95,9 @@ skip:
 
 ## Fetching the deeper documents
 
-Read the installed version first, then fetch at that tag — never from
-the default branch:
-
 ```bash
 VERSION=$(python -c "import importlib.metadata as m; print(m.version('verdict-rules'))")
-TAG="python-v${VERSION}"
-BASE="https://raw.githubusercontent.com/pawan-vyas/verdict-rules/${TAG}"
-
-curl -fsSL "${BASE}/docs/testing/README.md" -o references/docs/testing/README.md
-curl -fsSL "${BASE}/python/packages/verdict-rules/docs/quickstart.md" \
-     -o references/python/quickstart.md
+scripts/fetch-docs.sh python "$VERSION"
 ```
 
-The manifest at `MANIFEST.toml` lists every fetchable document: most as
-a literal `[[fetch]]` source/destination pair, the rest as a
-`[[fetch_group]]` whose `pattern` needs `{lang}` replaced with this
-language before fetching — see
-[`commands/verdict-fetch-docs.md`](../../commands/verdict-fetch-docs.md)
-for the exact expansion. Record the tag you fetched at in
-`references/python/.version` so a later reader can tell whether the
-documents still match what is installed.
-
-If `curl` fails because the tag does not exist, stop — do not fall back
-to the default branch. Documentation for a version the project does not
-have is worse than none.
+See [`commands/verdict-fetch-docs.md`](../../commands/verdict-fetch-docs.md).
