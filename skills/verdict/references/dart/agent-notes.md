@@ -15,12 +15,6 @@ Works unchanged in a Flutter project too -- `flutter pub add verdict_rules` ther
 import 'package:verdict_rules/verdict_rules.dart';
 ```
 
-The package name is **`verdict_rules`** (snake_case, no hyphen) —
-pub.dev's own package-identifier rules don't allow hyphens, unlike
-npm's `verdict-rules`. There is no naming split the way Python has
-(`pip install verdict-rules` → `import verdict`): the pub.dev name and
-the import path segment are the same word.
-
 ## The API, in one screen
 
 ```dart
@@ -57,9 +51,7 @@ each, not a separate name. `TContext` is usually inferred from the
 predicate's own parameter type at a constructor call site
 (`FunctionRule('x', predicate)` needs no type argument as long as
 `predicate` is typed), so most call sites are unaffected by which
-context a rule reads from. Every sub-rule inside one `AndRule<TContext>`/
-`OrRule<TContext>` must be a `Rule` of the exact same `TContext` — the
-analyzer rejects mixing contexts once a type argument is named.
+context a rule reads from.
 
 ## Which run mode
 
@@ -69,17 +61,3 @@ analyzer rejects mixing contexts once a type argument is named.
 | Every rule's own outcome (a status page, an audit trail) | `engine.runAll()` |
 | One named rule/group; absence would be a bug | The strict lookup — throws |
 | One named rule/group; absence is expected, your domain decides what it means | The non-raising lookup |
-
-## Testing what matters
-
-`docs/testing/` in the source repository is the full checklist (see
-`references/REPOSITORY-MAP.md`). The parts that are easy to skip:
-
-- Prove short-circuiting with a **call log**, not the final boolean. A
-  composite that evaluates everything still returns the right answer.
-- For a rule set **built from stored/config data at runtime** rather
-  than hand-written, hand-picked fixtures stop scaling as the
-  configuration space grows — reach for property-based testing or an
-  oracle/differential approach (an independent, deliberately simpler
-  reference implementation checked against many random configurations)
-  instead of adding fixtures one at a time as bugs are found.

@@ -41,8 +41,7 @@ predicate's own annotation — `FunctionRule("x", predicate)` needs no
 explicit type argument as long as `predicate` is typed. A plain `dict`
 context (`Rule[dict[str, Any]]`) is exactly as first-class as a typed
 one (a dataclass, a `TypedDict`); default to whichever the rule set
-naturally needs, never assume the typed form is "more correct." Every
-sub-rule inside one `AndRule`/`OrRule` must share the same `TContext`.
+naturally needs, never assume the typed form is "more correct."
 
 `RuleResult(rule_name, passed, detail="", data=None)` and
 `RunResult(passed, results)` are frozen dataclasses.
@@ -55,19 +54,3 @@ sub-rule inside one `AndRule`/`OrRule` must share the same `TContext`.
 | Every rule's own outcome (a status page, an audit trail) | `engine.run_all()` |
 | One named rule/group; absence would be a bug | The strict lookup — raises |
 | One named rule/group; absence is expected, your domain decides what it means | The non-raising lookup |
-
-## Testing what matters
-
-`docs/testing/` in the source repository is the full checklist (see
-`references/REPOSITORY-MAP.md`). The parts that are easy to skip:
-
-- Prove short-circuiting with a **call log**, not the final boolean. A
-  composite that evaluates everything still returns the right answer.
-- For a rule set **built from stored/config data at runtime** rather
-  than hand-written, hand-picked fixtures stop scaling as the
-  configuration space grows — reach for property-based testing (e.g.
-  Hypothesis) or an oracle/differential approach (an independent,
-  deliberately simpler reference implementation checked against many
-  random configurations) instead of adding fixtures one at a time as
-  bugs are found. `python/examples/graduation_verdict/` is a real,
-  shipped 500-case instance of the oracle/differential shape.

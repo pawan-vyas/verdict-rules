@@ -5,16 +5,11 @@ description: Build rule-based decision, eligibility, or policy-evaluation logic 
 
 # Verdict
 
-A skill for building rule-based decision, eligibility and policy logic
-with **verdict** — a small, zero-dependency, async-native
-rule-evaluation engine. Name each condition once, combine named
-conditions into a verdict, and run it against whatever facts a caller
-hands over.
-
-Verdict is **polyglot by design**: the same `Rule`/`FunctionRule`/
-`AndRule`/`OrRule`/`RulesEngine`/`RuleResult`/`RunResult` shape and the
-same execution-model guarantees exist in every language it ships for,
-and only the idiom changes.
+Name each condition once, combine named conditions into a verdict, and
+run it against whatever facts a caller hands over. The same
+`Rule`/`FunctionRule`/`AndRule`/`OrRule`/`RulesEngine`/`RuleResult`/
+`RunResult` shape and the same execution-model guarantees exist in
+every language verdict ships for — only the idiom changes.
 
 ## Step 1 — establish the language, before anything else
 
