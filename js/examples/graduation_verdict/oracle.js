@@ -1,18 +1,8 @@
 /**
  * A second, independent, verdict-rules-free implementation of the graduation decision.
  *
- * This is deliberately the "naive way" from
- * docs/samples/graduation-requirement-verdict/README.md, generalized to
- * score *any* policy list rather than the fixed 7-subject curriculum -- its
- * entire job is to be obviously correct by inspection, so it can serve as
- * ground truth for test/chaos.test.js's differential testing. See that
- * file's own doc comment and docs/testing/README.md for the full
- * reasoning: two independently written implementations (this plain loop,
- * and the verdict-rules-based engine in graduation-verdict.js) must agree
- * on every input, or one of them is wrong.
- *
- * Never import from "verdict-rules" here -- an oracle that shares a bug
- * with the system it's checking proves nothing.
+ * Used as ground truth by test/chaos.test.js's differential testing. Never
+ * import from "verdict-rules" here.
  */
 
 /** Whether one subject's own scores clear its policy's bar -- plain if/else, no Rule involved. */
@@ -35,12 +25,9 @@ function subjectPasses(policy, context) {
  * Compute the graduation decision directly, with no verdict-rules involved at all.
  *
  * @param {object[]} policies - Every subject's own policy (core and elective alike).
- * @param {object} context - One student's scores, cgpa, and attendance --
- *   the same shape `buildGraduationCheck`'s composite expects.
+ * @param {object} context - One student's scores, cgpa, and attendance.
  * @param {number} electiveMinimum - How many electives must pass.
- * @returns {boolean} Whether this student graduates, computed
- *   independently of `ruleForSubject`/`buildGraduationCheck` -- the two
- *   must always agree.
+ * @returns {boolean} Whether this student graduates.
  */
 export function expectedGraduates(policies, context, electiveMinimum) {
   const corePolicies = policies.filter((p) => !p.isElective);

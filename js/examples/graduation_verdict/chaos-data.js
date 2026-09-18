@@ -1,17 +1,8 @@
 /**
  * Deterministic, randomized (policy, student) case generation for test/chaos.test.js.
  *
- * "Deterministic" is the load-bearing word: every function here takes an
- * `Rng` instance explicitly -- never a shared or ambient generator -- so a
- * case built from a given seed is exactly reproducible. test/chaos.test.js
- * seeds one `Rng` per case from a pinned constant plus that case's own
- * index, so any single failing case can be regenerated on its own without
- * replaying every case before it.
- *
- * Every value generated stays within the schema's valid domain (a real
- * percentage, a real subjectType, etc.) -- this generates a wide space of
- * *valid* curricula and students, not malformed input. Garbage-input
- * handling is a different, narrower concern this suite doesn't cover.
+ * Every function takes an `Rng` instance explicitly. Every value
+ * generated stays within the schema's valid domain.
  */
 import { subjectPolicy } from "./graduation-verdict.js";
 
@@ -82,17 +73,13 @@ export function randomContext(rng, policies) {
 /**
  * Build one complete, self-consistent randomized case.
  *
- * @param {import("./rng.js").Rng} rng - The seeded generator to draw from --
- *   the sole source of randomness, so the same `rng` state always produces
- *   the same case.
+ * @param {import("./rng.js").Rng} rng - The seeded generator to draw from.
  * @param {number} [numSubjects] - How many subjects the generated
  *   curriculum has.
  * @returns {{ policies: object[], context: object, electiveMinimum: number }}
  *   A triple ready to hand to both `buildGraduationCheck` and
- *   `expectedGraduates`. `electiveMinimum` is always achievable (bounded by
- *   how many electives were actually generated), so a mismatch between the
- *   two implementations is never explained away as "an impossible
- *   curriculum."
+ *   `expectedGraduates`. `electiveMinimum` is bounded by how many
+ *   electives were actually generated.
  */
 export function generateCase(rng, numSubjects = 7) {
   const policies = Array.from({ length: numSubjects }, (_, i) => randomPolicy(rng, `SUBJ${i}`));
