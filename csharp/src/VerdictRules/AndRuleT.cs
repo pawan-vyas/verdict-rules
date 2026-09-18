@@ -29,7 +29,7 @@ public sealed class AndRule<TContext>(string name, IReadOnlyList<IRule<TContext>
     {
         // Checked here as well as in the loop below: an already-cancelled token
         // must evaluate nothing, including when there is nothing to evaluate and
-        // the loop would otherwise fall straight through to a vacuous pass.
+        // the loop would otherwise fall straight through to a vacuous `true`.
         cancellationToken.ThrowIfCancellationRequested();
 
         var subResults = new List<RuleResult>(_rules.Count);
