@@ -37,10 +37,15 @@ Then look for `references/<language>/agent-notes.md`:
 These hold in every language, and getting one wrong produces code that
 passes its own tests while being silently incorrect:
 
-- **Sequential, never concurrent.** Composites stop at the first
-  decided outcome. Never use `asyncio.gather`/`Promise.all`/
-  `Task.WhenAll`/`Future.wait` — the boolean is identical either way,
-  which is why this breaks silently.
+- **Sequential, never concurrent, inside a composite's own evaluation.**
+  `AndRule`/`OrRule` stop at the first decided outcome by evaluating
+  sub-rules one at a time. A custom composite implementing this same
+  pattern must do the same — running its own sub-rules via
+  `asyncio.gather`/`Promise.all`/`Task.WhenAll`/`Future.wait` instead of
+  a plain sequential loop breaks short-circuiting silently (the returned
+  boolean is identical either way). Scoped to a composite's own
+  sub-rule evaluation specifically, not a statement about concurrency
+  elsewhere in a codebase.
 - **Vacuous truth is asymmetric.** Empty `AndRule` passes; empty
   `OrRule` fails.
 - **Emptiness is not absence.** An empty rule list is a valid input. An
