@@ -83,12 +83,12 @@ mkdir -p "$stage/skill"
 cp -r "$skill_src" "$stage/skill/verdict"
 ( cd "$stage/skill" && zip -r -q "$ROOT/dist/verdict.skill" verdict -x '*/.DS_Store' )
 
-# 3) standalone tools package — install.sh + harness-templates/ + skill/ (SKILL.md + references/,
-#    recursive since references/ nests one subdirectory per language — today just python/). No
-#    scripts/*.js exist for this skill (unlike mermaid-diagrams' bundled validator), so nothing to
-#    copy there. install.sh resolves its own skill source by checking for a sibling ./skill/ dir
-#    first (this package's shape) before falling back to ../skills/verdict/ (the dev-repo shape) —
-#    see install.sh's own header comment.
+# 3) standalone tools package — install.sh + harness-templates/ + skill/ (SKILL.md + MANIFEST.toml +
+#    references/, recursive since references/ nests one subdirectory per language, + scripts/, so
+#    fetch-docs.sh and the fetch-catalog.tsv it reads travel with this package too). install.sh
+#    resolves its own skill source by checking for a sibling ./skill/ dir first (this package's
+#    shape) before falling back to ../skills/verdict/ (the dev-repo shape) — see install.sh's own
+#    header comment.
 mkdir -p "$stage/tools/verdict-tools/skill/references"
 cp scripts/install.sh "$stage/tools/verdict-tools/install.sh"
 chmod +x "$stage/tools/verdict-tools/install.sh"
@@ -96,6 +96,7 @@ cp -r scripts/harness-templates "$stage/tools/verdict-tools/harness-templates"
 cp "$skill_src/SKILL.md" "$stage/tools/verdict-tools/skill/SKILL.md"
 cp "$skill_src/MANIFEST.toml" "$stage/tools/verdict-tools/skill/MANIFEST.toml"
 cp -r "$skill_src/references/." "$stage/tools/verdict-tools/skill/references/"
+cp -r "$skill_src/scripts" "$stage/tools/verdict-tools/skill/scripts"
 ( cd "$stage/tools" && zip -r -q "$ROOT/dist/verdict-tools.zip" verdict-tools -x '*/.DS_Store' )
 
 echo "built:"
