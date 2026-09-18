@@ -19,6 +19,14 @@
   visible-on-sight bug (not prose-explained), converted to a typed
   `LoyaltyContext` — the first real §1 fix, all four languages,
   every code sample compiled/run-verified.
+- `shipping-fee-waiver` sample: converted to a typed `ShippingContext`
+  — the second §1 fix, all four languages, every code sample
+  compiled/run-verified. Showcases a multi-field aggregate context
+  where one field is an injected dependency (`promoCodeService`),
+  typed as a `Protocol`/interface rather than `Any`/`object`/`unknown`,
+  per the user's own framing of what this sample should demonstrate.
+  The naive-way section already landed the "I recognize this" hook
+  (§3) on inspection — no rewrite needed there.
 - `graduation_verdict` and `marketplace_eligibility` example fixtures:
   same comment trim as core lib, all four languages now done. Caught
   and fixed two real bugs while trimming C#: a misplaced XML doc
@@ -56,10 +64,6 @@
 **Not yet done, still in this PR's scope (no deferring, per explicit
 instruction):**
 
-- `shipping-fee-waiver` typed-context conversion (the second §1
-  candidate; per user's own framing, a good showcase for a
-  multi-field aggregate/composed context object several adjacent
-  rules read from, type-safely).
 - §4 below (eval audit + new adherence evals) — not started.
 - Language package version bump to `0.3.1` and skill version bump to
   `0.6.1`, per the user's own instruction once the comment-trim scope
@@ -199,9 +203,14 @@ orthogonal to §1/§2 (human-reader doc quality, not agent-facing bias or
 token cost) but touches the same files §1 already identified as
 typed-context candidates. **Folded in for `loyalty-tier-promotion`**
 (the naive-way rewrite and the typed-context conversion landed together
-in one pass, per explicit instruction) — still open for
-`shipping-fee-waiver` and `data-driven-rule-sets`, decide per-file when
-each is touched rather than as a blanket rule.
+in one pass, per explicit instruction). **Re-examined for
+`shipping-fee-waiver`** during its own typed-context conversion and
+found to already land the hook: the naive code's `await` on an external
+service call sits visibly first in the ladder, ahead of the two cheap
+checks — recognizable by inspection, the same bar the fix applies, so
+no separate rewrite was needed there. Still open for
+`data-driven-rule-sets` (not one of §1's typed-context candidates,
+so untouched by either pass so far).
 
 ## 4 · Scope addition: eval bias audit + adherence evals (raised mid-implementation)
 
