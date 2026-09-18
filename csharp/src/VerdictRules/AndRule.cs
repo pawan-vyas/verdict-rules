@@ -1,11 +1,6 @@
 namespace VerdictRules;
 
-/// <summary>
-/// Composite that passes only if every sub-rule passes, over the dict context.
-/// </summary>
-/// <param name="name">See <see cref="Name"/>.</param>
-/// <param name="rules">Sub-rules, evaluated in this order.</param>
-/// <param name="group">See <see cref="Group"/>.</param>
+/// <inheritdoc cref="AndRule{TContext}" />
 public sealed class AndRule(string name, IReadOnlyList<IRule> rules, string? group = null) : IRule
 {
     /// <summary>The generic composite this type is a closed specialization of.</summary>

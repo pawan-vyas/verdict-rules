@@ -1,11 +1,6 @@
 namespace VerdictRules;
 
-/// <summary>
-/// Wraps a plain asynchronous predicate as an <see cref="IRule"/>.
-/// </summary>
-/// <param name="name">See <see cref="Name"/>.</param>
-/// <param name="predicate">The wrapped predicate <see cref="EvaluateAsync"/> delegates to.</param>
-/// <param name="group">See <see cref="Group"/>.</param>
+/// <inheritdoc cref="FunctionRule{TContext}" />
 public sealed class FunctionRule(string name, RulePredicate predicate, string? group = null) : IRule
 {
     /// <summary>The generic rule this type is a closed specialization of.</summary>
