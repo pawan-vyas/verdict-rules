@@ -50,39 +50,56 @@ for the rest of what this shape gets wrong.
 ```dart
 import 'package:verdict_rules/verdict_rules.dart';
 
-Future<RuleResult> containsBannedTerms(Map<String, Object?> context) async {
-  final text = (context['text']! as String).toLowerCase();
-  final bannedTerms = context['bannedTerms']! as List<String>;
-  final hit = bannedTerms.any((term) => text.contains(term));
+class SubmissionContext {
+  final String text;
+  final List<String> bannedTerms;
+  final num spamScore;
+  final num spamThreshold;
+  final int minLength;
+  final int authorPostCount;
+
+  SubmissionContext({
+    required this.text,
+    required this.bannedTerms,
+    required this.spamScore,
+    required this.spamThreshold,
+    required this.minLength,
+    required this.authorPostCount,
+  });
+}
+
+Future<RuleResult> containsBannedTerms(SubmissionContext context) async {
+  final text = context.text.toLowerCase();
+  final hit = context.bannedTerms.any((term) => text.contains(term));
   return RuleResult(ruleName: 'contains_banned_terms', passed: !hit);
 }
 
-Future<RuleResult> flaggedBySpamScore(Map<String, Object?> context) async =>
+Future<RuleResult> flaggedBySpamScore(SubmissionContext context) async =>
     RuleResult(
       ruleName: 'flagged_by_spam_score',
-      passed: (context['spamScore']! as num) < (context['spamThreshold']! as num),
+      passed: context.spamScore < context.spamThreshold,
     );
 
-Future<RuleResult> meetsLengthMinimum(Map<String, Object?> context) async =>
+Future<RuleResult> meetsLengthMinimum(SubmissionContext context) async =>
     RuleResult(
       ruleName: 'meets_length_minimum',
-      passed: (context['text']! as String).length >= (context['minLength']! as int),
+      passed: context.text.length >= context.minLength,
     );
 
-Future<RuleResult> authorIsEstablished(Map<String, Object?> context) async =>
+Future<RuleResult> authorIsEstablished(SubmissionContext context) async =>
     RuleResult(
       ruleName: 'author_is_established',
-      passed: (context['authorPostCount']! as int) >= 10,
+      passed: context.authorPostCount >= 10,
     );
 
-final engine = RulesEngine([
+final engine = RulesEngine<SubmissionContext>([
   FunctionRule('contains_banned_terms', containsBannedTerms, group: 'auto_reject'),
   FunctionRule('flagged_by_spam_score', flaggedBySpamScore, group: 'auto_reject'),
   FunctionRule('meets_length_minimum', meetsLengthMinimum, group: 'auto_publish'),
   FunctionRule('author_is_established', authorIsEstablished, group: 'auto_publish'),
 ]);
 
-Future<String> routeSubmission(Map<String, Object?> context) async {
+Future<String> routeSubmission(SubmissionContext context) async {
   final rejectCheck = await engine.runGroup('auto_reject', context);
   if (!rejectCheck.passed) {
     return 'auto_rejected';
@@ -96,21 +113,35 @@ Future<String> routeSubmission(Map<String, Object?> context) async {
 All three routing outcomes, from the same engine:
 
 ```dart
-final trustedPost = {
-  'text': 'a perfectly reasonable long post about gardening',
-  'bannedTerms': ['spam', 'scam'],
-  'spamScore': 2,
-  'spamThreshold': 10,
-  'minLength': 20,
-  'authorPostCount': 50,
-};
+final trustedPost = SubmissionContext(
+  text: 'a perfectly reasonable long post about gardening',
+  bannedTerms: ['spam', 'scam'],
+  spamScore: 2,
+  spamThreshold: 10,
+  minLength: 20,
+  authorPostCount: 50,
+);
 await routeSubmission(trustedPost);
 // "auto_published" -- clears the auto_reject group, then the auto_publish group
 
-await routeSubmission({...trustedPost, 'authorPostCount': 1});
+await routeSubmission(SubmissionContext(
+  text: trustedPost.text,
+  bannedTerms: trustedPost.bannedTerms,
+  spamScore: trustedPost.spamScore,
+  spamThreshold: trustedPost.spamThreshold,
+  minLength: trustedPost.minLength,
+  authorPostCount: 1,
+));
 // "sent_to_review" -- clears auto_reject, but the new-author signal fails auto_publish
 
-await routeSubmission({...trustedPost, 'spamScore': 15});
+await routeSubmission(SubmissionContext(
+  text: trustedPost.text,
+  bannedTerms: trustedPost.bannedTerms,
+  spamScore: 15,
+  spamThreshold: trustedPost.spamThreshold,
+  minLength: trustedPost.minLength,
+  authorPostCount: trustedPost.authorPostCount,
+));
 // "auto_rejected" -- trips the auto_reject group; auto_publish is never even checked
 ```
 
