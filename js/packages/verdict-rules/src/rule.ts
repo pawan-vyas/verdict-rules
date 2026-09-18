@@ -3,18 +3,12 @@ import type { RuleResult } from "./result.js";
 /**
  * The contract every rule satisfies.
  *
- * A plain `interface`, which in TypeScript means **structural** typing: any
- * object of the right shape *is* a `Rule`. No `implements` clause, no base
- * class, no registration.
+ * A plain `interface` — structural typing: any object of the right shape
+ * is a `Rule`. No `implements` clause, no base class, no registration.
  *
  * `Rule<TContext>` is generic over the context it reads from, with no
- * default type parameter — deliberately, unlike a `Rule<TContext = Context>`
- * shorthand that was considered and rejected. A default would make
- * "deliberately chose dict-context" and "forgot to type this" look
- * identical in source, which is a real inconsistency in a codebase this
- * strict elsewhere (`strict: true`, `noUncheckedIndexedAccess: true`).
- * Dict-context is `Rule<Context>`, written out every time — no more
- * ceremony than any other explicit type argument.
+ * default type parameter. Dict-context is `Rule<Context>`, written out
+ * every time.
  *
  * ```ts
  * const overEighteen: Rule<Context> = {
@@ -22,12 +16,8 @@ import type { RuleResult } from "./result.js";
  *   async evaluate(ctx) {
  *     return { ruleName: "over_18", passed: (ctx.age as number) >= 18 };
  *   },
- * };            // already a Rule<Context> — nothing declared
+ * };
  * ```
- *
- * This matches Python's `Protocol[TContext]` exactly. Dart and C# have
- * nominal typing and require an explicit `implements`, so the extension
- * story genuinely differs between the SDKs rather than only its syntax.
  */
 export interface Rule<TContext> {
   /**
@@ -49,10 +39,7 @@ export type RulePredicate<TContext> = (context: TContext) => Promise<RuleResult>
 /**
  * Wraps a plain async predicate as a {@link Rule}.
  *
- * The shape most rules should be: no new class, no ceremony. `TContext` is
- * inferred from the wrapped predicate's own parameter type — a predicate
- * typed as `(ctx: OrderContext) => Promise<RuleResult>` needs no explicit
- * type argument at the `new FunctionRule(...)` call site.
+ * `TContext` is inferred from the wrapped predicate's own parameter type.
  */
 export class FunctionRule<TContext> implements Rule<TContext> {
   readonly name: string;
@@ -74,20 +61,11 @@ export class FunctionRule<TContext> implements Rule<TContext> {
 /**
  * Composite that passes only if every sub-rule passes.
  *
- * Short-circuits on the first failing sub-rule: later sub-rules are never
- * evaluated once one has failed, so a caller can rely on this never doing more
- * work — or having more side effects — than the minimum needed to reach a
- * verdict.
+ * Short-circuits on the first failing sub-rule.
  *
- * An empty list **passes** vacuously: nothing to fail on, and the identity of
- * the fold it performs. The opposite polarity to {@link OrRule}, which is
- * deliberate and easy to get backwards.
+ * An empty list passes vacuously.
  *
- * Every sub-rule must share the exact same `TContext` — the type checker
- * enforces this once construction names a type argument. Reusing one rule
- * across two differently-shaped contexts goes through an explicit
- * projecting adapter (see docs/extending/reusing-a-rule-across-contexts/)
- * rather than loosening this constraint.
+ * Every sub-rule must share the exact same `TContext`.
  */
 export class AndRule<TContext> implements Rule<TContext> {
   readonly name: string;
@@ -102,10 +80,7 @@ export class AndRule<TContext> implements Rule<TContext> {
 
   async evaluate(context: TContext): Promise<RuleResult> {
     const subResults: RuleResult[] = [];
-    // A plain sequential loop, never Promise.all: short-circuiting only means
-    // something if later work never *starts*, and concurrent scheduling would
-    // already have kicked off every sub-rule before the first result returns.
-    // The returned boolean is identical either way, so this breaks silently.
+    // Sequential, not Promise.all.
     for (const rule of this.#rules) {
       const result = await rule.evaluate(context);
       subResults.push(result);
@@ -125,9 +100,8 @@ export class AndRule<TContext> implements Rule<TContext> {
  *
  * Short-circuits on the first passing sub-rule.
  *
- * An empty list **fails** vacuously: nothing to pass on. The opposite of
- * {@link AndRule}, and the asymmetry is the point. The same same-`TContext`
- * requirement across sub-rules applies here too; see {@link AndRule}.
+ * An empty list fails vacuously. The same same-`TContext` requirement
+ * across sub-rules applies here too.
  */
 export class OrRule<TContext> implements Rule<TContext> {
   readonly name: string;
@@ -142,7 +116,7 @@ export class OrRule<TContext> implements Rule<TContext> {
 
   async evaluate(context: TContext): Promise<RuleResult> {
     const subResults: RuleResult[] = [];
-    // Sequential, for the same reason as AndRule.
+    // Sequential, not Promise.all.
     for (const rule of this.#rules) {
       const result = await rule.evaluate(context);
       subResults.push(result);

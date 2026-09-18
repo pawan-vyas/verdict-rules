@@ -1,8 +1,4 @@
-"""The engine that runs rules against a context.
-
-Holds a rule collection and offers three execution modes (all, named,
-grouped), resolved via plain dict lookups rather than an if/elif chain.
-"""
+"""The engine that runs rules against a context."""
 
 from __future__ import annotations
 
@@ -16,33 +12,18 @@ from verdict.rule import Rule, TContext
 class RulesEngine(Generic[TContext]):
     """Holds a set of rules and runs them against a context.
 
-    Unlike :class:`~verdict.rule.AndRule`/:class:`~verdict.rule.OrRule`
-    (which short-circuit to reach a single composite verdict
-    efficiently), every ``run_*`` method here evaluates every matching
-    rule unconditionally — the point of the engine's own run methods is
-    a full diagnostic picture (every rule's outcome), not the fastest
-    path to one boolean. Compose rules with ``AndRule``/``OrRule``
-    first if short-circuiting is what a particular call site wants.
-
-    Generic over ``TContext``, the same way :class:`~verdict.rule.Rule`
-    is: an untyped ``RulesEngine([...])`` serves a heterogeneous catalog
-    of unrelated dict-context rules exactly as it always has (erasure
-    means this is not a behavior change), while
-    ``RulesEngine[OrderContext]([...])`` documents that every rule
-    registered here shares one cohesive context type. Neither form
-    replaces the other — see docs/architecture/ for when each is the
-    right shape.
+    Every ``run_*`` method evaluates every matching rule unconditionally
+    — no short-circuiting. Generic over ``TContext``, the same way
+    :class:`~verdict.rule.Rule` is.
     """
 
     def __init__(self, rules: list[Rule[TContext]]) -> None:
         """Initialise with the full rule set this engine will serve.
 
         Args:
-            rules: Every rule this engine can run, by any of its three
-                execution modes. Names must be unique within this list —
-                a duplicate name silently shadows the earlier one in
-                :meth:`run_named`'s lookup, same as an ordinary dict
-                literal would.
+            rules: Every rule this engine can run. Names must be unique
+                within this list — a duplicate name shadows the earlier
+                one in :meth:`run_named`'s lookup.
         """
         self._rules = rules
         self._by_name: dict[str, Rule[TContext]] = {r.name: r for r in rules}
@@ -70,27 +51,13 @@ class RulesEngine(Generic[TContext]):
     async def try_run_named(self, name: str, context: TContext) -> RuleResult | None:
         """Evaluate one rule by name, or return ``None`` if no such rule exists.
 
-        This is the primitive; :meth:`run_named` is a two-line assertion on
-        top of it. The distinction matters when absence is an expected,
-        legitimate state rather than a mistake — a rule set that varies per
-        tenant, an optional group behind a feature flag, a name carried in
-        configuration that a given deployment has not adopted yet.
-
-        In those cases the caller decides what absence means, because the
-        engine cannot: for one consumer a missing rule means "nothing to
-        enforce, pass", for another "skip this and do not count it", for a
-        third "the configuration is wrong, fail loudly". A single library
-        default would be right for one of them and wrong for the rest.
-
         Args:
             name: The rule's own ``name`` attribute.
             context: Passed through unchanged to the rule's ``evaluate()``.
 
         Returns:
             That rule's own :class:`~verdict.result.RuleResult`, or ``None``
-            if no rule carries this name. ``None`` means *absent*, never
-            *failed* — a rule that exists and fails returns a
-            :class:`~verdict.result.RuleResult` with ``passed=False``.
+            if no rule carries this name.
         """
         rule = self._by_name.get(name)
         if rule is None:
@@ -99,11 +66,6 @@ class RulesEngine(Generic[TContext]):
 
     async def run_named(self, name: str, context: TContext) -> RuleResult:
         """Evaluate exactly one rule, looked up by name.
-
-        The strict form, and the one to reach for by default: if a name is
-        not expected to be absent, an absent name is a bug worth hearing
-        about immediately. Use :meth:`try_run_named` when absence is a state
-        your own domain has an answer for.
 
         Args:
             name: The rule's own ``name`` attribute.
@@ -125,12 +87,6 @@ class RulesEngine(Generic[TContext]):
     ) -> RunResult | None:
         """Evaluate a group, or return ``None`` if no such group exists.
 
-        This is the primitive; :meth:`run_group` is a two-line assertion on
-        top of it. See :meth:`try_run_named` for when reaching for it is
-        right — the short version is that the engine cannot know whether an
-        absent group means "no constraint applies here" or "the
-        configuration is broken", and only the caller can.
-
         Args:
             group: The group label to match against each rule's own
                 ``group`` attribute.
@@ -140,14 +96,6 @@ class RulesEngine(Generic[TContext]):
         Returns:
             A :class:`~verdict.result.RunResult` scoped to just this group,
             or ``None`` if no rule carries this label.
-
-            ``None`` means *absent*, never *vacuously passed*. That
-            distinction is the whole point: a group exists only by virtue of
-            a rule declaring it, so an empty-but-real group is not
-            representable, and a lookup matching nothing can only be a typo
-            or a stale name. Returning a passing
-            :class:`~verdict.result.RunResult` here would mean a misspelled
-            group silently approves.
         """
         rules = self._by_group.get(group)
         if not rules:
@@ -157,10 +105,6 @@ class RulesEngine(Generic[TContext]):
 
     async def run_group(self, group: str, context: TContext) -> RunResult:
         """Evaluate every rule sharing a given group label.
-
-        The strict form, and the one to reach for by default. Use
-        :meth:`try_run_group` when absence is a state your own domain has an
-        answer for.
 
         Args:
             group: The group label to match against each rule's own
@@ -183,25 +127,10 @@ class RulesEngine(Generic[TContext]):
 
     @property
     def rule_names(self) -> tuple[str, ...]:
-        """Every rule name registered on this engine, in registration order.
-
-        Returns:
-            The names :meth:`run_named` accepts without raising. Useful
-            for enumerating an engine; when the question is only "does
-            this one exist", :meth:`try_run_named` answers it in a single
-            call rather than a scan followed by a lookup.
-        """
+        """Every rule name registered on this engine, in registration order."""
         return tuple(self._by_name)
 
     @property
     def group_names(self) -> tuple[str, ...]:
-        """Every group label carried by at least one rule on this engine.
-
-        Returns:
-            The labels :meth:`run_group` accepts without raising. A group
-            is only present because some rule declared it, so this is
-            exactly the set of lookups that will not raise; when the
-            question is only "does this one exist",
-            :meth:`try_run_group` answers it in a single call.
-        """
+        """Every group label carried by at least one rule on this engine."""
         return tuple(self._by_group)

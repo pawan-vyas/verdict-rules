@@ -1,13 +1,9 @@
 /**
  * A small, zero-dependency, async-native rule-evaluation engine.
  *
- * Compose independently-changing conditions into one explainable pass/fail
- * verdict. Evaluation is sequential and never concurrent, which is what makes
- * short-circuiting a real contract rather than a best-effort optimisation.
- *
  * `Rule<TContext>`/`RulesEngine<TContext>` are generic over the context they
  * read from, with no default type parameter — dict-context is
- * `FunctionRule<Context>`/`RulesEngine<Context>`, written out explicitly.
+ * `FunctionRule<Context>`/`RulesEngine<Context>`.
  *
  * ```ts
  * import { AndRule, FunctionRule, type Context } from "verdict-rules";

@@ -1,13 +1,6 @@
 /**
  * Thrown when a lookup names a rule or group that does not exist.
  *
- * Every other SDK has a built-in type for this — Python raises `KeyError`,
- * C# `KeyNotFoundException`, Dart `ArgumentError`. JavaScript has no
- * equivalent, and a bare `Error` would leave callers matching on message text,
- * which breaks the moment a message is reworded. So this is exported instead:
- * `instanceof` is stable, and {@link UnknownLookupError.kind} and
- * {@link UnknownLookupError.key} say what was missing without parsing prose.
- *
  * ```ts
  * try {
  *   await engine.runGroup("cor", ctx);
@@ -17,9 +10,6 @@
  *   }
  * }
  * ```
- *
- * Reaching for this in a `catch` is usually a sign the check belongs earlier:
- * `RulesEngine.ruleNames` and `groupNames` let a caller ask before calling.
  */
 export class UnknownLookupError extends Error {
   /** Whether the missing thing was a rule name or a group label. */
