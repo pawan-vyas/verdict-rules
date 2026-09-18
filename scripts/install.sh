@@ -35,8 +35,8 @@
 #              a small HTML-comment marker), never overwriting existing content.
 #
 # In project scope, the full skill payload (SKILL.md + references/, nested one subdirectory per
-# language verdict ships for — today just references/python/) is vendored as an agentskills.io-
-# conformant skill folder (see https://agentskills.io/specification) at BOTH
+# language verdict ships for) is vendored as an agentskills.io-conformant skill folder
+# (see https://agentskills.io/specification) at BOTH
 # .agents/skills/verdict/ (the generic convention — Cursor and other agentskills.io tools scan this)
 # AND .claude/skills/verdict/ (Claude Code scans ONLY .claude/skills/, confirmed against
 # code.claude.com/docs/en/skills — it does not read .agents/skills/ at all). Both are refreshed on
@@ -54,12 +54,12 @@
 # This script runs in two different layouts and resolves its own skill source accordingly, so the
 # same file works unmodified in both — no separate copy to keep in sync:
 #   - Dev repo:            scripts/install.sh, with no sibling ./skill/ dir. skills/verdict/ in git
-#     holds only hand-written content -- fetch-docs.sh's own fetch-catalog.tsv and the bundled
-#     docs/architecture/ are generated at build time (see scripts/build.sh) and are not present in
-#     that source tree. So this layout runs scripts/build.sh itself and vendors from its
-#     dist/verdict.skill output, never from skills/verdict/ directly -- vendoring straight from
-#     source once shipped an installed skill silently missing fetch-docs.sh's own catalog and the
-#     bundled architecture docs, caught only by testing a real downstream install end to end.
+#     holds every hand-written file, but references/REPOSITORY-MAP.md is generated at build time
+#     (see scripts/build.sh) and is not present in that source tree. So this layout runs
+#     scripts/build.sh itself and vendors from its dist/verdict.skill output, never from
+#     skills/verdict/ directly -- vendoring straight from source once shipped an installed skill
+#     silently missing that generated file, caught only by testing a real downstream install end
+#     to end.
 #   - Standalone tools zip: install.sh at the package root, with ./skill/ as the source (see
 #     scripts/build.sh, which packages dist/verdict-tools.zip in exactly this shape — download that
 #     instead of cloning the whole repo if you only need the installer, not this repo's own docs/dev
@@ -75,8 +75,8 @@ trap cleanup_build_tmp EXIT
 if [ -d "$SCRIPT_DIR/skill" ]; then
   SKILL_SRC="$SCRIPT_DIR/skill"                                # standalone tools package
 else
-  # Dev repo: build fresh (docs/architecture/, MANIFEST.toml, fetch-docs.sh, fetch-catalog.tsv)
-  # rather than vendoring skills/verdict/'s own hand-written-only source tree.
+  # Dev repo: build fresh (references/REPOSITORY-MAP.md is generated, not hand-written) rather
+  # than vendoring skills/verdict/'s own source tree directly.
   REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
   bash "$REPO_ROOT/scripts/build.sh" >&2
   BUILD_TMP="$(mktemp -d)"
@@ -143,29 +143,26 @@ would() { if [ "$DRY_RUN" -eq 1 ]; then printf '[dry-run] %s\n' "$*"; fi; }
 # vendor_one() does the actual copy into one absolute destination path.
 vendor_one() {
   local dest="$1"
-  would "vendor SKILL.md + references/ + scripts/ into $dest/ (refreshed if already present)"
+  would "vendor SKILL.md + references/ into $dest/ (refreshed if already present)"
   if [ "$DRY_RUN" -eq 0 ]; then
     # references/ nests one subdirectory per language (today: references/python/), and that set of
     # languages changes as new SDKs ship -- a plain `cp -r` only ever adds or overwrites, it never
     # removes, so a stale destination accumulates orphaned files a source removal should have cleaned
     # up. rm -rf + recreate makes this a real sync, not a merge.
-    rm -rf "$dest/references" "$dest/scripts"
-    mkdir -p "$dest/references" "$dest/scripts"
+    rm -rf "$dest/references"
+    mkdir -p "$dest/references"
     cp "$SKILL_SRC/SKILL.md" "$dest/SKILL.md"
     cp -r "$SKILL_SRC/references/." "$dest/references/"
-    cp -r "$SKILL_SRC/scripts/." "$dest/scripts/"
     # cp preserves an existing destination file's permission bits rather than resetting them, so an
     # already-present, wrongly-permissioned destination (e.g. a stray 600) would otherwise survive a
     # refresh. Force it explicitly every time instead of relying on umask defaults for new files only.
-    # references/ and scripts/ nest real subdirectories -- a flat `chmod 644 */*` would catch those
+    # references/ nests real subdirectories -- a flat `chmod 644 references/*` would catch those
     # directories too and strip their execute/traverse bit (644 on a dir = not listable), so files and
     # directories need separate, recursive treatment, not one flat glob.
     chmod 644 "$dest/SKILL.md"
     find "$dest/references" -type d -exec chmod 755 {} +
     find "$dest/references" -type f -exec chmod 644 {} +
-    find "$dest/scripts" -type f -name '*.sh' -exec chmod 755 {} +
-    find "$dest/scripts" -type f -not -name '*.sh' -exec chmod 644 {} +
-    note "vendored $dest/ (SKILL.md + references/ + scripts/)"
+    note "vendored $dest/ (SKILL.md + references/)"
   fi
 }
 
@@ -272,4 +269,4 @@ else
   note "No --harness given — vendored the skill only (.agents/skills/verdict/ and .claude/skills/verdict/), no harness-specific pointer files written. Pass --harness=<name[,name...]|all> to also wire native rules files for a specific harness."
 fi
 
-note "Done. The vendored skill (.agents/skills/verdict/ and .claude/skills/verdict/) carries the workflow, the execution-model guarantees and the extension recipes locally — enough to write correct verdict code with no network. Deeper material (the testing guide, quickstart, samples and worked example) is pulled on demand at the version a project has installed; see the skill's own SKILL.md. Per-harness pointers wire up richer native surfaces where one exists."
+note "Done. The vendored skill (.agents/skills/verdict/ and .claude/skills/verdict/) carries the workflow, the execution-model guarantees, and each language's own full API — enough to write correct verdict code with no network. references/REPOSITORY-MAP.md names deeper material (design rationale, worked samples, extension scenarios) in the source repository, for the agent to fetch itself if a task needs it. Per-harness pointers wire up richer native surfaces where one exists."

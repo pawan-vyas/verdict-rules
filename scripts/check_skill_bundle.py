@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
 """Validate an assembled skill bundle before it is packaged.
 
-Two things can go wrong when the skill is assembled from a manifest, and
-neither is visible by reading either file alone:
+Everything under references/ ships in every install — there is no fetch
+tier and no manifest declaring what is bundled; the assembled directory
+itself is the source of truth. Two things can still go wrong, and neither
+is visible by reading one file alone:
 
-1. ``SKILL.md`` routes to a document the manifest does not bundle, so an agent
-   follows a pointer to a file that is not there.
-2. The manifest places two bundled documents such that a relative link between
-   them no longer resolves.
+1. SKILL.md or an agent-notes.md routes to a references/ path that is not
+   actually present in the assembled bundle.
+2. A relative link between two bundled documents does not resolve from
+   where they actually ended up.
 
-Links pointing at documents that are *not* bundled are expected and not an
-error: those are the fetch tier, and ``SKILL.md`` explains that an unresolved
-relative link resolves against the source repository at the pinned version.
-Checking them here would flag the design as a defect.
+A link to something outside references/ (a real repository path named in
+REPOSITORY-MAP.md, for a reader to go fetch themselves) is expected and
+not an error — those are never bundled, by design.
 
-Usage: check_skill_bundle.py <assembled-skill-dir> <manifest>
+Usage: check_skill_bundle.py <assembled-skill-dir>
 """
 
 from __future__ import annotations
@@ -23,72 +24,43 @@ import re
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
-import skill_manifest  # noqa: E402 — needs sys.path set first
-
 LINK = re.compile(r"\]\(([^)#\s]+)")
 SKILL_REF = re.compile(r"references/[A-Za-z0-9_./-]+\.md")
-# A documented fetch command, e.g.  curl ... "${BASE}/docs/testing/README.md" ...
-FETCH_URL = re.compile(r"\$\{BASE\}/([A-Za-z0-9_./-]+)")
 
 
-def bundled_destinations(manifest: Path) -> set[str]:
-    """Destination paths, relative to references/, that the bundle contains."""
-    return {dest for _, dest in skill_manifest.rows("bundled", manifest)}
-
-
-def check(skill_dir: Path, manifest: Path) -> list[str]:
+def check(skill_dir: Path) -> list[str]:
     failures: list[str] = []
     references = skill_dir / "references"
-    bundled = {(references / d).resolve() for d in bundled_destinations(manifest)}
 
-    # 1 — every path SKILL.md routes to is present.
-    skill_md = (skill_dir / "SKILL.md").read_text()
-    for ref in sorted(set(SKILL_REF.findall(skill_md))):
-        if "<language>" in ref:
-            continue  # a template, resolved per language at read time
-        if not (skill_dir / ref).exists():
-            failures.append(f"SKILL.md routes to '{ref}', which the bundle does not contain")
+    # 1 — every references/ path SKILL.md or an agent-notes.md routes to is present.
+    for doc in [skill_dir / "SKILL.md", *sorted(references.rglob("agent-notes.md"))]:
+        text = doc.read_text()
+        for ref in sorted(set(SKILL_REF.findall(text))):
+            if "<language>" in ref:
+                continue  # a template, resolved per language at read time
+            if not (skill_dir / ref).exists():
+                failures.append(f"{doc.relative_to(skill_dir)}: routes to '{ref}', which the bundle does not contain")
 
-    # 2 — links between bundled documents resolve where the manifest put them.
+    # 2 — links between bundled documents resolve where they actually landed.
     for doc in sorted(references.rglob("*.md")):
         for target in LINK.findall(doc.read_text()):
             if target.startswith(("http", "mailto")):
                 continue
             resolved = (doc.parent / target).resolve()
-            if resolved in bundled and not resolved.exists():
-                failures.append(
-                    f"{doc.relative_to(references)}: link to '{target}' is a bundled "
-                    f"document but does not resolve — check its destination in the manifest"
-                )
-
-    # 3 — every documented fetch URL names a path the manifest actually declares.
-    #
-    # These commands are the one place a repository path is written out by hand
-    # in shipped content, and they fail at the worst possible moment: not here,
-    # not in CI, but months later inside a consumer's project, against a tag
-    # whose layout moved. A 404 there is silent — the agent simply proceeds
-    # without the document it was told to read.
-    fetch_sources = {src for src, _ in skill_manifest.rows("fetch", manifest)}
-    for doc in sorted(skill_dir.rglob("*.md")):
-        for path in sorted(set(FETCH_URL.findall(doc.read_text()))):
-            if any(path == src or path.startswith(src) for src in fetch_sources):
-                continue
-            failures.append(
-                f"{doc.relative_to(skill_dir)}: fetches '{path}', which is not a "
-                f"fetch source in the manifest — the path moved, or the manifest did"
-            )
+            if references in resolved.parents or resolved == references:
+                if not resolved.exists():
+                    failures.append(f"{doc.relative_to(references)}: link to '{target}' does not resolve")
 
     return failures
 
 
 def main() -> int:
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 2:
         print(__doc__, file=sys.stderr)
         return 2
 
-    skill_dir, manifest = Path(sys.argv[1]), Path(sys.argv[2])
-    failures = check(skill_dir, manifest)
+    skill_dir = Path(sys.argv[1])
+    failures = check(skill_dir)
 
     for failure in failures:
         print(f"::error::{failure}")

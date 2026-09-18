@@ -19,55 +19,27 @@ trap 'rm -rf "$stage"' EXIT
 
 # Assemble the skill into the staging area, never in place.
 #
-# skills/verdict/ in git holds only hand-written content. The documents the
-# skill ships are copied here from the repository's own docs/, so there is one
-# copy of each fact and nothing to keep in sync. Doing it in staging rather
-# than in the source tree matters: all three artifacts below copy
-# skills/verdict/ wholesale, and build output living inside a source directory
-# is how unrelated files end up in a package (see .agents/incidents/002).
+# skills/verdict/ in git holds everything hand-written and bundled — SKILL.md
+# and each language's own agent-notes.md. The one generated piece is
+# REPOSITORY-MAP.md, built here from the repository's own docs/ so its
+# one-line descriptions cannot drift from what those documents actually say.
+# Nothing else is vendored: docs/extending/, docs/samples/, and
+# docs/architecture/ stay in the source repository, named but not copied.
 skill_src="$stage/skill-src"
 mkdir -p "$skill_src"
 cp -r skills/verdict/. "$skill_src/"
+python3 scripts/generate_repository_map.py "$skill_src/references/REPOSITORY-MAP.md"
 
-# The bundled tier, from MANIFEST.toml (read via scripts/skill_manifest.py —
-# one parser, not a second hand-rolled one here). A trailing slash on both
-# sides copies a directory. Anything marked `fetch` is deliberately absent —
-# SKILL.md explains how it is pulled on demand, pinned to the consumer's
-# installed version.
-bundled=0
-while IFS="$(printf '\t')" read -r src dst; do
-  target="$skill_src/references/$dst"
-  mkdir -p "$(dirname "$target")"
-  if [ "${src%/}" != "$src" ]; then
-    mkdir -p "$target"
-    cp -r "$src". "$target"
-  else
-    cp "$src" "$target"
-  fi
-  bundled=$((bundled + 1))
-done < <(python3 scripts/skill_manifest.py bundled)
+# Validate the assembled bundle before packaging it: SKILL.md and every
+# agent-notes.md must not route to a references/ path the bundle does not
+# contain, and links between bundled documents must resolve. A script rather
+# than an inline block — shell nested inside a generated file is how
+# .agents/incidents/005 happened.
+python3 scripts/check_skill_bundle.py "$skill_src"
 
-[ "$bundled" -gt 0 ] || { echo "error: MANIFEST.toml declared no bundled documents." >&2; exit 1; }
-
-# The fetch catalog scripts/fetch-docs.sh reads at runtime: (language, source,
-# destination) rows, fully resolved -- no TOML parsing needed on the
-# consumer side. Derived, not hand-maintained; lives beside the script itself.
-mkdir -p "$skill_src/scripts"
-python3 scripts/skill_manifest.py fetch-catalog > "$skill_src/scripts/fetch-catalog.tsv"
-chmod +x "$skill_src/scripts/fetch-docs.sh"
-
-# Validate the assembled bundle before packaging it: SKILL.md must not route
-# to anything the manifest omitted, and links between bundled documents must
-# resolve where the manifest put them. A script rather than an inline block —
-# shell nested inside a generated file is how .agents/incidents/005 happened.
-python3 scripts/check_skill_bundle.py "$skill_src" skills/verdict/MANIFEST.toml
-
-echo "skill assembled: $bundled bundled document(s)"
+echo "skill assembled"
 
 # 1) plugin package — top-level verdict/ so it extracts cleanly into a skills dir.
-# commands/ carries the one slash-command surface this skill has: fetching the
-# documents the bundle deliberately does not carry. Harnesses without commands
-# use the equivalent recipe in references/<language>/agent-notes.md.
 mkdir -p "$stage/plugin/verdict"
 cp -r .claude-plugin "$stage/plugin/verdict/"
 mkdir -p "$stage/plugin/verdict/skills"
@@ -83,20 +55,16 @@ mkdir -p "$stage/skill"
 cp -r "$skill_src" "$stage/skill/verdict"
 ( cd "$stage/skill" && zip -r -q "$ROOT/dist/verdict.skill" verdict -x '*/.DS_Store' )
 
-# 3) standalone tools package — install.sh + harness-templates/ + skill/ (SKILL.md + MANIFEST.toml +
-#    references/, recursive since references/ nests one subdirectory per language, + scripts/, so
-#    fetch-docs.sh and the fetch-catalog.tsv it reads travel with this package too). install.sh
-#    resolves its own skill source by checking for a sibling ./skill/ dir first (this package's
-#    shape) before falling back to ../skills/verdict/ (the dev-repo shape) — see install.sh's own
-#    header comment.
+# 3) standalone tools package — install.sh + harness-templates/ + skill/ (SKILL.md + references/,
+#    recursive since references/ nests one subdirectory per language). install.sh resolves its own
+#    skill source by checking for a sibling ./skill/ dir first (this package's shape) before
+#    falling back to ../skills/verdict/ (the dev-repo shape) — see install.sh's own header comment.
 mkdir -p "$stage/tools/verdict-tools/skill/references"
 cp scripts/install.sh "$stage/tools/verdict-tools/install.sh"
 chmod +x "$stage/tools/verdict-tools/install.sh"
 cp -r scripts/harness-templates "$stage/tools/verdict-tools/harness-templates"
 cp "$skill_src/SKILL.md" "$stage/tools/verdict-tools/skill/SKILL.md"
-cp "$skill_src/MANIFEST.toml" "$stage/tools/verdict-tools/skill/MANIFEST.toml"
 cp -r "$skill_src/references/." "$stage/tools/verdict-tools/skill/references/"
-cp -r "$skill_src/scripts" "$stage/tools/verdict-tools/skill/scripts"
 ( cd "$stage/tools" && zip -r -q "$ROOT/dist/verdict-tools.zip" verdict-tools -x '*/.DS_Store' )
 
 echo "built:"

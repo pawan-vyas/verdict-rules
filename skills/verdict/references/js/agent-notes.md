@@ -1,9 +1,7 @@
 # JavaScript/TypeScript — agent notes
 
-Short by design. Everything about *what verdict is* lives in
-`references/docs/`, which is the repository's own documentation rather
-than a summary that could drift from it. This file carries only what is
-specific to the JS/TS SDK, and to writing JS/TS that uses it.
+What is specific to the JS/TS SDK, and to writing JS/TS that uses it.
+The engine's own general guarantees are in `SKILL.md`, not repeated here.
 
 ## Install and import
 
@@ -56,70 +54,37 @@ engine.ruleNames, engine.groupNames       // readonly string[] of what exists
 construct them as object literals: `{ ruleName, passed, detail?, data? }`
 and `{ passed, results }`.
 
-## Mistakes that show up in generated JS/TS specifically
+**A typed, non-dict context** reaches for the exact same
+`FunctionRule`/`AndRule`/`OrRule`/`RulesEngine` — `TContext` is a type
+parameter on each, not a separate name, and is inferred from the
+predicate's own parameter type at the call site
+(`new FunctionRule("x", predicate)` needs no explicit type argument as
+long as `predicate` is typed, whether that type is `Context` or a
+custom interface). There is no default type parameter, though — the
+dict-context spelling still has to be written out somewhere a
+predicate's own type can't be inferred from context; see the mistake
+below. Every sub-rule inside one `AndRule<TContext>`/`OrRule<TContext>`
+must share the exact same `TContext`.
 
-- **`Promise.all` in a composite.** It starts every sub-rule's coroutine
-  before the first result returns and destroys the short-circuit
-  guarantee. Sub-rules are evaluated in a plain `for…of` loop with
-  `await`, one at a time.
-- **`result || default`.** JS's `||` fires on any *falsy* value, not
-  only `undefined` — `0`, `""`, `false` all trigger it. Write
-  `result?.passed ?? default`, or an explicit
-  `result !== undefined ? result.passed : default`. Unlike Python's
-  equivalent footgun, this one is not saved by the result types
-  happening to be truthy — `passed: false` is a real, common value here.
-- **A predicate returning a bare `boolean`.** `FunctionRule`'s predicate
-  must return a `RuleResult`, not `true`/`false`.
-- **Catching `UnknownLookupError` where a rule shape should be reached
-  for instead.** Checking `engine.ruleNames.includes(name)` (or
-  `groupNames`) before calling is usually clearer than a `try`/`catch`
-  around the strict form, and is exactly what those two getters exist
-  for — see `runNamed`'s own doc comment.
-- **A `Rule` implementation importing anything from `verdict-rules`.**
-  It does not need to — `Rule` is a structural `interface`, so the right
-  shape (a `name` and an `evaluate` method) is enough. This is the same
-  property Python's `Protocol` gives; unlike C#/Dart, no `implements`
-  clause is required either.
-- **`ruleName` set to something other than the rule's own `name`.** A
-  caller walking a `RunResult` attributes outcomes by that field.
-- **Writing bare `Rule` or `FunctionRule` with no type argument and
-  expecting dict-context.** There is no default type parameter,
-  deliberately — `Rule<Context>`/`FunctionRule<Context>` is the
-  dict-context spelling, written out every time. An untyped `Rule`
-  alone is a type error, not a silent `Rule<Context>`.
-- **Mixing sub-rules of different `TContext`s inside one
-  `AndRule`/`OrRule`.** `tsc` rejects this once a type argument is
-  named — reuse a rule across two shapes via an explicit projecting
-  adapter (`docs/extending/reusing-a-rule-across-contexts/js.md`)
-  instead of loosening the composite's own type.
+## Which run mode
+
+| Need | Reach for |
+| --- | --- |
+| One fast pass/fail verdict | A composite's own `evaluate()` |
+| Every rule's own outcome (a status page, an audit trail) | `engine.runAll()` |
+| One named rule/group; absence would be a bug | The strict lookup — throws |
+| One named rule/group; absence is expected, your domain decides what it means | The non-raising lookup |
 
 ## Testing what matters
 
-[`references/docs/testing/`](../../../../docs/testing/README.md) (fetch it) is the full checklist. The parts
-that are easy to skip:
+`docs/testing/` in the source repository is the full checklist (see
+`references/REPOSITORY-MAP.md`). The parts that are easy to skip:
 
 - Prove short-circuiting with a **call log**, not the final boolean. A
   composite that evaluates everything still returns the right answer.
-- Give each **vacuous-truth polarity** its own test. They are asymmetric.
-- Test both halves of a lookup: the strict form throwing **and** the
-  `try` form returning `undefined`.
-- If code uses a fallback, test the **present-but-failing** case — not
-  just the absent one. That is the direction where a bug is silent.
 - For a rule set **built from stored/config data at runtime** rather
   than hand-written, hand-picked fixtures stop scaling as the
   configuration space grows — reach for property-based testing or an
   oracle/differential approach (an independent, deliberately simpler
   reference implementation checked against many random configurations)
   instead of adding fixtures one at a time as bugs are found.
-
-## Fetching the deeper documents
-
-Determine the actual installed version first — not a range from the
-manifest — using this ecosystem's own tooling, then:
-
-```bash
-scripts/fetch-docs.sh js=<version>
-```
-
-If the tag doesn't exist, re-check the version before assuming the release
-is missing. See [`commands/verdict-fetch-docs.md`](../../commands/verdict-fetch-docs.md).

@@ -1,9 +1,7 @@
 # Python — agent notes
 
-Short by design. Everything about *what verdict is* lives in
-`references/docs/`, which is the repository's own documentation rather
-than a summary that could drift from it. This file carries only what is
-specific to the Python SDK, and to writing Python that uses it.
+What is specific to the Python SDK, and to writing Python that uses it.
+The engine's own general guarantees are in `SKILL.md`, not repeated here.
 
 ## Install and import
 
@@ -49,41 +47,22 @@ sub-rule inside one `AndRule`/`OrRule` must share the same `TContext`.
 `RuleResult(rule_name, passed, detail="", data=None)` and
 `RunResult(passed, results)` are frozen dataclasses.
 
-## Mistakes that show up in generated Python specifically
+## Which run mode
 
-- **`asyncio.gather` in a composite.** It returns the same boolean and
-  destroys the short-circuit guarantee. Sub-rules are evaluated in a
-  plain `for` loop with `await`, one at a time.
-- **`result or default`.** Python's `or` fires on any *falsy* value, not
-  only `None`. It happens to work here because these dataclasses are
-  always truthy, but that is a property of this library rather than of
-  the pattern. Write `result.passed if result is not None else default`.
-- **A predicate returning a bare `bool`.** `FunctionRule`'s predicate
-  must return a `RuleResult`, not `True`/`False`.
-- **`rule_name` set to something other than the rule's own `name`.** A
-  caller walking a `RunResult` attributes outcomes by that field.
-- **Reaching for `try_run_*` to avoid thinking about absence.** A
-  `KeyError` in development is a typo found in seconds; the same typo
-  behind a default is a rule set that silently stopped being enforced.
-  Use the strict form unless the caller's own domain has an answer for
-  absence.
-- **A `Rule` implementation importing anything from `verdict`.** It does
-  not need to — `Rule` is a `Protocol`, so the right shape is enough.
+| Need | Reach for |
+| --- | --- |
+| One fast pass/fail verdict | A composite's own `evaluate()` |
+| Every rule's own outcome (a status page, an audit trail) | `engine.run_all()` |
+| One named rule/group; absence would be a bug | The strict lookup — raises |
+| One named rule/group; absence is expected, your domain decides what it means | The non-raising lookup |
 
 ## Testing what matters
 
-[`references/docs/testing/`](../../../../docs/testing/README.md) (fetch it) is the full checklist,
-with [`references/docs/testing/python.md`](../../../../docs/testing/python.md)
-naming which test proves which contract. The parts that are easy to
-skip:
+`docs/testing/` in the source repository is the full checklist (see
+`references/REPOSITORY-MAP.md`). The parts that are easy to skip:
 
 - Prove short-circuiting with a **call log**, not the final boolean. A
   composite that evaluates everything still returns the right answer.
-- Give each **vacuous-truth polarity** its own test. They are asymmetric.
-- Test both halves of a lookup: the strict form raising **and** the
-  `try_` form returning `None`.
-- If code uses a fallback, test the **present-but-failing** case — not
-  just the absent one. That is the direction where a bug is silent.
 - For a rule set **built from stored/config data at runtime** rather
   than hand-written, hand-picked fixtures stop scaling as the
   configuration space grows — reach for property-based testing (e.g.
@@ -92,15 +71,3 @@ skip:
   random configurations) instead of adding fixtures one at a time as
   bugs are found. `python/examples/graduation_verdict/` is a real,
   shipped 500-case instance of the oracle/differential shape.
-
-## Fetching the deeper documents
-
-Determine the actual installed version first — not a range from the
-manifest — using this ecosystem's own tooling, then:
-
-```bash
-scripts/fetch-docs.sh python=<version>
-```
-
-If the tag doesn't exist, re-check the version before assuming the release
-is missing. See [`commands/verdict-fetch-docs.md`](../../commands/verdict-fetch-docs.md).
