@@ -1,11 +1,9 @@
 /// Tests for the graduation-verdict example.
 ///
-/// These aren't just tests of this example's own logic -- because this
-/// project exercises FunctionRule, AndRule, OrRule, a custom Rule shape,
-/// and all three RulesEngine run modes together, this suite functions as
-/// an integration/e2e regression net for verdict_rules itself. See
-/// docs/testing/README.md's "second testing layer" section for the full
-/// reasoning behind that claim.
+/// Also functions as an integration/e2e regression net for verdict_rules
+/// itself, exercising FunctionRule, AndRule, OrRule, a custom Rule shape,
+/// and all three RulesEngine run modes together. See
+/// docs/testing/README.md.
 import 'dart:convert';
 import 'dart:io';
 
@@ -28,9 +26,10 @@ final _edgeCases =
 SubjectPolicy _policy(String subjectId) =>
     _policies.firstWhere((p) => p.subjectId == subjectId);
 
-/// Walk the first failing branch down, collecting rule names. This is what
-/// proves a result's data is never flattened: a nested failure has to
-/// still be reachable by following data downward.
+/// Walk the first failing branch down, collecting rule names.
+///
+/// A nested failure is reachable by following data downward; a result's
+/// data is never flattened.
 List<String> _failingChain(RuleResult result) {
   final chain = <String>[];
   var node = result;
@@ -179,7 +178,7 @@ void main() {
 
     test('runGroup never short-circuits, unlike the graduates composite',
         () async {
-      // bob fails ENG101 (core) -- runGroup must still report every other core subject.
+      // bob fails ENG101 (core); runGroup still reports every other core subject.
       final (engine, _) = buildGraduationCheck(_policies, _electiveMinimum);
       final result = await engine.runGroup('core', _students['bob']!.context);
       expect(result.results.length, 4);
@@ -188,11 +187,9 @@ void main() {
   });
 
   group('shared fixture contract', () {
-    // Every expectation in the shared fixture, asserted. This is the
-    // cross-language contract: each port of this example must reproduce
-    // these exact numbers. See fixtures/graduation_verdict/README.md for
-    // what each field proves and why the counts matter more than the
-    // booleans.
+    // Every expectation in the shared fixture, asserted. Each port of
+    // this example reproduces these exact numbers. See
+    // fixtures/graduation_verdict/README.md for what each field checks.
 
     for (final studentId in _students.keys) {
       test('$studentId: verdict matches', () async {
@@ -210,9 +207,8 @@ void main() {
       });
 
       test('$studentId: short-circuit count matches', () async {
-        // bob and gita both fail, but bob stops after one rule and gita runs
-        // all four. An implementation that evaluated sub-rules concurrently
-        // would return both booleans correctly and fail here.
+        // bob and gita both fail; bob stops after one rule, gita runs
+        // all four.
         final (_, graduates) =
             buildGraduationCheck(_policies, _electiveMinimum);
         final record = _students[studentId]!;
@@ -223,7 +219,7 @@ void main() {
       });
 
       test('$studentId: failing chain matches', () async {
-        // Proves nesting survives: deepak's failure is three levels deep.
+        // deepak's failure is three levels deep.
         final (_, graduates) =
             buildGraduationCheck(_policies, _electiveMinimum);
         final record = _students[studentId]!;
@@ -244,9 +240,9 @@ void main() {
       });
 
       test('$studentId: group results match', () async {
-        // harish is the interesting one: he graduates while his elective
-        // group "fails", because the group verdict is all-must-pass and
-        // the composite's requirement is at-least-two-of-three.
+        // harish graduates while his elective group "fails", because the
+        // group verdict is all-must-pass and the composite's requirement
+        // is at-least-two-of-three.
         final (engine, _) = buildGraduationCheck(_policies, _electiveMinimum);
         final record = _students[studentId]!;
         final groups = record.expected['groups'] as Map<String, Object?>;
@@ -264,10 +260,9 @@ void main() {
 
   group('vacuous-truth edge cases', () {
     // The degenerate curricula, from the shared fixture's edge_cases.json.
-    // AndRule([]) passing while an at-least-N rule over an empty set fails
-    // for N > 0 is deliberately asymmetric, and it is the kind of thing a
-    // port gets backwards without noticing -- nothing in the main student
-    // set exercises an empty rule list at all.
+    // AndRule([]) passes while an at-least-N rule over an empty set fails
+    // for N > 0. Nothing in the main student set exercises an empty rule
+    // list.
 
     for (final caseName in _edgeCases.keys) {
       test('$caseName matches the fixture', () async {
@@ -294,9 +289,7 @@ void main() {
             reason: caseName);
         expect(runAll.passed, expectedRunAll['passed'], reason: caseName);
 
-        // Absence is reported two ways, and both are part of the contract:
-        // the strict form throws, the try-prefixed form returns null. A
-        // port that shipped one without the other would fail here.
+        // The strict form throws; the try-prefixed form returns null.
         final lookups = expected['lookups'] as Map<String, Object?>;
 
         final unknownGroup = lookups['unknown_group'] as Map<String, Object?>;

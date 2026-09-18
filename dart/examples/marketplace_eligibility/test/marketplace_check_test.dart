@@ -132,8 +132,7 @@ void main() {
 
     test('a new flag is additive, not a shared-context change', () async {
       // Registering a fourth check needs no change to
-      // SellerListingContext, BuyerPurchaseContext, or any existing flag
-      // -- the whole point of keeping this side dict-context.
+      // SellerListingContext, BuyerPurchaseContext, or any existing flag.
       final extended = RulesEngine<Context>([
         FunctionRule<Context>(
           'high_value_flag',
