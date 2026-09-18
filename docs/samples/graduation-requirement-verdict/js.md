@@ -17,17 +17,20 @@ serves as an integration/e2e regression net for verdict-rules itself.
 | Spec concept | `graduation-verdict.js` |
 | --- | --- |
 | Policies → the factory function | `loadCurriculum()`, `ruleForSubject()` |
-| The three rule shapes | `writtenPredicate()`, `practicalRule()`, `exemptionRule()` compose into whichever shape `ruleForSubject()` returns |
+| The three rule shapes | `writtenPredicate()`, `practicalRule()`, `exemptionRule()` compose into whichever shape each `subjectType`'s own builder returns |
+| Dispatch by `subjectType` | `SUBJECT_RULE_BUILDERS`, a table of one builder per type — `ruleForSubject()` itself is a lookup, never a branch |
 | The custom at-least-N rule shape | `AtLeastNRule` |
 | The engine and the AND composite, built once | `buildGraduationCheck()` |
 | The demo's two halves | `demo()` (the detailed `alice` walkthrough, then the batch loop) |
 
 **Adding a subject of a genuinely new type** — not just a new row of an
-existing type — needs a new branch in `ruleForSubject()`, a real code
-change, since a new *kind* of pass condition is a new concept, not new
-data. Every other curriculum change (a threshold, a new subject of an
-existing type, a student scenario, the elective-count minimum) is a
-data-only edit to the shared fixture — see
+existing type — is a new builder function plus a new entry in
+`SUBJECT_RULE_BUILDERS`, a real code change, since a new *kind* of pass
+condition is a new concept, not new data — but it's additive: nothing
+existing moves, and `ruleForSubject()` itself never changes. Every
+other curriculum change (a threshold, a new subject of an existing
+type, a student scenario, the elective-count minimum) is a data-only
+edit to the shared fixture — see
 [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md).
 
 ## Related

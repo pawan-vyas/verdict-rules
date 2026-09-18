@@ -128,11 +128,12 @@ both — is wrong in one direction or the other.
 
 **Adding a subject of a genuinely new *type*** — not just a new row of
 an existing type — is the one change that isn't data-only: it needs a
-new branch in whatever each language's own port calls its
-policy-to-rule factory function, since a new *kind* of pass condition is
-a new concept, not new data. See
+new builder plus a new entry in whatever each language's own port calls
+its subject-type-to-builder table, since a new *kind* of pass condition
+is a new concept, not new data — additive, though: nothing existing
+moves, and the factory function's own dispatch code never changes. See
 [`../../docs/samples/graduation-requirement-verdict/`](../../docs/samples/graduation-requirement-verdict/README.md)
-for where each language's own factory function lives.
+for where each language's own factory function and dispatch table live.
 
 ## Regenerating
 
