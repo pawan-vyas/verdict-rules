@@ -1,0 +1,42 @@
+{
+  "buyer_erin": {
+    "note": "Clean pass -- verified, sufficient balance, within the purchase limit.",
+    "buyer_verified": true,
+    "purchase_amount_cents": 2000,
+    "buyer_balance_cents": 5000,
+    "expected": {
+      "buyer_verified": true,
+      "purchase_eligible": true
+    }
+  },
+  "buyer_frank": {
+    "note": "Unverified, otherwise perfect -- mirrors seller_bob's failure mode.",
+    "buyer_verified": false,
+    "purchase_amount_cents": 2000,
+    "buyer_balance_cents": 5000,
+    "expected": {
+      "buyer_verified": false,
+      "purchase_eligible": false
+    }
+  },
+  "buyer_gita": {
+    "note": "Verified, within the purchase limit, but the balance is insufficient.",
+    "buyer_verified": true,
+    "purchase_amount_cents": 5000,
+    "buyer_balance_cents": 2000,
+    "expected": {
+      "buyer_verified": true,
+      "purchase_eligible": false
+    }
+  },
+  "buyer_hank": {
+    "note": "Verified, plenty of balance, but the purchase exceeds the limit.",
+    "buyer_verified": true,
+    "purchase_amount_cents": 150000,
+    "buyer_balance_cents": 999999,
+    "expected": {
+      "buyer_verified": true,
+      "purchase_eligible": false
+    }
+  }
+}
