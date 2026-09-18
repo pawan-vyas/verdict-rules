@@ -7,36 +7,51 @@
 ```dart
 import 'package:verdict_rules/verdict_rules.dart';
 
-Future<RuleResult> isActiveAccount(Map<String, Object?> context) async =>
+class AccountContext {
+  final String accountStatus;
+  final bool isPremiumMember;
+  final String? promoCode;
+  final num spend;
+  final num spendThreshold;
+
+  AccountContext({
+    required this.accountStatus,
+    required this.isPremiumMember,
+    this.promoCode,
+    required this.spend,
+    required this.spendThreshold,
+  });
+}
+
+Future<RuleResult> isActiveAccount(AccountContext context) async =>
     RuleResult(
       ruleName: 'is_active_account',
-      passed: context['accountStatus'] == 'active',
+      passed: context.accountStatus == 'active',
     );
 
-Future<RuleResult> isPremiumMember(Map<String, Object?> context) async =>
+Future<RuleResult> isPremiumMember(AccountContext context) async =>
     RuleResult(
       ruleName: 'is_premium_member',
-      passed: context['isPremiumMember']! as bool,
+      passed: context.isPremiumMember,
     );
 
-Future<RuleResult> hasPromoCode(Map<String, Object?> context) async =>
-    RuleResult(
+Future<RuleResult> hasPromoCode(AccountContext context) async => RuleResult(
       ruleName: 'has_promo_code',
-      passed: context['promoCode'] != null,
+      passed: context.promoCode != null,
     );
 
-Future<RuleResult> meetsSpendThreshold(Map<String, Object?> context) async =>
+Future<RuleResult> meetsSpendThreshold(AccountContext context) async =>
     RuleResult(
       ruleName: 'meets_spend_threshold',
-      passed: (context['spend']! as num) >= (context['spendThreshold']! as num),
+      passed: context.spend >= context.spendThreshold,
     );
 
 // Nesting doesn't care what built its sub-rules -- each of the four leaves
 // here is a plain FunctionRule, but any Rule (a custom shape, another
 // composite) would compose exactly the same way.
-final qualifies = AndRule('qualifies', [
+final qualifies = AndRule<AccountContext>('qualifies', [
   FunctionRule('is_active_account', isActiveAccount),
-  OrRule('has_a_valid_reason', [
+  OrRule<AccountContext>('has_a_valid_reason', [
     FunctionRule('is_premium_member', isPremiumMember),
     FunctionRule('has_promo_code', hasPromoCode),
     FunctionRule('meets_spend_threshold', meetsSpendThreshold),
@@ -45,13 +60,13 @@ final qualifies = AndRule('qualifies', [
 ```
 
 ```dart
-final context = {
-  'accountStatus': 'active',
-  'isPremiumMember': false,
-  'promoCode': 'SAVE10',
-  'spend': 20,
-  'spendThreshold': 100,
-};
+final context = AccountContext(
+  accountStatus: 'active',
+  isPremiumMember: false,
+  promoCode: 'SAVE10',
+  spend: 20,
+  spendThreshold: 100,
+);
 final result = await qualifies.evaluate(context);
 result.passed;
 // true
