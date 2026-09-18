@@ -24,10 +24,11 @@ public interface IRule<TContext> {                   // nominal -- must `: IRule
 public interface IRule : IRule<IReadOnlyDictionary<string, object?>> { }  // the dict-context closure
 public delegate Task<RuleResult> RulePredicate<TContext>(TContext context, CancellationToken cancellationToken = default);
 
-// cancellationToken is checked between rules -- by every composite, and by each engine run
-// that evaluates more than one rule; pass a real token when the caller has one.
+// cancellationToken is checked before any rule runs and again between rules, on every
+// composite and engine run method; an already-cancelled token evaluates nothing at all
+// (0.3.2+). Pass a real token when the caller has one.
 
-// Dict-context (IRule's own closure) -- non-generic, independent classes:
+// Dict-context (IRule's own closure) -- non-generic specializations of the generic forms below:
 new FunctionRule(name, predicate, group: null)       // wraps a plain async predicate (dict-context)
 new AndRule(name, rules, group: null)                // passes only if every sub-rule passes
 new OrRule(name, rules, group: null)                 // passes as soon as one does
@@ -39,9 +40,9 @@ await engine.TryRunNamedAsync(name, context, cancellationToken);  // -> RuleResu
 await engine.TryRunGroupAsync(group, context, cancellationToken); // -> RunResult?
 engine.RuleNames, engine.GroupNames                   // IReadOnlyCollection<string> of what exists
 
-// Typed context (e.g. OrderContext) -- the generic siblings, an independent
-// implementation from the dict-context forms above, not a wrapper. TContext is
-// usually inferred from the predicate, so the type argument is rarely spelled out:
+// Typed context (e.g. OrderContext) -- the generic forms, where the behaviour is
+// implemented; the dict-context ones above forward to them. TContext is usually
+// inferred from the predicate, so the type argument is rarely spelled out:
 new FunctionRule<OrderContext>(name, predicate, group: null)
 new AndRule<OrderContext>(name, rules, group: null)
 new OrRule<OrderContext>(name, rules, group: null)

@@ -26,8 +26,11 @@ own arity-coexistence relationship with `IRule` and that a typed context
 runs through every generic primitive identically to how a dict-context
 one runs through the non-generic primitives — including
 `CancellationToken` propagation proven separately for the generic
-composites, since they are independent implementations rather than
-wrappers around the non-generic ones.
+composites. The direction of that relationship matters when reading
+these tests: since 0.3.2 the generic form is the implementation and the
+non-generic one is a closed specialization of it by composition, so a
+test on each arity pins that the delegation is in place rather than
+checking two separate implementations agree.
 
 This SDK also has the second testing layer — a full, tested example
 project checked against the shared graduation fixture (see
@@ -80,7 +83,7 @@ graph LR
     %% 1: the engine's run modes are covered directly
     %% 2: RuleResult/RunResult are plain immutable classes, exercised as a side effect of the above -- no behavior of their own to test in isolation
     %% 3-4: CancellationToken propagation and structural typing for delegates only are C#-specific, not part of the Python-parity mirror
-    %% 5: the generic siblings are independent implementations, tested directly rather than assumed to inherit non-generic behavior
+    %% 5: the generic siblings hold the implementation; each arity is tested directly so the non-generic specialization's delegation is pinned, not assumed
     linkStyle 0 stroke:#FFCB7A,stroke-width:2px
     linkStyle 1 stroke:#FFCB7A,stroke-width:2px
     linkStyle 2 stroke:#E0E0E0,stroke-width:2px,stroke-dasharray:5 5
@@ -104,8 +107,12 @@ graph LR
 | A predicate's exception is never caught | `EngineExceptionPropagationTests.RunAllDoesNotCatchAPredicatesException`, `RunGroupDoesNotCatchAPredicatesException` (`EngineTests.cs`); `RuleExceptionPropagationTests.AndRuleDoesNotCatchASubRulesException`, `OrRuleDoesNotCatchASubRulesException` (`RuleTests.cs`) |
 
 Not part of this table on purpose — `CSharpIdiomTests.cs` proves
-`CancellationToken` propagation (checked between sub-rules, not just once
-at entry), C#'s structural typing for delegates only, and an explicit
+`CancellationToken` propagation (checked once before any rule runs *and*
+again between sub-rules, so an already-cancelled token evaluates nothing
+while a token cancelled mid-run still stops at the next boundary —
+`CancellationContractTests` and
+`AndRuleIdiomTests.CancellationStopsBeforeTheNextSubRuleEvenMidRun`
+respectively), C#'s structural typing for delegates only, and an explicit
 `IRule` implementation composing like any other. `GenericsTests.cs`
 proves `IRule<TContext>`'s own generic mechanics (arity coexistence, a
 typed context running through every generic primitive, generic

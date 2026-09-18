@@ -54,6 +54,9 @@ public sealed class RulesEngine<TContext>
     /// <returns>One aggregate result carrying every rule's own outcome, in registration order.</returns>
     public async Task<RunResult> RunAllAsync(TContext context, CancellationToken cancellationToken = default)
     {
+        // Also checked in the loop; this covers an engine holding no rules.
+        cancellationToken.ThrowIfCancellationRequested();
+
         var results = new List<RuleResult>(_rules.Count);
         foreach (var rule in _rules)
         {
@@ -76,6 +79,10 @@ public sealed class RulesEngine<TContext>
     /// <returns>The rule's outcome, or <c>null</c> if <paramref name="name"/> matches no rule.</returns>
     public async Task<RuleResult?> TryRunNamedAsync(string name, TContext context, CancellationToken cancellationToken = default)
     {
+        // A single rule has no "between rules" to check, so this is the only
+        // place cancellation can be honored before the predicate runs.
+        cancellationToken.ThrowIfCancellationRequested();
+
         if (!_byName.TryGetValue(name, out var rule))
         {
             return null;
@@ -108,6 +115,10 @@ public sealed class RulesEngine<TContext>
     /// <returns>The group's aggregate result, or <c>null</c> if <paramref name="group"/> matches no rule.</returns>
     public async Task<RunResult?> TryRunGroupAsync(string group, TContext context, CancellationToken cancellationToken = default)
     {
+        // Before the group lookup, so an absent group reports cancellation
+        // rather than a null that reads as "no such group".
+        cancellationToken.ThrowIfCancellationRequested();
+
         if (!_byGroup.TryGetValue(group, out var rules) || rules.Count == 0)
         {
             return null;

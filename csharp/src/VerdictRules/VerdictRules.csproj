@@ -25,7 +25,7 @@
 
   <PropertyGroup>
     <PackageId>VerdictRules</PackageId>
-    <Version>0.3.1</Version>
+    <Version>0.3.2</Version>
     <Authors>Pawan Vyas</Authors>
     <Description>A small, zero-dependency, async-native rule-evaluation engine. Compose conditions into one explainable pass/fail verdict, with sequential evaluation and real short-circuiting as a guarantee.</Description>
     <PackageTags>rules-engine;rule-evaluation;eligibility;decision;decision-engine;async</PackageTags>

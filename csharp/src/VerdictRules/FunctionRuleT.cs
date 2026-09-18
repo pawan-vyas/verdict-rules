@@ -28,6 +28,14 @@ public sealed class FunctionRule<TContext>(string name, RulePredicate<TContext> 
     /// <param name="context">Forwarded to the wrapped predicate as-is.</param>
     /// <param name="cancellationToken">Forwarded to the wrapped predicate as-is.</param>
     /// <returns>Whatever the wrapped predicate returns, unchanged.</returns>
-    public Task<RuleResult> EvaluateAsync(TContext context, CancellationToken cancellationToken = default) =>
-        _predicate(context, cancellationToken);
+    /// <exception cref="OperationCanceledException">
+    /// <paramref name="cancellationToken"/> is already cancelled, in which case
+    /// the predicate is not invoked at all. Thrown synchronously, as a guard on
+    /// a method that is deliberately not <c>async</c>.
+    /// </exception>
+    public Task<RuleResult> EvaluateAsync(TContext context, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return _predicate(context, cancellationToken);
+    }
 }

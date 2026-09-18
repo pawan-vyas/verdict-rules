@@ -27,6 +27,10 @@ public sealed class OrRule<TContext>(string name, IReadOnlyList<IRule<TContext>>
     /// <inheritdoc />
     public async Task<RuleResult> EvaluateAsync(TContext context, CancellationToken cancellationToken = default)
     {
+        // Checked here as well as in the loop, for the same reason as
+        // AndRule<TContext>: an empty list must not pass cancellation over.
+        cancellationToken.ThrowIfCancellationRequested();
+
         var subResults = new List<RuleResult>(_rules.Count);
         // Sequential, for the same reason as AndRule<TContext>.
         foreach (var rule in _rules)
