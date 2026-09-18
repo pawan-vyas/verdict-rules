@@ -171,16 +171,33 @@ passed the real-renderer validator.
 
 ## 3 · What to do next (prioritized)
 
-1. **Get explicit user sign-off on PR #94, then merge it.** Nothing else is blocking — this is the
-   single remaining step in the whole generics program. Never merge without that explicit go-ahead
-   (standing rule for this program, not just this PR).
+1. **Two commits are deliberately held back, to run only once the user gives explicit go-ahead to
+   merge** — so the PR's tip stays exactly these two, in this order, right before merge (not
+   interleaved with earlier audit/doc-fix commits):
+   1. **Housekeeping: archive the completed pre-generics SDK plans.** `git rm` (working-tree
+      removal only — history keeps everything) `.agents/plans/csharp-sdk/`,
+      `.agents/plans/dart-sdk/`, `.agents/plans/js-sdk/`, `.agents/plans/polyglot-sdk-resume.md`,
+      `.agents/plans/three-sdk-release-readiness.md` — all fully shipped (PRs #3/#5/#7, merged
+      long before this program started). Leave `.agents/plans/README.md` — confirm its content
+      still makes sense once the directory is otherwise empty before deciding whether it needs its
+      own edit or removal too.
+   2. **Version realignment, as the terminal commit.** Bump JS (`0.0.8`), C# (`0.0.2`), and Dart
+      (`0.0.4`) to **`0.3.0`** each, matching Python's already-correct `0.3.0` — the user's explicit
+      call: everyone lands on the same version for this shared release rather than each language's
+      own incremented number. Re-pin every version-pinned link
+      (`scripts/check_shipped_links.py --fix`), update each package's `CHANGELOG.md` heading to
+      `0.3.0`, and **trim every one of the four language changelog entries to plain factual
+      statements — no rationale/justification prose** (the user's explicit instruction this round);
+      keep Dart's `**Breaking**` marker since that's a fact, not narration. Re-verify all four
+      languages' full suites and `dart analyze`/`dotnet build -warnaserror`/`tsc` still pass after
+      the bump before committing.
+   - Do not run either step until the user says go-ahead. Both are otherwise ready to execute.
 2. **After #94 merges**, the generics program (issue #33) is complete. Consider whether the plan PR
    ([#84](https://github.com/pawan-vyas/verdict-rules/pull/84)) should be closed or merged as a
    historical record — it was left open throughout so its plan doc stayed available for reference;
    check with the user rather than assuming either way.
-3. **No other step is deferred.** Every item the original plan's step 3 punted past #94 (the new
-   fixture) is now done *inside* #94, per the user's explicit override — there is no trailing PR to
-   plan for.
+3. **No trailing PR is needed.** Every item the original plan's step 3 punted past #94 (the new
+   fixture) is now done *inside* #94, per the user's explicit override.
 
 ## 4 · Known issues / blockers
 
