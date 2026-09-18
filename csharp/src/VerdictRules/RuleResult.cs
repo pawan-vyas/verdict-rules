@@ -5,10 +5,10 @@ namespace VerdictRules;
 /// <summary>
 /// Outcome of evaluating a single <see cref="IRule"/>.
 /// </summary>
-/// <param name="ruleName">See <see cref="RuleName"/>.</param>
-/// <param name="passed">See <see cref="Passed"/>.</param>
-/// <param name="detail">See <see cref="Detail"/>.</param>
-/// <param name="data">See <see cref="Data"/>.</param>
+/// <param name="ruleName"><inheritdoc cref="RuleName" path="/summary/node()" /></param>
+/// <param name="passed"><inheritdoc cref="Passed" path="/summary/node()" /></param>
+/// <param name="detail"><inheritdoc cref="Detail" path="/summary/node()" /></param>
+/// <param name="data"><inheritdoc cref="Data" path="/summary/node()" /></param>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
 public sealed class RuleResult(string ruleName, bool passed, string detail = "", object? data = null)
 {
