@@ -1,0 +1,15 @@
+{
+  "eval_name": "employee-bonus-eligibility",
+  "prompt": "We're building an eligibility check for our annual bonus program. An employee qualifies if they've been employed at least 12 months, their latest performance review score is 4 or above (out of 5), they have no active disciplinary action on file, and their manager has signed off. HR wants a full breakdown of which criteria passed and failed for every employee under review, not just a yes/no. All four of these fields already exist on every employee record we have -- there's no admin-configurable or per-tenant set of criteria here, it's the same four fields for everyone. Can you help me build this?",
+  "expected_output": "A solution using verdict's Rule/AndRule/RulesEngine primitives with per-criterion diagnostics (e.g. via run_all()). Since every field this reads is a fixed, known-ahead-of-time property of one employee record rather than a runtime-named or admin-configurable set, the response should reach for a typed context (a dataclass or equivalent) rather than a bare dict-context -- or, if it stays dict-context, state an explicit reason for that choice rather than defaulting to it silently.",
+  "files": [
+    "files/pyproject.toml"
+  ],
+  "expectations": [
+    "Each of the four conditions (tenure, performance score, disciplinary status, manager approval) is represented as its own independent, named check",
+    "A per-condition breakdown is available via run_all(), not just a single pass/fail boolean",
+    "Given every field is a fixed, known-ahead-of-time property of one employee record, the response reaches for a typed context (e.g. a frozen dataclass) rather than a bare dict context -- or, if it stays dict-context, states an explicit reason for that choice rather than defaulting to it silently",
+    "If a typed context is used, verdict's generic Rule[T]/RulesEngine[T] spelling is applied consistently -- the rule/engine's own type parameter matches the context type, not a typed context passed into an untyped Rule",
+    "Domain logic (bonus-eligibility vocabulary) stays out of low-level rule-evaluation code, or the design explicitly separates the two concerns"
+  ]
+}

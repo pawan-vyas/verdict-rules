@@ -60,11 +60,15 @@
   abort the whole script instead of skipping that language).
 - `SKILL.md`'s "what the engine guarantees" list trimmed to the same bar,
   inline link to `docs/extending/isolating-flaky-predicates/` dropped.
+- §4 (eval bias audit + new adherence evals): all 23 existing evals
+  read and found not to carry the bias — each domain's dict-vs-typed
+  shape already matches its sample counterpart's own deliberate
+  choice. One new `employee-bonus-eligibility` adherence eval added
+  per language (27 total now), assembled and validated.
 
 **Not yet done, still in this PR's scope (no deferring, per explicit
 instruction):**
 
-- §4 below (eval audit + new adherence evals) — not started.
 - Language package version bump to `0.3.1` and skill version bump to
   `0.6.1`, per the user's own instruction once the comment-trim scope
   was discovered ("this needs fixing in this PR itself, so it will cut
@@ -229,24 +233,54 @@ that being the field name skill-creator's own generic instructions use;
 this repo's own evals use `expectations`, a list of qualitative
 checkpoints a grader reads against).
 
-**Two things to do, both explicitly requested, neither started yet:**
+**Two things to do, both explicitly requested — both now done:**
 
-1. **Audit the 23 existing evals** the same way §1 audited samples/
-   extending docs — per eval, ask whether its own domain has a
-   knowable-ahead-of-time context shape (a typed-context-friendly
-   scenario) or a runtime-named one (dict-context-friendly), and
-   whether the eval's own `expectations` implicitly reward one shape
-   without saying so. `discount-eligibility` (fixed fields: minimum
-   cart value, region, first-purchase flag) is a plausible candidate
-   already worth a close look, the same way `loyalty-tier-promotion`
-   was in §1 — not a conclusion, a place to look first.
-2. **Add one new eval per language**, purpose-built to test real
-   adherence: a scenario shaped like the post-§1 `loyalty-tier-promotion`
-   (a fixed, known set of context fields) with an explicit
-   `expectations` entry checking whether the agent reached for a typed
-   context (or explicitly justified staying dict-context) — grading
-   real judgment, not a blanket "must use typed" rule that would
-   itself be a new bias in the other direction.
+1. **Audit the 23 existing evals**, the same question asked per eval
+   as §1 asked per doc: does this domain have a knowable-ahead-of-time
+   context shape, or a runtime-named one, and does the eval's own
+   `expectations` implicitly reward one without saying so? Read all
+   23 against that question — findings:
+   - `discount-eligibility` (all four languages) and js's own
+     `cdn-conditional-ui`: both describe an eligible-*region set* and
+     a threshold as campaign-configurable values — the same shape
+     `dynamic-discounts` documents as a deliberate dict-context stay,
+     not a typed-context miss. Correctly modeled; no bias.
+   - `data-driven-admin-rules` (all four) and `absence-versus-emptiness`
+     (all four): both explicitly about a runtime-named or
+     admin-configured catalog — the `data-driven-rule-sets`/
+     `admin-eligibility-lookup` shape, which stays dict-context by
+     design. Correctly modeled; no bias.
+   - `shipping-fee-waiver` (all four): the underlying sample doc is now
+     typed (this same PR, above) but the eval's own `expectations`
+     never mentioned context shape either before or after — it grades
+     `OrRule` ordering and the short-circuit proof, which is shape-
+     agnostic. No change needed.
+   - `flutter-conditional-banner` (dart-only): three fixed boolean
+     flags on one profile — structurally a typed-context-friendly
+     shape, closer to `loyalty-tier-promotion` than to
+     `dynamic-discounts` — but the eval's own focus is the
+     Flutter-`build()`-must-stay-synchronous problem, a different hard
+     case entirely; folding a context-shape check in here would blur
+     what it actually tests. Left as is; the new adherence eval below
+     covers the shape question on its own instead.
+   - No existing eval's `expectations` mentions "dict"/"typed"/"Map"/
+     generic-parameter shape at all — confirms the earlier read (no
+     active bias in what's graded today), and confirms every current
+     domain's dict-vs-typed shape matches what its sample counterpart
+     already models, deliberately, not by omission.
+2. **Added one new eval per language**
+   (`employee-bonus-eligibility`, `evals/{python,js,csharp,dart}/0{6,7}-employee-bonus-eligibility.json`),
+   purpose-built to test real adherence: a fixed, known set of four
+   context fields on one employee record (the same shape
+   `loyalty-tier-promotion` now models), explicitly contrasted in its
+   own prompt against an admin-configurable catalog ("there's no
+   admin-configurable or per-tenant set of criteria here"), with an
+   `expectations` entry checking whether the response reached for a
+   typed context — or explicitly justified staying dict-context —
+   rather than a blanket "must use typed" rule that would itself be a
+   new bias in the other direction. Assembled and validated via
+   `scripts/build_evals.py` (23 → 27 evals, every declared `files`
+   path resolves).
 
 **Validation pass, explicitly sequenced last**: once everything else in
 this PR lands and is committed, run 1–2 evals per language through a
