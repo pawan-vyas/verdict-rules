@@ -1,11 +1,11 @@
 ---
 kind: session-handoff
 handoff_schema: 1
-updated_utc: 2026-09-17T17:12:58Z
-updated_local: 2026-09-17T22:42:58+05:30
+updated_utc: 2026-09-17T18:35:00Z
+updated_local: 2026-09-18T00:05:00+05:30
 branch: main
-state_at_commit: def163d294859c2a4fdedd384f3d0a73ef45cc6a
-state_at_commit_short: def163d
+state_at_commit: 273a140395f23dddd9efb41e73653e156c8e35b9
+state_at_commit_short: 273a140
 # Freshness: run `git log --oneline "$(git log -1 --format=%H -- HANDOFF.md)"..HEAD`. Empty (+ clean
 # tree) = current. Non-empty = stale — reconcile per §0.1 before trusting §2–§3. (Comparing against
 # state_at_commit directly always shows the handoff commit itself as "drift" — see §0.1.)
@@ -24,10 +24,11 @@ state_at_commit_short: def163d
 You (the next agent) are continuing work on **verdict**. Read §1 for what it is, §2 for where we
 are, §3 for what to do next, §4 for known issues, §5 for how to verify.
 
-**`main` is at `def163d`, CI green, all four language SDKs merged.** A multi-PR generics effort
+**`main` is at `273a140`, CI green, all four language SDKs merged.** A multi-PR generics effort
 (GitHub issue #33, `Rule<TContext>`) is in progress across a dedicated plan directory — see §2 and
-§3. Two test-suite-parity PRs are open right now, independently mergeable, each awaiting explicit
-merge approval.
+§3. **Seven PRs are open right now**, all green, all awaiting explicit merge approval: two
+test-suite-parity PRs, three `graduation_verdict` fixture-port PRs, and the single core
+`Rule<TContext>` migration PR spanning all four languages.
 
 ## 0.1 · Freshness & alignment protocol (read before trusting §2–§3)
 
@@ -119,31 +120,59 @@ PR merges — never auto-merge anything in this program):
    - Each language's own `docs/testing/<language>.md` was rewritten to match (test counts, a new
      mermaid diagram showing the three-file layout with the idiom file styled purple, the contract
      table pointing at new file/test names) and validated with the mermaid skill's validator.
-2. **`graduation_verdict` fixture port for JS/C#/Dart** (currently missing for all three — only
-   Python has it, under `python/examples/graduation_verdict/`) — **three separate per-language PRs**,
-   confirmed explicitly this session rather than bundled: it's additive fixture work, not the
-   cross-language source change that forces step 4 into one PR. Not started yet.
+2. **`graduation_verdict` fixture port for JS/C#/Dart** (was missing for all three — only Python had
+   it, under `python/examples/graduation_verdict/`) — **three separate per-language PRs**, confirmed
+   explicitly rather than bundled: it's additive fixture work, not the cross-language source change
+   that forces step 4 into one PR. **Done — all three open, green, awaiting sign-off:**
+   - **JS** ([PR #91](https://github.com/pawan-vyas/verdict-rules/pull/91), branch
+     `js/graduation-verdict-fixture-port`). New `js/examples/graduation_verdict/` (a new `examples/*`
+     workspace member): the real implementation, an oracle, a seeded `Rng` (JS's `Math.random()`
+     isn't seedable), 57 curated tests + 500 chaos cases, 557 total.
+   - **C#** ([PR #92](https://github.com/pawan-vyas/verdict-rules/pull/92), branch
+     `csharp/graduation-verdict-fixture-port`). New `csharp/examples/GraduationVerdict/` +
+     `GraduationVerdict.Tests/`, using .NET's own seedable `Random`. Same 57 + 500 = 557 total.
+   - **Dart** ([PR #93](https://github.com/pawan-vyas/verdict-rules/pull/93), branch
+     `dart/graduation-verdict-fixture-port`). New `dart/examples/graduation_verdict/`, a standalone
+     package (`path:` dependency on `verdict_rules`, since there's deliberately no root
+     `pubspec.yaml` yet). Same 57 + 500 = 557 total.
+   - All three verified against the same shared fixture numbers Python's own port already proves
+     (identical demo output, identical per-student `expected` blocks) — the differential/chaos
+     generators are each language's own seeded PRNG, never shared, by design.
 3. **The new cross-language "production-grade" generics-showcase fixture** — design deliberately
    deferred. Direction hints only: marketplace/onboarding-flow-inspired but fully generalized (never
    naming a real consuming project or product), showcasing the typed+dict hybrid, `ProjectingRule`,
    and both engine forms. Written first in Python, `fixtures/<name>/README.md`. **Resolved only after
-   step 4 lands and its own unit testing proves the design out** — this is the one open point in the
-   whole program, confirmed explicitly this session.
+   step 4 lands and its own unit testing proves the design out** — this is the one open point left in
+   the whole program.
 4. **The core `Rule<TContext>` migration — a single PR spanning all four languages.** Confirmed
-   explicitly this session (previously each language's plan implied its own PR for this step too):
-   core generics implementation, comprehensive unit tests (including edge cases and per-language
-   idiom gotchas) for all four languages, each language's own docs/samples/quickstart/changelog/
-   skill-agent-notes sweep, **and** the shared cross-language docs sweep (root `README.md`,
-   `docs/architecture/`, `docs/testing/README.md`, `docs/extending/` shared READMEs,
-   `docs/maintenance/`, the skill's shared content plus a `plugin.json` version bump) all land and
-   merge together in one PR — confirmed to fold in rather than stay a separate trailing PR, so
-   nothing on `main` describes a stale non-generic reality even briefly. Work through this step
-   without stopping for interim check-ins once it starts; only the final merge itself needs sign-off.
-   Sample/doc content should showcase `Rule<TContext>` where a scenario is genuinely single-context,
-   and keep the plain-dict form where a scenario is genuinely heterogeneous (a registry-style,
-   runtime-string-keyed catalog) — without turning every doc into an exhaustive both-forms-always
-   demo; match doc weight to which form that example actually needs. **Not started yet** — steps 1–2
-   come first.
+   explicitly (previously each language's plan implied its own PR for this step too): core generics
+   implementation, comprehensive unit tests (including edge cases and per-language idiom gotchas) for
+   all four languages, each language's own docs/samples/quickstart/changelog/skill-agent-notes
+   sweep, **and** the shared cross-language docs sweep (`docs/architecture/README.md`'s own new
+   "Generic context" subsection, `docs/extending/reusing-a-rule-across-contexts/` — a new shared
+   scenario, one page per language — plus the skill's `plugin.json` version bump) all land and merge
+   together in one PR. **Done — implemented, tested, documented, and open:**
+   [PR #94](https://github.com/pawan-vyas/verdict-rules/pull/94), branch
+   `generics/v0.3.0-rule-context`. Cut from `main` before PRs #89–#93 above had merged, so **it will
+   need a rebase once those land** — flagged explicitly in the PR's own description, not assumed away.
+   Per-language mechanics, each genuinely different (none are interchangeable):
+   - **Python** — `Rule` becomes `Protocol[TContext]`; the rest become `Generic[TContext]`.
+     Non-breaking at runtime (generics erase). 17 new tests, `tests/test_generics.py`.
+   - **JS/TS** — `Rule<TContext>` etc. gain **no default type parameter**, deliberately. Dict-context
+     is `Rule<Context>`, written out every time. 8 new tests, `test/generics.test.js`.
+   - **C#** — arity coexistence: `IRule<TContext>` is new and independent; `IRule` becomes the closed
+     specialization `IRule : IRule<IReadOnlyDictionary<string, object?>>`. Matches
+     `IComparer`/`IComparer<T>`'s real BCL relationship, not `IEnumerable<T>`'s inheritance direction.
+     Every generic type is a fresh, independent implementation, fully additive, zero breaking
+     changes. 13 new tests, `GenericsTests.cs`.
+   - **Dart** — the one real breaking migration: `implements Rule` becomes `implements Rule<Context>`
+     (a new `Context` typedef, now exported) or `implements Rule<SomeTypedContext>` explicitly.
+     Constructor call sites are unaffected (`TContext` inferred via ordinary type inference). Test
+     suite rebuilt from scratch (superseding PR #90's not-yet-merged file split, since the breaking
+     change touches every test file anyway) plus a new `generics_test.dart`, 9 tests. 54 tests total.
+   - Verification: Python 617 passed, JS 40 passed + `tsc` clean, C# 61 passed + 0 warnings
+     (`-warnaserror`), Dart 54 passed + `dart analyze` clean. Every new doc code sample
+     compiled/run-verified against the real built package, not eyeballed.
 
 Each of steps 1–2 is its own small, focused, independently-approved PR. Step 4 is deliberately the
 one place this program abandons the "one PR per language" pattern, because it changes source code
@@ -152,31 +181,28 @@ would leave `main` in a state no single language's docs accurately describe.
 
 ## 3 · What to do next (prioritized)
 
-1. **Get explicit sign-off on PR #89 (JS) and PR #90 (Dart), then merge both.** Both are green,
-   reviewed against this same session's own work. Confirm no release is cut on merge (already proven
-   for C# by watching `release-csharp.yml` skip every downstream job when the version tag already
-   exists — the same `detect`-gate pattern is identical across `release-js.yml`/`release-dart.yml`,
-   but JS's npm Trusted Publishing has its own nuances worth a real look before assuming).
-2. **Start step 2 — `graduation_verdict` fixture ports**, one PR each for JS, C#, and Dart, no
-   particular order between them. Use `python/examples/graduation_verdict/` as the reference to port
-   test-for-test, the same drop-and-recreate discipline as step 1 rather than inventing a new
-   structure per language.
-3. **Do not start step 4 (the single generics PR) until steps 1–2 are fully merged.** When it starts,
-   read `.agents/plans/verdict-generics-v0.3.0/README.md` in full first — it has the per-language
-   generics mechanics already researched and confirmed (C#'s arity-based interface coexistence
-   verified against real `IComparer`/`IComparer<T>` .NET source; TypeScript's no-default-type-param
-   decision; Dart's breaking-migration scope). Work through implementation, tests, and docs for all
-   four languages plus the shared sweep before asking for anything beyond the final merge approval.
-4. **Step 3 (the new cross-language fixture) stays unstarted until step 4 has landed and its own
-   tests have proven the design** — don't jump ahead to it opportunistically even if step 4 leaves
-   idle time in some language.
+1. **Get explicit sign-off on all seven open PRs, then merge in this order**: #88 is already merged;
+   merge #89 (JS test-parity) and #90 (Dart test-parity) first, then #91/#92/#93 (the three fixture
+   ports), **then rebase #94 (the generics PR) onto the resulting `main`** before merging it last —
+   #94 was cut before any of the other six merged, so a straight merge without rebasing risks a stale
+   diff. Confirm no release is cut on any of these merges (already proven for C# by watching
+   `release-csharp.yml` skip every downstream job when the version tag already exists — the same
+   `detect`-gate pattern is identical across every language's `release-*.yml`, but JS's npm Trusted
+   Publishing has its own nuances worth a real look before assuming).
+2. **After #94 merges: start step 3, the new cross-language fixture.** Read
+   `.agents/plans/verdict-generics-v0.3.0/README.md` first for the direction hints already recorded.
+   Design it once, in Python, producing one language-agnostic spec (`fixtures/<name>/README.md`)
+   before any other language implements against it.
+3. **Don't skip the rebase step for #94.** A generics PR built against a stale `main` (missing the
+   test-parity/fixture-port work that landed after it was cut) is exactly the kind of silent-drift
+   risk this repo's own `AGENTS.md` warns about — verify the rebase is clean, not just that it applies.
 
 ## 4 · Known issues / blockers
 
 - No open defect in any shipped package itself.
-- The `graduation_verdict` fixture exists only for Python — JS/C#/Dart's own testing docs each note
-  this gap explicitly (see `docs/testing/<language>.md`'s "Current state" section); step 2 above
-  closes it.
+- **PR #94 (the generics PR) is cut from a `main` that predates PRs #89–#93** — merging it before
+  those, or without rebasing after they land, is the one real risk in this whole program right now.
+  See §3, item 3.
 - No CI pipeline gate exists yet for any language's test suite running on every PR touching that
   language's path — see `docs/future_plan.md` if this is ever picked up. (This is distinct from the
   *release* workflows, which do gate on the version-vs-tag check and are already verified working.)

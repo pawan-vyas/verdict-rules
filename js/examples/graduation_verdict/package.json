@@ -1,0 +1,16 @@
+{
+  "name": "@verdict-rules/example-graduation-verdict",
+  "private": true,
+  "description": "A college graduation-eligibility check, built as real, tested code -- the flagship example exercising the full breadth of verdict-rules at once. Not published.",
+  "type": "module",
+  "scripts": {
+    "demo": "node graduation-verdict.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "verdict-rules": "file:../../packages/verdict-rules"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
