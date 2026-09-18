@@ -1,17 +1,12 @@
 namespace VerdictRules;
 
-/// <summary>
-/// Holds a set of dict-context rules and answers questions about them.
-/// </summary>
-/// <remarks>
-/// A specialization of <see cref="RulesEngine{TContext}"/> over
-/// <see cref="IReadOnlyDictionary{TKey, TValue}"/> by composition, for the same
-/// reason as <see cref="AndRule"/>: name/group indexing, run-mode semantics,
-/// lookup strictness and the cancellation contract are defined once, in the
-/// generic engine, and reached through here. The engine's run modes never
-/// short-circuit.
-/// </remarks>
-/// <param name="rules">Rules this engine holds, indexed by name and group.</param>
+/// <inheritdoc cref="RulesEngine{TContext}" />
+/// <param name="rules">
+/// Rules this engine holds, indexed by name and group. Stated here rather than
+/// inherited: <see cref="RulesEngine{TContext}"/> declares an explicit
+/// constructor, so its own <c>param</c> sits on that constructor rather than on
+/// the type, and a type-level <c>inheritdoc</c> has nothing to pick up.
+/// </param>
 public sealed class RulesEngine(IReadOnlyList<IRule> rules)
 {
     /// <summary>The generic engine this type is a closed specialization of.</summary>
