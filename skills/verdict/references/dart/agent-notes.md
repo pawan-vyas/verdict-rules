@@ -38,20 +38,10 @@ await engine.runGroup(group, context);     // one group;  throws ArgumentError i
 await engine.tryRunNamed(name, context);   // -> RuleResult?
 await engine.tryRunGroup(group, context);  // -> RunResult?
 engine.ruleNames, engine.groupNames        // Iterable<String> of what exists
+
+RuleResult(ruleName: name, passed: true, detail: '', data: null)  // immutable, const constructors
+RunResult(passed: true, results: [...])
 ```
-
-`RuleResult` and `RunResult` are plain immutable classes with `const`
-constructors, not interfaces to satisfy — construct them directly:
-`RuleResult(ruleName: name, passed: true, detail: '', data: null)` and
-`RunResult(passed: true, results: [...])`.
-
-**A typed, non-dict context** reaches for the same `FunctionRule`/
-`AndRule`/`OrRule`/`RulesEngine` — `TContext` is a type parameter on
-each, not a separate name. `TContext` is usually inferred from the
-predicate's own parameter type at a constructor call site
-(`FunctionRule('x', predicate)` needs no type argument as long as
-`predicate` is typed), so most call sites are unaffected by which
-context a rule reads from.
 
 ## Which run mode
 
