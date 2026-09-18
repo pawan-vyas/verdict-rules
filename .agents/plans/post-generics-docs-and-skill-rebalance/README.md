@@ -91,10 +91,11 @@
 **Not yet done, still in this PR's scope (no deferring, per explicit
 instruction):**
 
-- Push the branch, confirm CI is green, and get explicit sign-off
-  before merging (this repo's `main` requires PR review; either normal
-  review or an explicit user-authorized admin-merge bypass, as was
-  done for PR #94 earlier in this program).
+- Explicit user sign-off to merge (this repo's `main` requires PR
+  review; either normal review or an explicit user-authorized
+  admin-merge bypass, as was done for PR #94 earlier in this program).
+  Branch is pushed, all 21 CI checks are green, PR is `MERGEABLE` —
+  this is the only remaining item.
 
 ## 1 · Docs dict-bias (an agent-facing risk, not a human-facing one)
 
