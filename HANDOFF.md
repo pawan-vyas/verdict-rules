@@ -1,11 +1,11 @@
 ---
 kind: session-handoff
 handoff_schema: 1
-updated_utc: 2026-09-18T04:33:41Z
-updated_local: 2026-09-18T10:03:41+05:30
+updated_utc: 2026-09-18T08:28:09Z
+updated_local: 2026-09-18T13:58:09+05:30
 branch: generics/v0.3.0-rule-context
-state_at_commit: 6f38ceb47cf7ce434e9c699feac50b108df5afcf
-state_at_commit_short: 6f38ceb
+state_at_commit: 8a5fbd950a655ed66b561ddad56cf35718676e07
+state_at_commit_short: 8a5fbd9
 # Freshness: run `git log --oneline "$(git log -1 --format=%H -- HANDOFF.md)"..HEAD`. Empty (+ clean
 # tree) = current. Non-empty = stale — reconcile per §0.1 before trusting §2–§3. (Comparing against
 # state_at_commit directly always shows the handoff commit itself as "drift" — see §0.1.)
@@ -154,6 +154,14 @@ ce413cd New cross-language fixture: marketplace_eligibility (proves the generic 
 b4c929c js: implement the marketplace_eligibility fixture (proves the generic path)
 44504d7 csharp: implement the marketplace_eligibility fixture (proves the generic path)
 6f38ceb dart: add the marketplace_eligibility fixture port
+9efc95a docs(handoff): refresh session state @ 6f38ceb
+cae5619 vscode: fix false 'Import could not be resolved' on python/'s workspace venv
+a29eeaa python: replace subject_type dispatch chains with a lookup table
+d787555 python/examples: add the missing marketplace_eligibility index row
+f2ca83c js: replace subjectType dispatch chains with a lookup table
+035497b csharp: replace SubjectType dispatch chains with a lookup table
+9000e3a dart: replace subjectType dispatch switch/chains with a lookup table
+8a5fbd9 docs: fix extension instructions stale after the dispatch-table refactor
 ```
 
 **Full verification, this session, all four languages, every suite** (see §5 for the exact commands):
@@ -168,6 +176,37 @@ b4c929c js: implement the marketplace_eligibility fixture (proves the generic pa
 All green. `dart analyze`/`dotnet build -warnaserror`/`tsc` all clean. Every new doc code sample was
 compiled/run-verified against the real built package, not eyeballed. Every new/edited mermaid diagram
 passed the real-renderer validator.
+
+**Post-review dispatch-table audit.** The user caught a real `AGENTS.md` dispatch-rule violation by eye
+in Dart's `graduation_verdict` example (`ruleForSubject` used a `switch` on `subjectType`) that grep-based
+scans had missed — a `switch` doesn't match the same regex as an `if`/`elif` chain, even though it's the
+same forbidden shape. Prompted a full manual (not grep) read-through of every real source file in the
+repo — every core library file in all four languages, both example projects per language, every test
+suite, and every repo tooling script. Found and fixed the same violation in **all four languages**
+(Python/JS/C# had the `if`-chain form, Dart the `switch` form), in both `ruleForSubject`'s own dispatch
+and the equivalent one level down in each language's chaos-data generator (`random_policy`/
+`random_context` picking extra fields by `subject_type`) — 8 files total, one commit per language plus
+one for Python's fixture-index fix. Each replaced with a builder-per-variant table keyed by the
+discriminant. The **sanctioned exception**, confirmed by reading every oracle file's own header: each
+`oracle.*` is explicitly documented as "deliberately the naive way... never import/reference `verdict`
+here," existing specifically as independent ground truth for differential testing — left untouched, and
+correctly so, since a lookup table there would give it the same implementation strategy as the code it's
+supposed to independently re-derive.
+
+**Downstream doc staleness the refactor itself introduced, caught in the same pass**: all four
+`docs/samples/graduation-requirement-verdict/<lang>.md` pages and `fixtures/graduation_verdict/README.md`
+said "adding a new subject type needs a new branch in `rule_for_subject()`" — no longer true, since that
+function is now a pure lookup and never changes; adding a type is now "a new builder function plus a new
+table entry" instead. Fixed in all five files, verified no other doc anywhere in the repo repeats the
+stale phrasing.
+
+Also fixed this session, unprompted by the dispatch audit: a VS Code/Pylance false "Import could not be
+resolved" on every `python/` file (workspace-root auto-detection doesn't look into `python/`'s own
+`.venv`) — `.vscode/settings.json` + `python/AGENTS.md` now document and fix it; and a real strict-mypy
+gap the generics migration left behind in `graduation_verdict.py` (a missing `var-annotated` on the
+`graduates` composite plus several bare `dict`/`Rule` annotations that used to infer cleanly and no longer
+do) — confirmed via a one-off `mypy --strict` run, fixed, the two remaining `--strict` findings are
+pre-existing and unrelated to generics.
 
 ## 3 · What to do next (prioritized)
 
