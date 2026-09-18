@@ -1,11 +1,11 @@
 ---
 kind: session-handoff
 handoff_schema: 1
-updated_utc: 2026-09-18T08:28:09Z
-updated_local: 2026-09-18T13:58:09+05:30
-branch: generics/v0.3.0-rule-context
-state_at_commit: 8a5fbd950a655ed66b561ddad56cf35718676e07
-state_at_commit_short: 8a5fbd9
+updated_utc: 2026-09-18T09:23:35Z
+updated_local: 2026-09-18T14:53:35+05:30
+branch: main
+state_at_commit: 53399f7ff1431ffb33cba006e1362c363f7c2250
+state_at_commit_short: 53399f7
 # Freshness: run `git log --oneline "$(git log -1 --format=%H -- HANDOFF.md)"..HEAD`. Empty (+ clean
 # tree) = current. Non-empty = stale — reconcile per §0.1 before trusting §2–§3. (Comparing against
 # state_at_commit directly always shows the handoff commit itself as "drift" — see §0.1.)
@@ -24,13 +24,9 @@ state_at_commit_short: 8a5fbd9
 You (the next agent) are continuing work on **verdict**. Read §1 for what it is, §2 for where we
 are, §3 for what to do next, §4 for known issues, §5 for how to verify.
 
-**`main` is merged through PR #93.** The generics effort (GitHub issue #33, `Rule<TContext>`) is
-down to its **last open PR**: [PR #94](https://github.com/pawan-vyas/verdict-rules/pull/94), branch
-`generics/v0.3.0-rule-context` (this branch). It has been rebased onto post-#93 `main`, and now also
-contains the cross-language generics-showcase fixture that the original plan deferred until after
-PR #94 merged — that deferral was explicitly reversed by the user mid-program (see §2). Everything
-described below is **committed and green on this branch**; the only remaining step is explicit user
-sign-off to merge it.
+**The generics program (GitHub issue #33) is fully closed.** All four language SDKs and the skill
+are on `main`, released, live on their registries. **One small PR is open** (#95, a planning doc for
+the next piece of work) — see §2 and §3.
 
 ## 0.1 · Freshness & alignment protocol (read before trusting §2–§3)
 
@@ -57,8 +53,10 @@ git status --short
 `git pull` before trusting any of this if you have been away — the formula above compares against
 your *local* HEAD, so an out-of-date clone reads "current" while `origin/main` has moved.
 
-**This branch is a PR branch, not `main`.** §2 and §3 below describe `generics/v0.3.0-rule-context`
-(PR #94), which sits ahead of `main` by design until it merges.
+**One untracked, unexplained file sits in the working tree as of this handoff**:
+`skills/verdict-workspace/evals/csharp/.gitignore` (contents: `bin/`/`obj/`). It predates this
+session's own changes and wasn't touched by anything recorded in §2 — flagged rather than silently
+committed or deleted, since its origin isn't known. Look at it before doing either.
 
 ## 1 · What this project is (one paragraph)
 
@@ -66,81 +64,102 @@ your *local* HEAD, so an out-of-date clone reads "current" while `origin/main` h
 `Rule`/`FunctionRule`/`AndRule`/`OrRule`/`RulesEngine`/`RuleResult`/`RunResult` — designed to exist
 in more than one language with identical execution-model guarantees: sequential, never concurrent,
 evaluation so short-circuiting is a real contract rather than an optimization, and vacuous-truth
-polarity decided explicitly per composite shape. **All four language SDKs are merged to `main`**:
-Python (PyPI `verdict-rules`, under `python/`), JS/TS (npm `verdict-rules`, under `js/`), C# (NuGet
-`VerdictRules`, under `csharp/`), and Dart (pub.dev `verdict_rules`, under `dart/`) — each with its
-own top-level directory, its own `AGENTS.md`, and its own `docs/maintenance/releases/<language>.md`.
-Cross-language docs are in `docs/`, the AI-agent skill in `skills/verdict/` (vendored into other
-projects by `scripts/install.sh`), the published site in `site/`, and agent working material in
-`.agents/`. Design source of truth: [`docs/architecture/`](docs/architecture/README.md).
+polarity decided explicitly per composite shape. **All four language SDKs are on `main`, all at
+`v0.3.0`, all live**: Python (PyPI `verdict-rules`), JS/TS (npm `verdict-rules`), C# (NuGet
+`VerdictRules`), Dart (pub.dev `verdict_rules`) — each with its own top-level directory, its own
+`AGENTS.md`, and its own `docs/maintenance/releases/<language>.md`. `Rule` (or each language's own
+idiom) is generic over its context (`Rule<TContext>`/`Rule[TContext]`) in every language as of this
+release; dict-context stays permanently first-class alongside it — see
+[`docs/architecture/README.md`](docs/architecture/README.md#generic-context). Cross-language docs
+are in `docs/`, the AI-agent skill in `skills/verdict/` (vendored into other projects by
+`scripts/install.sh`), the published site in `site/`, and agent working material in `.agents/`.
 
 ## 1b · External references (NOT part of this repo)
 
-**None.** The repo is fully self-contained: both vendored skills (`mermaid-diagrams`,
-`context-fence`) are in-tree copies, so no network, plugin install, or sibling checkout is needed to
-follow either. Nothing a session needs lives outside the boundary.
-
-The generics program's master plan doc (`.agents/plans/verdict-generics-v0.3.0/README.md`) lives
-only on the still-open plan branch/PR
-([#84](https://github.com/pawan-vyas/verdict-rules/pull/84)), not on this branch or on `main` — it
-is referenced below by PR URL rather than by relative path for that reason. It has the full design
-rationale for everything summarized in §2 (why generics are scoped to context only, never
-`RuleResult`; C#'s arity-based `IRule`/`IRule<TContext>` coexistence; TypeScript's deliberate lack of
-a default type parameter; Dart's `implements Rule<Context>` migration) and is worth reading in full
-if any of §2's per-language mechanics need re-deriving.
+None. The repo is fully self-contained: both vendored skills (`mermaid-diagrams`, `context-fence`)
+are in-tree copies, so no network, plugin install, or sibling checkout is needed to follow either.
 
 ## 2 · Where we are (this session's work)
 
-The full generics program (GitHub issue #33) is functionally complete on this branch. Sequencing,
-confirmed and executed exactly as planned (each step gated on explicit user sign-off before its PR
-merged — never auto-merged):
+**The generics program (issue #33) closed out completely this session**, in this order:
 
-1. **Test-suite parity** (one PR per language, dropping each non-Python suite and recreating it as a
-   strict 1:1 port of Python's own tests plus a separate idiom file) — **all merged**: C# (#88),
-   JS/TS (#89), Dart (#90).
-2. **`graduation_verdict` fixture port for JS/C#/Dart** (Python already had it) — **all merged**: JS
-   (#91), C# (#92), Dart (#93). Each is 57 curated + 500 chaos-generated cases against its own
-   seeded PRNG, 557 tests total per language, matching Python's own port's expected outcomes
-   exactly.
-3. **The core `Rule<TContext>` migration, one PR spanning all four languages** — implemented, tested,
-   documented. Per-language mechanics (each genuinely different, none interchangeable):
-   - **Python** — `Rule` becomes `Protocol[TContext]`; the rest become `Generic[TContext]`.
-     Non-breaking at runtime (generics erase).
-   - **JS/TS** — `Rule<TContext>` etc. gain **no default type parameter**, deliberately. Dict-context
-     is `Rule<Context>`, written out every time.
-   - **C#** — arity coexistence: `IRule<TContext>` is new and independent; `IRule` becomes the closed
-     specialization `IRule : IRule<IReadOnlyDictionary<string, object?>>` (matches
-     `IComparer`/`IComparer<T>`'s real BCL relationship, not `IEnumerable<T>`'s inheritance
-     direction). Every generic type is a fresh, independent implementation, fully additive.
-   - **Dart** — the one real breaking migration: `implements Rule` becomes
-     `implements Rule<Context>` (new `Context` typedef, exported) or an explicit typed context.
-     Constructor call sites are unaffected (inferred).
-   - Shared docs: `docs/architecture/README.md`'s new "Generic context" subsection, a new shared
-     extending scenario `docs/extending/reusing-a-rule-across-contexts/` (one page per language), the
-     skill's `plugin.json` version bump.
-4. **The new cross-language generics-showcase fixture, `marketplace_eligibility`** — originally
-   planned to be designed only *after* PR #94 merged, so its own tests could prove the design out
-   independently. The user explicitly overrode that sequencing mid-program, directing it be built
-   **inside PR #94 itself**, immediately. Built exactly as the deferred plan specified (Python
-   first, spec-and-implementation, each other language porting against the already-fixed spec):
-   a two-sided marketplace (sellers/buyers) plus an independent compliance-event catalog, proving
-   two typed contexts sharing no fields, one rule (`is_verified_identity`) reused across both via a
-   `ProjectingRule` adapter, and a dict-context catalog coexisting in the same codebase. Deliberately
-   narrower in scope than `graduation_verdict` — doesn't pin short-circuit counts or run an
-   oracle/chaos suite, since `graduation_verdict` already proves those guarantees; this fixture's job
-   is proving the generic-context design specifically. Landed as four commits, one per language
-   (Python bundled with the fixture's own data/spec commit), each independently tested and doc'd:
-   `fixtures/marketplace_eligibility/`, `docs/samples/marketplace-eligibility/` (one page per
-   language plus a language-agnostic spec with two validated mermaid diagrams), and each language's
-   own `examples/marketplace_eligibility/` project.
-5. **The rebase** (PR #94 was cut before #89–#93 merged) — done, clean. One real breakage surfaced
-   only after rebasing: Dart's `graduation_verdict` example (`AtLeastNRule implements Rule`) needed
-   the same breaking migration as everything else, since it's source code, not test code, and the
-   rebase brought both changes into the same tree for the first time. Fixed in its own clearly-
-   labeled commit, verified via `dart analyze` + the full 557-test suite before folding back in.
+1. **PR #94 merged** — the full `Rule<TContext>` migration across all four languages, the new
+   cross-language `marketplace_eligibility` fixture, and (caught mid-review by the user, not by any
+   automated check) a real `AGENTS.md` dispatch-rule violation: `ruleForSubject`'s
+   `subject_type`/`subjectType`/`SubjectType` dispatch used a sequential `if`-chain (Python, JS, C#)
+   or a `switch` (Dart) — the exact predicate-chain shape the dispatch rule forbids, in the flagship
+   `graduation_verdict` example, in **all four languages**. A full manual (not grep) read-through of
+   every real source file in the repo confirmed this was isolated to that one dispatch site plus the
+   same shape one level down in each language's chaos-data generator — 8 files, fixed as a
+   builder-per-variant table in each language's own idiom, plus the 5 docs whose own extension
+   instructions ("adding a subject type needs a new branch...") went stale the moment that became a
+   lookup. The oracle files in each language were confirmed as the one correctly sanctioned exception
+   (explicitly documented "deliberately the naive way," used as independent differential-testing
+   ground truth) and left untouched. Full verification after every fix: all four languages' full test
+   suites green (Python 650, JS 644, C# 650, Dart 645), zero warnings, clean `dart analyze`.
+   `main` was **not mergeable via the normal path** — required-review branch protection
+   (`required_approving_review_count: 1`, CODEOWNERS-backed) blocked it; merged with explicit user
+   authorization via `gh pr merge --admin`, bypassing that protection deliberately, not by default.
+2. **All five releases fired and confirmed live**: `python-v0.3.0`, `js-v0.3.0`, `csharp-v0.3.0`,
+   `dart-v0.3.0`, `skill-v0.6.0` (skill version stayed independent, per its own changelog's stated
+   cadence — only the four language packages realigned to `0.3.0`). C#'s release hit a **known,
+   previously-documented failure mode**: the actual NuGet push succeeded (confirmed via the push job's
+   own log — both `.nupkg`/`.snupkg` got `201 Created`), but the workflow's own post-publish
+   `verify-published` step exhausted its 20×30s (~10min) retry budget against nuget.org's flatcontainer
+   endpoint before nuget.org's own indexing caught up — the same shape of gap the workflow's code
+   comments already record happening at `csharp-v0.0.1` and `js-v0.0.4`. Confirmed live via direct
+   `curl` roughly 15 minutes after the push (not a re-run, not a fix — nuget.org's own indexing simply
+   finished). **This is the third occurrence of this exact pattern** — worth a real fix (not another
+   budget widening) if it recurs a fourth time; not recorded as a formal incident this session per the
+   user's own choice (monitor-and-confirm, not incident-write-up).
+3. **Program closed out on GitHub, not just in code**:
+   - [Issue #33](https://github.com/pawan-vyas/verdict-rules/issues/33) (the generics tracking issue)
+     — closed, linked to PR #94 and the five live releases.
+   - [PR #84](https://github.com/pawan-vyas/verdict-rules/pull/84) (the generics plan doc, branch
+     `plans/generics-v0.3.0`) — **closed without merging**, matching the
+     `plan/python-namespacing` (#9) precedent: its real design rationale is already captured in
+     `docs/architecture/README.md`'s own "Generic context" section via PR #94, so the raw planning doc
+     was redundant rather than something that needed to land on `main`. Branch deleted, both remotely
+     and locally, per explicit user instruction (PRs themselves can't be deleted on GitHub — only
+     closed; confirmed this isn't a permissions gap, it's a platform limitation).
+   - [Issue #76](https://github.com/pawan-vyas/verdict-rules/issues/76) ("bring JS/Dart/C# to Python's
+     test parity, then add the graduation-fixture layer") — found open and stale during this closeout
+     sweep; the work it describes was already fully done via PRs #88–93 (merged before this session's
+     own generics work began). Closed with a pointer to those six PRs.
+   - [Issue #39](https://github.com/pawan-vyas/verdict-rules/issues/39) — found during the same sweep,
+     checked, **confirmed still genuinely open and valid**: the "naive way" sections in three specific
+     samples (`shipping-fee-waiver`, `loyalty-tier-promotion`, `data-driven-rule-sets`) don't land the
+     same "I recognize this" hook `dynamic-discounts` does. Nothing in the generics program touched it.
+     Left open deliberately — noted as a related-but-orthogonal candidate in the new plan doc (next
+     bullet), not resolved.
+   - Branch cleanup: `main`, `generics/v0.3.0-rule-context`, and `plans/generics-v0.3.0` are the only
+     branches this session touched directly; all fully merged or explicitly closed-and-deleted, both
+     locally and on GitHub. (A larger, separate branch-cleanup pass earlier this same session removed
+     19 more already-merged branches unrelated to the generics program itself — see the commit log
+     around `git log --oneline b7e7fa9~30..b7e7fa9` if that context is ever needed again.)
+4. **A new planning doc opened as [PR #95](https://github.com/pawan-vyas/verdict-rules/pull/95)**
+   (branch `docs/post-generics-rebalance-plan`, CI green, doc-only), recording two follow-on problems
+   the user identified once the generics program landed, explicitly scoped as one future PR:
+   - **Sample/extending docs are dict-context-biased** — measured, not assumed: 6/10
+     `docs/samples/*/python.md` and 7/8 `docs/extending/*/python.md` are confirmed dict-shaped; only
+     this generics cycle's own additions (`marketplace-eligibility`,
+     `reusing-a-rule-across-contexts`) show typed context. Not a factual error anywhere — a
+     statistical bias in what an agent learns from reading the docs, since dict-context is documented
+     as "exactly as first-class as typed, never a fallback" but the sample mix doesn't reflect that.
+   - **Skill token economics** — `MANIFEST.toml`'s 18 near-identical `fetch_group` entries are
+     mechanically compressible without losing the file's own "hand-authored, never silently enlarges
+     the skill" guardrail; `agent-notes.md`'s shared boilerplate (confirmed via a direct diff between
+     Python's and Dart's own files) repeats near-verbatim across all four languages, with a real
+     bundled-vs-shared-doc tension to resolve, not a trivial cut. **Confirmed, not assumed, as
+     already-correct**: the two docs added this generics cycle are already properly wired into
+     `MANIFEST.toml` and resolve via `scripts/skill_manifest.py fetch` — checked directly before
+     writing the plan, in response to the user asking specifically whether this was a gap.
+   - Full detail, including which specific samples are plausible typed-context candidates and why
+     (and, just as importantly, which ones should explicitly stay dict-context) in
+     [`.agents/plans/post-generics-docs-and-skill-rebalance/README.md`](.agents/plans/post-generics-docs-and-skill-rebalance/README.md).
 
-**Full commit range on this branch, oldest first** (`9437328` = the PR #93 merge commit, the last
-point this branch shared with post-rebase `main`):
+**Full commit range this session, `main`, oldest first** (from the last point `main` and the
+generics branch diverged through the merge and everything after):
 
 ```text
 c18277b python: add generic context to Rule (Rule[TContext])
@@ -162,92 +181,42 @@ f2ca83c js: replace subjectType dispatch chains with a lookup table
 035497b csharp: replace SubjectType dispatch chains with a lookup table
 9000e3a dart: replace subjectType dispatch switch/chains with a lookup table
 8a5fbd9 docs: fix extension instructions stale after the dispatch-table refactor
+dbc0404 docs(handoff): refresh session state @ 8a5fbd9
+b7e7fa9 chore: archive the completed pre-generics SDK plan docs
+95c5e01 release: align all four language packages on v0.3.0
+53399f7 Merge pull request #94 from pawan-vyas/generics/v0.3.0-rule-context
 ```
-
-**Full verification, this session, all four languages, every suite** (see §5 for the exact commands):
-
-| Language | Core | `graduation_verdict` | `marketplace_eligibility` | Total |
-| --- | --- | --- | --- | --- |
-| Python | (bundled below) | (bundled below) | 33 | 650 |
-| JS | 54 | 557 | 33 | 644 |
-| C# | 61 | 557 | 32 | 650 |
-| Dart | 55 | 557 | 33 | 645 |
-
-All green. `dart analyze`/`dotnet build -warnaserror`/`tsc` all clean. Every new doc code sample was
-compiled/run-verified against the real built package, not eyeballed. Every new/edited mermaid diagram
-passed the real-renderer validator.
-
-**Post-review dispatch-table audit.** The user caught a real `AGENTS.md` dispatch-rule violation by eye
-in Dart's `graduation_verdict` example (`ruleForSubject` used a `switch` on `subjectType`) that grep-based
-scans had missed — a `switch` doesn't match the same regex as an `if`/`elif` chain, even though it's the
-same forbidden shape. Prompted a full manual (not grep) read-through of every real source file in the
-repo — every core library file in all four languages, both example projects per language, every test
-suite, and every repo tooling script. Found and fixed the same violation in **all four languages**
-(Python/JS/C# had the `if`-chain form, Dart the `switch` form), in both `ruleForSubject`'s own dispatch
-and the equivalent one level down in each language's chaos-data generator (`random_policy`/
-`random_context` picking extra fields by `subject_type`) — 8 files total, one commit per language plus
-one for Python's fixture-index fix. Each replaced with a builder-per-variant table keyed by the
-discriminant. The **sanctioned exception**, confirmed by reading every oracle file's own header: each
-`oracle.*` is explicitly documented as "deliberately the naive way... never import/reference `verdict`
-here," existing specifically as independent ground truth for differential testing — left untouched, and
-correctly so, since a lookup table there would give it the same implementation strategy as the code it's
-supposed to independently re-derive.
-
-**Downstream doc staleness the refactor itself introduced, caught in the same pass**: all four
-`docs/samples/graduation-requirement-verdict/<lang>.md` pages and `fixtures/graduation_verdict/README.md`
-said "adding a new subject type needs a new branch in `rule_for_subject()`" — no longer true, since that
-function is now a pure lookup and never changes; adding a type is now "a new builder function plus a new
-table entry" instead. Fixed in all five files, verified no other doc anywhere in the repo repeats the
-stale phrasing.
-
-Also fixed this session, unprompted by the dispatch audit: a VS Code/Pylance false "Import could not be
-resolved" on every `python/` file (workspace-root auto-detection doesn't look into `python/`'s own
-`.venv`) — `.vscode/settings.json` + `python/AGENTS.md` now document and fix it; and a real strict-mypy
-gap the generics migration left behind in `graduation_verdict.py` (a missing `var-annotated` on the
-`graduates` composite plus several bare `dict`/`Rule` annotations that used to infer cleanly and no longer
-do) — confirmed via a one-off `mypy --strict` run, fixed, the two remaining `--strict` findings are
-pre-existing and unrelated to generics.
 
 ## 3 · What to do next (prioritized)
 
-1. **Two commits are deliberately held back, to run only once the user gives explicit go-ahead to
-   merge** — so the PR's tip stays exactly these two, in this order, right before merge (not
-   interleaved with earlier audit/doc-fix commits):
-   1. **Housekeeping: archive the completed pre-generics SDK plans.** `git rm` (working-tree
-      removal only — history keeps everything) `.agents/plans/csharp-sdk/`,
-      `.agents/plans/dart-sdk/`, `.agents/plans/js-sdk/`, `.agents/plans/polyglot-sdk-resume.md`,
-      `.agents/plans/three-sdk-release-readiness.md` — all fully shipped (PRs #3/#5/#7, merged
-      long before this program started). Leave `.agents/plans/README.md` — confirm its content
-      still makes sense once the directory is otherwise empty before deciding whether it needs its
-      own edit or removal too.
-   2. **Version realignment, as the terminal commit.** Bump JS (`0.0.8`), C# (`0.0.2`), and Dart
-      (`0.0.4`) to **`0.3.0`** each, matching Python's already-correct `0.3.0` — the user's explicit
-      call: everyone lands on the same version for this shared release rather than each language's
-      own incremented number. Re-pin every version-pinned link
-      (`scripts/check_shipped_links.py --fix`), update each package's `CHANGELOG.md` heading to
-      `0.3.0`, and **trim every one of the four language changelog entries to plain factual
-      statements — no rationale/justification prose** (the user's explicit instruction this round);
-      keep Dart's `**Breaking**` marker since that's a fact, not narration. Re-verify all four
-      languages' full suites and `dart analyze`/`dotnet build -warnaserror`/`tsc` still pass after
-      the bump before committing.
-   - Do not run either step until the user says go-ahead. Both are otherwise ready to execute.
-2. **After #94 merges**, the generics program (issue #33) is complete. Consider whether the plan PR
-   ([#84](https://github.com/pawan-vyas/verdict-rules/pull/84)) should be closed or merged as a
-   historical record — it was left open throughout so its plan doc stayed available for reference;
-   check with the user rather than assuming either way.
-3. **No trailing PR is needed.** Every item the original plan's step 3 punted past #94 (the new
-   fixture) is now done *inside* #94, per the user's explicit override.
+1. **Get PR #95 reviewed and merged** (or, if it's genuinely fine to fast-track, use the same explicit
+   admin-bypass path as PR #94, but only on explicit instruction — it's a low-stakes doc-only PR, not
+   a reason to skip asking). Nothing blocks it; CI is green.
+2. **After #95 merges, start the plan it records** —
+   [`.agents/plans/post-generics-docs-and-skill-rebalance/README.md`](.agents/plans/post-generics-docs-and-skill-rebalance/README.md)
+   has the full scope: rebalancing sample/extending docs' dict-vs-typed mix (with specific candidate
+   samples already triaged), and the skill's `MANIFEST.toml`/`agent-notes.md` token-economics pass.
+   Read it before starting — it also records what the fix is **not** (don't invert the bias, don't cut
+   the per-language "mistakes" sections, don't break the hand-authored `MANIFEST.toml` guardrail).
+3. **Decide on [issue #39](https://github.com/pawan-vyas/verdict-rules/issues/39)** — fold into the
+   same PR as §3.2 (it touches the same three sample files the docs-bias fix already identifies as
+   typed-context candidates) or keep it separately triaged. Not decided; ask rather than assume either
+   way, per the plan doc's own §3.
+4. **If C#'s NuGet-indexing-lag pattern recurs a fourth time**, it's worth writing a real
+   `.agents/incidents/` entry and considering a structural fix (a `workflow_dispatch`-triggered
+   standalone re-verify job, rather than baking an ever-widening retry budget into the release
+   workflow itself) instead of widening the budget a third time.
 
 ## 4 · Known issues / blockers
 
 - No open defect in any shipped package itself.
-- `.agents/scratch/check_links.py` reports pre-existing broken links unrelated to this session's
-  work (in `.agents/memory/*.md` and this file's own §1b-style references to the plan branch) — none
-  of them touch anything this session added or edited; verified by re-running the checker after
-  every doc change made here.
+- The untracked `skills/verdict-workspace/evals/csharp/.gitignore` noted in §0.1 — origin unknown,
+  not part of this session's own changes, flagged rather than acted on.
 - No CI pipeline gate exists yet for any language's test suite running on every PR touching that
-  language's path — see `docs/future_plan.md` if this is ever picked up. (This is distinct from the
-  *release* workflows, which do gate on the version-vs-tag check and are already verified working.)
+  language's path — see `docs/future_plan.md` if this is ever picked up. (Distinct from the *release*
+  workflows, which do gate on the version-vs-tag check and are working correctly.)
+- C#'s NuGet publish-verification step has now hit its documented propagation-lag failure mode three
+  times (`csharp-v0.0.1`, `js-v0.0.4`'s npm equivalent, and this session's `csharp-v0.3.0`) — see §3.4.
 
 ## 5 · Verify (gate / test commands)
 
@@ -300,14 +269,13 @@ bash scripts/build.sh && ls dist/   # verdict-plugin.zip  verdict-tools.zip  ver
 - **Node** 18+ for JS/TS (`npm`, workspace-rooted at `js/`); also needed for the mermaid diagram
   validator regardless of language.
 - **.NET SDK** (targets `net10.0`/`netstandard2.1`) for C#. Test suite is **`xunit`** +
-  `Microsoft.NET.Test.Sdk` + `xunit.runner.visualstudio` only — no FluentAssertions/Moq, confirmed
-  and kept minimal/official on purpose.
-- **Dart SDK** ≥3.0.0 for Dart. **`pana`** (pub.dev's own package analyzer —
-  `dart pub global activate pana`) reproduces pub.dev's real scoring locally, no publish required.
+  `Microsoft.NET.Test.Sdk` + `xunit.runner.visualstudio` only.
+- **Dart SDK** ≥3.0.0 for Dart. **`pana`** (pub.dev's own package analyzer) reproduces pub.dev's real
+  scoring locally, no publish required.
 - **`jq`** only by CI workflows (preinstalled on `ubuntu-latest`).
-- **Vendored skills**, mirrored to both `.agents/skills/` and `.claude/skills/`:
-  `mermaid-diagrams` (diagram standards + validator) and `context-fence` (the operations manual
-  this file is the exit seal of). Both are tool-owned: refresh wholesale, never hand-edit.
+- **Vendored skills**, mirrored to both `.agents/skills/` and `.claude/skills/`: `mermaid-diagrams`
+  (diagram standards + validator) and `context-fence` (the operations manual this file is the exit
+  seal of). Both are tool-owned: refresh wholesale, never hand-edit.
 - `skills/verdict/` is the *shipped* skill; `skills/verdict-workspace/` is its eval working
   material — the per-target eval JSON files under `evals/<target>/` are tracked, the assembled
   `evals/evals.json` is gitignored. Evals run via the **skill-creator** plugin, not `claude plugin
@@ -316,24 +284,17 @@ bash scripts/build.sh && ls dist/   # verdict-plugin.zip  verdict-tools.zip  ver
 ## 6 · Key docs
 
 - [`AGENTS.md`](AGENTS.md) — standing rules for every agent (`CLAUDE.md` is just `@AGENTS.md`);
-  each language's own `AGENTS.md` adds that language's own layer.
-- [PR #84](https://github.com/pawan-vyas/verdict-rules/pull/84) — the master plan for the generics
-  effort described in §2 (full design rationale); see §1b for why this is a PR link, not a path.
-- [`docs/architecture/`](docs/architecture/README.md) — design source of truth: why evaluation is
-  sequential, why `Rule` is structural, why `RuleResult.data` stays opaque, and the new "Generic
-  context" subsection this session's work added.
-- [`docs/testing/`](docs/testing/README.md) — the testing checklist, shared across every language;
-  each language's own `docs/testing/<language>.md` names which test proves which contract.
-- [`docs/extending/reusing-a-rule-across-contexts/`](docs/extending/reusing-a-rule-across-contexts/README.md) —
-  the new shared extension scenario this session added, one page per language.
-- [`docs/samples/marketplace-eligibility/`](docs/samples/marketplace-eligibility/README.md) — the
-  new fixture's language-agnostic spec plus one implementation page per language.
-- [`docs/maintenance/doc-authoring/`](docs/maintenance/doc-authoring/README.md) — every doc-category
-  template this repo enforces by review.
+  each language's own `AGENTS.md` adds that language's own layer. Its dispatch-table rule is what
+  this session's own review caught a real violation against — read it again if extending any example.
+- [`docs/architecture/README.md`](docs/architecture/README.md#generic-context) — design source of
+  truth, including the "Generic context" subsection this program added.
+- [`.agents/plans/post-generics-docs-and-skill-rebalance/README.md`](.agents/plans/post-generics-docs-and-skill-rebalance/README.md) —
+  the next piece of work, full scope and reasoning.
+- [`docs/testing/`](docs/testing/README.md) — the testing checklist, shared across every language.
+- [`docs/extending/`](docs/extending/README.md) — the eight extension scenarios.
+- [`docs/samples/`](docs/samples/README.md) — the ten worked samples §2's new plan doc audits.
 - [`docs/maintenance/releases/`](docs/maintenance/releases/README.md) — the shared release pipeline
-  plus each registry's own real mechanics.
+  plus each registry's own real mechanics, including the NuGet propagation-lag pattern from §2/§4.
 - [`docs/future_plan.md`](docs/future_plan.md) — exploratory candidates, explicitly not a roadmap.
-- [`python/examples/graduation_verdict/`](python/examples/graduation_verdict/) — the flagship
-  dict-context worked example; every other language's own port matches its fixture data exactly.
 - [`.agents/README.md`](.agents/README.md) — the agent working-material layout, and
   [`.agents/memory/`](.agents/memory/) — durable facts worth not re-deriving.
