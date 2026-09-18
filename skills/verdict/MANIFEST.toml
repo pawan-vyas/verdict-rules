@@ -1,70 +1,48 @@
-# Which repository documents this skill carries, and how.
+# Which repository documents this skill carries. Hand-authored, not
+# glob-discovered: each line is a deliberate decision.
 #
-# Hand-authored on purpose: adding a doc to the repo must never silently
-# enlarge the skill. An entry here is a deliberate decision that an agent
-# building with verdict needs this document.
+# Shapes:
+#   [topics]        category -> [names] -> readme = docs/<category>/<name>/README.md,
+#                   pattern = docs/<category>/<name>/{lang}.md
+#   docs            source with destination == source
+#   [quickstarts]   language -> source; destination = "<lang>/quickstart.md"
+#   [[bundled]]     copied into the artifact by scripts/build.sh
+#   [[fetch]]       explicit source + destination (rare one-off)
+#   [[fetch_group]] explicit readme + {lang}-templated pattern
 #
-# Three shapes, each an array of tables (plus one top-level list):
-#
-#   [[bundled]]      copied into the artifact by scripts/build.sh. Available
-#                     with no network and no round trip. Keep this set
-#                     small — it is read on every invocation that needs it.
-#   [[fetch]]         NOT shipped. Pulled on demand from the repository at
-#                     the tag matching the consumer's installed version —
-#                     one-off files with no per-language sibling. See
-#                     SKILL.md.
-#   [[fetch_group]]   the repeated fetch shape: a topic's `readme` (its
-#                     spec) plus that same topic's own file per language,
-#                     same directory, same filename stem as the language.
-#                     `pattern`'s `{lang}` placeholder is expanded against
-#                     `languages` below; a language with no file for that
-#                     topic yet is skipped, not an error — a topic doesn't
-#                     have to land in every language at once.
-#
-# `languages` is the one place a shipped language is declared. Every
-# `[[fetch_group]]` expands against it automatically, so landing a new
-# language here is what makes its own doc for every existing topic
-# fetchable — none of the fetch_group blocks below need editing, and
-# scripts/skill_manifest.py's `rows("fetch", ...)` still returns the exact
-# same flat (source, destination) list every other script already consumes.
-# This is deliberate, not an accident of tidiness: every language ships
-# from its own branch, so a block every language's branch has to add a new
-# row to is a rebase conflict waiting to happen — the same reasoning as
-# `scripts/check_shipped_links.py`'s own `SHIPPED` list, and
-# `.agents/memory/adding-a-variant-is-a-new-file.md` generally.
-languages = ["python", "js", "dart", "csharp"]
-#              ^ add a language here once its own per-topic docs exist;
-#                nothing below needs a matching edit.
+# `docs` must appear before any [[...]] header (TOML folds a bare
+# key=value into whichever array-of-tables is currently open).
 
-# Every entry has `source` (path in this repo) and `destination` (path under
-# `references/` in the built skill). A trailing slash on both copies a
-# directory rather than a single file.
-#
-# Destination mirrors source for anything under docs/ — a doc there is
-# language-agnostic by construction (see each one's own blockquote), so it is
-# fetched to the exact same path under references/docs/, read by every
-# language's agent from the same place. A destination diverges from its
-# source only when the source itself is language-specific (it lives under a
-# language's own top-level directory, e.g. python/) and an alias makes for a
-# shorter, tidier local path.
-#
-# Deliberately absent, and not by oversight:
-#   docs/maintenance/, docs/future_plan.md
-#     -- maintainer documents. A consumer changing their own rules never
-#        needs them, and shipping them would spend an agent's context on
-#        this repo's internals rather than on the caller's problem.
-#   fixtures/graduation_verdict/
-#     -- the cross-language parity fixture. It exists to prove a new
-#        language port matches the reference, which is a contributor
-#        activity. docs/maintenance/adding-a-language.md and
-#        adding-a-fixture.md route contributors there; SKILL.md mentions
-#        it for an agent that wants a worked example of testing
-#        rule-based logic, without spending routing surface on it.
-#   python/examples/graduation_verdict/*.py and its data files
-#     -- example *code*. An agent reads the pattern from the example's own
-#        docs; shipping the project itself would put a pyproject.toml, and
-#        in other languages a .csproj or pubspec.yaml, inside a consumer's
-#        skill directory.
+languages = ["python", "js", "dart", "csharp"]
+
+docs = [
+  "docs/extending/README.md",
+  "docs/samples/README.md",
+]
+
+[topics]
+extending = [
+  "wrapping-a-predicate",
+  "new-rule-shape",
+  "domain-adapter-module",
+  "data-driven-rule-construction",
+  "nesting-composites",
+  "absence-vs-failure",
+  "isolating-flaky-predicates",
+  "reusing-a-rule-across-contexts",
+]
+samples = [
+  "dynamic-discounts",
+  "shipping-fee-waiver",
+  "loyalty-tier-promotion",
+  "content-moderation-routing",
+  "data-driven-rule-sets",
+  "admin-eligibility-lookup",
+  "signup-form-readiness",
+  "premium-upsell-panel",
+  "graduation-requirement-verdict",
+  "marketplace-eligibility",
+]
 
 [[bundled]]
 source = "docs/architecture/"
@@ -74,123 +52,11 @@ destination = "docs/architecture/"
 readme = "docs/testing/README.md"
 pattern = "docs/testing/{lang}.md"
 
-[[fetch]]
-source = "docs/extending/README.md"
-destination = "docs/extending/README.md"
-
-# Each scenario fetches both halves (spec + that language's implementation)
-# into the same relative shape they have in the repo, so the implementation
-# doc's own same-directory link to its spec (`README.md`) still resolves
-# once fetched — the same reasoning as the samples groups below. Only a
-# scenario with no per-language code worth showing at all would fetch just
-# its spec; none do today.
-[[fetch_group]]
-readme = "docs/extending/wrapping-a-predicate/README.md"
-pattern = "docs/extending/wrapping-a-predicate/{lang}.md"
-
-[[fetch_group]]
-readme = "docs/extending/new-rule-shape/README.md"
-pattern = "docs/extending/new-rule-shape/{lang}.md"
-
-[[fetch_group]]
-readme = "docs/extending/domain-adapter-module/README.md"
-pattern = "docs/extending/domain-adapter-module/{lang}.md"
-
-[[fetch_group]]
-readme = "docs/extending/data-driven-rule-construction/README.md"
-pattern = "docs/extending/data-driven-rule-construction/{lang}.md"
-
-[[fetch_group]]
-readme = "docs/extending/nesting-composites/README.md"
-pattern = "docs/extending/nesting-composites/{lang}.md"
-
-[[fetch_group]]
-readme = "docs/extending/absence-vs-failure/README.md"
-pattern = "docs/extending/absence-vs-failure/{lang}.md"
-
-[[fetch_group]]
-readme = "docs/extending/isolating-flaky-predicates/README.md"
-pattern = "docs/extending/isolating-flaky-predicates/{lang}.md"
-
-[[fetch_group]]
-readme = "docs/extending/reusing-a-rule-across-contexts/README.md"
-pattern = "docs/extending/reusing-a-rule-across-contexts/{lang}.md"
-
-# Quickstarts stay individual [[fetch]] entries rather than a fetch_group:
-# each language's own package layout puts its quickstart at a genuinely
-# different path shape -- python/packages/verdict-rules/docs/, js/packages/
-# verdict-rules/docs/, dart/packages/verdict_rules/doc/ (singular -- pub.dev's
-# own layout convention, not a typo), csharp/src/VerdictRules/docs/ once that
-# lands -- not a shared docs/ directory a `{lang}.md` pattern could describe.
-# One new row per language here is real, unavoidable per-ecosystem variation,
-# not the hand-duplicated-across-every-topic shape `fetch_group` exists to
-# remove.
-[[fetch]]
-source = "python/packages/verdict-rules/docs/quickstart.md"
-destination = "python/quickstart.md"
-
-[[fetch]]
-source = "js/packages/verdict-rules/docs/quickstart.md"
-destination = "js/quickstart.md"
-
-[[fetch]]
-source = "dart/packages/verdict_rules/doc/quickstart.md"
-destination = "dart/quickstart.md"
-
-[[fetch]]
-source = "csharp/src/VerdictRules/docs/quickstart.md"
-destination = "csharp/quickstart.md"
-
-[[fetch]]
-source = "docs/samples/README.md"
-destination = "docs/samples/README.md"
-
-# Each sample fetches both halves (spec + that language's implementation)
-# into the same relative shape they have in the repo, so the implementation
-# doc's own same-directory link to its spec (`README.md`) still resolves
-# once fetched — flattening the destination would silently point that link
-# at a sibling sample's spec instead.
-[[fetch_group]]
-readme = "docs/samples/dynamic-discounts/README.md"
-pattern = "docs/samples/dynamic-discounts/{lang}.md"
-
-[[fetch_group]]
-readme = "docs/samples/shipping-fee-waiver/README.md"
-pattern = "docs/samples/shipping-fee-waiver/{lang}.md"
-
-[[fetch_group]]
-readme = "docs/samples/loyalty-tier-promotion/README.md"
-pattern = "docs/samples/loyalty-tier-promotion/{lang}.md"
-
-[[fetch_group]]
-readme = "docs/samples/content-moderation-routing/README.md"
-pattern = "docs/samples/content-moderation-routing/{lang}.md"
-
-[[fetch_group]]
-readme = "docs/samples/data-driven-rule-sets/README.md"
-pattern = "docs/samples/data-driven-rule-sets/{lang}.md"
-
-[[fetch_group]]
-readme = "docs/samples/admin-eligibility-lookup/README.md"
-pattern = "docs/samples/admin-eligibility-lookup/{lang}.md"
-
-# JS/Dart only today, same "expected 404, not an error" handling as any other
-# language gap — see commands/verdict-fetch-docs.md.
-[[fetch_group]]
-readme = "docs/samples/signup-form-readiness/README.md"
-pattern = "docs/samples/signup-form-readiness/{lang}.md"
-
-[[fetch_group]]
-readme = "docs/samples/premium-upsell-panel/README.md"
-pattern = "docs/samples/premium-upsell-panel/{lang}.md"
-
-[[fetch_group]]
-readme = "docs/samples/graduation-requirement-verdict/README.md"
-pattern = "docs/samples/graduation-requirement-verdict/{lang}.md"
-
-[[fetch_group]]
-readme = "docs/samples/marketplace-eligibility/README.md"
-pattern = "docs/samples/marketplace-eligibility/{lang}.md"
+[quickstarts]
+python = "python/packages/verdict-rules/docs/quickstart.md"
+js = "js/packages/verdict-rules/docs/quickstart.md"
+dart = "dart/packages/verdict_rules/doc/quickstart.md"
+csharp = "csharp/src/VerdictRules/docs/quickstart.md"
 
 [[fetch]]
 source = "python/examples/graduation_verdict/README.md"
