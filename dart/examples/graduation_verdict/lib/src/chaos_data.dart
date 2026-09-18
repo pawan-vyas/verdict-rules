@@ -29,18 +29,39 @@ extension RandomUniform on Random {
   T choice<T>(List<T> items) => items[nextInt(items.length)];
 }
 
+/// (practicalMinPct, exemptionAllowed) per subjectType -- the two policy
+/// fields whose valid range depends on which type generated them. A new
+/// subject type is a new entry here.
+final _policyExtrasBySubjectType = <String, (double?, bool) Function(Random)>{
+  'vocational': (rng) => (rng.uniform(0, 100), false),
+  'language': (rng) => (null, rng.choice([true, false])),
+  'academic': (_) => (null, false),
+};
+
 /// Build one randomized, but schema-valid, subject policy.
 SubjectPolicy randomPolicy(Random rng, String subjectId) {
   final subjectType = rng.choice(_subjectTypes);
+  final (practicalMinPct, exemptionAllowed) =
+      _policyExtrasBySubjectType[subjectType]!(rng);
   return SubjectPolicy(
     subjectId: subjectId,
     subjectType: subjectType,
     writtenMinPct: rng.uniform(0, 100),
-    practicalMinPct: subjectType == 'vocational' ? rng.uniform(0, 100) : null,
-    exemptionAllowed: subjectType == 'language' && rng.choice([true, false]),
+    practicalMinPct: practicalMinPct,
+    exemptionAllowed: exemptionAllowed,
     isElective: rng.choice([true, false]),
   );
 }
+
+/// Extra score-entry fields per subjectType, merged onto the shared
+/// written_pct base below.
+final _contextExtrasBySubjectType =
+    <String, void Function(Random, Map<String, Object?>)>{
+  'vocational': (rng, entry) => entry['practical_pct'] = rng.uniform(0, 100),
+  'language': (rng, entry) =>
+      entry['has_exemption'] = rng.choice([true, false]),
+  'academic': (rng, entry) {},
+};
 
 /// Build one randomized student context matching the given policies.
 ///
@@ -50,12 +71,7 @@ Map<String, Object?> randomContext(Random rng, List<SubjectPolicy> policies) {
   final scores = <String, Object?>{};
   for (final policy in policies) {
     final entry = <String, Object?>{'written_pct': rng.uniform(0, 100)};
-    if (policy.subjectType == 'vocational') {
-      entry['practical_pct'] = rng.uniform(0, 100);
-    }
-    if (policy.subjectType == 'language') {
-      entry['has_exemption'] = rng.choice([true, false]);
-    }
+    _contextExtrasBySubjectType[policy.subjectType]!(rng, entry);
     scores[policy.subjectId] = entry;
   }
 
