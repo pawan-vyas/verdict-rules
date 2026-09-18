@@ -65,7 +65,6 @@
   shape already matches its sample counterpart's own deliberate
   choice. One new `employee-bonus-eligibility` adherence eval added
   per language (27 total now), assembled and validated.
-
 - Language packages bumped to `0.3.1` (all four), skill bumped to
   `0.6.1` — `CHANGELOG.md` entries added, shipped GitHub links
   re-pinned to the new tags via `scripts/check_shipped_links.py --fix`
@@ -77,12 +76,15 @@
   (`scripts/build.sh`) and its package contents spot-checked
   (`fetch-docs.sh`, `fetch-catalog.tsv`, and the compressed
   `MANIFEST.toml` all bundle correctly).
+- §4's haiku-model eval validation pass: `fetch-docs-completeness` run
+  for all four languages, sequentially, against the real built skill —
+  all four passed every expectation (see §4's own closing section for
+  the per-language detail, including the C# regex fix's real
+  end-to-end confirmation).
 
 **Not yet done, still in this PR's scope (no deferring, per explicit
 instruction):**
 
-- The haiku-model eval validation pass (§4's own closing paragraph) —
-  now that everything else above has landed and is committed.
 - Push the branch, confirm CI is green, and get explicit sign-off
   before merging (this repo's `main` requires PR review; either normal
   review or an explicit user-authorized admin-merge bypass, as was
@@ -294,21 +296,47 @@ checkpoints a grader reads against).
    `scripts/build_evals.py` (23 → 27 evals, every declared `files`
    path resolves).
 
-**Validation pass, explicitly sequenced last**: once everything else in
-this PR lands and is committed, run 1–2 evals per language through a
-real subagent to confirm end-to-end usability against the actual
-shipped state (including the new `fetch-docs.sh` script and the
-rebalanced samples) — using the **haiku model**, per the user's own
-reasoning: the library, docs, and skill are mature enough now to hold up
-respectably on a smaller model, and that's a more honest test of
-whether the skill's own guidance carries the weight than always
-grading against a frontier model. Run sequentially, never in parallel
-(rate-limit risk — see
-[`.agents/memory/`](../../memory/) if a durable note on this doesn't
-already exist there). This is genuinely a **validation** pass, not a
-grading/scoring exercise like skill-creator's own iteration loop — the
-question is "does this actually work," not "which iteration scored
-higher."
+**Validation pass — done.** Ran the `fetch-docs-completeness` eval for
+all four languages (one per language, within the "1-2 per language"
+budget) through a real `haiku`-model subagent each, sequentially, never
+in parallel. This eval was picked deliberately over the others: it is
+the single highest-risk shipped surface from this whole PR (the new
+`fetch-docs.sh` script, the compressed `MANIFEST.toml`/
+`fetch-catalog.tsv` it reads, and the one-line `agent-notes.md` fetch
+sections that now depend on both), so it validates "does the actual
+new mechanism work," not just "can a model describe the library."
+
+Each run used the real built skill (`scripts/build.sh` output, unzipped
+to a scratch directory — not the source tree, the actual shipped
+artifact) and a real per-language scratch project carrying only that
+eval's own fixture manifest, so version detection had to work from the
+real file, not from context. All four passed every one of their six
+`expectations`, confirmed both from each agent's own report and from
+independent filesystem evidence (the fetched `references/<lang>/`
+tree and `.version` marker each run left behind, inspected directly
+rather than trusting the agent's self-report alone):
+
+- **Python**: auto-detected `python-v0.2.5` from `pyproject.toml`,
+  fetched both named scenarios plus every sample, went well beyond the
+  two quickstart/testing docs shown literally in `agent-notes.md`.
+- **JS**: `package.json` alone (no `node_modules`) meant auto-detection
+  had nothing to import, so the agent correctly fell back to the
+  explicit `js=0.0.3` override syntax rather than guessing or stalling
+  — validating that fallback path for real, not just in the script's
+  own unit-level testing.
+- **C#**: auto-detected `csharp-v0.0.1` from `StorefrontApi.csproj`'s
+  real `<PackageReference Include="VerdictRules" Version="...">` shape
+  — the exact regex this session's own comment-trim pass found broken
+  and fixed. This run is the fix's actual end-to-end confirmation, not
+  just the scratch-`.csproj` unit check done at the time.
+- **Dart**: auto-detected `dart-v0.0.2` from `pubspec.lock` (not the
+  caret constraint in `pubspec.yaml`, which is a range, not an
+  installed version) — the harder of the two files to read correctly,
+  read correctly.
+
+No document path was invented in any of the four runs; every fetch
+resolved through the real catalog against a real, existing historical
+tag.
 
 ## Related
 
