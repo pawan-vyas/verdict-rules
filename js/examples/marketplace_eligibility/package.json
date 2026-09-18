@@ -1,0 +1,16 @@
+{
+  "name": "@verdict-rules/example-marketplace-eligibility",
+  "private": true,
+  "description": "A two-sided marketplace eligibility check exercising Rule<TContext> end to end -- two typed contexts, a ProjectingRule adapter, and a dict-context catalog in the same codebase. Not published.",
+  "type": "module",
+  "scripts": {
+    "demo": "node marketplace-eligibility.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "verdict-rules": "file:../../packages/verdict-rules"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
