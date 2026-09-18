@@ -6,19 +6,26 @@
 > Python code.
 
 ```python
+from dataclasses import dataclass
+
 from verdict import FunctionRule, RuleResult, RulesEngine
 
 
-async def is_beta_tester(context: dict) -> RuleResult:
-    return RuleResult(rule_name="is_beta_tester", passed=context.get("beta_tester", False))
+@dataclass(frozen=True)
+class UserContext:
+    beta_tester: bool = False
 
 
-engine = RulesEngine([FunctionRule("is_beta_tester", is_beta_tester, group="beta_checks")])
+async def is_beta_tester(context: UserContext) -> RuleResult:
+    return RuleResult(rule_name="is_beta_tester", passed=context.beta_tester)
 
-result = await engine.try_run_group("beta_checks", {"beta_tester": True})
+
+engine: RulesEngine[UserContext] = RulesEngine([FunctionRule("is_beta_tester", is_beta_tester, group="beta_checks")])
+
+result = await engine.try_run_group("beta_checks", UserContext(beta_tester=True))
 # RunResult(passed=True, results=[RuleResult(rule_name='is_beta_tester', passed=True, ...)])
 
-await engine.try_run_group("no_such_group", {})
+await engine.try_run_group("no_such_group", UserContext())
 # None — the group was never registered
 ```
 

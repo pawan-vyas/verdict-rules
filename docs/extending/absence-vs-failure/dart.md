@@ -8,20 +8,26 @@
 ```dart
 import 'package:verdict_rules/verdict_rules.dart';
 
-Future<RuleResult> isBetaTester(Map<String, Object?> context) async =>
-    RuleResult(
+class UserContext {
+  final bool betaTester;
+
+  UserContext({this.betaTester = false});
+}
+
+Future<RuleResult> isBetaTester(UserContext context) async => RuleResult(
       ruleName: 'is_beta_tester',
-      passed: (context['betaTester'] as bool?) ?? false,
+      passed: context.betaTester,
     );
 
-final engine = RulesEngine([
+final engine = RulesEngine<UserContext>([
   FunctionRule('is_beta_tester', isBetaTester, group: 'beta_checks'),
 ]);
 
-final result = await engine.tryRunGroup('beta_checks', {'betaTester': true});
+final result =
+    await engine.tryRunGroup('beta_checks', UserContext(betaTester: true));
 // RunResult(passed: true, results: [RuleResult(ruleName: is_beta_tester, passed: true)])
 
-await engine.tryRunGroup('no_such_group', {});
+await engine.tryRunGroup('no_such_group', UserContext());
 // null -- the group was never registered
 ```
 
