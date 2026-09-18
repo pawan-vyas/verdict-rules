@@ -36,6 +36,16 @@ public static class ChaosData
 {
     private static readonly string[] SubjectTypes = ["academic", "vocational", "language"];
 
+    // (PracticalMinPct, ExemptionAllowed) per SubjectType -- the two policy
+    // fields whose valid range depends on which type generated them. A new
+    // subject type is a new entry here.
+    private static readonly Dictionary<string, Func<Random, (double? PracticalMinPct, bool ExemptionAllowed)>> PolicyExtrasBySubjectType = new()
+    {
+        ["vocational"] = rng => (rng.Uniform(0, 100), false),
+        ["language"] = rng => (null, rng.Choice([true, false])),
+        ["academic"] = _ => (null, false),
+    };
+
     /// <summary>Build one randomized, but schema-valid, subject policy.</summary>
     /// <param name="rng">The seeded generator to draw from.</param>
     /// <param name="subjectId">Identifier for the generated subject.</param>
@@ -43,12 +53,13 @@ public static class ChaosData
     public static SubjectPolicy RandomPolicy(Random rng, string subjectId)
     {
         var subjectType = rng.Choice(SubjectTypes);
+        var (practicalMinPct, exemptionAllowed) = PolicyExtrasBySubjectType[subjectType](rng);
         return new SubjectPolicy(
             SubjectId: subjectId,
             SubjectType: subjectType,
             WrittenMinPct: rng.Uniform(0, 100),
-            PracticalMinPct: subjectType == "vocational" ? rng.Uniform(0, 100) : null,
-            ExemptionAllowed: subjectType == "language" && rng.Choice([true, false]),
+            PracticalMinPct: practicalMinPct,
+            ExemptionAllowed: exemptionAllowed,
             IsElective: rng.Choice([true, false]));
     }
 
@@ -62,20 +73,22 @@ public static class ChaosData
     /// A context in exactly the shape <see cref="GraduationCheck"/>'s rules
     /// and <see cref="Oracle.ExpectedGraduates"/> both expect.
     /// </returns>
+    // Extra score-entry fields per SubjectType, applied onto the shared
+    // written_pct base below.
+    private static readonly Dictionary<string, Action<Random, Dictionary<string, object?>>> ContextExtrasBySubjectType = new()
+    {
+        ["vocational"] = (rng, entry) => entry["practical_pct"] = rng.Uniform(0, 100),
+        ["language"] = (rng, entry) => entry["has_exemption"] = rng.Choice([true, false]),
+        ["academic"] = (_, _) => { },
+    };
+
     public static Dictionary<string, object?> RandomContext(Random rng, IReadOnlyList<SubjectPolicy> policies)
     {
         var scores = new Dictionary<string, object?>();
         foreach (var policy in policies)
         {
             var entry = new Dictionary<string, object?> { ["written_pct"] = rng.Uniform(0, 100) };
-            if (policy.SubjectType == "vocational")
-            {
-                entry["practical_pct"] = rng.Uniform(0, 100);
-            }
-            if (policy.SubjectType == "language")
-            {
-                entry["has_exemption"] = rng.Choice([true, false]);
-            }
+            ContextExtrasBySubjectType[policy.SubjectType](rng, entry);
             scores[policy.SubjectId] = entry;
         }
 

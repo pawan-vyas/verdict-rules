@@ -31,38 +31,48 @@ public static class GraduationCheck
     /// silently building a vacuously-passing rule for an unrecognized
     /// policy.
     /// </exception>
+    // One builder per SubjectType, keyed by the value itself -- adding a
+    // fifth subject type is a new method plus a new entry here, never a new
+    // branch in RuleForSubject.
+    private static readonly Dictionary<string, Func<SubjectPolicy, string, string, IRule>> SubjectRuleBuilders = new()
+    {
+        ["vocational"] = VocationalSubjectRule,
+        ["language"] = LanguageSubjectRule,
+        ["academic"] = AcademicSubjectRule,
+    };
+
     public static IRule RuleForSubject(SubjectPolicy policy)
     {
         var group = policy.IsElective ? "elective" : "core";
         var sid = policy.SubjectId;
 
-        if (policy.SubjectType == "vocational")
+        if (!SubjectRuleBuilders.TryGetValue(policy.SubjectType, out var builder))
         {
-            return new AndRule(
+            throw new ArgumentException($"unknown SubjectType '{policy.SubjectType}' for subject '{sid}'", nameof(policy));
+        }
+        return builder(policy, sid, group);
+    }
+
+    private static IRule VocationalSubjectRule(SubjectPolicy policy, string sid, string group) =>
+        new AndRule(
+            sid,
+            [WrittenRule(policy, $"{sid}:written"), PracticalRule(policy, $"{sid}:practical")],
+            group);
+
+    private static IRule LanguageSubjectRule(SubjectPolicy policy, string sid, string group)
+    {
+        if (policy.ExemptionAllowed)
+        {
+            return new OrRule(
                 sid,
-                [WrittenRule(policy, $"{sid}:written"), PracticalRule(policy, $"{sid}:practical")],
+                [WrittenRule(policy, $"{sid}:written"), ExemptionRule(policy, $"{sid}:exemption")],
                 group);
         }
-
-        if (policy.SubjectType == "language")
-        {
-            if (policy.ExemptionAllowed)
-            {
-                return new OrRule(
-                    sid,
-                    [WrittenRule(policy, $"{sid}:written"), ExemptionRule(policy, $"{sid}:exemption")],
-                    group);
-            }
-            return new FunctionRule(sid, WrittenPredicate(policy, sid), group);
-        }
-
-        if (policy.SubjectType == "academic")
-        {
-            return new FunctionRule(sid, WrittenPredicate(policy, sid), group);
-        }
-
-        throw new ArgumentException($"unknown SubjectType '{policy.SubjectType}' for subject '{sid}'", nameof(policy));
+        return new FunctionRule(sid, WrittenPredicate(policy, sid), group);
     }
+
+    private static IRule AcademicSubjectRule(SubjectPolicy policy, string sid, string group) =>
+        new FunctionRule(sid, WrittenPredicate(policy, sid), group);
 
     private static RulePredicate WrittenPredicate(SubjectPolicy policy, string name) =>
         (context, _) =>
