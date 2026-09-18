@@ -24,7 +24,7 @@ import 'subject_policy.dart';
 /// Throws [ArgumentError] if [policy.subjectType] isn't one of the known
 /// types -- deliberately loud rather than silently building a
 /// vacuously-passing rule for an unrecognized policy.
-Rule ruleForSubject(SubjectPolicy policy) {
+Rule<Context> ruleForSubject(SubjectPolicy policy) {
   final group = policy.isElective ? 'elective' : 'core';
   final sid = policy.subjectId;
 
@@ -203,7 +203,7 @@ Map<String, Object?> contextFromJson(Map<String, Object?> row) {
 /// rule objects -- `engine` serves runNamed/runGroup/runAll lookups,
 /// `graduates` is the fast, short-circuiting pass/fail composite. See
 /// docs/samples/graduation-requirement-verdict/README.md's second diagram.
-(RulesEngine, AndRule) buildGraduationCheck(
+(RulesEngine<Context>, AndRule<Context>) buildGraduationCheck(
     List<SubjectPolicy> policies, int electiveMinimum) {
   final subjectRules = policies.map(ruleForSubject).toList();
   final engine = RulesEngine(subjectRules);
