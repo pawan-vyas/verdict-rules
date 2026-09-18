@@ -4,12 +4,11 @@ using VerdictRules;
 namespace MarketplaceEligibility;
 
 /// <summary>
-/// Marketplace eligibility -- the flagship generic-context example, as real code.
+/// Marketplace eligibility, implemented with verdict-rules.
 /// </summary>
 /// <remarks>
-/// See docs/samples/marketplace-eligibility/README.md for the full design
-/// and fixtures/marketplace_eligibility/README.md for the shared,
-/// cross-language data contract this class reproduces.
+/// See docs/samples/marketplace-eligibility/README.md for the design and
+/// fixtures/marketplace_eligibility/README.md for the fixture contract.
 /// </remarks>
 public static class MarketplaceCheck
 {
@@ -48,9 +47,7 @@ public static class MarketplaceCheck
     /// </summary>
     /// <returns>
     /// A <c>(ListingEligible, SellerVerified)</c> pair -- the full
-    /// composite, and the identity sub-rule alone, so a caller (and the
-    /// test suite) can distinguish "which check failed" without
-    /// re-running anything.
+    /// composite, and the identity sub-rule alone.
     /// </returns>
     public static (AndRule<SellerListingContext> ListingEligible, IRule<SellerListingContext> SellerVerified) BuildSellerCheck()
     {
@@ -93,11 +90,8 @@ public static class MarketplaceCheck
     /// Build the dict-context compliance catalog.
     /// </summary>
     /// <remarks>
-    /// Unlike the seller/buyer sides, this is deliberately untyped: a
-    /// compliance team adds a new flag by registering one more rule here,
-    /// never by agreeing on a shared typed context every existing flag
-    /// would otherwise need to accommodate too. See
-    /// docs/architecture/README.md#generic-context for the full reasoning.
+    /// Unlike the seller/buyer sides, this is deliberately untyped. See
+    /// docs/architecture/README.md#generic-context.
     /// </remarks>
     public static RulesEngine BuildComplianceCatalog() => new(
     [
