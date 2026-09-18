@@ -112,6 +112,10 @@ pattern = "docs/extending/absence-vs-failure/{lang}.md"
 readme = "docs/extending/isolating-flaky-predicates/README.md"
 pattern = "docs/extending/isolating-flaky-predicates/{lang}.md"
 
+[[fetch_group]]
+readme = "docs/extending/reusing-a-rule-across-contexts/README.md"
+pattern = "docs/extending/reusing-a-rule-across-contexts/{lang}.md"
+
 # Quickstarts stay individual [[fetch]] entries rather than a fetch_group:
 # each language's own package layout puts its quickstart at a genuinely
 # different path shape -- python/packages/verdict-rules/docs/, js/packages/
@@ -180,13 +184,13 @@ pattern = "docs/samples/signup-form-readiness/{lang}.md"
 readme = "docs/samples/premium-upsell-panel/README.md"
 pattern = "docs/samples/premium-upsell-panel/{lang}.md"
 
-# Python-only by design, tied to python/examples/graduation_verdict/ — no
-# other language has a matching file, so this fetch_group's expansion
-# against `languages` above naturally emits only the README and python.md,
-# skipping every other language rather than needing its own carve-out.
 [[fetch_group]]
 readme = "docs/samples/graduation-requirement-verdict/README.md"
 pattern = "docs/samples/graduation-requirement-verdict/{lang}.md"
+
+[[fetch_group]]
+readme = "docs/samples/marketplace-eligibility/README.md"
+pattern = "docs/samples/marketplace-eligibility/{lang}.md"
 
 [[fetch]]
 source = "python/examples/graduation_verdict/README.md"

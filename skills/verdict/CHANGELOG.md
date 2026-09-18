@@ -10,18 +10,16 @@ cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skil
 
 - **`Rule<TContext>` generics land across all four languages.** Every
   `references/<language>/agent-notes.md` updated: the API-in-one-screen
-  block now shows the generic signature, and each file's own mistakes
+  block shows the generic signature, and each file's own mistakes
   section covers that language's own generic gotchas (C#'s arity
-  coexistence between `IRule`/`IRule<TContext>`, TypeScript's
-  deliberate lack of a default type parameter, Dart's one real breaking
-  migration from a bare `implements Rule`, Python's erased-at-runtime
-  `Protocol[TContext]`). Dict-context stays first-class in every
-  language's own notes -- never framed as a fallback for the untyped.
-- **New shared extending scenario,
-  `references/docs/extending/reusing-a-rule-across-contexts/`** -- the
+  coexistence between `IRule`/`IRule<TContext>`, TypeScript's lack of a
+  default type parameter, Dart's breaking migration from a bare
+  `implements Rule`, Python's erased-at-runtime `Protocol[TContext]`).
+- **`MANIFEST.toml` gains two `fetch_group` entries**: the new extending
+  scenario `docs/extending/reusing-a-rule-across-contexts/` (the
   `ProjectingRule` adapter for reusing one typed rule across two
-  differently-shaped contexts, with a verified-runnable code sample per
-  language.
+  differently-shaped contexts) and the new sample
+  `docs/samples/marketplace-eligibility/`.
 
 ## [0.5.9] - 2026-09-17
 
