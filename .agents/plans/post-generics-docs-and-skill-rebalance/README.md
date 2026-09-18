@@ -20,8 +20,8 @@
   `LoyaltyContext` — the first real §1 fix, all four languages,
   every code sample compiled/run-verified.
 - `graduation_verdict` and `marketplace_eligibility` example fixtures:
-  same comment trim as core lib, Python/JS/C# done, Dart not yet.
-  Caught and fixed two real bugs while trimming C#: a misplaced XML doc
+  same comment trim as core lib, all four languages now done. Caught
+  and fixed two real bugs while trimming C#: a misplaced XML doc
   comment left over from the dispatch-table refactor (documented the
   wrong member), and a version-detection regex that never matched a
   real consumer `.csproj`'s `<PackageReference>` shape.
@@ -56,8 +56,6 @@
 **Not yet done, still in this PR's scope (no deferring, per explicit
 instruction):**
 
-- Dart `graduation_verdict`/`marketplace_eligibility` example fixture
-  comment trim.
 - `shipping-fee-waiver` typed-context conversion (the second §1
   candidate; per user's own framing, a good showcase for a
   multi-field aggregate/composed context object several adjacent
