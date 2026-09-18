@@ -12,25 +12,26 @@ import 'package:verdict_rules/verdict_rules.dart';
 ///
 /// Not part of verdict itself -- a consumer-defined combinator, exactly
 /// as free to exist as AndRule/OrRule are, with no changes needed on
-/// verdict's side to support it. `implements Rule` is required here --
-/// Dart has no free structural typing for a multi-member interface the
-/// way Python's Protocol or TypeScript's structural interface do.
-class ThresholdRule implements Rule {
+/// verdict's side to support it. `implements Rule<TContext>` is
+/// required here -- Dart has no free structural typing for a
+/// multi-member interface the way Python's Protocol or TypeScript's
+/// structural interface do.
+class ThresholdRule<TContext> implements Rule<TContext> {
   @override
   final String name;
 
   @override
   final String? group;
 
-  final List<Rule> _rules;
+  final List<Rule<TContext>> _rules;
   final int _minimum;
 
-  ThresholdRule(this.name, List<Rule> rules, int minimum, {this.group})
+  ThresholdRule(this.name, List<Rule<TContext>> rules, int minimum, {this.group})
       : _rules = rules,
         _minimum = minimum;
 
   @override
-  Future<RuleResult> evaluate(Map<String, Object?> context) async {
+  Future<RuleResult> evaluate(TContext context) async {
     final subResults = <RuleResult>[];
     for (final rule in _rules) {
       subResults.add(await rule.evaluate(context));
@@ -46,11 +47,11 @@ class ThresholdRule implements Rule {
 }
 ```
 
-`ThresholdRule` can now be handed to a `RulesEngine`, nested inside an
-`AndRule`, or hold an `AndRule` as one of its own sub-rules — every
-existing piece of this package already knows how to run it, because
-nothing anywhere checks the runtime type of a `Rule`; `implements Rule`
-is the only contract that matters.
+`ThresholdRule<TContext>` can now be handed to a `RulesEngine`, nested
+inside an `AndRule`, or hold an `AndRule` as one of its own sub-rules —
+every existing piece of this package already knows how to run it,
+because nothing anywhere checks the runtime type of a `Rule`;
+`implements Rule<TContext>` is the only contract that matters.
 
 The same case the spec's own diagram shows — 2 of 3 needed, the third
 sub-rule fails:
@@ -62,7 +63,7 @@ Future<RuleResult> alwaysFail(String name) async =>
     RuleResult(ruleName: name, passed: false);
 
 Future<void> main() async {
-  final atLeastTwo = ThresholdRule(
+  final atLeastTwo = ThresholdRule<Map<String, Object?>>(
     'at_least_two',
     [
       FunctionRule('rule_1', (ctx) => alwaysPass('rule_1')),
@@ -78,6 +79,30 @@ Future<void> main() async {
 }
 ```
 
+`ThresholdRule<TContext>` binds every direct sub-rule to the same
+`TContext` — but a sub-rule can be a
+[`ProjectingRule`](../reusing-a-rule-across-contexts/dart.md), which
+itself satisfies `Rule<TContext>` while its wrapped rule reads a
+narrower, different type internally. The combinator stays bound to one
+context; what its sub-rules actually read does not have to match:
+
+```dart
+final verifiedRule = FunctionRule('is_verified_user', isVerifiedUser); // reads UserFlag
+final checkoutVerified = ProjectingRule<OrderContext, UserFlag>(
+  verifiedRule,
+  (ctx) => UserFlag(isVerified: ctx.isVerified),
+);
+
+final qualifies = ThresholdRule<OrderContext>(
+  'qualifies',
+  [
+    checkoutVerified, // reads UserFlag internally, via the projection
+    FunctionRule('has_promo_code', hasPromoCode), // reads OrderContext directly
+  ],
+  2,
+);
+```
+
 ## Related
 
 - [`README.md`](README.md) — the language-agnostic scenario this page
@@ -85,3 +110,7 @@ Future<void> main() async {
 - [`../../samples/graduation-requirement-verdict/`](../../samples/graduation-requirement-verdict/README.md) —
   `AtLeastNRule`, the design this exact pattern would back, once this
   SDK has its own tested instance.
+- [`../reusing-a-rule-across-contexts/dart.md`](../reusing-a-rule-across-contexts/dart.md) —
+  `ProjectingRule` itself, used above to mix a sub-rule reading a
+  narrower context into a `ThresholdRule<TContext>` bound to a wider
+  one.
