@@ -142,8 +142,12 @@ skip:
 
 ## Fetching the deeper documents
 
+Determine the actual installed version first — not a range from the
+manifest — using this ecosystem's own tooling, then:
+
 ```bash
-scripts/fetch-docs.sh dart
+scripts/fetch-docs.sh dart=<version>
 ```
 
-See [`commands/verdict-fetch-docs.md`](../../commands/verdict-fetch-docs.md).
+If the tag doesn't exist, re-check the version before assuming the release
+is missing. See [`commands/verdict-fetch-docs.md`](../../commands/verdict-fetch-docs.md).
