@@ -1,0 +1,15 @@
+{
+  "eval_name": "reference-at-installed-version",
+  "prompt": "We check `is_verified_user` in two completely different places: at checkout, where the context also carries order total and payment method, and at signup, where the context carries email and referral source. Right now those two checks are hand-written twice, once per context shape, and they've already drifted out of sync once. I want the same rule written once and reused in both `AndRule` composites without collapsing the two contexts into one bloated shape. If you need to check how verdict's own docs recommend handling this, make sure whatever you fetch matches what's actually installed here -- not just whatever's newest on GitHub.",
+  "expected_output": "A single rule (or predicate) written once against its own narrow context, reused in both composites via an explicit projecting adapter that satisfies Rule structurally for each outer context -- not a copy-pasted duplicate, and not a single rule loosened to accept a union or superset context. If the agent fetches anything from the source repository to confirm the pattern, it fetches at the python-v0.3.1 tag (the version this fixture's pyproject.toml actually pins), not from the default branch.",
+  "files": [
+    "files/pyproject.toml"
+  ],
+  "expectations": [
+    "The installed verdict-rules version is read from pyproject.toml (0.3.1) rather than assumed to be the newest release",
+    "If the response fetches or cites a source-repository URL, it is pinned to the python-v0.3.1 tag, not to main or an unpinned URL",
+    "The solution reuses one rule/predicate across both contexts via an explicit adapter, rather than duplicating the check or loosening AndRule's shared-TContext requirement",
+    "The response does not claim or imply that AndRule/OrRule accept sub-rules of differing TContext within one composite",
+    "No fetch script, curl example, or MANIFEST-driven fetch group is referenced -- none exist in this skill version, and inventing one would be a fabricated instruction"
+  ]
+}

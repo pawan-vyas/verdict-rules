@@ -36,6 +36,24 @@ python3 scripts/build_evals.py                  # every target
 python3 scripts/build_evals.py --target python  # one target
 ```
 
+## Hand a running eval the built skill, never the raw source
+
+`skills/verdict/references/REPOSITORY-MAP.md` does not exist as a file
+in this repository — `scripts/generate_repository_map.py` writes it at
+build time, and it is never checked in. Pointing an evaluated agent at
+`skills/verdict/` directly therefore reproduces a real-looking but false
+failure: `SKILL.md`'s "Where to look next" names a file that genuinely
+is not there, and a careful agent will say so.
+
+Every real consumer gets the built skill — through `install.sh`, the
+Claude plugin marketplace, or `dist/verdict.skill` unzipped — where
+`REPOSITORY-MAP.md` is present, because `scripts/build.sh` generates it
+before packaging. Run `bash scripts/build.sh` (or unzip the resulting
+`dist/verdict.skill`) and hand an evaluated agent *that* tree, not
+`skills/verdict/` itself. An eval whose "observations" report a missing
+`REPOSITORY-MAP.md` almost always means this step was skipped, not that
+the skill has a real gap.
+
 ## Why each eval declares a manifest file
 
 The skill's first step is *establish the language by reading the target
@@ -88,31 +106,31 @@ wrong *and* silent when it is:
   synchronous, so `evaluate()`'s `Future` has to be resolved outside it
   (`initState`/`setState`, a `FutureBuilder`), and states that
   `verdict_rules` needs no Flutter-specific adapter since it is a pure
-  Dart package. Also the one scenario using `pubspec.lock` rather than
-  `pubspec.yaml`'s own caret constraint to establish the installed
-  version — the same distinction `06-fetch-docs-completeness` relies on
-  for every other Dart eval.
-- `python/05-fetch-docs-completeness`, `js/06-fetch-docs-completeness`,
-  `dart/06-fetch-docs-completeness`, and `csharp/05-fetch-docs-completeness`
-  — added alongside `MANIFEST.toml`'s `[[fetch_group]]` restructuring,
-  to catch the failure that change actually could have shipped with: an
-  agent reading `references/<lang>/agent-notes.md`'s two illustrative
-  curl examples as the *complete* fetch list, rather than as examples of
-  a pattern that covers fourteen topics. Each prompt names two scenarios
-  deliberately not among those two examples, so getting the eval right
-  means the agent expanded a `fetch_group` pattern for itself rather
-  than pattern-matching on what it was shown literally. C#'s own fixture
-  has no lockfile-equivalent the way Dart's does — a `PackageReference`'s
-  `Version` attribute already names the exact resolved version directly
-  — so this eval also checks that the agent reads it from the one
-  manifest file rather than assuming a second file exists to check.
+  Dart package.
+- `python/07-reference-at-installed-version` — the skill ships no fetch
+  script and no bundled architecture tier; everything an agent might
+  reach for beyond `agent-notes.md` is named, one line each, in
+  `references/REPOSITORY-MAP.md`, for the agent to go get itself.
+  Probes that when a task genuinely calls for something
+  `REPOSITORY-MAP.md` names (here, reusing one rule across two
+  differently-shaped contexts — a real documented scenario, not an
+  invented one), the agent (a) determines the actual installed version
+  from the fixture manifest rather than assuming the latest release,
+  and (b) if it does go fetch that document, does so at the matching
+  `python-v<version>` tag rather than the default branch — the specific
+  failure mode `SKILL.md`'s own "Where to look next" section exists to
+  prevent. Getting the composable-shapes design right without fetching
+  anything is an equally good outcome; inventing a shape that violates
+  the shared-`TContext` guarantee, or fetching from `main`, are the
+  failures this eval looks for.
 
-**Not covered, and known**: that a fetch actually happens at the pinned
-tag, over the real network, against a real released tag. Measuring that
-needs network access inside the eval sandbox, which would make the
-result depend on GitHub being reachable rather than on the skill being
-right — the four `fetch-docs-completeness` evals measure whether the
-agent identifies the *correct set* of documents to fetch, not whether
-the `curl` itself succeeded. `scripts/check_skill_bundle.py` covers the
-one fetch-path failure that was actually reachable without a network
-round trip — a documented fetch path drifting away from the manifest.
+**Not covered, and known**: that a fetch actually happens over the real
+network, against a real released tag. Measuring that needs network
+access inside the eval sandbox, which would make the result depend on
+GitHub being reachable rather than on the skill being right —
+`python/07-reference-at-installed-version` measures whether the agent
+*would* fetch the right document at the right tag, not whether a `curl`
+or `WebFetch` call actually succeeded. `scripts/check_skill_bundle.py`
+covers the one link-integrity failure that is reachable without a
+network round trip — a route from `SKILL.md` or an `agent-notes.md` to a
+`references/` path that the assembled bundle does not actually contain.
