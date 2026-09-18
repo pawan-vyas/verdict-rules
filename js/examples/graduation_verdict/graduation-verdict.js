@@ -124,6 +124,41 @@ function exemptionRule(policy, name) {
   });
 }
 
+function vocationalSubjectRule(policy, sid, group) {
+  return new AndRule(
+    sid,
+    [
+      new FunctionRule(`${sid}:written`, writtenPredicate(policy)),
+      practicalRule(policy, `${sid}:practical`),
+    ],
+    group,
+  );
+}
+
+function languageSubjectRule(policy, sid, group) {
+  if (policy.exemptionAllowed) {
+    return new OrRule(
+      sid,
+      [new FunctionRule(`${sid}:written`, writtenPredicate(policy)), exemptionRule(policy, `${sid}:exemption`)],
+      group,
+    );
+  }
+  return new FunctionRule(sid, writtenPredicate(policy), group);
+}
+
+function academicSubjectRule(policy, sid, group) {
+  return new FunctionRule(sid, writtenPredicate(policy), group);
+}
+
+// One builder per subjectType, keyed by the value itself -- adding a fifth
+// subject type is a new function plus a new entry here, never a new branch
+// in ruleForSubject.
+const SUBJECT_RULE_BUILDERS = {
+  vocational: vocationalSubjectRule,
+  language: languageSubjectRule,
+  academic: academicSubjectRule,
+};
+
 /**
  * Turn one subject's policy into a Rule -- the shape depends on its type.
  *
@@ -140,33 +175,11 @@ export function ruleForSubject(policy) {
   const group = policy.isElective ? "elective" : "core";
   const sid = policy.subjectId;
 
-  if (policy.subjectType === "vocational") {
-    return new AndRule(
-      sid,
-      [
-        new FunctionRule(`${sid}:written`, writtenPredicate(policy)),
-        practicalRule(policy, `${sid}:practical`),
-      ],
-      group,
-    );
+  const builder = SUBJECT_RULE_BUILDERS[policy.subjectType];
+  if (builder === undefined) {
+    throw new Error(`unknown subjectType ${JSON.stringify(policy.subjectType)} for subject ${JSON.stringify(sid)}`);
   }
-
-  if (policy.subjectType === "language") {
-    if (policy.exemptionAllowed) {
-      return new OrRule(
-        sid,
-        [new FunctionRule(`${sid}:written`, writtenPredicate(policy)), exemptionRule(policy, `${sid}:exemption`)],
-        group,
-      );
-    }
-    return new FunctionRule(sid, writtenPredicate(policy), group);
-  }
-
-  if (policy.subjectType === "academic") {
-    return new FunctionRule(sid, writtenPredicate(policy), group);
-  }
-
-  throw new Error(`unknown subjectType ${JSON.stringify(policy.subjectType)} for subject ${JSON.stringify(sid)}`);
+  return builder(policy, sid, group);
 }
 
 export async function cgpaMet(context) {

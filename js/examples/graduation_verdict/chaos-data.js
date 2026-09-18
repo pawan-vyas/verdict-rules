@@ -17,6 +17,15 @@ import { subjectPolicy } from "./graduation-verdict.js";
 
 const SUBJECT_TYPES = ["academic", "vocational", "language"];
 
+// (practicalMinPct, exemptionAllowed) per subjectType -- the two policy
+// fields whose valid range depends on which type generated them. A new
+// subject type is a new entry here.
+const POLICY_EXTRAS_BY_SUBJECT_TYPE = {
+  vocational: (rng) => ({ practicalMinPct: rng.uniform(0, 100), exemptionAllowed: false }),
+  language: (rng) => ({ practicalMinPct: undefined, exemptionAllowed: rng.choice([true, false]) }),
+  academic: () => ({ practicalMinPct: undefined, exemptionAllowed: false }),
+};
+
 /**
  * Build one randomized, but schema-valid, subject policy.
  *
@@ -27,12 +36,13 @@ const SUBJECT_TYPES = ["academic", "vocational", "language"];
  */
 export function randomPolicy(rng, subjectId) {
   const subjectType = rng.choice(SUBJECT_TYPES);
+  const { practicalMinPct, exemptionAllowed } = POLICY_EXTRAS_BY_SUBJECT_TYPE[subjectType](rng);
   return subjectPolicy({
     subjectId,
     subjectType,
     writtenMinPct: rng.uniform(0, 100),
-    practicalMinPct: subjectType === "vocational" ? rng.uniform(0, 100) : undefined,
-    exemptionAllowed: subjectType === "language" ? rng.choice([true, false]) : false,
+    practicalMinPct,
+    exemptionAllowed,
     isElective: rng.choice([true, false]),
   });
 }
