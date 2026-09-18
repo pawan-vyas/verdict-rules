@@ -21,6 +21,27 @@ async function cartMeetsMinimum(context: Context): Promise<RuleResult> {
 const rule = new FunctionRule("cart_meets_minimum", cartMeetsMinimum);
 ```
 
+The wrap itself doesn't care what the predicate's own context looks
+like — a predicate already written against a typed context wraps
+exactly the same way:
+
+```ts
+interface CartContext {
+  cartTotal: number;
+  minimumForOffer: number;
+}
+
+async function cartMeetsMinimumTyped(context: CartContext): Promise<RuleResult> {
+  return {
+    ruleName: "cart_meets_minimum",
+    passed: context.cartTotal >= context.minimumForOffer,
+    detail: `${context.cartTotal} vs minimum ${context.minimumForOffer}`,
+  };
+}
+
+const typedRule = new FunctionRule<CartContext>("cart_meets_minimum", cartMeetsMinimumTyped);
+```
+
 ## Related
 
 - [`README.md`](README.md) — the language-agnostic scenario this page

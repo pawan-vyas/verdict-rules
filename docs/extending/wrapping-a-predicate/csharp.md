@@ -21,6 +21,22 @@ static Task<RuleResult> CartMeetsMinimum(IReadOnlyDictionary<string, object?> co
 var rule = new FunctionRule("cart_meets_minimum", CartMeetsMinimum);
 ```
 
+The wrap itself doesn't care what the predicate's own context looks
+like — a predicate already written against a typed context wraps
+exactly the same way:
+
+```csharp
+record CartContext(double CartTotal, double MinimumForOffer);
+
+static Task<RuleResult> CartMeetsMinimumTyped(CartContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new RuleResult(
+        "cart_meets_minimum",
+        context.CartTotal >= context.MinimumForOffer,
+        $"{context.CartTotal} vs minimum {context.MinimumForOffer}"));
+
+var typedRule = new FunctionRule<CartContext>("cart_meets_minimum", CartMeetsMinimumTyped);
+```
+
 ## Related
 
 - [`README.md`](README.md) — the language-agnostic scenario this page
