@@ -87,6 +87,13 @@
   "verdict's core" phrasing fixed, a stray unquoted `:` in the same
   field's value fixed, and the "contributor artifact" section removed
   outright. See §5 for the full sweep and what else was checked.
+- §6 (`docs/extending/` never got the §1 audit): all eight scenarios
+  triaged; five converted to typed or given a both-shapes treatment
+  (`nesting-composites`, `isolating-flaky-predicates`,
+  `absence-vs-failure`, `new-rule-shape`, `wrapping-a-predicate`), two
+  confirmed genuinely dict-appropriate and left untouched
+  (`data-driven-rule-construction`, `domain-adapter-module`). See §6
+  for the per-scenario reasoning.
 
 **Not yet done, still in this PR's scope (no deferring, per explicit
 instruction):**
@@ -405,6 +412,68 @@ citation of the shipped library's real practice as a pattern for a
 consumer's own reusable code to follow, not maintainer narration, and
 was left as is. Rebuilt (`scripts/build.sh`) and re-linted after every
 edit; the bundle stayed internally consistent throughout.
+
+## 6 · Scope addition: `docs/extending/` never got the §1 audit (raised at PR review)
+
+§1's own bias measurement counted `docs/extending/` alongside
+`docs/samples/` (7 of 8 scenarios dict, only
+`reusing-a-rule-across-contexts` typed) — but every fix that actually
+landed touched only the two sample candidates the plan named. The eight
+extending scenarios were never triaged. Caught at PR review, after §4's
+own eval validation pass, CI already green.
+
+Triaged all eight against the same question §1 asks per doc: does this
+scenario's context shape get decided by a human ahead of time, or named
+by the caller at runtime?
+
+**Converted to typed, all four languages, every sample compiled/
+run-verified:**
+
+- **`nesting-composites`** — `is_active_account`/`is_premium_member`/
+  `has_promo_code`/`meets_spend_threshold`, four fixed fields on one
+  account. Converted to `AccountContext`.
+- **`isolating-flaky-predicates`** — its promo-code example nearly
+  duplicated `shipping-fee-waiver`'s, now typed too. The `defensive()`
+  wrapper itself is generic over `TContext` (not fixed to one shape),
+  wrapping a new `PromoContext`.
+- **`absence-vs-failure`** — weaker case (the scenario is really about
+  the lookup API, not context shape), converted anyway per explicit
+  instruction to genericize where applicable: `UserContext` with one
+  `beta_tester` field, `RulesEngine<UserContext>`.
+- **`new-rule-shape`** — `ThresholdRule` itself was hardcoded to
+  dict/`Any` despite illustrating a *new rule shape*, the one place in
+  the whole extending index that should showcase proper genericity.
+  Genericized to `ThresholdRule<TContext>`/`ThresholdRule[TContext]`
+  (naming varies per language) across all four languages. Per explicit
+  instruction, also shows the combinator is context-bound as a whole
+  but its sub-rules don't have to be: a second, brief example mixes a
+  `ProjectingRule`-wrapped sub-rule (reading a narrower inner context)
+  into a `ThresholdRule<TContext>` bound to a wider outer one, linking
+  to `reusing-a-rule-across-contexts` for `ProjectingRule` itself
+  rather than re-deriving it inline.
+- **`wrapping-a-predicate`** — explicitly **not** the "convert or
+  add a note" treatment given to the others: this scenario is about
+  wrapping a predicate someone already has, so per explicit
+  instruction it now shows both — the same wrap mechanic applied to a
+  dict-context predicate and to an already-typed one, proving the wrap
+  itself doesn't care which.
+
+**Left unchanged, no code edits and no added prose** (per explicit
+instruction: no notes or justifications on scenarios being changed or
+left alone, unlike §1's original samples-side plan, which had proposed
+an explicit "stays dict on purpose" note for `data-driven-rule-sets`/
+`admin-eligibility-lookup`):
+
+- **`data-driven-rule-construction`** — the strongest dict case of all
+  eight; explicitly about building rules from whatever configuration a
+  caller already has.
+- **`domain-adapter-module`** — checked for genericizing too, and
+  found genuinely not applicable: `VerdictRateLimiter.check()` reads
+  `ctx[f"{window}_used"]`, a key composed at runtime from a caller-
+  supplied `windows` dict. That access only compiles against something
+  dict/mapping-shaped; constraining `TContext` to a `Mapping` bound
+  would just be dict-typing with extra ceremony, not a real
+  generalization. Confirmed by attempting it, not by inspection alone.
 
 ## Related
 
