@@ -7,11 +7,13 @@
 ```csharp
 using VerdictRules;
 
+record PromoContext(string PromoCode, bool SimulateTimeout = false);
+
 // Turn a predicate's own exception into a failing RuleResult, instead of
 // letting it propagate out of the run that contains it.
-static FunctionRule Defensive(string name, RulePredicate predicate)
+static FunctionRule<TContext> Defensive<TContext>(string name, RulePredicate<TContext> predicate)
 {
-    async Task<RuleResult> Wrapped(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
+    async Task<RuleResult> Wrapped(TContext context, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -22,27 +24,27 @@ static FunctionRule Defensive(string name, RulePredicate predicate)
             return new RuleResult(name, false, exc.Message);
         }
     }
-    return new FunctionRule(name, Wrapped);
+    return new FunctionRule<TContext>(name, Wrapped);
 }
 
 // Stands in for a real network call that can time out.
-static Task<RuleResult> CheckPromoCodeAgainstExternalService(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
+static Task<RuleResult> CheckPromoCodeAgainstExternalService(PromoContext context, CancellationToken cancellationToken = default)
 {
-    if (context.TryGetValue("simulate_timeout", out var t) && t is true)
+    if (context.SimulateTimeout)
     {
         throw new TimeoutException("promo-validation service did not respond");
     }
-    return Task.FromResult(new RuleResult("promo_code_valid", (string?)context["promo_code"] == "SAVE10"));
+    return Task.FromResult(new RuleResult("promo_code_valid", context.PromoCode == "SAVE10"));
 }
 
-var rule = Defensive("promo_code_valid", CheckPromoCodeAgainstExternalService);
+var rule = Defensive<PromoContext>("promo_code_valid", CheckPromoCodeAgainstExternalService);
 ```
 
 ```csharp
-await rule.EvaluateAsync(new Dictionary<string, object?> { ["promo_code"] = "SAVE10" });
+await rule.EvaluateAsync(new PromoContext("SAVE10"));
 // RuleResult(RuleName: "promo_code_valid", Passed: true, ...)
 
-await rule.EvaluateAsync(new Dictionary<string, object?> { ["promo_code"] = "SAVE10", ["simulate_timeout"] = true });
+await rule.EvaluateAsync(new PromoContext("SAVE10", SimulateTimeout: true));
 // RuleResult(RuleName: "promo_code_valid", Passed: false,
 //            Detail: "promo-validation service did not respond")
 ```
@@ -52,8 +54,8 @@ of returning a result — this is what every other rule shares a
 `RunAllAsync`/`RunGroupAsync` with, unless it's wrapped too:
 
 ```csharp
-var unwrapped = new FunctionRule("promo_code_valid", CheckPromoCodeAgainstExternalService);
-await unwrapped.EvaluateAsync(new Dictionary<string, object?> { ["promo_code"] = "SAVE10", ["simulate_timeout"] = true });
+var unwrapped = new FunctionRule<PromoContext>("promo_code_valid", CheckPromoCodeAgainstExternalService);
+await unwrapped.EvaluateAsync(new PromoContext("SAVE10", SimulateTimeout: true));
 // throws TimeoutException: promo-validation service did not respond
 ```
 
