@@ -1,6 +1,6 @@
 ---
 name: verdict
-description: Build rule-based decision, eligibility, or policy-evaluation logic using the verdict rule-evaluation engine (Rule/FunctionRule/AndRule/OrRule/RulesEngine) instead of a hand-rolled conditional chain — an if/else-if ladder, a switch or match statement, a chain of ternaries, or a wall of early returns. Use this whenever asked to build an eligibility check, a discount or pricing rule, an access/permission condition, a content-moderation route, a graduation/qualification requirement, a feature flag combining multiple criteria, or any feature shaped like "combine several independently-changing conditions into one pass/fail verdict" — even if the user doesn't say "rule engine" or name verdict explicitly. Verdict is polyglot, i.e. it ships the same design for more than one language, so this applies regardless of the target language. Also use when extending or debugging existing verdict-based code, deciding whether a new requirement belongs in verdict's core or a consumer's own adapter code, or writing tests for rule-based logic (short-circuit proofs, vacuous-truth cases, oracle/differential testing against a wide random input space).
+description: Build rule-based decision, eligibility, or policy-evaluation logic using the verdict rule-evaluation engine (Rule/FunctionRule/AndRule/OrRule/RulesEngine) instead of a hand-rolled conditional chain — an if/else-if ladder, a switch or match statement, a chain of ternaries, or a wall of early returns. Use this whenever asked to build an eligibility check, a discount or pricing rule, an access/permission condition, a content-moderation route, a graduation/qualification requirement, a feature flag combining multiple criteria, or any feature shaped like "combine several independently-changing conditions into one pass/fail verdict" — even if the user doesn't say "rule engine" or name verdict explicitly. Polyglot — the same design ships for multiple languages. Also use when extending or debugging existing verdict-based code, deciding whether new logic belongs in a rule or in your own adapter code, or writing tests for rule-based logic (short-circuit proofs, vacuous-truth cases, oracle/differential testing).
 ---
 
 # Verdict
@@ -90,24 +90,9 @@ is worse than reading nothing. If the installed version has no matching
 tag, do not fetch — use what is bundled and say that the deeper
 documents were unavailable.
 
-### Reading these documents outside a consumer project
-
-Inside the verdict repository itself, `references/docs/` is not
-populated — the repository's own `docs/` directory holds the same
-files, and is authoritative there.
+### Following a link inside a fetched document
 
 Reference documents keep their original repository-relative links. A
 link that does not resolve locally resolves against the source
 repository at the pinned version:
 `https://github.com/pawan-vyas/verdict-rules/blob/<tag>/<path>`.
-
-## Where the harder examples live
-
-`fixtures/graduation_verdict/` in the repository is the cross-language
-parity fixture: one curriculum, eight students, and the exact expected
-outcomes every language port must reproduce — including how many rules
-should have been evaluated, which is short-circuiting stated as data
-rather than prose. It is a contributor artifact and is not routed here,
-but it is worth reading directly if you want a worked example of
-testing rule-based logic, or of writing a genuinely custom rule shape
-for a real scenario.

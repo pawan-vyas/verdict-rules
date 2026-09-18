@@ -80,7 +80,13 @@
   for all four languages, sequentially, against the real built skill —
   all four passed every expectation (see §4's own closing section for
   the per-language detail, including the C# regex fix's real
-  end-to-end confirmation).
+  end-to-end confirmation, and its own correction of an earlier
+  overclaim about how uniformly those four passes were verified).
+- §5 (maintainer-facing framing leak in `SKILL.md`, raised at PR
+  review after CI was already green): the frontmatter `description`'s
+  "verdict's core" phrasing fixed, a stray unquoted `:` in the same
+  field's value fixed, and the "contributor artifact" section removed
+  outright. See §5 for the full sweep and what else was checked.
 
 **Not yet done, still in this PR's scope (no deferring, per explicit
 instruction):**
@@ -311,10 +317,20 @@ to a scratch directory — not the source tree, the actual shipped
 artifact) and a real per-language scratch project carrying only that
 eval's own fixture manifest, so version detection had to work from the
 real file, not from context. All four passed every one of their six
-`expectations`, confirmed both from each agent's own report and from
-independent filesystem evidence (the fetched `references/<lang>/`
-tree and `.version` marker each run left behind, inspected directly
-rather than trusting the agent's self-report alone):
+`expectations` — **grading rigor differed across the four runs, and
+that difference should be stated plainly rather than smoothed over**:
+Python's run was independently checked against the filesystem (the
+`find`/`.version` inspection run directly, before the next language's
+run started and before the scratch directory was cleaned up) — the
+other three (JS, C#, Dart) are graded from each subagent's own
+self-reported transcript, including the literal captured script output
+it relayed (e.g. `fetched 32, skipped 9 at js-v0.0.3`), not from a
+second, independent filesystem check — the scratch directory was
+deleted before that would have been possible. The self-reported output
+is genuine tool output relayed by the subagent, not a fabricated
+summary, but it is one tier weaker than Python's own independently
+re-verified result, and this doc should say so rather than imply all
+four were checked the same way.
 
 - **Python**: auto-detected `python-v0.2.5` from `pyproject.toml`,
   fetched both named scenarios plus every sample, went well beyond the
@@ -337,6 +353,57 @@ rather than trusting the agent's self-report alone):
 No document path was invented in any of the four runs; every fetch
 resolved through the real catalog against a real, existing historical
 tag.
+
+## 5 · Scope addition: maintainer-facing framing leaking into consumer-facing content (raised at PR review)
+
+Raised after §4's validation pass, reviewing the shipped `SKILL.md`
+directly rather than through an eval. The skill is consumer-facing
+only — it exists to help someone *integrate* verdict into their own
+project, never to help anyone *maintain verdict itself* (this repo's
+own `AGENTS.md` is that document, and it is deliberately never
+shipped). Two places in `SKILL.md` blurred that boundary:
+
+- The frontmatter `description` said a trigger case was "deciding
+  whether a new requirement belongs in verdict's core or a consumer's
+  own adapter code." "Verdict's core" is the shipped library's own
+  internals — something only this repository's own maintainers can
+  change, never a decision available to a consumer. A consumer only
+  ever decides whether new logic belongs in a `Rule`/predicate they
+  write, or in their own adapter code around it — reworded to say
+  exactly that. The same edit fixed a separate, unrelated risk: the
+  original value contained a bare `Polyglot:` inside the unquoted
+  frontmatter scalar — a literal `:` in plain YAML scalar text is
+  fragile for a frontmatter parser (flagged directly, confirmed via a
+  real `yaml.safe_load()` parse of the fixed value) — replaced with an
+  em dash, matching the punctuation the same field already uses
+  elsewhere.
+- A whole section, "Where the harder examples live," described
+  `fixtures/graduation_verdict/` as *"a contributor artifact"* —
+  literally self-identifying as not for the audience this skill ships
+  to. Worse, that path does not exist in a downstream consumer's own
+  project at all; it only exists inside this repository. Removed
+  entirely, not reworded — there was no consumer-facing version of
+  this content to salvage.
+- "Reading these documents outside a consumer project" mixed one
+  genuinely useful consumer-facing fact (an unresolvable link inside a
+  fetched document falls back to the pinned GitHub tag) with one
+  purely self-referential one ("inside the verdict repository itself,
+  `references/docs/` is not populated"). Split: kept and retitled the
+  first as "Following a link inside a fetched document," cut the
+  second.
+
+Swept the skill's other own-authored surfaces (`commands/*.md`,
+`MANIFEST.toml`, every `references/<language>/agent-notes.md`) for the
+same pattern via two grep passes — one for direct maintainer-vocabulary
+terms (`verdict's core`, `this repository`, `contributor`,
+`maintainer`, `upstream`), one for narration markers ("we ", `this session`, `originally`,
+`previously`, `used to be`). Found
+nothing else; the one incidental hit (`csharp/agent-notes.md`'s
+"this package's own source does it on every internal `await`") is a
+citation of the shipped library's real practice as a pattern for a
+consumer's own reusable code to follow, not maintainer narration, and
+was left as is. Rebuilt (`scripts/build.sh`) and re-linted after every
+edit; the bundle stayed internally consistent throughout.
 
 ## Related
 
