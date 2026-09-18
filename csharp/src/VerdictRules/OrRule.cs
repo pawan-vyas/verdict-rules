@@ -4,9 +4,8 @@ namespace VerdictRules;
 /// Composite that passes as soon as any sub-rule passes.
 /// </summary>
 /// <remarks>
-/// Short-circuits on the first passing sub-rule. An empty list <b>fails</b>
-/// vacuously: nothing to pass on. The opposite of <see cref="AndRule"/>, and
-/// the asymmetry is the point.
+/// Short-circuits on the first passing sub-rule. An empty list fails
+/// vacuously.
 /// </remarks>
 /// <param name="name">See <see cref="Name"/>.</param>
 /// <param name="rules">Sub-rules, evaluated in this order.</param>

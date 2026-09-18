@@ -7,10 +7,20 @@
 ```dart
 import 'package:verdict_rules/verdict_rules.dart';
 
+class PromoContext {
+  final String promoCode;
+  final bool simulateTimeout;
+
+  PromoContext({required this.promoCode, this.simulateTimeout = false});
+}
+
 /// Turn a predicate's own exception into a failing RuleResult, instead
 /// of letting it propagate out of the run that contains it.
-FunctionRule defensive(String name, RulePredicate predicate) {
-  Future<RuleResult> wrapped(Map<String, Object?> context) async {
+FunctionRule<TContext> defensive<TContext>(
+  String name,
+  RulePredicate<TContext> predicate,
+) {
+  Future<RuleResult> wrapped(TContext context) async {
     try {
       return await predicate(context);
     } catch (exc) {
@@ -23,25 +33,28 @@ FunctionRule defensive(String name, RulePredicate predicate) {
 
 /// Stands in for a real network call that can time out.
 Future<RuleResult> checkPromoCodeAgainstExternalService(
-  Map<String, Object?> context,
+  PromoContext context,
 ) async {
-  if (context['simulateTimeout'] == true) {
+  if (context.simulateTimeout) {
     throw Exception('promo-validation service did not respond');
   }
   return RuleResult(
     ruleName: 'promo_code_valid',
-    passed: context['promoCode'] == 'SAVE10',
+    passed: context.promoCode == 'SAVE10',
   );
 }
 
-final rule = defensive('promo_code_valid', checkPromoCodeAgainstExternalService);
+final rule = defensive<PromoContext>(
+  'promo_code_valid',
+  checkPromoCodeAgainstExternalService,
+);
 ```
 
 ```dart
-await rule.evaluate({'promoCode': 'SAVE10'});
+await rule.evaluate(PromoContext(promoCode: 'SAVE10'));
 // RuleResult(ruleName: promo_code_valid, passed: true, detail: )
 
-await rule.evaluate({'promoCode': 'SAVE10', 'simulateTimeout': true});
+await rule.evaluate(PromoContext(promoCode: 'SAVE10', simulateTimeout: true));
 // RuleResult(ruleName: promo_code_valid, passed: false,
 //   detail: Exception: promo-validation service did not respond)
 ```
@@ -51,11 +64,13 @@ of returning a result — this is what every other rule shares a
 `runAll`/`runGroup` with, unless it's wrapped too:
 
 ```dart
-final unwrapped = FunctionRule(
+final unwrapped = FunctionRule<PromoContext>(
   'promo_code_valid',
   checkPromoCodeAgainstExternalService,
 );
-await unwrapped.evaluate({'promoCode': 'SAVE10', 'simulateTimeout': true});
+await unwrapped.evaluate(
+  PromoContext(promoCode: 'SAVE10', simulateTimeout: true),
+);
 // throws Exception: promo-validation service did not respond
 ```
 

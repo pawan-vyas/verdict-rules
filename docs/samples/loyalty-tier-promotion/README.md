@@ -18,40 +18,48 @@ distinct from a composite's own short-circuiting evaluate.
 
 ## What the naive approach gets wrong
 
-The obvious first implementation ends up as *two* functions that have
-to be kept in sync by hand — one for the yes/no decision, one for the
-customer-facing checklist:
+The obvious first implementation is *two* functions, one for the
+customer-facing checklist and one for the actual yes/no decision, each
+with the four criteria's thresholds written inline:
 
 ```text
 function gold_checklist(customer):
     return {
-        "spend": customer.trailing_12mo_spend >= customer.gold_spend_threshold,
-        "orders": customer.trailing_12mo_orders >= customer.gold_order_threshold,
-        "returns": customer.return_rate <= customer.gold_max_return_rate,
+        "spend": customer.trailing_12mo_spend >= 5000,
+        "orders": customer.trailing_12mo_orders >= 15,
+        "returns": customer.return_rate <= 0.05,
         "standing": customer.account_status == "active",
     }
 
 function is_eligible_for_gold(customer):
-    checklist = gold_checklist(customer)
-    return all(checklist.values())
+    return (
+        customer.trailing_12mo_spend >= 5000
+        and customer.trailing_12mo_orders >= 20
+        and customer.return_rate <= 0.05
+        and customer.account_status == "active"
+    )
 ```
 
-The coupling between the two functions is enforced by nothing except a
-developer remembering it exists:
+Read the two functions side by side and the bug is visible without
+reading a word past the code itself: `gold_checklist` promotes at 15
+orders, `is_eligible_for_gold` at 20. Nothing about this is a future
+risk — a customer with 17 trailing-12-month orders sees a checklist
+showing "orders: met" *right now*, while the actual decision function
+says not eligible, because the number that matters lives in two places
+and nobody kept them equal:
 
-- **A new criterion means editing two places, not one.** Adding a fifth
-  requirement to `is_eligible_for_gold` without also adding it to
-  `gold_checklist` produces a promotion decision the UI's own checklist
-  can't explain — a customer who "shouldn't" be eligible sees a screen
-  showing all checks passed.
-- **Nothing catches the two functions drifting apart.** There's no
-  compiler error, no test failure by default — just a UI that quietly
-  stops matching the real decision the day someone edits only one of
-  the two functions.
+- **The two functions never agreed in the first place.** This isn't a
+  hypothetical drift from a future edit — the values shown are already
+  wrong relative to each other, the ordinary result of writing the same
+  threshold twice.
+- **Nothing catches it.** No compiler error, no test failure by
+  default — the checklist and the decision it's supposed to explain
+  just silently disagree, and stay disagreeing until someone happens to
+  notice a customer's confusing support ticket.
 - **The pattern gets worse with every additional consumer.** A third
   place that needs "which criteria are met" (an internal ops dashboard,
-  an email template) is a third function to keep in sync, or a
-  reference back to one of the first two that's easy to get wrong.
+  an email template) is a third hardcoded copy of the same four
+  numbers, each one more chance to drift from the rest.
 
 ## The `verdict` way
 
@@ -142,9 +150,14 @@ graph TB
   objects, never two independently maintained implementations.
 - Each criterion is unit-testable on its own, without populating every
   other criterion's own inputs first.
-- The naive-way section names a concrete drift risk (two functions kept
-  in sync by hand, with nothing that catches them diverging), not a
-  hypothetical one.
+- The naive-way section shows a concrete, already-present bug (two
+  functions whose hardcoded thresholds have already drifted apart),
+  not a hypothetical future risk.
+- The context is a typed record with one field per threshold, not a
+  dict — each threshold has exactly one definition, read by name from
+  every rule that needs it, which is what makes the naive version's
+  drift structurally impossible here rather than merely avoided by
+  discipline.
 
 ## Related
 

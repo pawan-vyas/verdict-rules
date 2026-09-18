@@ -1,16 +1,7 @@
 """Deterministic, randomized (policy, student) case generation for test_chaos.py.
 
-"Deterministic" is the load-bearing word: every function here takes a
-`random.Random` instance explicitly — never the global `random` module — so
-a case built from a given seed is exactly reproducible. test_chaos.py seeds
-one `random.Random` per case from a pinned constant plus that case's own
-index, so any single failing case can be regenerated on its own without
-replaying every case before it.
-
-Every value generated stays within the schema's valid domain (a real
-percentage, a real subject_type, etc.) — this generates a wide space of
-*valid* curricula and students, not malformed input. Garbage-input handling
-is a different, narrower concern this suite doesn't cover.
+Every function takes a `random.Random` instance explicitly. Every value
+generated stays within the schema's valid domain.
 """
 
 from __future__ import annotations
@@ -120,18 +111,14 @@ def generate_case(rng: random.Random, num_subjects: int = 7) -> tuple[list[Subje
     """Build one complete, self-consistent randomized case.
 
     Args:
-        rng: The seeded generator to draw from — the sole source of
-            randomness, so the same `rng` state always produces the same
-            case.
+        rng: The seeded generator to draw from.
         num_subjects: How many subjects the generated curriculum has.
 
     Returns:
         A `(policies, context, elective_minimum)` triple ready to hand to
         both `graduation_verdict.build_graduation_check` and
-        `oracle.expected_graduates`. `elective_minimum` is always
-        achievable (bounded by how many electives were actually
-        generated), so a mismatch between the two implementations is
-        never explained away as "an impossible curriculum."
+        `oracle.expected_graduates`. `elective_minimum` is bounded by
+        how many electives were actually generated.
     """
     policies = [random_policy(rng, f"SUBJ{i}") for i in range(num_subjects)]
     context = random_context(rng, policies)

@@ -1,24 +1,12 @@
-/// Chaos/differential testing: does the engine ever disagree with an independent oracle?
+/// Chaos/differential testing: compares `buildGraduationCheck` against
+/// `expectedGraduates` across a wide, randomly-generated space of curricula
+/// and students.
 ///
-/// graduation_verdict_test.dart proves 8 hand-picked, hand-verified
-/// scenarios come out right. That doesn't say anything about the enormous
-/// space of curricula and students nobody hand-picked. This file checks a
-/// much wider space by comparing two independent implementations against
-/// each other instead of against a fixed expected value:
+/// Every case is generated from a seeded `Random`, never a shared or
+/// ambient instance, so a disagreement is exactly reproducible from its
+/// seed.
 ///
-/// - `buildGraduationCheck` -- the real, verdict_rules-based implementation
-///   this whole project exists to demonstrate.
-/// - `expectedGraduates` -- a plain, verdict_rules-free re-implementation,
-///   deliberately dumb so it's trustworthy by inspection.
-///
-/// If they ever disagree, one of them is wrong -- and because every case
-/// is generated from a *seeded* `Random` (never a shared or ambient
-/// instance), that disagreement is exactly reproducible: the same seed
-/// always regenerates the exact same case. "The chaos suite didn't cause
-/// any breakdown" is therefore a real, re-checkable claim across runs, not
-/// a one-off observation about whatever numbers came up this time.
-///
-/// See docs/testing.md for the full design reasoning.
+/// See docs/testing.md for the full design.
 import 'dart:math';
 
 import 'package:graduation_verdict/graduation_verdict.dart';
@@ -35,12 +23,10 @@ void main() {
   group('engine agrees with an independent oracle', () {
     for (var caseIndex = 0; caseIndex < _numCases; caseIndex++) {
       test('case $caseIndex', () async {
-        // Each case is seeded from chaosSeed + caseIndex -- not from a
-        // single shared generator advanced across all cases --
-        // specifically so any one failing case reproduces on its own:
-        // re-run Random(chaosSeed + caseIndex) through generateCase and
-        // you get the exact same policies/context/electiveMinimum that
-        // failed, with no need to replay every earlier case first.
+        // Each case is seeded from chaosSeed + caseIndex, not a single
+        // shared generator advanced across all cases, so a failing case
+        // reproduces on its own via Random(chaosSeed + caseIndex) through
+        // generateCase.
         final rng = Random(_chaosSeed + caseIndex);
         final (policies, context, electiveMinimum) = generateCase(rng);
 

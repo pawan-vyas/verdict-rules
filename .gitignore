@@ -79,3 +79,8 @@ dart/examples/*/build/
 skills/verdict-workspace/evals/*/files/.dart_tool/
 csharp/**/bin/
 csharp/**/obj/
+# Same leak as the Dart eval-fixture case above, for C#: files/StorefrontApi.csproj
+# ships as a real eval fixture, but dotnet build/restore against it regenerates
+# bin/obj outside csharp/**, which the pattern above doesn't reach.
+skills/verdict-workspace/evals/*/files/bin/
+skills/verdict-workspace/evals/*/files/obj/

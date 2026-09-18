@@ -43,30 +43,43 @@ rest of what this shape gets wrong.
 
 ## The `verdict-rules` way
 
+A typed context, not a dict — and unlike the other typed samples, one
+of its fields isn't order data at all: `promoCodeService` is an
+injected dependency, typed as an interface rather than `unknown`, so
+every rule reading it gets the same compile-time checking as the plain
+fields:
+
 ```ts
-import { FunctionRule, OrRule, type Context, type RuleResult } from "verdict-rules";
+import { FunctionRule, OrRule, type RuleResult } from "verdict-rules";
 
 interface PromoCodeService {
   validate(code: string | undefined): Promise<boolean>;
 }
 
-async function orderTotalOverThreshold(context: Context): Promise<RuleResult> {
-  const passed = (context.orderTotal as number) >= (context.freeShippingThreshold as number);
+interface ShippingContext {
+  orderTotal: number;
+  freeShippingThreshold: number;
+  isPremiumMember: boolean;
+  promoCode: string | undefined;
+  promoCodeService: PromoCodeService;
+}
+
+async function orderTotalOverThreshold(context: ShippingContext): Promise<RuleResult> {
+  const passed = context.orderTotal >= context.freeShippingThreshold;
   return { ruleName: "order_total_over_threshold", passed };
 }
 
-async function hasPremiumMembership(context: Context): Promise<RuleResult> {
-  return { ruleName: "has_premium_membership", passed: context.isPremiumMember as boolean };
+async function hasPremiumMembership(context: ShippingContext): Promise<RuleResult> {
+  return { ruleName: "has_premium_membership", passed: context.isPremiumMember };
 }
 
-async function hasValidPromoCode(context: Context): Promise<RuleResult> {
+async function hasValidPromoCode(context: ShippingContext): Promise<RuleResult> {
   // The expensive path: only reached if both cheaper checks above failed.
-  const service = context.promoCodeService as PromoCodeService;
-  const isValid = await service.validate(context.promoCode as string | undefined);
+  const isValid = await context.promoCodeService.validate(context.promoCode);
   return { ruleName: "has_valid_promo_code", passed: isValid };
 }
 
-const shipsFree = new OrRule("ships_free", [
+const shipsFree = new OrRule<ShippingContext>("ships_free", [
   new FunctionRule("order_total_over_threshold", orderTotalOverThreshold),
   new FunctionRule("has_premium_membership", hasPremiumMembership),
   new FunctionRule("has_valid_promo_code", hasValidPromoCode), // cheapest-last, on purpose
@@ -78,7 +91,8 @@ is now a stated decision at the point it matters, not something the
 next person to edit this file has to reconstruct from scratch.
 
 Proving the skip, not just asserting it — a call-counting fake stands
-in for the real service:
+in for the real service, and satisfies `PromoCodeService` the same way
+the real implementation would:
 
 ```ts
 class FakePromoService implements PromoCodeService {
@@ -90,7 +104,7 @@ class FakePromoService implements PromoCodeService {
 }
 
 const promoService = new FakePromoService();
-const order: Context = {
+const order: ShippingContext = {
   orderTotal: 120,
   freeShippingThreshold: 50,
   isPremiumMember: false,

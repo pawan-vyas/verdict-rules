@@ -1,9 +1,5 @@
 /// A small, zero-dependency, async-native rule-evaluation engine.
 ///
-/// Compose independently-changing conditions into one explainable pass/fail
-/// verdict. Evaluation is sequential and never concurrent, which is what makes
-/// short-circuiting a real contract rather than a best-effort optimisation.
-///
 /// `Rule<TContext>`/`RulesEngine<TContext>` are generic over the context
 /// they read from. Dict-context is `Rule<Context>`, written out explicitly
 /// -- `Context` is exported below as the `Map<String, Object?>` alias.

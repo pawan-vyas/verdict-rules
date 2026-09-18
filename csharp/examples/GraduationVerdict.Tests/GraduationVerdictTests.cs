@@ -8,12 +8,10 @@ namespace GraduationVerdict.Tests;
 /// Tests for the graduation-verdict example.
 /// </summary>
 /// <remarks>
-/// These aren't just tests of this example's own logic -- because this
-/// project exercises FunctionRule, AndRule, OrRule, a custom Rule shape,
-/// and all three RulesEngine run modes together, this suite functions as
-/// an integration/e2e regression net for verdict-rules itself. See
-/// docs/testing/README.md's "second testing layer" section for the full
-/// reasoning behind that claim.
+/// Also functions as an integration/e2e regression net for verdict-rules
+/// itself, exercising FunctionRule, AndRule, OrRule, a custom Rule shape,
+/// and all three RulesEngine run modes together. See
+/// docs/testing/README.md.
 /// </remarks>
 public static class SharedFixture
 {
@@ -180,7 +178,7 @@ public class EngineRunModesTests
     [Fact]
     public async Task RunGroupNeverShortCircuitsUnlikeTheGraduatesComposite()
     {
-        // bob fails ENG101 (core) -- RunGroupAsync must still report every other core subject.
+        // bob fails ENG101 (core); RunGroupAsync still reports every other core subject.
         var (engine, _) = GraduationCheck.BuildGraduationCheck(SharedFixture.Curriculum.Policies, SharedFixture.Curriculum.ElectiveMinimum);
         var result = await engine.RunGroupAsync("core", SharedFixture.Students["bob"].Context);
         Assert.Equal(4, result.Results.Count);
@@ -189,11 +187,9 @@ public class EngineRunModesTests
 }
 
 /// <summary>
-/// Every expectation in the shared fixture, asserted. This is the
-/// cross-language contract: each port of this example must reproduce
-/// these exact numbers. See fixtures/graduation_verdict/README.md for
-/// what each field proves and why the counts matter more than the
-/// booleans.
+/// Every expectation in the shared fixture, asserted. Each port of this
+/// example reproduces these exact numbers. See
+/// fixtures/graduation_verdict/README.md for what each field checks.
 /// </summary>
 public class SharedFixtureContractTests
 {
@@ -215,9 +211,8 @@ public class SharedFixtureContractTests
     [MemberData(nameof(StudentIds))]
     public async Task ShortCircuitCountMatches(string studentId)
     {
-        // bob and gita both fail, but bob stops after one rule and gita runs
-        // all four. An implementation that evaluated sub-rules concurrently
-        // would return both booleans correctly and fail here.
+        // bob and gita both fail; bob stops after one rule, gita runs all
+        // four.
         var (_, graduates) = GraduationCheck.BuildGraduationCheck(SharedFixture.Curriculum.Policies, SharedFixture.Curriculum.ElectiveMinimum);
         var record = SharedFixture.Students[studentId];
         var expectedCount = record.Expected.GetProperty("rules_evaluated").GetInt32();
@@ -231,7 +226,7 @@ public class SharedFixtureContractTests
     [MemberData(nameof(StudentIds))]
     public async Task FailingChainMatches(string studentId)
     {
-        // Proves nesting survives: deepak's failure is three levels deep.
+        // deepak's failure is three levels deep.
         var (_, graduates) = GraduationCheck.BuildGraduationCheck(SharedFixture.Curriculum.Policies, SharedFixture.Curriculum.ElectiveMinimum);
         var record = SharedFixture.Students[studentId];
         var expectedChain = record.Expected.GetProperty("failing_chain").EnumerateArray().Select(e => e.GetString()!).ToList();
@@ -258,9 +253,9 @@ public class SharedFixtureContractTests
     [MemberData(nameof(StudentIds))]
     public async Task GroupResultsMatch(string studentId)
     {
-        // harish is the interesting one: he graduates while his elective
-        // group "fails", because the group verdict is all-must-pass and the
-        // composite's requirement is at-least-two-of-three.
+        // harish graduates while his elective group "fails", because the
+        // group verdict is all-must-pass and the composite's requirement
+        // is at-least-two-of-three.
         var (engine, _) = GraduationCheck.BuildGraduationCheck(SharedFixture.Curriculum.Policies, SharedFixture.Curriculum.ElectiveMinimum);
         var record = SharedFixture.Students[studentId];
         foreach (var group in record.Expected.GetProperty("groups").EnumerateObject())
@@ -274,10 +269,9 @@ public class SharedFixtureContractTests
 
 /// <summary>
 /// The degenerate curricula, from the shared fixture's edge_cases.json.
-/// AndRule([]) passing while an at-least-N rule over an empty set fails
-/// for N > 0 is deliberately asymmetric, and it is the kind of thing a
-/// port gets backwards without noticing -- nothing in the main student
-/// set exercises an empty rule list at all.
+/// AndRule([]) passes while an at-least-N rule over an empty set fails
+/// for N > 0. Nothing in the main student set exercises an empty rule
+/// list.
 /// </summary>
 public class VacuousTruthEdgeCasesTests
 {
@@ -306,9 +300,7 @@ public class VacuousTruthEdgeCasesTests
         Assert.Equal(expected.GetProperty("run_all").GetProperty("evaluated").GetInt32(), runAll.Results.Count);
         Assert.Equal(expected.GetProperty("run_all").GetProperty("passed").GetBoolean(), runAll.Passed);
 
-        // Absence is reported two ways, and both are part of the contract:
-        // the strict form throws, the try-prefixed form returns null. A port
-        // that shipped one without the other would fail here.
+        // The strict form throws; the try-prefixed form returns null.
         var lookups = expected.GetProperty("lookups");
 
         var group = lookups.GetProperty("unknown_group").GetProperty("name").GetString()!;

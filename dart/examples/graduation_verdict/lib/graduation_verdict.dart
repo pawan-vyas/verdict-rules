@@ -1,7 +1,7 @@
-/// A college graduation-eligibility check, built as real, tested code --
-/// the flagship example exercising the full breadth of verdict_rules at
-/// once. See docs/samples/graduation-requirement-verdict/README.md for the
-/// original framing question this project answers.
+/// A college graduation-eligibility check, implemented with verdict_rules.
+///
+/// See docs/samples/graduation-requirement-verdict/README.md for the
+/// design.
 library;
 
 export 'src/at_least_n_rule.dart';

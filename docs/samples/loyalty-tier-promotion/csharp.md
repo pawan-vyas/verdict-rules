@@ -7,67 +7,73 @@
 
 ## The naive way (and why it breaks down)
 
-The obvious first implementation ends up as *two* methods that have to
-be kept in sync by hand — one for the yes/no decision, one for the
-customer-facing checklist:
+The obvious first implementation is *two* methods, one for the
+customer-facing checklist and one for the actual yes/no decision, each
+with the four criteria's thresholds written inline:
 
 ```csharp
 static Dictionary<string, bool> GoldChecklist(Customer customer) => new()
 {
-    ["spend"] = customer.Trailing12MoSpend >= customer.GoldSpendThreshold,
-    ["orders"] = customer.Trailing12MoOrders >= customer.GoldOrderThreshold,
-    ["returns"] = customer.ReturnRate <= customer.GoldMaxReturnRate,
+    ["spend"] = customer.Trailing12MoSpend >= 5000,
+    ["orders"] = customer.Trailing12MoOrders >= 15,
+    ["returns"] = customer.ReturnRate <= 0.05,
     ["standing"] = customer.AccountStatus == "active",
 };
 
-static bool IsEligibleForGold(Customer customer) => GoldChecklist(customer).Values.All(v => v);
+static bool IsEligibleForGold(Customer customer) =>
+    customer.Trailing12MoSpend >= 5000
+    && customer.Trailing12MoOrders >= 20
+    && customer.ReturnRate <= 0.05
+    && customer.AccountStatus == "active";
 ```
 
-Nothing enforces the coupling between the two methods — adding a
-fifth requirement to one without the other produces a promotion
-decision the UI's own checklist can't explain. See the spec for the
-rest of what this shape gets wrong.
+`GoldChecklist` promotes at 15 orders; `IsEligibleForGold` at 20 —
+visible by reading the two methods side by side, not a hypothetical
+future drift. See the spec for the rest of what this shape gets wrong.
 
 ## The `verdict` way
+
+A typed context, not a dictionary — each threshold has exactly one
+definition, read by name from every rule that needs it:
 
 ```csharp
 using VerdictRules;
 
-static Task<RuleResult> MeetsSpendThreshold(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
-{
-    var passed = (double)context["trailing_12mo_spend"]! >= (double)context["gold_spend_threshold"]!;
-    return Task.FromResult(new RuleResult("meets_spend_threshold", passed));
-}
+record LoyaltyContext(
+    double Trailing12MoSpend,
+    double GoldSpendThreshold,
+    double Trailing12MoOrders,
+    double GoldOrderThreshold,
+    double ReturnRate,
+    double GoldMaxReturnRate,
+    string AccountStatus);
 
-static Task<RuleResult> MeetsOrderCount(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
-{
-    var passed = (double)context["trailing_12mo_orders"]! >= (double)context["gold_order_threshold"]!;
-    return Task.FromResult(new RuleResult("meets_order_count", passed));
-}
+static Task<RuleResult> MeetsSpendThreshold(LoyaltyContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new RuleResult("meets_spend_threshold", context.Trailing12MoSpend >= context.GoldSpendThreshold));
 
-static Task<RuleResult> ReturnRateBelowMax(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
-{
-    var passed = (double)context["return_rate"]! <= (double)context["gold_max_return_rate"]!;
-    return Task.FromResult(new RuleResult("return_rate_below_max", passed));
-}
+static Task<RuleResult> MeetsOrderCount(LoyaltyContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new RuleResult("meets_order_count", context.Trailing12MoOrders >= context.GoldOrderThreshold));
 
-static Task<RuleResult> AccountInGoodStanding(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("account_in_good_standing", (string)context["account_status"]! == "active"));
+static Task<RuleResult> ReturnRateBelowMax(LoyaltyContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new RuleResult("return_rate_below_max", context.ReturnRate <= context.GoldMaxReturnRate));
+
+static Task<RuleResult> AccountInGoodStanding(LoyaltyContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new RuleResult("account_in_good_standing", context.AccountStatus == "active"));
 
 // Registered as four independent named rules on one engine -- not nested
 // in an AndRule -- precisely so RunAllAsync() reports every criterion's
 // own outcome, with no short-circuiting hiding a later criterion's result.
-var engine = new RulesEngine(new IRule[]
+var engine = new RulesEngine<LoyaltyContext>(new IRule<LoyaltyContext>[]
 {
-    new FunctionRule("meets_spend_threshold", MeetsSpendThreshold),
-    new FunctionRule("meets_order_count", MeetsOrderCount),
-    new FunctionRule("return_rate_below_max", ReturnRateBelowMax),
-    new FunctionRule("account_in_good_standing", AccountInGoodStanding),
+    new FunctionRule<LoyaltyContext>("meets_spend_threshold", MeetsSpendThreshold),
+    new FunctionRule<LoyaltyContext>("meets_order_count", MeetsOrderCount),
+    new FunctionRule<LoyaltyContext>("return_rate_below_max", ReturnRateBelowMax),
+    new FunctionRule<LoyaltyContext>("account_in_good_standing", AccountInGoodStanding),
 });
 
-async Task<RunResult> PromotionChecklist(IReadOnlyDictionary<string, object?> customerContext)
+async Task<RunResult> PromotionChecklist(LoyaltyContext context)
 {
-    var result = await engine.RunAllAsync(customerContext);
+    var result = await engine.RunAllAsync(context);
     // result.Passed is true only if all four passed -- the actual promotion decision.
     // result.Results is one RuleResult per criterion, always all four -- the UI checklist.
     return result;
@@ -84,16 +90,14 @@ A customer meeting three of the four criteria — the same case the
 spec's own diagram shows:
 
 ```csharp
-var customer = new Dictionary<string, object?>
-{
-    ["trailing_12mo_spend"] = 6000.0,
-    ["gold_spend_threshold"] = 5000.0,
-    ["trailing_12mo_orders"] = 20.0,
-    ["gold_order_threshold"] = 15.0,
-    ["return_rate"] = 0.08,
-    ["gold_max_return_rate"] = 0.05,
-    ["account_status"] = "active",
-};
+var customer = new LoyaltyContext(
+    Trailing12MoSpend: 6000,
+    GoldSpendThreshold: 5000,
+    Trailing12MoOrders: 20,
+    GoldOrderThreshold: 15,
+    ReturnRate: 0.08,
+    GoldMaxReturnRate: 0.05,
+    AccountStatus: "active");
 
 var checklist = await PromotionChecklist(customer);
 checklist.Passed;

@@ -1,11 +1,7 @@
-"""Marketplace eligibility — the flagship generic-context example, as real code.
+"""Marketplace eligibility, implemented with `verdict`.
 
-See docs/samples/marketplace-eligibility/README.md for the full design
-and fixtures/marketplace_eligibility/README.md for the shared,
-cross-language data contract this module reproduces.
-
-Nothing here is illustrative pseudocode: every function is imported and
-exercised by test_marketplace_eligibility.py.
+See docs/samples/marketplace-eligibility/README.md for the design and
+fixtures/marketplace_eligibility/README.md for the fixture contract.
 """
 
 from __future__ import annotations
@@ -38,9 +34,7 @@ class IdentityFlag:
     """The narrow context `is_verified_identity` is written against.
 
     Shares no fields with either `SellerListingContext` or
-    `BuyerPurchaseContext` — the point being demonstrated is that a rule
-    written against this alone can be reused against both, via
-    `ProjectingRule`, without ever seeing either wider context directly.
+    `BuyerPurchaseContext`.
     """
 
     verified: bool
@@ -60,10 +54,7 @@ class SellerListingContext:
 class BuyerPurchaseContext:
     """What a purchase-eligibility check reads.
 
-    Shares no fields with `SellerListingContext` — this is deliberate;
-    the only thing the two sides have in common is that both need an
-    identity-verification check, which is exactly what `ProjectingRule`
-    exists to let them share without a common context.
+    Shares no fields with `SellerListingContext`.
     """
 
     buyer_id: str
@@ -75,11 +66,8 @@ class BuyerPurchaseContext:
 class ProjectingRule(Generic[TOuter, TInner]):
     """Adapts a ``Rule[TInner]`` to run inside a composite built on ``TOuter``.
 
-    Not part of verdict itself — a consumer-defined adapter, exactly as
-    free to exist as a new rule shape is, with no changes needed on
-    verdict's side to support it. See
-    docs/extending/reusing-a-rule-across-contexts/python.md for the
-    standalone version of this same pattern.
+    Not part of verdict itself. See
+    docs/extending/reusing-a-rule-across-contexts/python.md.
     """
 
     def __init__(self, inner: Rule[TInner], project: Callable[[TOuter], TInner]) -> None:
@@ -93,7 +81,7 @@ class ProjectingRule(Generic[TOuter, TInner]):
 
 
 async def _is_verified_identity(context: IdentityFlag) -> RuleResult:
-    """Written once, against `IdentityFlag` alone — reused on both sides via `ProjectingRule`."""
+    """Reused on both sides via `ProjectingRule`."""
     return RuleResult(rule_name="is_verified_identity", passed=context.verified)
 
 
@@ -144,9 +132,7 @@ def build_seller_check(seller_id: str) -> tuple[AndRule[SellerListingContext], R
 
     Returns:
         A `(listing_eligible, seller_verified)` pair — the full
-        composite, and the identity sub-rule alone, so a caller (and
-        the test suite) can distinguish "which check failed" without
-        re-running anything.
+        composite, and the identity sub-rule alone.
     """
     seller_verified = _seller_identity_rule()
     listing_eligible: AndRule[SellerListingContext] = AndRule(
@@ -194,11 +180,8 @@ async def _new_seller_flag(context: dict) -> RuleResult:
 def build_compliance_catalog() -> RulesEngine[dict]:
     """Build the dict-context compliance catalog.
 
-    Unlike the seller/buyer sides, this is deliberately untyped: a
-    compliance team adds a new flag by registering one more rule here,
-    never by agreeing on a shared typed context every existing flag
-    would otherwise need to accommodate too. See
-    docs/architecture/README.md#generic-context for the full reasoning.
+    Unlike the seller/buyer sides, this is deliberately untyped. See
+    docs/architecture/README.md#generic-context.
     """
     return RulesEngine(
         [

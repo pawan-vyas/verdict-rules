@@ -3,30 +3,15 @@ using Xunit;
 namespace GraduationVerdict.Tests;
 
 /// <summary>
-/// Chaos/differential testing: does the engine ever disagree with an independent oracle?
+/// Chaos/differential testing: compares
+/// <see cref="GraduationCheck.BuildGraduationCheck"/> against
+/// <see cref="Oracle.ExpectedGraduates"/> across a wide, randomly-generated
+/// space of curricula and students.
 /// </summary>
 /// <remarks>
-/// <see cref="SharedFixtureContractTests"/> proves 8 hand-picked,
-/// hand-verified scenarios come out right. That doesn't say anything about
-/// the enormous space of curricula and students nobody hand-picked. This
-/// class checks a much wider space by comparing two independent
-/// implementations against each other instead of against a fixed expected
-/// value:
-/// <list type="bullet">
-/// <item><see cref="GraduationCheck.BuildGraduationCheck"/> -- the real,
-/// verdict-rules-based implementation this whole project exists to
-/// demonstrate.</item>
-/// <item><see cref="Oracle.ExpectedGraduates"/> -- a plain,
-/// verdict-rules-free re-implementation, deliberately dumb so it's
-/// trustworthy by inspection.</item>
-/// </list>
-/// If they ever disagree, one of them is wrong -- and because every case
-/// is generated from a *seeded* <see cref="Random"/> (never a shared or
-/// ambient instance), that disagreement is exactly reproducible: the same
-/// seed always regenerates the exact same case. "The chaos suite didn't
-/// cause any breakdown" is therefore a real, re-checkable claim across
-/// runs, not a one-off observation about whatever numbers came up this
-/// time.
+/// Every case is generated from a seeded <see cref="Random"/>, never a
+/// shared or ambient instance, so a disagreement is exactly reproducible
+/// from its seed.
 /// </remarks>
 public class ChaosTests
 {
@@ -46,13 +31,10 @@ public class ChaosTests
     /// always match.
     /// </summary>
     /// <remarks>
-    /// Each case is seeded from <c>ChaosSeed + caseIndex</c> -- not from a
-    /// single shared generator advanced across all cases -- specifically
-    /// so any one failing case reproduces on its own: re-run
-    /// <c>new Random(ChaosSeed + caseIndex)</c> through
-    /// <see cref="ChaosData.GenerateCase"/> and you get the exact same
-    /// policies/context/electiveMinimum that failed, with no need to
-    /// replay every earlier case first.
+    /// Each case is seeded from <c>ChaosSeed + caseIndex</c>, not a single
+    /// shared generator advanced across all cases, so a failing case
+    /// reproduces on its own via <c>new Random(ChaosSeed + caseIndex)</c>
+    /// through <see cref="ChaosData.GenerateCase"/>.
     /// </remarks>
     [Theory]
     [MemberData(nameof(CaseIndexes))]

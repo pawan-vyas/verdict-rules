@@ -1,15 +1,9 @@
 /**
- * Graduation requirement verdict -- the flagship verdict example, as real code.
+ * Graduation requirement verdict, implemented with verdict-rules.
  *
- * See docs/samples/graduation-requirement-verdict/README.md for the full
- * design -- the naive-way contrast, both diagrams, and the reasoning
- * behind every choice below. See fixtures/graduation_verdict/README.md
- * for how to extend this project, and docs/testing/README.md for why its
- * own test suite doubles as a regression net for verdict-rules itself.
- *
- * Nothing here is illustrative pseudocode: every function is imported and
- * exercised by test/graduation-verdict.test.js, and the block at the
- * bottom is a real, runnable demo.
+ * See docs/samples/graduation-requirement-verdict/README.md for the
+ * design and fixtures/graduation_verdict/README.md for the fixture
+ * contract.
  */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -39,8 +33,7 @@ const FIXTURES = join(__dirname, "..", "..", "..", "fixtures", "graduation_verdi
  * @param {boolean} row.isElective - Whether this subject counts toward the
  *   elective requirement rather than the core requirement.
  * @returns {object} A frozen subject-policy record with every optional
- *   field defaulted, the same way a real database row's NULL columns
- *   would be handled.
+ *   field defaulted.
  */
 export function subjectPolicy({
   subjectId,
@@ -63,11 +56,8 @@ export function subjectPolicy({
 /**
  * Passes if at least `minimum` of the given sub-rules pass.
  *
- * Same shape as verdict-rules' docs/extending/new-rule-shape/
- * (`ThresholdRule`) -- not part of verdict-rules itself, a consumer-defined
- * combinator for a requirement AndRule/OrRule can't express directly.
- * Evaluates every sub-rule unconditionally (no short-circuit is possible
- * for a threshold count), unlike AndRule/OrRule.
+ * Not part of verdict-rules itself; see docs/extending/new-rule-shape/.
+ * Evaluates every sub-rule unconditionally.
  */
 export class AtLeastNRule {
   #rules;
@@ -167,9 +157,7 @@ const SUBJECT_RULE_BUILDERS = {
  *   practical) for a vocational subject, an OrRule (written OR exemption)
  *   for a language subject with an exemption path, or a plain FunctionRule
  *   otherwise.
- * @throws {Error} `policy.subjectType` isn't one of the known types --
- *   deliberately loud rather than silently building a vacuously-passing
- *   rule for an unrecognized policy.
+ * @throws {Error} `policy.subjectType` isn't one of the known types.
  */
 export function ruleForSubject(policy) {
   const group = policy.isElective ? "elective" : "core";
@@ -200,9 +188,8 @@ export async function attendanceMet(context) {
  * @param {string} path - Path to a JSON object with an `elective_minimum`
  *   integer and a `subjects` array of subject-policy objects.
  * @returns {{ policies: object[], electiveMinimum: number }} One
- *   subjectPolicy per entry (missing optional fields filled with their
- *   defaults) and the minimum number of electives required to graduate.
- *   Both come from data -- neither is a literal anywhere in this module.
+ *   subjectPolicy per entry, missing optional fields filled with their
+ *   defaults, and the minimum number of electives required to graduate.
  */
 export function loadCurriculum(path) {
   return curriculumFromObject(JSON.parse(readFileSync(path, "utf8")));
@@ -210,10 +197,7 @@ export function loadCurriculum(path) {
 
 /**
  * Convert an already-parsed curriculum object (the shared `{ elective_minimum,
- * subjects }` shape) into `{ policies, electiveMinimum }` -- the same
- * row-conversion `loadCurriculum` applies to a file, exposed separately so
- * the edge-case suite can apply it to `edge_cases.json`'s own inline
- * curricula without re-parsing anything from disk.
+ * subjects }` shape) into `{ policies, electiveMinimum }`.
  *
  * @param {{ elective_minimum: number, subjects: object[] }} curriculum
  * @returns {{ policies: object[], electiveMinimum: number }}
@@ -239,8 +223,7 @@ export function curriculumFromObject(curriculum) {
  *
  * @param {string} path - Path to a JSON object keyed by student id.
  * @returns {Record<string, object>} One context per student, plus the
- *   fixture's own `note` and `expected` fields the rules never read,
- *   used only by the demo and the test suite.
+ *   fixture's own `note` and `expected` fields.
  */
 export function loadStudents(path) {
   const raw = JSON.parse(readFileSync(path, "utf8"));
@@ -252,10 +235,7 @@ export function loadStudents(path) {
 /**
  * Convert a bare, shared-fixture-shaped context object (the `scores`/`cgpa`/
  * `attendance_*` fields the rules actually read, with no `note`/`expected`
- * wrapper) into this module's camelCase context shape. Exported separately
- * from `studentContext` so the edge-case suite can apply it directly to
- * `edge_cases.json`'s own inline `student` objects, which never carry a
- * `note`/`expected` wrapper of their own.
+ * wrapper) into this module's camelCase context shape.
  *
  * @param {object} row
  * @returns {object}
@@ -288,15 +268,11 @@ function studentContext(row) {
  * Build both structures from one policy list: a diagnostic engine and a fast verdict.
  *
  * @param {object[]} policies - Every subject's own policy.
- * @param {number} electiveMinimum - How many electives must pass -- read
- *   from policies.json's own `elective_minimum` field, never hardcoded
- *   here, so a curriculum change to this number is a data edit like every
- *   other threshold in this project.
+ * @param {number} electiveMinimum - How many electives must pass.
  * @returns {{ engine: RulesEngine, graduates: AndRule }} A pair built from
- *   the *same* underlying Rule objects -- `engine` serves
- *   runNamed/runGroup/runAll lookups, `graduates` is the fast,
- *   short-circuiting pass/fail composite. See
- *   docs/samples/graduation-requirement-verdict/README.md's second diagram.
+ *   the same underlying Rule objects -- `engine` serves
+ *   runNamed/runGroup/runAll lookups, `graduates` is the
+ *   short-circuiting pass/fail composite.
  */
 export function buildGraduationCheck(policies, electiveMinimum) {
   const subjectRules = policies.map((p) => ruleForSubject(p));
@@ -346,9 +322,7 @@ async function demo() {
   }
 }
 
-// The ESM equivalent of Python's `if __name__ == "__main__":` -- only runs
-// the demo when this file is executed directly, not when imported by the
-// test suite.
+// Runs the demo only when this file is executed directly.
 if (import.meta.url === `file://${process.argv[1]}`) {
   await demo();
 }

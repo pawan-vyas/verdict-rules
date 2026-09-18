@@ -8,15 +8,20 @@
 ```csharp
 using VerdictRules;
 
-static Task<RuleResult> IsBetaTester(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("is_beta_tester", context.TryGetValue("beta_tester", out var v) && v is true));
+record UserContext(bool BetaTester = false);
 
-var engine = new RulesEngine([new FunctionRule("is_beta_tester", IsBetaTester, "beta_checks")]);
+static Task<RuleResult> IsBetaTester(UserContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new RuleResult("is_beta_tester", context.BetaTester));
 
-var result = await engine.TryRunGroupAsync("beta_checks", new Dictionary<string, object?> { ["beta_tester"] = true });
+var engine = new RulesEngine<UserContext>(new IRule<UserContext>[]
+{
+    new FunctionRule<UserContext>("is_beta_tester", IsBetaTester, "beta_checks"),
+});
+
+var result = await engine.TryRunGroupAsync("beta_checks", new UserContext(true));
 // RunResult(Passed: true, Results: [RuleResult(RuleName: "is_beta_tester", Passed: true, ...)])
 
-await engine.TryRunGroupAsync("no_such_group", new Dictionary<string, object?>());
+await engine.TryRunGroupAsync("no_such_group", new UserContext());
 // null -- the group was never registered
 ```
 

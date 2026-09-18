@@ -6,13 +6,17 @@
 > JS/TS code.
 
 ```ts
-import { FunctionRule, RulesEngine, type Context, type RuleResult } from "verdict-rules";
+import { FunctionRule, RulesEngine, type RuleResult } from "verdict-rules";
 
-async function isBetaTester(context: Context): Promise<RuleResult> {
-  return { ruleName: "is_beta_tester", passed: (context.betaTester as boolean) ?? false };
+interface UserContext {
+  betaTester?: boolean;
 }
 
-const engine = new RulesEngine([new FunctionRule("is_beta_tester", isBetaTester, "beta_checks")]);
+async function isBetaTester(context: UserContext): Promise<RuleResult> {
+  return { ruleName: "is_beta_tester", passed: context.betaTester ?? false };
+}
+
+const engine = new RulesEngine<UserContext>([new FunctionRule("is_beta_tester", isBetaTester, "beta_checks")]);
 
 const result = await engine.tryRunGroup("beta_checks", { betaTester: true });
 // { passed: true, results: [ { ruleName: 'is_beta_tester', passed: true } ] }

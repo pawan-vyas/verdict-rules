@@ -131,8 +131,7 @@ describe("compliance catalog is dict-context and heterogeneous", () => {
 
   it("a new flag is additive, not a shared-context change", async () => {
     // Registering a fourth check needs no change to SellerListingContext,
-    // BuyerPurchaseContext, or any existing flag -- the whole point of
-    // keeping this side dict-context. Proven by constructing one directly
+    // BuyerPurchaseContext, or any existing flag. Constructed directly
     // alongside the existing three, reading the same event shape with no
     // adapter needed.
     const weekendFlag = new FunctionRule("weekend_flag", async (ctx) => ({

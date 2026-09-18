@@ -124,8 +124,7 @@ class TestComplianceCatalogIsDictContextAndHeterogeneous:
 
     async def test_a_new_flag_is_additive_not_a_shared_context_change(self) -> None:
         # Registering a fourth check needs no change to SellerListingContext,
-        # BuyerPurchaseContext, or any existing flag -- the whole point of
-        # keeping this side dict-context.
+        # BuyerPurchaseContext, or any existing flag.
         from verdict import FunctionRule, RuleResult, RulesEngine
 
         async def _weekend_flag(context: dict) -> RuleResult:

@@ -1,31 +1,21 @@
 /// Result types returned by rule evaluation.
-///
-/// Deliberately plain, immutable data — a [Rule] reports what happened and
-/// nothing more. Any domain-specific payload a caller wants to carry alongside
-/// the pass/fail outcome rides in [RuleResult.data], which this package treats
-/// as fully opaque: verdict never inspects or depends on its shape, and that is
-/// what keeps the engine reusable across unrelated domains.
 library;
 
 /// Outcome of evaluating a single rule.
 class RuleResult {
-  /// Name of the rule this result came from, matching that rule's own `name`,
-  /// so a caller walking a [RunResult] can attribute each outcome back to the
-  /// rule that produced it.
+  /// Name of the rule this result came from, matching that rule's own `name`.
   final String ruleName;
 
   /// Whether the rule's condition was satisfied.
   final bool passed;
 
-  /// Optional human-readable explanation — usually why a rule failed. Empty
-  /// when there is nothing worth saying beyond the boolean.
+  /// Optional human-readable explanation. Empty when there is nothing
+  /// beyond the boolean.
   final String detail;
 
-  /// Optional, fully opaque payload. Verdict never reads it.
+  /// Optional payload; opaque to this package.
   ///
-  /// For composites this holds the sub-results gathered so far — only the ones
-  /// that actually ran, never padded out to the full list, and never flattened
-  /// into the parent's own level.
+  /// For composites this holds the sub-results gathered so far.
   final Object? data;
 
   const RuleResult({
@@ -47,9 +37,8 @@ class RunResult {
 
   /// One [RuleResult] per rule evaluated, in evaluation order.
   ///
-  /// A short-circuited composite still contributes exactly one entry here for
-  /// itself; its own sub-results are nested inside its [RuleResult.data]
-  /// rather than flattened into this list.
+  /// A composite's own sub-results are nested inside its
+  /// [RuleResult.data] rather than flattened into this list.
   final List<RuleResult> results;
 
   const RunResult({required this.passed, this.results = const []});

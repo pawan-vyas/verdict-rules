@@ -50,6 +50,12 @@ rest of what this shape gets wrong.
 
 ## The `verdict` way
 
+A typed context, not a `Map` — and unlike the other typed samples, one
+of its fields isn't order data at all: `promoCodeService` is an
+injected dependency, typed as an interface rather than `Object?`, so
+every rule reading it gets the same compile-time checking as the plain
+fields:
+
 ```dart
 import 'package:verdict_rules/verdict_rules.dart';
 
@@ -57,26 +63,40 @@ abstract interface class PromoCodeService {
   Future<bool> validate(String? code);
 }
 
-Future<RuleResult> orderTotalOverThreshold(Map<String, Object?> context) async {
-  final passed = (context['orderTotal']! as num) >=
-      (context['freeShippingThreshold']! as num);
+class ShippingContext {
+  final num orderTotal;
+  final num freeShippingThreshold;
+  final bool isPremiumMember;
+  final String? promoCode;
+  final PromoCodeService promoCodeService;
+
+  ShippingContext({
+    required this.orderTotal,
+    required this.freeShippingThreshold,
+    required this.isPremiumMember,
+    this.promoCode,
+    required this.promoCodeService,
+  });
+}
+
+Future<RuleResult> orderTotalOverThreshold(ShippingContext context) async {
+  final passed = context.orderTotal >= context.freeShippingThreshold;
   return RuleResult(ruleName: 'order_total_over_threshold', passed: passed);
 }
 
-Future<RuleResult> hasPremiumMembership(Map<String, Object?> context) async =>
+Future<RuleResult> hasPremiumMembership(ShippingContext context) async =>
     RuleResult(
       ruleName: 'has_premium_membership',
-      passed: context['isPremiumMember']! as bool,
+      passed: context.isPremiumMember,
     );
 
-Future<RuleResult> hasValidPromoCode(Map<String, Object?> context) async {
+Future<RuleResult> hasValidPromoCode(ShippingContext context) async {
   // The expensive path: only reached if both cheaper checks above failed.
-  final service = context['promoCodeService']! as PromoCodeService;
-  final isValid = await service.validate(context['promoCode'] as String?);
+  final isValid = await context.promoCodeService.validate(context.promoCode);
   return RuleResult(ruleName: 'has_valid_promo_code', passed: isValid);
 }
 
-final shipsFree = OrRule('ships_free', [
+final shipsFree = OrRule<ShippingContext>('ships_free', [
   FunctionRule('order_total_over_threshold', orderTotalOverThreshold),
   FunctionRule('has_premium_membership', hasPremiumMembership),
   FunctionRule('has_valid_promo_code', hasValidPromoCode), // cheapest-last, on purpose
@@ -88,7 +108,8 @@ is now a stated decision at the point it matters, not something the
 next person to edit this file has to reconstruct from scratch.
 
 Proving the skip, not just asserting it — a call-counting fake stands
-in for the real service:
+in for the real service, and satisfies `PromoCodeService` the same way
+the real implementation would:
 
 ```dart
 class FakePromoService implements PromoCodeService {
@@ -103,13 +124,13 @@ class FakePromoService implements PromoCodeService {
 
 Future<void> main() async {
   final promoService = FakePromoService();
-  final order = {
-    'orderTotal': 120,
-    'freeShippingThreshold': 50,
-    'isPremiumMember': false,
-    'promoCode': null,
-    'promoCodeService': promoService,
-  };
+  final order = ShippingContext(
+    orderTotal: 120,
+    freeShippingThreshold: 50,
+    isPremiumMember: false,
+    promoCode: null,
+    promoCodeService: promoService,
+  );
 
   final result = await shipsFree.evaluate(order);
   print('${result.passed}, ${promoService.calls}');

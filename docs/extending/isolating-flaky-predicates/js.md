@@ -5,12 +5,17 @@
 > that first. This page is the concrete JS/TS code.
 
 ```ts
-import { FunctionRule, type Context, type RuleResult, type RulePredicate } from "verdict-rules";
+import { FunctionRule, type RulePredicate, type RuleResult } from "verdict-rules";
+
+interface PromoContext {
+  promoCode: string;
+  simulateTimeout?: boolean;
+}
 
 /** Turn a predicate's own exception into a failing RuleResult,
  * instead of letting it propagate out of the run that contains it. */
-function defensive(name: string, predicate: RulePredicate): FunctionRule {
-  const wrapped = async (context: Context): Promise<RuleResult> => {
+function defensive<TContext>(name: string, predicate: RulePredicate<TContext>): FunctionRule<TContext> {
+  const wrapped = async (context: TContext): Promise<RuleResult> => {
     try {
       return await predicate(context);
     } catch (exc) {
@@ -21,7 +26,7 @@ function defensive(name: string, predicate: RulePredicate): FunctionRule {
 }
 
 /** Stands in for a real network call that can time out. */
-async function checkPromoCodeAgainstExternalService(context: Context): Promise<RuleResult> {
+async function checkPromoCodeAgainstExternalService(context: PromoContext): Promise<RuleResult> {
   if (context.simulateTimeout) {
     throw new Error("promo-validation service did not respond");
   }

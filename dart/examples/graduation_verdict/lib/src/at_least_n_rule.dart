@@ -2,12 +2,9 @@ import 'package:verdict_rules/verdict_rules.dart';
 
 /// Passes if at least [minimum] of the given sub-rules pass.
 ///
-/// Same shape as verdict_rules' docs/extending/new-rule-shape/
-/// (`ThresholdRule`) -- not part of verdict_rules itself, a
-/// consumer-defined combinator for a requirement [AndRule]/[OrRule] can't
-/// express directly. Evaluates every sub-rule unconditionally (no
-/// short-circuit is possible for a threshold count), unlike
-/// [AndRule]/[OrRule].
+/// Not part of verdict_rules itself; see
+/// docs/extending/new-rule-shape/. Evaluates every sub-rule
+/// unconditionally, unlike [AndRule]/[OrRule].
 class AtLeastNRule implements Rule<Context> {
   @override
   final String name;

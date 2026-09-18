@@ -7,42 +7,42 @@
 ```csharp
 using VerdictRules;
 
-static Task<RuleResult> IsActiveAccount(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("is_active_account", (string)context["account_status"]! == "active"));
+record AccountContext(
+    string AccountStatus,
+    bool IsPremiumMember,
+    string? PromoCode,
+    double Spend,
+    double SpendThreshold);
 
-static Task<RuleResult> IsPremiumMember(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("is_premium_member", (bool)context["is_premium_member"]!));
+static Task<RuleResult> IsActiveAccount(AccountContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new RuleResult("is_active_account", context.AccountStatus == "active"));
 
-static Task<RuleResult> HasPromoCode(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("has_promo_code", context.TryGetValue("promo_code", out var v) && v is string { Length: > 0 }));
+static Task<RuleResult> IsPremiumMember(AccountContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new RuleResult("is_premium_member", context.IsPremiumMember));
 
-static Task<RuleResult> MeetsSpendThreshold(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("meets_spend_threshold", (double)context["spend"]! >= (double)context["spend_threshold"]!));
+static Task<RuleResult> HasPromoCode(AccountContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new RuleResult("has_promo_code", !string.IsNullOrEmpty(context.PromoCode)));
+
+static Task<RuleResult> MeetsSpendThreshold(AccountContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new RuleResult("meets_spend_threshold", context.Spend >= context.SpendThreshold));
 
 // Nesting doesn't care what built its sub-rules -- each of the four leaves
 // here is a plain FunctionRule, but any IRule (a custom shape, another
 // composite) would compose exactly the same way.
-var qualifies = new AndRule("qualifies", new IRule[]
+var qualifies = new AndRule<AccountContext>("qualifies", new IRule<AccountContext>[]
 {
-    new FunctionRule("is_active_account", IsActiveAccount),
-    new OrRule("has_a_valid_reason", new IRule[]
+    new FunctionRule<AccountContext>("is_active_account", IsActiveAccount),
+    new OrRule<AccountContext>("has_a_valid_reason", new IRule<AccountContext>[]
     {
-        new FunctionRule("is_premium_member", IsPremiumMember),
-        new FunctionRule("has_promo_code", HasPromoCode),
-        new FunctionRule("meets_spend_threshold", MeetsSpendThreshold),
+        new FunctionRule<AccountContext>("is_premium_member", IsPremiumMember),
+        new FunctionRule<AccountContext>("has_promo_code", HasPromoCode),
+        new FunctionRule<AccountContext>("meets_spend_threshold", MeetsSpendThreshold),
     }),
 });
 ```
 
 ```csharp
-var context = new Dictionary<string, object?>
-{
-    ["account_status"] = "active",
-    ["is_premium_member"] = false,
-    ["promo_code"] = "SAVE10",
-    ["spend"] = 20.0,
-    ["spend_threshold"] = 100.0,
-};
+var context = new AccountContext("active", false, "SAVE10", 20, 100);
 var result = await qualifies.EvaluateAsync(context);
 result.Passed;
 // true

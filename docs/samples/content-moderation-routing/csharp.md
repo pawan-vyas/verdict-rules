@@ -35,32 +35,39 @@ for the rest of what this shape gets wrong.
 ```csharp
 using VerdictRules;
 
-static Task<RuleResult> ContainsBannedTerms(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
+record SubmissionContext(
+    string Text,
+    IReadOnlyList<string> BannedTerms,
+    double SpamScore,
+    double SpamThreshold,
+    int MinLength,
+    int AuthorPostCount);
+
+static Task<RuleResult> ContainsBannedTerms(SubmissionContext context, CancellationToken cancellationToken = default)
 {
-    var text = ((string)context["text"]!).ToLowerInvariant();
-    var bannedTerms = (IReadOnlyList<string>)context["banned_terms"]!;
-    var hit = bannedTerms.Any(text.Contains);
+    var text = context.Text.ToLowerInvariant();
+    var hit = context.BannedTerms.Any(text.Contains);
     return Task.FromResult(new RuleResult("contains_banned_terms", !hit));
 }
 
-static Task<RuleResult> FlaggedBySpamScore(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("flagged_by_spam_score", (double)context["spam_score"]! < (double)context["spam_threshold"]!));
+static Task<RuleResult> FlaggedBySpamScore(SubmissionContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new RuleResult("flagged_by_spam_score", context.SpamScore < context.SpamThreshold));
 
-static Task<RuleResult> MeetsLengthMinimum(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("meets_length_minimum", ((string)context["text"]!).Length >= (double)context["min_length"]!));
+static Task<RuleResult> MeetsLengthMinimum(SubmissionContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new RuleResult("meets_length_minimum", context.Text.Length >= context.MinLength));
 
-static Task<RuleResult> AuthorIsEstablished(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("author_is_established", (double)context["author_post_count"]! >= 10));
+static Task<RuleResult> AuthorIsEstablished(SubmissionContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new RuleResult("author_is_established", context.AuthorPostCount >= 10));
 
-var engine = new RulesEngine(new IRule[]
+var engine = new RulesEngine<SubmissionContext>(new IRule<SubmissionContext>[]
 {
-    new FunctionRule("contains_banned_terms", ContainsBannedTerms, "auto_reject"),
-    new FunctionRule("flagged_by_spam_score", FlaggedBySpamScore, "auto_reject"),
-    new FunctionRule("meets_length_minimum", MeetsLengthMinimum, "auto_publish"),
-    new FunctionRule("author_is_established", AuthorIsEstablished, "auto_publish"),
+    new FunctionRule<SubmissionContext>("contains_banned_terms", ContainsBannedTerms, "auto_reject"),
+    new FunctionRule<SubmissionContext>("flagged_by_spam_score", FlaggedBySpamScore, "auto_reject"),
+    new FunctionRule<SubmissionContext>("meets_length_minimum", MeetsLengthMinimum, "auto_publish"),
+    new FunctionRule<SubmissionContext>("author_is_established", AuthorIsEstablished, "auto_publish"),
 });
 
-async Task<string> RouteSubmission(IReadOnlyDictionary<string, object?> context)
+async Task<string> RouteSubmission(SubmissionContext context)
 {
     var rejectCheck = await engine.RunGroupAsync("auto_reject", context);
     if (!rejectCheck.Passed)
@@ -76,22 +83,18 @@ async Task<string> RouteSubmission(IReadOnlyDictionary<string, object?> context)
 All three routing outcomes, from the same engine:
 
 ```csharp
-var trustedPost = new Dictionary<string, object?>
-{
-    ["text"] = "a perfectly reasonable long post about gardening",
-    ["banned_terms"] = new List<string> { "spam", "scam" },
-    ["spam_score"] = 2.0,
-    ["spam_threshold"] = 10.0,
-    ["min_length"] = 20.0,
-    ["author_post_count"] = 50.0,
-};
+var trustedPost = new SubmissionContext(
+    "a perfectly reasonable long post about gardening",
+    new List<string> { "spam", "scam" },
+    SpamScore: 2, SpamThreshold: 10, MinLength: 20, AuthorPostCount: 50);
+
 await RouteSubmission(trustedPost);
 // "auto_published" -- clears the auto_reject group, then the auto_publish group
 
-await RouteSubmission(new Dictionary<string, object?>(trustedPost) { ["author_post_count"] = 1.0 });
+await RouteSubmission(trustedPost with { AuthorPostCount = 1 });
 // "sent_to_review" -- clears auto_reject, but the new-author signal fails auto_publish
 
-await RouteSubmission(new Dictionary<string, object?>(trustedPost) { ["spam_score"] = 15.0 });
+await RouteSubmission(trustedPost with { SpamScore = 15 });
 // "auto_rejected" -- trips the auto_reject group; auto_publish is never even checked
 ```
 

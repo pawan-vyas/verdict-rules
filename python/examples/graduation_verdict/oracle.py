@@ -1,16 +1,7 @@
 """A second, independent, verdict-free implementation of the graduation decision.
 
-This is deliberately the "naive way" from
-docs/samples/graduation-requirement-verdict/README.md, generalized
-to score *any* policy list rather than the fixed 7-subject curriculum — its
-entire job is to be obviously correct by inspection, so it can serve as
-ground truth for test_chaos.py's differential testing. See that file's own
-docstring and docs/testing/README.md for the full reasoning: two independently
-written implementations (this plain loop, and the verdict-based engine in
-graduation_verdict.py) must agree on every input, or one of them is wrong.
-
-Never import from `verdict` here — an oracle that shares a bug with the
-system it's checking proves nothing.
+Used as ground truth by test_chaos.py's differential testing. Never
+import from `verdict` here.
 """
 
 from __future__ import annotations
@@ -40,15 +31,11 @@ def expected_graduates(policies: list[SubjectPolicy], context: dict, elective_mi
 
     Args:
         policies: Every subject's own policy (core and elective alike).
-        context: One student's scores, cgpa, and attendance — the same
-            shape `graduation_verdict.build_graduation_check`'s composite
-            expects.
+        context: One student's scores, cgpa, and attendance.
         elective_minimum: How many electives must pass.
 
     Returns:
-        Whether this student graduates, computed independently of
-        `rule_for_subject`/`build_graduation_check` — the two must always
-        agree.
+        Whether this student graduates.
     """
     core_policies = [p for p in policies if not p.is_elective]
     elective_policies = [p for p in policies if p.is_elective]

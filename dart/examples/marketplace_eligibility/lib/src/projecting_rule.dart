@@ -2,11 +2,8 @@ import 'package:verdict_rules/verdict_rules.dart';
 
 /// Adapts a `Rule<TInner>` to run inside a composite built on `TOuter`.
 ///
-/// Not part of verdict_rules itself -- a consumer-defined adapter, exactly
-/// as free to exist as a new rule shape is, with no changes needed on
-/// verdict_rules' side to support it. See
-/// docs/extending/reusing-a-rule-across-contexts/dart.md for the standalone
-/// version of this same pattern.
+/// Not part of verdict_rules itself. See
+/// docs/extending/reusing-a-rule-across-contexts/dart.md.
 class ProjectingRule<TOuter, TInner> implements Rule<TOuter> {
   @override
   final String name;

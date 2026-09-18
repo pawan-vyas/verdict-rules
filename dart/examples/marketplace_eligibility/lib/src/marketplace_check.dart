@@ -1,8 +1,7 @@
-/// Marketplace eligibility -- the flagship generic-context example, as real code.
+/// Marketplace eligibility, implemented with verdict_rules.
 ///
-/// See docs/samples/marketplace-eligibility/README.md for the full design
-/// and fixtures/marketplace_eligibility/README.md for the shared,
-/// cross-language data contract this module reproduces.
+/// See docs/samples/marketplace-eligibility/README.md for the design and
+/// fixtures/marketplace_eligibility/README.md for the fixture contract.
 library;
 
 import 'dart:convert';
@@ -63,9 +62,7 @@ Future<RuleResult> _purchaseLimitNotExceeded(
 /// Build the typed listing-eligibility composite for one seller.
 ///
 /// Returns a `(listingEligible, sellerVerified)` pair -- the full
-/// composite, and the identity sub-rule alone, so a caller (and the test
-/// suite) can distinguish "which check failed" without re-running
-/// anything.
+/// composite, and the identity sub-rule alone.
 (AndRule<SellerListingContext>, Rule<SellerListingContext>) buildSellerCheck() {
   final sellerVerified = _sellerIdentityRule();
   final listingEligible = AndRule<SellerListingContext>('listing_eligible', [
@@ -106,11 +103,8 @@ Future<RuleResult> _newSellerFlag(Context context) async => RuleResult(
 
 /// Build the dict-context compliance catalog.
 ///
-/// Unlike the seller/buyer sides, this is deliberately untyped: a
-/// compliance team adds a new flag by registering one more rule here,
-/// never by agreeing on a shared typed context every existing flag would
-/// otherwise need to accommodate too. See
-/// docs/architecture/README.md#generic-context for the full reasoning.
+/// Unlike the seller/buyer sides, this is deliberately untyped. See
+/// docs/architecture/README.md#generic-context.
 RulesEngine<Context> buildComplianceCatalog() => RulesEngine<Context>([
       FunctionRule('high_value_flag', _highValueFlag),
       FunctionRule('blocked_country_flag', _blockedCountryFlag),

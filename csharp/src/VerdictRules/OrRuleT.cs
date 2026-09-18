@@ -5,11 +5,9 @@ namespace VerdictRules;
 /// context every sub-rule shares.
 /// </summary>
 /// <remarks>
-/// The generic sibling of <see cref="OrRule"/> — an independent, fresh
-/// implementation at a different generic arity. Short-circuits on the first
-/// passing sub-rule. The same same-<typeparamref name="TContext"/>
-/// requirement across sub-rules applies here too; see
-/// <see cref="AndRule{TContext}"/>'s own remarks.
+/// Short-circuits on the first passing sub-rule. Every sub-rule must be
+/// <see cref="IRule{TContext}"/> for the exact same
+/// <typeparamref name="TContext"/>.
 /// </remarks>
 /// <typeparam name="TContext">The context type every sub-rule shares.</typeparam>
 /// <param name="name">See <see cref="Name"/>.</param>

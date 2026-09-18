@@ -4,17 +4,23 @@ using VerdictRules;
 namespace GraduationVerdict;
 
 /// <summary>
-/// Graduation requirement verdict -- the flagship verdict-rules example, as real code.
+/// Graduation requirement verdict, implemented with verdict-rules.
 /// </summary>
 /// <remarks>
-/// See docs/samples/graduation-requirement-verdict/README.md for the full
-/// design -- the naive-way contrast, both diagrams, and the reasoning
-/// behind every choice below. See fixtures/graduation_verdict/README.md
-/// for how to extend this project, and docs/testing/README.md for why its
-/// own test suite doubles as a regression net for verdict-rules itself.
+/// See docs/samples/graduation-requirement-verdict/README.md for the
+/// design and fixtures/graduation_verdict/README.md for the fixture
+/// contract.
 /// </remarks>
 public static class GraduationCheck
 {
+    // One builder per SubjectType, keyed by the value itself.
+    private static readonly Dictionary<string, Func<SubjectPolicy, string, string, IRule>> SubjectRuleBuilders = new()
+    {
+        ["vocational"] = VocationalSubjectRule,
+        ["language"] = LanguageSubjectRule,
+        ["academic"] = AcademicSubjectRule,
+    };
+
     /// <summary>
     /// Turn one subject's policy into a rule -- the shape depends on its type.
     /// </summary>
@@ -27,20 +33,8 @@ public static class GraduationCheck
     /// </returns>
     /// <exception cref="ArgumentException">
     /// <paramref name="policy"/>'s <see cref="SubjectPolicy.SubjectType"/>
-    /// isn't one of the known types -- deliberately loud rather than
-    /// silently building a vacuously-passing rule for an unrecognized
-    /// policy.
+    /// isn't one of the known types.
     /// </exception>
-    // One builder per SubjectType, keyed by the value itself -- adding a
-    // fifth subject type is a new method plus a new entry here, never a new
-    // branch in RuleForSubject.
-    private static readonly Dictionary<string, Func<SubjectPolicy, string, string, IRule>> SubjectRuleBuilders = new()
-    {
-        ["vocational"] = VocationalSubjectRule,
-        ["language"] = LanguageSubjectRule,
-        ["academic"] = AcademicSubjectRule,
-    };
-
     public static IRule RuleForSubject(SubjectPolicy policy)
     {
         var group = policy.IsElective ? "elective" : "core";
@@ -121,11 +115,9 @@ public static class GraduationCheck
     /// <c>subjects</c> array of subject-policy objects.
     /// </param>
     /// <returns>
-    /// One <see cref="SubjectPolicy"/> per entry (missing optional fields
-    /// filled with their record defaults, the same way a real database
-    /// row's NULL columns would be handled), and the minimum number of
-    /// electives required to graduate. Both come from data -- neither is a
-    /// C# literal anywhere in this project.
+    /// One <see cref="SubjectPolicy"/> per entry, missing optional fields
+    /// filled with their record defaults, and the minimum number of
+    /// electives required to graduate.
     /// </returns>
     public static (IReadOnlyList<SubjectPolicy> Policies, int ElectiveMinimum) LoadCurriculum(string path) =>
         CurriculumFromJson(JsonDocument.Parse(File.ReadAllText(path)).RootElement);
@@ -133,10 +125,7 @@ public static class GraduationCheck
     /// <summary>
     /// Convert an already-parsed curriculum element (the shared
     /// <c>{ elective_minimum, subjects }</c> shape) into policies plus a
-    /// threshold -- the same row-conversion <see cref="LoadCurriculum"/>
-    /// applies to a file, exposed separately so the edge-case suite can
-    /// apply it to edge_cases.json's own inline curricula without
-    /// re-parsing anything from disk.
+    /// threshold.
     /// </summary>
     public static (IReadOnlyList<SubjectPolicy> Policies, int ElectiveMinimum) CurriculumFromJson(JsonElement curriculum)
     {
@@ -156,11 +145,9 @@ public static class GraduationCheck
     /// </summary>
     /// <param name="path">Path to a JSON object keyed by student id.</param>
     /// <returns>
-    /// One context per student -- each value's own shape already *is* the
-    /// context dict verdict-rules expects (plus a <c>note</c> and
-    /// <c>expected</c> field the rules themselves never read, used only by
-    /// the demo and the test suite, carried alongside as raw
-    /// <see cref="JsonElement"/>s for the test suite's own use).
+    /// One context per student -- each value's own shape is the context
+    /// dict verdict-rules expects, plus a <c>note</c> and <c>expected</c>
+    /// field the rules themselves don't read.
     /// </returns>
     public static Dictionary<string, StudentRecord> LoadStudents(string path)
     {
@@ -177,9 +164,7 @@ public static class GraduationCheck
     /// Convert a bare, shared-fixture-shaped context element (the
     /// <c>scores</c>/<c>cgpa</c>/<c>attendance_*</c> fields the rules
     /// actually read, with no <c>note</c>/<c>expected</c> wrapper) into
-    /// this project's context dictionary shape. Exposed separately from
-    /// <see cref="LoadStudents"/> so the edge-case suite can apply it
-    /// directly to edge_cases.json's own inline <c>student</c> objects.
+    /// this project's context dictionary shape.
     /// </summary>
     public static Dictionary<string, object?> ContextFromJson(JsonElement row)
     {
@@ -212,18 +197,11 @@ public static class GraduationCheck
     /// Build both structures from one policy list: a diagnostic engine and a fast verdict.
     /// </summary>
     /// <param name="policies">Every subject's own policy.</param>
-    /// <param name="electiveMinimum">
-    /// How many electives must pass -- read from policies.json's own
-    /// <c>elective_minimum</c> field, never hardcoded here, so a
-    /// curriculum change to this number is a data edit like every other
-    /// threshold in this project.
-    /// </param>
+    /// <param name="electiveMinimum">How many electives must pass.</param>
     /// <returns>
-    /// A pair built from the *same* underlying rule objects -- the engine
+    /// A pair built from the same underlying rule objects -- the engine
     /// serves RunNamedAsync/RunGroupAsync/RunAllAsync lookups, the
-    /// composite is the fast, short-circuiting pass/fail verdict. See
-    /// docs/samples/graduation-requirement-verdict/README.md's second
-    /// diagram.
+    /// composite is the short-circuiting pass/fail verdict.
     /// </returns>
     public static (RulesEngine Engine, AndRule Graduates) BuildGraduationCheck(
         IReadOnlyList<SubjectPolicy> policies, int electiveMinimum)
@@ -247,9 +225,7 @@ public static class GraduationCheck
 
 /// <summary>
 /// One student's context plus the shared fixture's own <c>expected</c>
-/// block, carried alongside as a raw <see cref="JsonElement"/> so the test
-/// suite can read whichever field it needs without a matching C# type for
-/// every fixture shape.
+/// block, carried alongside as a raw <see cref="JsonElement"/>.
 /// </summary>
 /// <param name="Context">The context dictionary verdict-rules' rules read.</param>
 /// <param name="Expected">The fixture's own expected-outcome block.</param>

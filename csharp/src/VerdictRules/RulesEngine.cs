@@ -4,9 +4,7 @@ namespace VerdictRules;
 /// Holds a set of rules and answers questions about them.
 /// </summary>
 /// <remarks>
-/// Distinct from a composite: a composite returns one verdict and stops early,
-/// whereas the engine's run modes are diagnostic and never short-circuit. They
-/// exist to produce a full picture, not the fastest path to one boolean.
+/// The engine's run modes never short-circuit.
 /// </remarks>
 public sealed class RulesEngine
 {
@@ -24,10 +22,6 @@ public sealed class RulesEngine
     public RulesEngine(IReadOnlyList<IRule> rules)
     {
         _rules = rules;
-        // rules.Count is an exact upper bound for _byName (one entry per rule,
-        // fewer only if names collide) but not for _byGroup -- the distinct
-        // group count is data-dependent and unknowable without a first pass,
-        // so only _byName gets a capacity hint.
         _byName = new Dictionary<string, IRule>(rules.Count, StringComparer.Ordinal);
         _byGroup = new Dictionary<string, List<IRule>>(StringComparer.Ordinal);
 
@@ -49,23 +43,15 @@ public sealed class RulesEngine
         }
     }
 
-    /// <summary>
-    /// Every rule name registered here, in registration order. Exactly the
-    /// names <see cref="RunNamedAsync"/> accepts, so a caller who cannot know
-    /// in advance whether a rule exists can check rather than catch.
-    /// </summary>
+    /// <summary>Every rule name registered here, in registration order.</summary>
     public IReadOnlyCollection<string> RuleNames => _byName.Keys;
 
-    /// <summary>
-    /// Every group label carried by at least one rule. Exactly the labels
-    /// <see cref="RunGroupAsync"/> accepts — a group is present only because
-    /// some rule declared it.
-    /// </summary>
+    /// <summary>Every group label carried by at least one rule.</summary>
     public IReadOnlyCollection<string> GroupNames => _byGroup.Keys;
 
     /// <summary>Evaluates every registered rule. Never short-circuits.</summary>
     /// <param name="context">The facts every registered rule's predicate reads from.</param>
-    /// <param name="cancellationToken">Checked between rules, so a cancellation raised mid-run stops before the next rule starts.</param>
+    /// <param name="cancellationToken">Checked between rules.</param>
     /// <returns>One aggregate result carrying every rule's own outcome, in registration order.</returns>
     public async Task<RunResult> RunAllAsync(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
     {
@@ -83,25 +69,7 @@ public sealed class RulesEngine
     /// Evaluates one rule by name, or returns <c>null</c> if no such rule exists.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// This is the primitive; <see cref="RunNamedAsync"/> is a two-line
-    /// assertion on top of it. The distinction matters when absence is an
-    /// expected, legitimate state rather than a mistake — a rule set that
-    /// varies per tenant, an optional group behind a feature flag, a name
-    /// carried in configuration a given deployment has not adopted yet.
-    /// </para>
-    /// <para>
-    /// In those cases the caller decides what absence means, because the
-    /// engine cannot: for one consumer a missing rule means "nothing to
-    /// enforce, pass", for another "skip this and do not count it", for a
-    /// third "the configuration is wrong, fail loudly". A single library
-    /// default would be right for one of them and wrong for the rest.
-    /// </para>
-    /// <para>
-    /// <c>null</c> means <i>absent</i>, never <i>failed</i> — a rule that
-    /// exists and fails still returns a <see cref="RuleResult"/> with
-    /// <see cref="RuleResult.Passed"/> false.
-    /// </para>
+    /// <c>null</c> means absent, never failed.
     /// </remarks>
     /// <param name="name">The rule name to look up, matching some <see cref="IRule{TContext}.Name"/>.</param>
     /// <param name="context">The facts the matched rule's predicate reads from.</param>
@@ -118,12 +86,6 @@ public sealed class RulesEngine
     }
 
     /// <summary>Evaluates exactly one rule, looked up by name.</summary>
-    /// <remarks>
-    /// The strict form, and the one to reach for by default: if a name is not
-    /// expected to be absent, an absent name is a bug worth hearing about
-    /// immediately. Use <see cref="TryRunNamedAsync"/> when absence is a state
-    /// your own domain has an answer for.
-    /// </remarks>
     /// <param name="name">The rule name to look up, matching some <see cref="IRule{TContext}.Name"/>.</param>
     /// <param name="context">The facts the matched rule's predicate reads from.</param>
     /// <param name="cancellationToken">Forwarded to the matched rule's own <see cref="IRule{TContext}.EvaluateAsync"/>.</param>
@@ -139,24 +101,11 @@ public sealed class RulesEngine
     /// Evaluates a group, or returns <c>null</c> if no such group exists.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// This is the primitive; <see cref="RunGroupAsync"/> is a two-line
-    /// assertion on top of it. See <see cref="TryRunNamedAsync"/> for when
-    /// reaching for it is right — the short version is that the engine cannot
-    /// know whether an absent group means "no constraint applies here" or "the
-    /// configuration is broken", and only the caller can.
-    /// </para>
-    /// <para>
-    /// <c>null</c> means <i>absent</i>, never <i>vacuously passed</i>. A group
-    /// exists only because some rule declared it, so an empty-but-real group is
-    /// not representable, and a lookup matching nothing can only be a typo or a
-    /// stale name. Returning a passing <see cref="RunResult"/> here would mean
-    /// a misspelled group silently approves.
-    /// </para>
+    /// <c>null</c> means absent, never vacuously passed.
     /// </remarks>
     /// <param name="group">The group label to look up, matching some <see cref="IRule{TContext}.Group"/>.</param>
     /// <param name="context">The facts every rule in the matched group reads from.</param>
-    /// <param name="cancellationToken">Checked between rules, so a cancellation raised mid-run stops before the next rule starts.</param>
+    /// <param name="cancellationToken">Checked between rules.</param>
     /// <returns>The group's aggregate result, or <c>null</c> if <paramref name="group"/> matches no rule.</returns>
     public async Task<RunResult?> TryRunGroupAsync(string group, IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
     {
@@ -178,15 +127,9 @@ public sealed class RulesEngine
     /// <summary>
     /// Evaluates every rule sharing a group label. Never short-circuits.
     /// </summary>
-    /// <remarks>
-    /// The strict form, and the one to reach for by default. Use
-    /// <see cref="TryRunGroupAsync"/> when absence is a state your own domain
-    /// has an answer for. This is the one place the package is strict:
-    /// emptiness folds to an identity, absence is an error.
-    /// </remarks>
     /// <param name="group">The group label to look up, matching some <see cref="IRule{TContext}.Group"/>.</param>
     /// <param name="context">The facts every rule in the matched group reads from.</param>
-    /// <param name="cancellationToken">Checked between rules, so a cancellation raised mid-run stops before the next rule starts.</param>
+    /// <param name="cancellationToken">Checked between rules.</param>
     /// <returns>The group's aggregate result.</returns>
     /// <exception cref="KeyNotFoundException">No rule carries this label.</exception>
     public async Task<RunResult> RunGroupAsync(string group, IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)

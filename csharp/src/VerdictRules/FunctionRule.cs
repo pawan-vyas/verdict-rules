@@ -3,11 +3,6 @@ namespace VerdictRules;
 /// <summary>
 /// Wraps a plain asynchronous predicate as an <see cref="IRule"/>.
 /// </summary>
-/// <remarks>
-/// The shape most rules should be: no new type, no ceremony. C# has no free
-/// structural typing for a multi-member interface like <see cref="IRule"/>,
-/// so this is the escape hatch that keeps most rules from needing one.
-/// </remarks>
 /// <param name="name">See <see cref="Name"/>.</param>
 /// <param name="predicate">The wrapped predicate <see cref="EvaluateAsync"/> delegates to.</param>
 /// <param name="group">See <see cref="Group"/>.</param>

@@ -21,6 +21,30 @@ Future<RuleResult> cartMeetsMinimum(Map<String, Object?> context) async {
 final rule = FunctionRule('cart_meets_minimum', cartMeetsMinimum);
 ```
 
+The wrap itself doesn't care what the predicate's own context looks
+like — a predicate already written against a typed context wraps
+exactly the same way:
+
+```dart
+class CartContext {
+  final num cartTotal;
+  final num minimumForOffer;
+  const CartContext({required this.cartTotal, required this.minimumForOffer});
+}
+
+Future<RuleResult> cartMeetsMinimumTyped(CartContext context) async =>
+    RuleResult(
+      ruleName: 'cart_meets_minimum',
+      passed: context.cartTotal >= context.minimumForOffer,
+      detail: '${context.cartTotal} vs minimum ${context.minimumForOffer}',
+    );
+
+final typedRule = FunctionRule<CartContext>(
+  'cart_meets_minimum',
+  cartMeetsMinimumTyped,
+);
+```
+
 ## Related
 
 - [`README.md`](README.md) — the language-agnostic scenario this page

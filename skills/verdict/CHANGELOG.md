@@ -6,6 +6,35 @@ Release history for the verdict AI-agent skill. Format follows
 This versions **the guidance**, not any language's API, so it moves on its own
 cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skill-vX.Y.Z`.
 
+## [0.6.1] - 2026-09-18
+
+- **`loyalty-tier-promotion` and `shipping-fee-waiver` samples
+  converted to a typed context**, all four languages -- rebalancing
+  the samples index away from an unintended dict-context skew (most
+  samples were dict-shaped even though a typed context is exactly as
+  first-class). `shipping-fee-waiver` showcases a typed context whose
+  fields include an injected service dependency, typed as a
+  `Protocol`/interface rather than `Any`/`object`/`unknown`.
+- **`MANIFEST.toml` compressed 201 → 67 lines**, no data change: a
+  `[topics]` table replaces per-topic `[[fetch_group]]` boilerplate, a
+  flat `docs` array replaces destination-equals-source one-offs, and a
+  `[quickstarts]` table replaces the per-language
+  destination-is-always-`<lang>/quickstart.md` case. The file's own
+  comments trimmed to the same bar as shipped source.
+- **`scripts/fetch-docs.sh` ships as a real executable script**, not a
+  prose recipe an agent has to regenerate. Reads a build-time-generated
+  `fetch-catalog.tsv` and auto-detects each language's installed
+  version itself, so every `references/<language>/agent-notes.md`'s
+  "Fetching the deeper documents" section is one line. Supports
+  multiple languages in one call for a polyglot monorepo.
+- **`SKILL.md`'s "what the engine guarantees" list trimmed**, and its
+  sequential-evaluation bullet reworded to scope explicitly to a
+  composite's own sub-rule evaluation, not a blanket statement about
+  concurrency elsewhere in a codebase.
+- **One new eval per language** (`employee-bonus-eligibility`) added
+  to test real dict-vs-typed-context adherence; all 23 existing evals
+  audited for the same bias and found not to carry it.
+
 ## [0.6.0] - 2026-09-17
 
 - **`Rule<TContext>` generics land across all four languages.** Every

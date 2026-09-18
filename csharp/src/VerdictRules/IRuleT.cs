@@ -5,12 +5,7 @@ namespace VerdictRules;
 /// </summary>
 /// <typeparam name="TContext">
 /// The type this rule's predicate reads from. <see cref="IRule"/> is the
-/// closed specialization over
-/// <see cref="IReadOnlyDictionary{TKey, TValue}"/> most rules still use —
-/// exactly as first-class as any typed <c>TContext</c>, never a fallback for
-/// the untyped. See <see cref="IRule"/>'s own remarks for why the two
-/// interfaces coexist as independent types rather than one inheriting the
-/// other in the opposite direction.
+/// closed specialization over <see cref="IReadOnlyDictionary{TKey, TValue}"/>.
 /// </typeparam>
 public interface IRule<TContext>
 {
@@ -29,9 +24,7 @@ public interface IRule<TContext>
     /// <param name="context">The facts this rule's predicate reads from.</param>
     /// <param name="cancellationToken">
     /// Observed between sub-rules by every composite and by
-    /// <see cref="RulesEngine{TContext}"/>'s own run methods; whether a leaf
-    /// rule's own predicate observes it depends on that predicate's
-    /// implementation.
+    /// <see cref="RulesEngine{TContext}"/>'s own run methods.
     /// </param>
     /// <returns>The outcome, attributed back to this rule by <see cref="Name"/>.</returns>
     Task<RuleResult> EvaluateAsync(TContext context, CancellationToken cancellationToken = default);

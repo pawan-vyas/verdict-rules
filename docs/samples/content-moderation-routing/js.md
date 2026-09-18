@@ -39,41 +39,43 @@ for the rest of what this shape gets wrong.
 ## The `verdict-rules` way
 
 ```ts
-import { FunctionRule, RulesEngine, type Context, type RuleResult } from "verdict-rules";
+import { FunctionRule, RulesEngine, type RuleResult } from "verdict-rules";
 
-async function containsBannedTerms(context: Context): Promise<RuleResult> {
-  const text = (context.text as string).toLowerCase();
-  const bannedTerms = context.bannedTerms as string[];
-  const hit = bannedTerms.some((term) => text.includes(term));
+interface SubmissionContext {
+  text: string;
+  bannedTerms: string[];
+  spamScore: number;
+  spamThreshold: number;
+  minLength: number;
+  authorPostCount: number;
+}
+
+async function containsBannedTerms(context: SubmissionContext): Promise<RuleResult> {
+  const text = context.text.toLowerCase();
+  const hit = context.bannedTerms.some((term) => text.includes(term));
   return { ruleName: "contains_banned_terms", passed: !hit };
 }
 
-async function flaggedBySpamScore(context: Context): Promise<RuleResult> {
-  return {
-    ruleName: "flagged_by_spam_score",
-    passed: (context.spamScore as number) < (context.spamThreshold as number),
-  };
+async function flaggedBySpamScore(context: SubmissionContext): Promise<RuleResult> {
+  return { ruleName: "flagged_by_spam_score", passed: context.spamScore < context.spamThreshold };
 }
 
-async function meetsLengthMinimum(context: Context): Promise<RuleResult> {
-  return {
-    ruleName: "meets_length_minimum",
-    passed: (context.text as string).length >= (context.minLength as number),
-  };
+async function meetsLengthMinimum(context: SubmissionContext): Promise<RuleResult> {
+  return { ruleName: "meets_length_minimum", passed: context.text.length >= context.minLength };
 }
 
-async function authorIsEstablished(context: Context): Promise<RuleResult> {
-  return { ruleName: "author_is_established", passed: (context.authorPostCount as number) >= 10 };
+async function authorIsEstablished(context: SubmissionContext): Promise<RuleResult> {
+  return { ruleName: "author_is_established", passed: context.authorPostCount >= 10 };
 }
 
-const engine = new RulesEngine([
+const engine = new RulesEngine<SubmissionContext>([
   new FunctionRule("contains_banned_terms", containsBannedTerms, "auto_reject"),
   new FunctionRule("flagged_by_spam_score", flaggedBySpamScore, "auto_reject"),
   new FunctionRule("meets_length_minimum", meetsLengthMinimum, "auto_publish"),
   new FunctionRule("author_is_established", authorIsEstablished, "auto_publish"),
 ]);
 
-async function routeSubmission(context: Context): Promise<string> {
+async function routeSubmission(context: SubmissionContext): Promise<string> {
   const rejectCheck = await engine.runGroup("auto_reject", context);
   if (!rejectCheck.passed) {
     return "auto_rejected";
@@ -87,7 +89,7 @@ async function routeSubmission(context: Context): Promise<string> {
 All three routing outcomes, from the same engine:
 
 ```ts
-const trustedPost: Context = {
+const trustedPost: SubmissionContext = {
   text: "a perfectly reasonable long post about gardening",
   bannedTerms: ["spam", "scam"],
   spamScore: 2,

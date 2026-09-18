@@ -3,9 +3,8 @@ import 'dart:io';
 import 'package:marketplace_eligibility/marketplace_eligibility.dart';
 
 Future<void> main() async {
-  // Fixture data lives at the repo root, shared by every language's own port
-  // of this example -- see fixtures/marketplace_eligibility/README.md for
-  // the contract.
+  // Fixture data lives at the repo root; see
+  // fixtures/marketplace_eligibility/README.md for the contract.
   final scriptDir = File(Platform.script.toFilePath()).parent.path;
   final fixtures =
       Directory('$scriptDir/../../../../fixtures/marketplace_eligibility')

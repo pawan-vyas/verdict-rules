@@ -1,12 +1,4 @@
-"""Result types returned by rule evaluation.
-
-Deliberately plain, immutable data — a :class:`Rule` reports what
-happened, nothing more. Any domain-specific payload a caller wants to
-carry alongside the pass/fail outcome rides in :attr:`RuleResult.data`,
-which this module (and every other module in this package) treats as
-fully opaque — Verdict itself never inspects or depends on its shape,
-which is what keeps the engine reusable across unrelated domains.
-"""
+"""Result types returned by rule evaluation."""
 
 from __future__ import annotations
 
@@ -18,18 +10,12 @@ class RuleResult:
     """Outcome of evaluating a single :class:`~verdict.rule.Rule`.
 
     Attributes:
-        rule_name: The name of the rule this result came from — matches
-            the evaluated rule's own ``name`` attribute, so a caller
-            walking a :class:`RunResult` can attribute each outcome
-            back to the rule that produced it.
+        rule_name: The name of the rule this result came from.
         passed: Whether the rule's condition was satisfied.
-        detail: Optional human-readable explanation of the outcome —
-            e.g. why a rule failed. Empty string when there's nothing
-            worth saying beyond the boolean.
-        data: Optional, fully opaque payload a caller can attach to
-            carry its own domain object through the evaluation (e.g. a
-            computed status object) — Verdict never reads or depends on
-            its shape.
+        detail: Optional human-readable explanation of the outcome.
+            Empty string when there's nothing to say beyond the boolean.
+        data: Optional payload a caller can attach; opaque to this
+            package.
     """
 
     rule_name: str
@@ -46,12 +32,10 @@ class RunResult:
 
     Attributes:
         passed: ``True`` only if every rule in :attr:`results` passed.
-        results: One :class:`RuleResult` per rule that was evaluated,
-            in evaluation order. A short-circuited composite rule (see
-            :class:`~verdict.rule.AndRule`/:class:`~verdict.rule.OrRule`)
-            still contributes exactly one entry here for itself — its
-            own sub-rule results are nested inside its own
-            :attr:`RuleResult.data`, not flattened into this list.
+        results: One :class:`RuleResult` per rule that was evaluated, in
+            evaluation order. A composite rule's own sub-results are
+            nested inside its own :attr:`RuleResult.data`, not
+            flattened into this list.
     """
 
     passed: bool

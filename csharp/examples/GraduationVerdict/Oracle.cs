@@ -4,18 +4,8 @@ namespace GraduationVerdict;
 /// A second, independent, verdict-rules-free implementation of the graduation decision.
 /// </summary>
 /// <remarks>
-/// This is deliberately the "naive way" from
-/// docs/samples/graduation-requirement-verdict/README.md, generalized to
-/// score *any* policy list rather than the fixed 7-subject curriculum --
-/// its entire job is to be obviously correct by inspection, so it can
-/// serve as ground truth for the chaos suite's differential testing. See
-/// that suite's own doc comment and docs/testing/README.md for the full
-/// reasoning: two independently written implementations (this plain
-/// loop, and the verdict-rules-based engine in <see cref="GraduationCheck"/>)
-/// must agree on every input, or one of them is wrong.
-///
-/// Never reference <c>VerdictRules</c> here -- an oracle that shares a
-/// bug with the system it's checking proves nothing.
+/// Used as ground truth by the chaos suite's differential testing. Never
+/// reference <c>VerdictRules</c> here.
 /// </remarks>
 public static class Oracle
 {
@@ -46,17 +36,9 @@ public static class Oracle
     /// Compute the graduation decision directly, with no verdict-rules involved at all.
     /// </summary>
     /// <param name="policies">Every subject's own policy (core and elective alike).</param>
-    /// <param name="context">
-    /// One student's scores, cgpa, and attendance -- the same shape
-    /// <see cref="GraduationCheck.BuildGraduationCheck"/>'s composite expects.
-    /// </param>
+    /// <param name="context">One student's scores, cgpa, and attendance.</param>
     /// <param name="electiveMinimum">How many electives must pass.</param>
-    /// <returns>
-    /// Whether this student graduates, computed independently of
-    /// <see cref="GraduationCheck.RuleForSubject"/>/
-    /// <see cref="GraduationCheck.BuildGraduationCheck"/> -- the two must
-    /// always agree.
-    /// </returns>
+    /// <returns>Whether this student graduates.</returns>
     public static bool ExpectedGraduates(
         IReadOnlyList<SubjectPolicy> policies, IReadOnlyDictionary<string, object?> context, int electiveMinimum)
     {

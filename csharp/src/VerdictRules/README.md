@@ -136,9 +136,9 @@ one everybody thinks of first.
 
 | Doc | For |
 | --- | --- |
-| [`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.3.0/csharp/src/VerdictRules/docs/quickstart.md) | The quickstart — core concepts and a full worked example |
-| [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.3.0/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
-| [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.3.0/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
-| [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.3.0/docs/maintenance/README.md) | Changing this package itself |
-| [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.3.0/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
-| [`docs/samples/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.3.0/docs/samples/README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
+| [`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.3.1/csharp/src/VerdictRules/docs/quickstart.md) | The quickstart — core concepts and a full worked example |
+| [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.3.1/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
+| [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.3.1/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
+| [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.3.1/docs/maintenance/README.md) | Changing this package itself |
+| [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.3.1/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
+| [`docs/samples/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.3.1/docs/samples/README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |

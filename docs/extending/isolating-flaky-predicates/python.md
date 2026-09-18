@@ -5,14 +5,21 @@
 > that first. This page is the concrete Python code.
 
 ```python
+from dataclasses import dataclass
+from typing import Awaitable, Callable, TypeVar
+
 from verdict import FunctionRule, RuleResult
 
+TContext = TypeVar("TContext")
 
-def defensive(name: str, predicate) -> FunctionRule:
+
+def defensive(
+    name: str, predicate: Callable[[TContext], Awaitable[RuleResult]]
+) -> FunctionRule[TContext]:
     """Turn a predicate's own exception into a failing RuleResult,
     instead of letting it propagate out of the run that contains it."""
 
-    async def wrapped(context: dict) -> RuleResult:
+    async def wrapped(context: TContext) -> RuleResult:
         try:
             return await predicate(context)
         except Exception as exc:
@@ -21,21 +28,27 @@ def defensive(name: str, predicate) -> FunctionRule:
     return FunctionRule(name, wrapped)
 
 
-async def check_promo_code_against_external_service(context: dict) -> RuleResult:
+@dataclass(frozen=True)
+class PromoContext:
+    promo_code: str
+    simulate_timeout: bool = False
+
+
+async def check_promo_code_against_external_service(context: PromoContext) -> RuleResult:
     """Stands in for a real network call that can time out."""
-    if context.get("simulate_timeout"):
+    if context.simulate_timeout:
         raise TimeoutError("promo-validation service did not respond")
-    return RuleResult(rule_name="promo_code_valid", passed=context["promo_code"] == "SAVE10")
+    return RuleResult(rule_name="promo_code_valid", passed=context.promo_code == "SAVE10")
 
 
 rule = defensive("promo_code_valid", check_promo_code_against_external_service)
 ```
 
 ```python
-await rule.evaluate({"promo_code": "SAVE10"})
+await rule.evaluate(PromoContext(promo_code="SAVE10"))
 # RuleResult(rule_name='promo_code_valid', passed=True, ...)
 
-await rule.evaluate({"promo_code": "SAVE10", "simulate_timeout": True})
+await rule.evaluate(PromoContext(promo_code="SAVE10", simulate_timeout=True))
 # RuleResult(rule_name='promo_code_valid', passed=False,
 #            detail='promo-validation service did not respond')
 ```
@@ -46,7 +59,7 @@ of returning a result — this is what every other rule shares a
 
 ```python
 unwrapped = FunctionRule("promo_code_valid", check_promo_code_against_external_service)
-await unwrapped.evaluate({"promo_code": "SAVE10", "simulate_timeout": True})
+await unwrapped.evaluate(PromoContext(promo_code="SAVE10", simulate_timeout=True))
 # raises TimeoutError: promo-validation service did not respond
 ```
 

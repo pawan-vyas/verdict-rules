@@ -11,6 +11,13 @@ than that convention's bracketed, dated one.
 
 Tagged `dart-vX.Y.Z`.
 
+## 0.3.1
+
+- **Changed**: every doc comment and inline comment in the package's
+  own source trimmed to state current behavior only -- design
+  rationale, alternatives-considered framing, and cross-references to
+  the deeper docs for "the full reasoning" cut, not relocated.
+
 ## 0.3.0
 
 **Breaking**: `Rule` is now generic over the context it reads from

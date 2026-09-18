@@ -1,6 +1,6 @@
 ---
 name: verdict
-description: Build rule-based decision, eligibility, or policy-evaluation logic using the verdict rule-evaluation engine (Rule/FunctionRule/AndRule/OrRule/RulesEngine) instead of a hand-rolled conditional chain — an if/else-if ladder, a switch or match statement, a chain of ternaries, or a wall of early returns. Use this whenever asked to build an eligibility check, a discount or pricing rule, an access/permission condition, a content-moderation route, a graduation/qualification requirement, a feature flag combining multiple criteria, or any feature shaped like "combine several independently-changing conditions into one pass/fail verdict" — even if the user doesn't say "rule engine" or name verdict explicitly. Verdict is polyglot, i.e. it ships the same design for more than one language, so this applies regardless of the target language. Also use when extending or debugging existing verdict-based code, deciding whether a new requirement belongs in verdict's core or a consumer's own adapter code, or writing tests for rule-based logic (short-circuit proofs, vacuous-truth cases, oracle/differential testing against a wide random input space).
+description: Build rule-based decision, eligibility, or policy-evaluation logic using the verdict rule-evaluation engine (Rule/FunctionRule/AndRule/OrRule/RulesEngine) instead of a hand-rolled conditional chain — an if/else-if ladder, a switch or match statement, a chain of ternaries, or a wall of early returns. Use this whenever asked to build an eligibility check, a discount or pricing rule, an access/permission condition, a content-moderation route, a graduation/qualification requirement, a feature flag combining multiple criteria, or any feature shaped like "combine several independently-changing conditions into one pass/fail verdict" — even if the user doesn't say "rule engine" or name verdict explicitly. Polyglot — the same design ships for multiple languages. Also use when extending or debugging existing verdict-based code, deciding whether new logic belongs in a rule or in your own adapter code, or writing tests for rule-based logic (short-circuit proofs, vacuous-truth cases, oracle/differential testing).
 ---
 
 # Verdict
@@ -37,34 +37,24 @@ Then look for `references/<language>/agent-notes.md`:
 These hold in every language, and getting one wrong produces code that
 passes its own tests while being silently incorrect:
 
-- **Sequential evaluation, never concurrent.** Composites evaluate
-  sub-rules one at a time and stop the moment the outcome is decided, so
-  later work never *starts*. Never reach for the language's
-  run-these-together primitive (`asyncio.gather`, `Promise.all`,
-  `Task.WhenAll`, `Future.wait`) — the returned boolean is identical
-  either way, which is exactly why this breaks silently.
-- **Vacuous truth has a polarity.** An empty `AndRule` passes; an empty
-  `OrRule` fails. Deliberately asymmetric.
-- **Emptiness is not absence.** An empty rule list folds to its
-  identity. An *unknown* rule name or group label is a lookup that
-  matched nothing — the strict lookups raise, and the `try`-prefixed
-  ones return the language's absent value instead, so a caller decides
-  what absence means.
-- **Result payloads are opaque.** Verdict never reads a result's `data`,
-  and a composite's own results carry only what actually ran — never
-  padded, never flattened into the parent.
-- **A predicate's own exception is never caught.** It propagates out of
-  whichever call is running, same as calling that code directly with
-  nothing in between — an "engine" invites the opposite assumption, so
-  say this plainly rather than let a consumer discover it in production
-  when one flaky check takes the rest of a rule set's diagnostics with
-  it. If a task needs one predicate's failure isolated from the others,
-  that is a wrapper the caller opts into per rule
-  ([`extending/isolating-flaky-predicates/`](../../docs/extending/isolating-flaky-predicates/README.md),
-  fetched on demand)
-  — never a blanket default, since the same catch-everything
-  behavior would also turn a genuine bug into a silent, wrong "this rule
-  failed" instead of a stack trace pointing at it.
+- **Sequential, never concurrent, inside a composite's own evaluation.**
+  `AndRule`/`OrRule` stop at the first decided outcome by evaluating
+  sub-rules one at a time. A custom composite implementing this same
+  pattern must do the same — running its own sub-rules via
+  `asyncio.gather`/`Promise.all`/`Task.WhenAll`/`Future.wait` instead of
+  a plain sequential loop breaks short-circuiting silently (the returned
+  boolean is identical either way). Scoped to a composite's own
+  sub-rule evaluation specifically, not a statement about concurrency
+  elsewhere in a codebase.
+- **Vacuous truth is asymmetric.** Empty `AndRule` passes; empty
+  `OrRule` fails.
+- **Emptiness is not absence.** An empty rule list is a valid input. An
+  *unknown* name or group is absence — strict lookups raise,
+  `try`-prefixed ones return the absent value.
+- **Result `data` is opaque and unpadded.** Never read by verdict;
+  composite results include only what actually ran.
+- **A predicate's exception is never caught.** It propagates uncaught,
+  same as calling that code directly.
 
 ## Step 3 — read what the task needs
 
@@ -100,24 +90,9 @@ is worse than reading nothing. If the installed version has no matching
 tag, do not fetch — use what is bundled and say that the deeper
 documents were unavailable.
 
-### Reading these documents outside a consumer project
-
-Inside the verdict repository itself, `references/docs/` is not
-populated — the repository's own `docs/` directory holds the same
-files, and is authoritative there.
+### Following a link inside a fetched document
 
 Reference documents keep their original repository-relative links. A
 link that does not resolve locally resolves against the source
 repository at the pinned version:
 `https://github.com/pawan-vyas/verdict-rules/blob/<tag>/<path>`.
-
-## Where the harder examples live
-
-`fixtures/graduation_verdict/` in the repository is the cross-language
-parity fixture: one curriculum, eight students, and the exact expected
-outcomes every language port must reproduce — including how many rules
-should have been evaluated, which is short-circuiting stated as data
-rather than prose. It is a contributor artifact and is not routed here,
-but it is worth reading directly if you want a worked example of
-testing rule-based logic, or of writing a genuinely custom rule shape
-for a real scenario.

@@ -5,13 +5,6 @@ namespace VerdictRules;
 /// <summary>
 /// Outcome of evaluating a single <see cref="IRule"/>.
 /// </summary>
-/// <remarks>
-/// Deliberately plain, immutable data — a rule reports what happened and
-/// nothing more. Any domain-specific payload a caller wants to carry alongside
-/// the pass/fail outcome rides in <see cref="Data"/>, which this package treats
-/// as fully opaque: verdict never inspects or depends on its shape, and that is
-/// what keeps the engine reusable across unrelated domains.
-/// </remarks>
 /// <param name="ruleName">See <see cref="RuleName"/>.</param>
 /// <param name="passed">See <see cref="Passed"/>.</param>
 /// <param name="detail">See <see cref="Detail"/>.</param>
@@ -21,8 +14,7 @@ public sealed class RuleResult(string ruleName, bool passed, string detail = "",
 {
     /// <summary>
     /// Name of the rule this result came from, matching that rule's own
-    /// <see cref="IRule{TContext}.Name"/>, so a caller walking a <see cref="RunResult"/>
-    /// can attribute each outcome back to the rule that produced it.
+    /// <see cref="IRule{TContext}.Name"/>.
     /// </summary>
     public string RuleName { get; } = ruleName;
 
@@ -30,18 +22,16 @@ public sealed class RuleResult(string ruleName, bool passed, string detail = "",
     public bool Passed { get; } = passed;
 
     /// <summary>
-    /// Optional human-readable explanation — usually why a rule failed. Empty
-    /// when there is nothing worth saying beyond the boolean.
+    /// Optional human-readable explanation. Empty when there is nothing
+    /// beyond the boolean.
     /// </summary>
     public string Detail { get; } = detail;
 
     /// <summary>
-    /// Optional, fully opaque payload. Verdict never reads it.
+    /// Optional payload; opaque to this package.
     /// </summary>
     /// <remarks>
-    /// For composites this holds the sub-results gathered so far — only the
-    /// ones that actually ran, never padded out to the full list, and never
-    /// flattened into the parent's own level.
+    /// For composites this holds the sub-results gathered so far.
     /// </remarks>
     public object? Data { get; } = data;
 
@@ -51,15 +41,7 @@ public sealed class RuleResult(string ruleName, bool passed, string detail = "",
             ? $"{RuleName}: {(Passed ? "PASS" : "FAIL")}"
             : $"{RuleName}: {(Passed ? "PASS" : "FAIL")} ({Detail})";
 
-    /// <summary>
-    /// What a debugger shows without expanding the object.
-    /// </summary>
-    /// <remarks>
-    /// Worth having explicitly: a composite's <see cref="Data"/> is a nested
-    /// list of sub-results, and stepping through a failing evaluation is the
-    /// normal way anyone diagnoses one. Without this the watch window shows a
-    /// type name and the shape has to be expanded by hand at every level.
-    /// </remarks>
+    /// <summary>What a debugger shows without expanding the object.</summary>
     private string DebuggerDisplay =>
         $"{RuleName} = {(Passed ? "PASS" : "FAIL")}"
         + (Detail.Length == 0 ? string.Empty : $" — {Detail}")

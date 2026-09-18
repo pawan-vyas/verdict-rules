@@ -27,27 +27,39 @@ for the rest of what this shape gets wrong.
 ## The `verdict` way
 
 ```python
+from dataclasses import dataclass
+
 from verdict import FunctionRule, RulesEngine, RuleResult
 
 
-async def contains_banned_terms(context: dict) -> RuleResult:
-    hit = any(term in context["text"].lower() for term in context["banned_terms"])
+@dataclass(frozen=True)
+class SubmissionContext:
+    text: str
+    banned_terms: list[str]
+    spam_score: float
+    spam_threshold: float
+    min_length: int
+    author_post_count: int
+
+
+async def contains_banned_terms(context: SubmissionContext) -> RuleResult:
+    hit = any(term in context.text.lower() for term in context.banned_terms)
     return RuleResult(rule_name="contains_banned_terms", passed=not hit)
 
 
-async def flagged_by_spam_score(context: dict) -> RuleResult:
-    return RuleResult(rule_name="flagged_by_spam_score", passed=context["spam_score"] < context["spam_threshold"])
+async def flagged_by_spam_score(context: SubmissionContext) -> RuleResult:
+    return RuleResult(rule_name="flagged_by_spam_score", passed=context.spam_score < context.spam_threshold)
 
 
-async def meets_length_minimum(context: dict) -> RuleResult:
-    return RuleResult(rule_name="meets_length_minimum", passed=len(context["text"]) >= context["min_length"])
+async def meets_length_minimum(context: SubmissionContext) -> RuleResult:
+    return RuleResult(rule_name="meets_length_minimum", passed=len(context.text) >= context.min_length)
 
 
-async def author_is_established(context: dict) -> RuleResult:
-    return RuleResult(rule_name="author_is_established", passed=context["author_post_count"] >= 10)
+async def author_is_established(context: SubmissionContext) -> RuleResult:
+    return RuleResult(rule_name="author_is_established", passed=context.author_post_count >= 10)
 
 
-engine = RulesEngine([
+engine: RulesEngine[SubmissionContext] = RulesEngine([
     FunctionRule("contains_banned_terms", contains_banned_terms, group="auto_reject"),
     FunctionRule("flagged_by_spam_score", flagged_by_spam_score, group="auto_reject"),
     FunctionRule("meets_length_minimum", meets_length_minimum, group="auto_publish"),
@@ -55,7 +67,7 @@ engine = RulesEngine([
 ])
 
 
-async def route_submission(context: dict) -> str:
+async def route_submission(context: SubmissionContext) -> str:
     reject_check = await engine.run_group("auto_reject", context)
     if not reject_check.passed:
         return "auto_rejected"
@@ -67,21 +79,23 @@ async def route_submission(context: dict) -> str:
 All three routing outcomes, from the same engine:
 
 ```python
-trusted_post = {
-    "text": "a perfectly reasonable long post about gardening",
-    "banned_terms": ["spam", "scam"],
-    "spam_score": 2,
-    "spam_threshold": 10,
-    "min_length": 20,
-    "author_post_count": 50,
-}
+from dataclasses import replace
+
+trusted_post = SubmissionContext(
+    text="a perfectly reasonable long post about gardening",
+    banned_terms=["spam", "scam"],
+    spam_score=2,
+    spam_threshold=10,
+    min_length=20,
+    author_post_count=50,
+)
 await route_submission(trusted_post)
 # "auto_published" — clears the auto_reject group, then the auto_publish group
 
-await route_submission({**trusted_post, "author_post_count": 1})
+await route_submission(replace(trusted_post, author_post_count=1))
 # "sent_to_review" — clears auto_reject, but the new-author signal fails auto_publish
 
-await route_submission({**trusted_post, "spam_score": 15})
+await route_submission(replace(trusted_post, spam_score=15))
 # "auto_rejected" — trips the auto_reject group; auto_publish is never even checked
 ```
 

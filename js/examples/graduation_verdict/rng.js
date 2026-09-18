@@ -1,16 +1,6 @@
 /**
- * A small, seeded, deterministic pseudo-random generator -- `Math.random()`
- * cannot be seeded, so chaos-data.js needs its own. Not cryptographic, and
- * not meant to be: the only property this needs is that the same seed
- * always produces the same sequence, so a failing chaos case reproduces
- * from its `caseIndex` alone. Uses the public-domain mulberry32 algorithm
- * (Tommy Ettinger), chosen for being small enough to read and verify by
- * eye rather than trust as a black box.
- *
- * No two languages produce identical pseudo-random sequences from the same
- * seed -- see fixtures/graduation_verdict/README.md's "What is deliberately
- * not pinned" -- so this generates its own, independently reproducible
- * space of cases rather than mirroring Python's exact sequence.
+ * A small, seeded, deterministic pseudo-random generator. Not cryptographic.
+ * Uses the public-domain mulberry32 algorithm (Tommy Ettinger).
  */
 export class Rng {
   #state;

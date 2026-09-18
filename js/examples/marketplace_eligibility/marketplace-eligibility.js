@@ -1,12 +1,8 @@
 /**
- * Marketplace eligibility -- the flagship generic-context example, as real code.
+ * Marketplace eligibility, implemented with verdict-rules.
  *
- * See docs/samples/marketplace-eligibility/README.md for the full design
- * and fixtures/marketplace_eligibility/README.md for the shared,
- * cross-language data contract this module reproduces.
- *
- * Nothing here is illustrative pseudocode: every function is imported and
- * exercised by test/marketplace-eligibility.test.js.
+ * See docs/samples/marketplace-eligibility/README.md for the design and
+ * fixtures/marketplace_eligibility/README.md for the fixture contract.
  */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -33,11 +29,8 @@ export const NEW_SELLER_THRESHOLD_DAYS = 30;
 /**
  * Adapts a rule built against TInner to run inside a composite built on TOuter.
  *
- * Not part of verdict-rules itself -- a consumer-defined adapter, exactly
- * as free to exist as a new rule shape is, with no changes needed on
- * verdict-rules' side to support it. See
- * docs/extending/reusing-a-rule-across-contexts/js.md for the standalone
- * version of this same pattern.
+ * Not part of verdict-rules itself. See
+ * docs/extending/reusing-a-rule-across-contexts/js.md.
  */
 export class ProjectingRule {
   /**
@@ -56,7 +49,7 @@ export class ProjectingRule {
   }
 }
 
-/** Written once, against IdentityFlag alone -- reused on both sides via ProjectingRule. */
+/** Reused on both sides via ProjectingRule. */
 async function isVerifiedIdentity(context) {
   return { ruleName: "is_verified_identity", passed: context.verified };
 }
@@ -104,9 +97,7 @@ async function purchaseLimitNotExceeded(context) {
  * Build the typed listing-eligibility composite for one seller.
  *
  * @returns {{ listingEligible: AndRule<SellerListingContext>, sellerVerified: ProjectingRule }}
- *   The full composite, and the identity sub-rule alone, so a caller (and
- *   the test suite) can distinguish "which check failed" without
- *   re-running anything.
+ *   The full composite, and the identity sub-rule alone.
  */
 export function buildSellerCheck() {
   const sellerVerified = sellerIdentityRule();
@@ -148,11 +139,8 @@ async function newSellerFlag(context) {
 /**
  * Build the dict-context compliance catalog.
  *
- * Unlike the seller/buyer sides, this is deliberately untyped: a
- * compliance team adds a new flag by registering one more rule here,
- * never by agreeing on a shared typed context every existing flag would
- * otherwise need to accommodate too. See
- * docs/architecture/README.md#generic-context for the full reasoning.
+ * Unlike the seller/buyer sides, this is deliberately untyped. See
+ * docs/architecture/README.md#generic-context.
  *
  * @returns {RulesEngine<import("verdict-rules").Context>}
  */

@@ -34,11 +34,7 @@ public sealed class RunResult(bool passed, IReadOnlyList<RuleResult> results)
         $"{(Passed ? "PASS" : "FAIL")} — {Results.Count} rule(s), "
         + $"{Results.Count(r => !r.Passed)} failing";
 
-    /// <summary>
-    /// Makes a debugger expand straight to the per-rule results rather than to
-    /// this type's own properties, which is what anyone inspecting a run
-    /// actually wants to see.
-    /// </summary>
+    /// <summary>Makes a debugger expand straight to the per-rule results.</summary>
     /// <param name="result">The run this proxy presents to the debugger.</param>
     private sealed class RunResultDebugView(RunResult result)
     {

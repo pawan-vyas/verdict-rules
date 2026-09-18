@@ -150,41 +150,8 @@ skip:
 
 ## Fetching the deeper documents
 
-[`references/docs/architecture/README.md`](../../../../docs/architecture/README.md)
-ships bundled — the design rationale is always available with no fetch
-needed. [`references/docs/testing/`](../../../../docs/testing/README.md),
-`docs/extending/`, and `docs/samples/` are fetch-tier, same as for
-every language: too much to ship on every install, pulled at the
-version actually installed. This SDK's own quickstart is fetch-tier
-too, same as Python's, JS's, and Dart's:
-
 ```bash
-VERSION=$(grep -m1 '<Version>' path/to/YourProject.csproj | sed -E 's/.*<Version>(.+)<\/Version>.*/\1/')
-TAG="csharp-v${VERSION}"
-BASE="https://raw.githubusercontent.com/pawan-vyas/verdict-rules/${TAG}"
-
-curl -fsSL "${BASE}/docs/testing/README.md" -o references/docs/testing/README.md
-curl -fsSL "${BASE}/csharp/src/VerdictRules/docs/quickstart.md" \
-     -o references/csharp/quickstart.md
+scripts/fetch-docs.sh csharp
 ```
 
-Reading the resolved `PackageReference` version straight out of the
-consuming project's own `.csproj` is enough here — unlike Dart's caret
-constraint in `pubspec.yaml`, a `<PackageReference Version="...">`
-names an exact version directly by default (a floating version like
-`0.0.*` is possible but opt-in, not NuGet's default), so there is no
-separate lockfile to read the resolved version from the way Dart needs
-`pubspec.lock`.
-
-The manifest at `MANIFEST.toml` lists every fetchable document: most as
-a literal `[[fetch]]` source/destination pair, the rest as a
-`[[fetch_group]]` whose `pattern` needs `{lang}` replaced with this
-language before fetching — see
-[`commands/verdict-fetch-docs.md`](../../commands/verdict-fetch-docs.md)
-for the exact expansion. Record the tag you fetched at in
-`references/csharp/.version` so a later reader can tell whether the
-documents still match what is installed.
-
-If `curl` fails because the tag does not exist, stop — do not fall back
-to the default branch. Documentation for a version the project does not
-have is worse than none.
+See [`commands/verdict-fetch-docs.md`](../../commands/verdict-fetch-docs.md).

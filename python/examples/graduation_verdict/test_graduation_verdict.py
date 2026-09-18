@@ -1,11 +1,9 @@
 """Tests for the graduation-verdict example.
 
-These aren't just tests of this example's own logic — because this
-project exercises FunctionRule, AndRule, OrRule, a custom Rule shape,
-and all three RulesEngine run modes together, this suite functions as
-an integration/e2e regression net for `verdict` itself. See
-docs/testing/README.md's "second testing layer" section for the
-full reasoning behind that claim.
+Also functions as an integration/e2e regression net for `verdict`
+itself, exercising `FunctionRule`, `AndRule`, `OrRule`, a custom `Rule`
+shape, and all three `RulesEngine` run modes together. See
+docs/testing/README.md.
 """
 
 from __future__ import annotations
@@ -25,8 +23,8 @@ from graduation_verdict import (
 )
 
 _HERE = Path(__file__).parent
-# Fixture data lives at the repo root, shared by every language's own port of
-# this example — see fixtures/graduation_verdict/README.md for the contract.
+# Fixture data lives at the repo root; see
+# fixtures/graduation_verdict/README.md for the contract.
 _FIXTURES = _HERE.parents[2] / "fixtures" / "graduation_verdict"
 _POLICIES, _ELECTIVE_MINIMUM = load_curriculum(_FIXTURES / "policies.json")
 _STUDENTS = load_students(_FIXTURES / "students.json")
@@ -136,8 +134,8 @@ class TestEngineRunModes:
 def _failing_chain(result) -> list[str]:
     """Walk the first failing branch down, collecting rule names.
 
-    This is what proves `RuleResult.data` is never flattened: a nested
-    failure has to still be reachable by following `data` downward.
+    A nested failure is reachable by following `data` downward;
+    `RuleResult.data` is never flattened.
     """
     chain: list[str] = []
     node = result
@@ -153,10 +151,8 @@ def _failing_chain(result) -> list[str]:
 class TestSharedFixtureContract:
     """Every expectation in the shared fixture, asserted.
 
-    This is the cross-language contract: each port of this example must
-    reproduce these exact numbers. See
-    fixtures/graduation_verdict/README.md for what each field proves and
-    why the counts matter more than the booleans.
+    Each port of this example reproduces these exact numbers. See
+    fixtures/graduation_verdict/README.md for what each field checks.
     """
 
     @pytest.mark.parametrize("student_id", list(_STUDENTS.keys()))
@@ -172,12 +168,8 @@ class TestSharedFixtureContract:
 
     @pytest.mark.parametrize("student_id", list(_STUDENTS.keys()))
     async def test_short_circuit_count_matches(self, student_id: str) -> None:
-        """The assertion a boolean-only fixture cannot make.
-
-        bob and gita both fail, but bob stops after one rule and gita
-        runs all four. An implementation that evaluated sub-rules
-        concurrently would return both booleans correctly and fail here.
-        """
+        """bob and gita both fail; bob stops after one rule, gita runs all
+        four."""
         _, graduates = build_graduation_check(_POLICIES, _ELECTIVE_MINIMUM)
         context = _STUDENTS[student_id]
         expected = context["expected"]
@@ -212,9 +204,9 @@ class TestSharedFixtureContract:
 
     @pytest.mark.parametrize("student_id", list(_STUDENTS.keys()))
     async def test_group_results_match(self, student_id: str) -> None:
-        """harish is the interesting one: he graduates while his elective
-        group 'fails', because the group verdict is all-must-pass and the
-        composite's requirement is at-least-two-of-three."""
+        """harish graduates while his elective group 'fails', because the
+        group verdict is all-must-pass and the composite's requirement is
+        at-least-two-of-three."""
         engine, _ = build_graduation_check(_POLICIES, _ELECTIVE_MINIMUM)
         context = _STUDENTS[student_id]
         for group, expected in context["expected"]["groups"].items():
@@ -226,10 +218,9 @@ class TestSharedFixtureContract:
 class TestVacuousTruthEdgeCases:
     """The degenerate curricula, from the shared fixture's edge_cases.json.
 
-    `AndRule([])` passing while an at-least-N rule over an empty set
-    fails for N > 0 is deliberately asymmetric, and it is the kind of
-    thing a port gets backwards without noticing — nothing in the main
-    student set exercises an empty rule list at all.
+    `AndRule([])` passes while an at-least-N rule over an empty set fails
+    for N > 0. Nothing in the main student set exercises an empty rule
+    list.
     """
 
     @pytest.mark.parametrize("case_name", list(_EDGE_CASES.keys()))
@@ -252,9 +243,7 @@ class TestVacuousTruthEdgeCases:
         assert len(run_all.results) == expected["run_all"]["evaluated"], case_name
         assert run_all.passed == expected["run_all"]["passed"], case_name
 
-        # Absence is reported two ways, and both are part of the contract:
-        # the strict form raises, the try_ form returns None. A port that
-        # shipped one without the other would fail here.
+        # The strict form raises; the try_ form returns None.
         lookups = expected["lookups"]
 
         group = lookups["unknown_group"]["name"]

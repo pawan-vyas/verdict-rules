@@ -142,38 +142,8 @@ skip:
 
 ## Fetching the deeper documents
 
-[`references/docs/architecture/README.md`](../../../../docs/architecture/README.md)
-ships bundled — the design rationale is always available with no fetch
-needed. [`references/docs/testing/`](../../../../docs/testing/README.md),
-`docs/extending/`, and `docs/samples/` are fetch-tier, same as for
-every language: too much to ship on every install, pulled at the
-version actually installed. This SDK's own quickstart is fetch-tier
-too, same as Python's and JS's:
-
 ```bash
-VERSION=$(awk '/^  verdict_rules:/{found=1} found && /version:/{print $2; exit}' pubspec.lock | tr -d '"')
-TAG="dart-v${VERSION}"
-BASE="https://raw.githubusercontent.com/pawan-vyas/verdict-rules/${TAG}"
-
-curl -fsSL "${BASE}/docs/testing/README.md" -o references/docs/testing/README.md
-curl -fsSL "${BASE}/dart/packages/verdict_rules/doc/quickstart.md" \
-     -o references/dart/quickstart.md
+scripts/fetch-docs.sh dart
 ```
 
-Reading `pubspec.lock` rather than `pubspec.yaml`'s own `dependencies:`
-is deliberate: a caret constraint like `^0.0.2` names a range, not the
-version actually resolved and installed, and fetching the wrong
-version's documentation is worse than fetching none.
-
-The manifest at `MANIFEST.toml` lists every fetchable document: most as
-a literal `[[fetch]]` source/destination pair, the rest as a
-`[[fetch_group]]` whose `pattern` needs `{lang}` replaced with this
-language before fetching — see
-[`commands/verdict-fetch-docs.md`](../../commands/verdict-fetch-docs.md)
-for the exact expansion. Record the tag you fetched at in
-`references/dart/.version` so a later reader can tell whether the
-documents still match what is installed.
-
-If `curl` fails because the tag does not exist, stop — do not fall back
-to the default branch. Documentation for a version the project does not
-have is worse than none.
+See [`commands/verdict-fetch-docs.md`](../../commands/verdict-fetch-docs.md).

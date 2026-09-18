@@ -16,12 +16,12 @@ using VerdictRules;
 /// as free to exist as AndRule/OrRule are, with no changes needed on
 /// verdict's side to support it.
 /// </remarks>
-sealed class ThresholdRule : IRule
+sealed class ThresholdRule<TContext> : IRule<TContext>
 {
-    private readonly IReadOnlyList<IRule> _rules;
+    private readonly IReadOnlyList<IRule<TContext>> _rules;
     private readonly int _minimum;
 
-    public ThresholdRule(string name, IReadOnlyList<IRule> rules, int minimum, string? group = null)
+    public ThresholdRule(string name, IReadOnlyList<IRule<TContext>> rules, int minimum, string? group = null)
     {
         Name = name;
         Group = group;
@@ -32,7 +32,7 @@ sealed class ThresholdRule : IRule
     public string Name { get; }
     public string? Group { get; }
 
-    public async Task<RuleResult> EvaluateAsync(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
+    public async Task<RuleResult> EvaluateAsync(TContext context, CancellationToken cancellationToken = default)
     {
         var subResults = new List<RuleResult>();
         foreach (var rule in _rules)
@@ -49,33 +49,33 @@ sealed class ThresholdRule : IRule
 }
 ```
 
-`ThresholdRule` can now be handed to a `RulesEngine`, nested inside an
-`AndRule`, or hold an `AndRule` as one of its own sub-rules — every
-existing piece of this package already knows how to run it, because
-nothing anywhere checks `is FunctionRule` or similar; `: IRule` is the
-only contract that matters. Unlike Python's structural `Protocol`, C#
-requires the explicit `: IRule` declaration — see
-[`../../architecture/csharp.md`](../../architecture/csharp.md) for why
-that's a real, nominal-typing requirement here, not just syntax.
+`ThresholdRule<TContext>` can now be handed to a `RulesEngine`, nested
+inside an `AndRule`, or hold an `AndRule` as one of its own sub-rules —
+every existing piece of this package already knows how to run it,
+because nothing anywhere checks `is FunctionRule` or similar;
+`: IRule<TContext>` is the only contract that matters. Unlike Python's
+structural `Protocol`, C# requires the explicit interface declaration —
+see [`../../architecture/csharp.md`](../../architecture/csharp.md) for
+why that's a real, nominal-typing requirement here, not just syntax.
 
 The same case the spec's own diagram shows — 2 of 3 needed, the third
 sub-rule fails:
 
 ```csharp
-static Task<RuleResult> Rule1(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
+static Task<RuleResult> Rule1(Dictionary<string, object?> context, CancellationToken cancellationToken = default) =>
     Task.FromResult(new RuleResult("rule_1", true));
 
-static Task<RuleResult> Rule2(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
+static Task<RuleResult> Rule2(Dictionary<string, object?> context, CancellationToken cancellationToken = default) =>
     Task.FromResult(new RuleResult("rule_2", true));
 
-static Task<RuleResult> Rule3(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
+static Task<RuleResult> Rule3(Dictionary<string, object?> context, CancellationToken cancellationToken = default) =>
     Task.FromResult(new RuleResult("rule_3", false));
 
-var atLeastTwo = new ThresholdRule("at_least_two", new IRule[]
+var atLeastTwo = new ThresholdRule<Dictionary<string, object?>>("at_least_two", new IRule<Dictionary<string, object?>>[]
 {
-    new FunctionRule("rule_1", Rule1),
-    new FunctionRule("rule_2", Rule2),
-    new FunctionRule("rule_3", Rule3),
+    new FunctionRule<Dictionary<string, object?>>("rule_1", Rule1),
+    new FunctionRule<Dictionary<string, object?>>("rule_2", Rule2),
+    new FunctionRule<Dictionary<string, object?>>("rule_3", Rule3),
 }, minimum: 2);
 
 var result = await atLeastTwo.EvaluateAsync(new Dictionary<string, object?>());
@@ -83,7 +83,30 @@ Console.WriteLine($"{result.Passed} {result.Detail}");
 // True 2 of 3 passed, needed 2
 ```
 
+`ThresholdRule<TContext>` binds every direct sub-rule to the same
+`TContext` — but a sub-rule can be a
+[`ProjectingRule`](../reusing-a-rule-across-contexts/csharp.md), which
+itself satisfies `IRule<TContext>` while its wrapped rule reads a
+narrower, different type internally. The combinator stays bound to one
+context; what its sub-rules actually read does not have to match:
+
+```csharp
+var verifiedRule = new FunctionRule<UserFlag>("is_verified_user", IsVerifiedUser); // reads UserFlag
+var checkoutVerified = new ProjectingRule<OrderContext, UserFlag>(
+    verifiedRule, ctx => new UserFlag(ctx.IsVerified));
+
+var qualifies = new ThresholdRule<OrderContext>("qualifies", new IRule<OrderContext>[]
+{
+    checkoutVerified, // reads UserFlag internally, via the projection
+    new FunctionRule<OrderContext>("has_promo_code", HasPromoCode), // reads OrderContext directly
+}, minimum: 2);
+```
+
 ## Related
 
 - [`README.md`](README.md) — the language-agnostic scenario this page
   implements.
+- [`../reusing-a-rule-across-contexts/csharp.md`](../reusing-a-rule-across-contexts/csharp.md) —
+  `ProjectingRule` itself, used above to mix a sub-rule reading a
+  narrower context into a `ThresholdRule<TContext>` bound to a wider
+  one.
