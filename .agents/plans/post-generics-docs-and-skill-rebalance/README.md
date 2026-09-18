@@ -66,15 +66,27 @@
   choice. One new `employee-bonus-eligibility` adherence eval added
   per language (27 total now), assembled and validated.
 
+- Language packages bumped to `0.3.1` (all four), skill bumped to
+  `0.6.1` — `CHANGELOG.md` entries added, shipped GitHub links
+  re-pinned to the new tags via `scripts/check_shipped_links.py --fix`
+  (27 links across 6 files), `js/package-lock.json` regenerated.
+- Final full-suite verification across all four languages: Python
+  650 tests, JS 33+54 tests plus `tsc --noEmit` clean, C# 650 tests
+  across three test projects with `-warnaserror` clean, Dart 54+557+32
+  tests with `dart analyze` clean. The skill itself rebuilt
+  (`scripts/build.sh`) and its package contents spot-checked
+  (`fetch-docs.sh`, `fetch-catalog.tsv`, and the compressed
+  `MANIFEST.toml` all bundle correctly).
+
 **Not yet done, still in this PR's scope (no deferring, per explicit
 instruction):**
 
-- Language package version bump to `0.3.1` and skill version bump to
-  `0.6.1`, per the user's own instruction once the comment-trim scope
-  was discovered ("this needs fixing in this PR itself, so it will cut
-  a v0.3.1 release for all, along with skill v0.6.1").
-- Final full-suite verification across all four languages plus the
-  eval runs (§4), before push and merge.
+- The haiku-model eval validation pass (§4's own closing paragraph) —
+  now that everything else above has landed and is committed.
+- Push the branch, confirm CI is green, and get explicit sign-off
+  before merging (this repo's `main` requires PR review; either normal
+  review or an explicit user-authorized admin-merge bypass, as was
+  done for PR #94 earlier in this program).
 
 ## 1 · Docs dict-bias (an agent-facing risk, not a human-facing one)
 
