@@ -21,6 +21,11 @@ Prints a detailed lookup for one student, then a batch verdict for all
 8 — one engine and one `graduates` composite, built once, applied to
 every record.
 
+Opening this file in VS Code right after cloning and seeing "Import
+`verdict` could not be resolved" on the import line isn't a packaging
+bug — see [`../../AGENTS.md`](../../AGENTS.md#layout) for why and the
+checked-in fix.
+
 ## Test it
 
 ```bash

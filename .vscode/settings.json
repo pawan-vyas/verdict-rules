@@ -14,5 +14,20 @@
     "LICENSE.md": "ignore",
     "LICENSE": "ignore",
     "CODEOWNERS": "ignore",
-  }
+  },
+
+  // `python/` is a uv workspace with its own `.venv`, one level below this
+  // repo's own root -- Pylance's own workspace-root auto-detection doesn't
+  // look inside `python/` for it, so without this, every file under
+  // `python/` (source, tests, examples) shows a false "Import could not be
+  // resolved" on `from verdict import ...` even though `uv run` resolves it
+  // correctly. Only affects someone working in this repo itself (this repo's
+  // own `.venv`, not a downstream `pip install verdict-rules`, which needs
+  // none of this). `python/AGENTS.md` documents `uv sync` as the setup step
+  // that creates this exact interpreter.
+  "python.defaultInterpreterPath": "${workspaceFolder}/python/.venv/bin/python",
+  // Windows' `uv` creates `python/.venv/Scripts/python.exe` instead -- the
+  // path above won't resolve there. Use "Python: Select Interpreter" and
+  // point it at that `.venv` once instead of editing this file.
+  "python.analysis.extraPaths": ["python/packages/verdict-rules/src"]
 }
