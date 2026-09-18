@@ -115,8 +115,7 @@ that are easy to skip:
 ## Fetching the deeper documents
 
 ```bash
-VERSION=$(node -p "require('verdict-rules/package.json').version")
-scripts/fetch-docs.sh js "$VERSION"
+scripts/fetch-docs.sh js
 ```
 
 See [`commands/verdict-fetch-docs.md`](../../commands/verdict-fetch-docs.md).

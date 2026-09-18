@@ -6,12 +6,8 @@ namespace GraduationVerdict;
 /// Passes if at least <paramref name="minimum"/> of the given sub-rules pass.
 /// </summary>
 /// <remarks>
-/// Same shape as verdict-rules' docs/extending/new-rule-shape/
-/// (<c>ThresholdRule</c>) -- not part of verdict-rules itself, a
-/// consumer-defined combinator for a requirement <see cref="AndRule"/>/
-/// <see cref="OrRule"/> can't express directly. Evaluates every sub-rule
-/// unconditionally (no short-circuit is possible for a threshold count),
-/// unlike <see cref="AndRule"/>/<see cref="OrRule"/>.
+/// Not part of verdict-rules itself; see docs/extending/new-rule-shape/.
+/// Evaluates every sub-rule unconditionally.
 /// </remarks>
 public sealed class AtLeastNRule(string name, IReadOnlyList<IRule> rules, int minimum, string? group = null) : IRule
 {

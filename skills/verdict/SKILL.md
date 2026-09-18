@@ -37,34 +37,19 @@ Then look for `references/<language>/agent-notes.md`:
 These hold in every language, and getting one wrong produces code that
 passes its own tests while being silently incorrect:
 
-- **Sequential evaluation, never concurrent.** Composites evaluate
-  sub-rules one at a time and stop the moment the outcome is decided, so
-  later work never *starts*. Never reach for the language's
-  run-these-together primitive (`asyncio.gather`, `Promise.all`,
-  `Task.WhenAll`, `Future.wait`) — the returned boolean is identical
-  either way, which is exactly why this breaks silently.
-- **Vacuous truth has a polarity.** An empty `AndRule` passes; an empty
-  `OrRule` fails. Deliberately asymmetric.
-- **Emptiness is not absence.** An empty rule list folds to its
-  identity. An *unknown* rule name or group label is a lookup that
-  matched nothing — the strict lookups raise, and the `try`-prefixed
-  ones return the language's absent value instead, so a caller decides
-  what absence means.
-- **Result payloads are opaque.** Verdict never reads a result's `data`,
-  and a composite's own results carry only what actually ran — never
-  padded, never flattened into the parent.
-- **A predicate's own exception is never caught.** It propagates out of
-  whichever call is running, same as calling that code directly with
-  nothing in between — an "engine" invites the opposite assumption, so
-  say this plainly rather than let a consumer discover it in production
-  when one flaky check takes the rest of a rule set's diagnostics with
-  it. If a task needs one predicate's failure isolated from the others,
-  that is a wrapper the caller opts into per rule
-  ([`extending/isolating-flaky-predicates/`](../../docs/extending/isolating-flaky-predicates/README.md),
-  fetched on demand)
-  — never a blanket default, since the same catch-everything
-  behavior would also turn a genuine bug into a silent, wrong "this rule
-  failed" instead of a stack trace pointing at it.
+- **Sequential, never concurrent.** Composites stop at the first
+  decided outcome. Never use `asyncio.gather`/`Promise.all`/
+  `Task.WhenAll`/`Future.wait` — the boolean is identical either way,
+  which is why this breaks silently.
+- **Vacuous truth is asymmetric.** Empty `AndRule` passes; empty
+  `OrRule` fails.
+- **Emptiness is not absence.** An empty rule list is a valid input. An
+  *unknown* name or group is absence — strict lookups raise,
+  `try`-prefixed ones return the absent value.
+- **Result `data` is opaque and unpadded.** Never read by verdict;
+  composite results include only what actually ran.
+- **A predicate's exception is never caught.** It propagates uncaught,
+  same as calling that code directly.
 
 ## Step 3 — read what the task needs
 

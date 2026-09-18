@@ -151,8 +151,7 @@ skip:
 ## Fetching the deeper documents
 
 ```bash
-VERSION=$(grep -m1 'PackageReference Include="VerdictRules"' path/to/YourProject.csproj | sed -E 's/.*Version="([^"]+)".*/\1/')
-scripts/fetch-docs.sh csharp "$VERSION"
+scripts/fetch-docs.sh csharp
 ```
 
 See [`commands/verdict-fetch-docs.md`](../../commands/verdict-fetch-docs.md).

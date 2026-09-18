@@ -142,12 +142,8 @@ skip:
 
 ## Fetching the deeper documents
 
-Read from `pubspec.lock`, not `pubspec.yaml`'s `dependencies:` — a caret
-constraint like `^0.0.2` names a range, not the resolved version:
-
 ```bash
-VERSION=$(awk '/^  verdict_rules:/{found=1} found && /version:/{print $2; exit}' pubspec.lock | tr -d '"')
-scripts/fetch-docs.sh dart "$VERSION"
+scripts/fetch-docs.sh dart
 ```
 
 See [`commands/verdict-fetch-docs.md`](../../commands/verdict-fetch-docs.md).

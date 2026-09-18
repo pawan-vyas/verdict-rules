@@ -96,8 +96,7 @@ skip:
 ## Fetching the deeper documents
 
 ```bash
-VERSION=$(python -c "import importlib.metadata as m; print(m.version('verdict-rules'))")
-scripts/fetch-docs.sh python "$VERSION"
+scripts/fetch-docs.sh python
 ```
 
 See [`commands/verdict-fetch-docs.md`](../../commands/verdict-fetch-docs.md).
