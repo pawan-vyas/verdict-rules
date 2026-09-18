@@ -162,8 +162,7 @@ public class ComplianceCatalogTests
     public async Task ANewFlagIsAdditiveNotASharedContextChange()
     {
         // Registering a fourth check needs no change to SellerListingContext,
-        // BuyerPurchaseContext, or any existing flag -- the whole point of
-        // keeping this side dict-context.
+        // BuyerPurchaseContext, or any existing flag.
         var extended = new RulesEngine(
         [
             new FunctionRule("high_value_flag", (ctx, _) =>
