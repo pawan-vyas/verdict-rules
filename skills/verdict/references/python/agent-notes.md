@@ -13,11 +13,7 @@ pip install verdict-rules
 from verdict import AndRule, FunctionRule, OrRule, Rule, RuleResult, RulesEngine, RunResult
 ```
 
-The distribution is **`verdict-rules`**; the import is **`verdict`**.
-The plain name was taken on PyPI, so the two differ — the same split as
-`beautifulsoup4` → `bs4`. Add `verdict-rules` to the project's own
-dependency list before writing code against it; an import working in one
-file is not evidence it is declared.
+> Note: The distribution is **`verdict-rules`**; the import is **`verdict`**.
 
 ## The API, in one screen
 
