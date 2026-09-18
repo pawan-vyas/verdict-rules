@@ -39,9 +39,19 @@ detect_version() {
       [ -n "$lockfile" ] && awk '/^  verdict_rules:/{found=1} found && /version:/{print $2; exit}' "$lockfile" | tr -d '"'
       ;;
     csharp)
-      local csproj
+      local csproj inline
       csproj="$(grep -rl 'PackageReference Include="VerdictRules"' --include='*.csproj' . 2>/dev/null | head -1)"
-      [ -n "$csproj" ] && grep -m1 'PackageReference Include="VerdictRules"' "$csproj" | sed -E 's/.*Version="([^"]+)".*/\1/'
+      [ -n "$csproj" ] || return 0
+      inline="$(grep -m1 'PackageReference Include="VerdictRules"' "$csproj" | grep -oE 'Version="[^"]+"' | sed -E 's/Version="([^"]+)"/\1/')"
+      if [ -n "$inline" ]; then
+        printf '%s' "$inline"
+      else
+        # Central Package Management: the csproj's own PackageReference carries no
+        # inline version -- it lives in a Directory.Packages.props instead.
+        local props
+        props="$(grep -rl 'PackageVersion Include="VerdictRules"' --include='Directory.Packages.props' . 2>/dev/null | head -1)"
+        [ -n "$props" ] && grep -m1 'PackageVersion Include="VerdictRules"' "$props" | grep -oE 'Version="[^"]+"' | sed -E 's/Version="([^"]+)"/\1/'
+      fi
       ;;
   esac
 }
