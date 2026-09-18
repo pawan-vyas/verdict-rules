@@ -71,6 +71,48 @@ that matter, and why:
 >    engine was configured with, regardless of how deep any individual
 >    rule's own internal composition goes.
 
+### Generic context
+
+`Rule` is generic over the context it reads from (`TContext`) in every
+language, added on top of the type structure above without changing
+any of it — `FunctionRule`, `AndRule`, `OrRule`, and `RulesEngine` are
+each generic the same way. Each language's own mechanics differ
+genuinely (arity-coexisting interfaces in C#, no default type parameter
+in TypeScript, erased-at-runtime `Protocol[TContext]` in Python, one
+real breaking migration in Dart) — see that language's own file in this
+directory for the concrete realization — but the design decisions below
+are identical everywhere:
+
+- **Dict-context stays first-class, permanently — never an "escape
+  hatch."** A rule meant to be reused across genuinely different
+  aggregate shapes (a fact whose nesting path differs between a
+  checkout flow and an onboarding flow, say) is naturally served by an
+  untyped context; a strictly-typed rule would need an explicit
+  projecting adapter at every reuse site instead — see
+  [`../extending/reusing-a-rule-across-contexts/README.md`](../extending/reusing-a-rule-across-contexts/README.md).
+- **A composite requires every sub-rule to share the exact same
+  `TContext`.** This is the real guarantee typing the leaf buys over
+  dict-context: two rules secretly expecting different shapes of an
+  untyped context can be combined today and only fail at runtime on a
+  missing field; once `TContext` is a concrete type, that mismatch is
+  caught before the composite ever runs.
+- **`RuleResult`/`RunResult` stay non-generic.** Context is input, read
+  at every predicate call site; a result's data payload is output,
+  written once and already documented as opaque. A composite's own data
+  already holds a list of sub-results, each potentially carrying an
+  unrelated domain object in its own data — genericizing that field
+  would force every rule that might ever compose under one `AndRule` to
+  share a single data type, which real, already-shipped code
+  contradicts (see
+  [`../extending/domain-adapter-module/`](../extending/domain-adapter-module/README.md)).
+- **The registry/catalog boundary — a fully heterogeneous, runtime-
+  string-keyed set of independently-typed rules looked up by name — is
+  explicitly out of scope for typing.** No generics design in any
+  language makes that lookup fully static, because the type information
+  doesn't exist until the name is read. `RulesEngine<TContext>` serves
+  the cohesive, single-context case; a plain, untyped `RulesEngine`
+  remains the answer for a genuinely heterogeneous catalog.
+
 ## Execution model: sequential, not concurrent
 
 Composites evaluate their sub-rules one at a time, in the order given —

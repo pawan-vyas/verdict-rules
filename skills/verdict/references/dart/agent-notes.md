@@ -26,14 +26,16 @@ the import path segment are the same word.
 ## The API, in one screen
 
 ```dart
-abstract interface class Rule {           // nominal -- must `implements Rule` explicitly
+typedef Context = Map<String, Object?>;    // the dict-context spelling of TContext
+
+abstract interface class Rule<TContext> { // nominal -- must `implements Rule<TContext>` explicitly
   String get name;
   String? get group;
-  Future<RuleResult> evaluate(Map<String, Object?> context);
+  Future<RuleResult> evaluate(TContext context);
 }
-typedef RulePredicate = Future<RuleResult> Function(Map<String, Object?> context);
+typedef RulePredicate<TContext> = Future<RuleResult> Function(TContext context);
 
-FunctionRule(name, predicate, {group})     // wraps a plain async predicate
+FunctionRule(name, predicate, {group})     // wraps a plain async predicate (TContext inferred)
 AndRule(name, rules, {group})              // passes only if every sub-rule passes
 OrRule(name, rules, {group})               // passes as soon as one does
 
@@ -51,6 +53,16 @@ constructors, not interfaces to satisfy — construct them directly:
 `RuleResult(ruleName: name, passed: true, detail: '', data: null)` and
 `RunResult(passed: true, results: [...])`.
 
+**A typed, non-dict context** reaches for the same `FunctionRule`/
+`AndRule`/`OrRule`/`RulesEngine` — `TContext` is a type parameter on
+each, not a separate name. `TContext` is usually inferred from the
+predicate's own parameter type at a constructor call site
+(`FunctionRule('x', predicate)` needs no type argument as long as
+`predicate` is typed), so most call sites are unaffected by which
+context a rule reads from. Every sub-rule inside one `AndRule<TContext>`/
+`OrRule<TContext>` must be a `Rule` of the exact same `TContext` — the
+analyzer rejects mixing contexts once a type argument is named.
+
 ## Mistakes that show up in generated Dart specifically
 
 - **`Future.wait` in a composite.** It starts every sub-rule's
@@ -59,24 +71,34 @@ constructors, not interfaces to satisfy — construct them directly:
   plain `for` loop with `await`, one at a time — the returned boolean
   is identical either way, so this is the one mistake here that passes
   its own tests.
-- **Forgetting `implements Rule`.** Dart *does* have structural typing
-  — for function types. Any function matching `RulePredicate` is a
-  rule through `FunctionRule`, with nothing declared and no type to
-  name; a tear-off works directly, as `FunctionRule('quorum',
-  hasQuorum)`. What Dart lacks is structural typing for a
-  *multi-member* interface: an object carrying `name`, `group` and
-  `evaluate` is not thereby a `Rule`, where Python's `Protocol` and
-  TypeScript's structural `interface` would accept it as-is. A rule
-  shape owning its own name and group must say `implements Rule`
-  explicitly. That's why `FunctionRule` carries more weight in this
-  SDK than in Python/JS — it's the escape hatch back to shape-based
-  rules, and most rules should use it rather than declaring a type.
-- **`extends Rule` instead of `implements Rule`.** `Rule` is declared
-  `abstract interface class` specifically to forbid extension — this
-  is a compile error, so an agent won't get it silently wrong, but
-  it's worth knowing why: forbidding extension means an instance
-  method calling another method on `this` always reaches a known
-  implementation, never landing in a consumer's override.
+- **Forgetting `implements Rule<TContext>`.** Dart *does* have
+  structural typing — for function types. Any function matching
+  `RulePredicate` is a rule through `FunctionRule`, with nothing
+  declared and no type to name; a tear-off works directly, as
+  `FunctionRule('quorum', hasQuorum)`. What Dart lacks is structural
+  typing for a *multi-member* interface: an object carrying `name`,
+  `group` and `evaluate` is not thereby a `Rule`, where Python's
+  `Protocol` and TypeScript's structural `interface` would accept it
+  as-is. A rule shape owning its own name and group must say
+  `implements Rule<Context>` (or `implements Rule<SomeTypedContext>`)
+  explicitly — there is no default type parameter to fall back on, so
+  a bare `implements Rule` no longer compiles on its own. That's why
+  `FunctionRule` carries more weight in this SDK than in Python/JS —
+  it's the escape hatch back to shape-based rules, and most rules
+  should use it rather than declaring a type.
+- **`extends Rule<TContext>` instead of `implements Rule<TContext>`.**
+  `Rule` is declared `abstract interface class` specifically to forbid
+  extension — this is a compile error, so an agent won't get it
+  silently wrong, but it's worth knowing why: forbidding extension
+  means an instance method calling another method on `this` always
+  reaches a known implementation, never landing in a consumer's
+  override.
+- **Mixing sub-rules of different `TContext`s inside one
+  `AndRule<TContext>`/`OrRule<TContext>`.** The analyzer rejects this
+  once a type argument is named — reuse a rule across two shapes via an
+  explicit projecting adapter
+  (`docs/extending/reusing-a-rule-across-contexts/dart.md`) instead of
+  trying to loosen the composite's own type parameter.
 - **A predicate returning a bare `bool`.** `FunctionRule`'s predicate
   must return `Future<RuleResult>`, not `true`/`false`.
 - **Checking `result.detail != null`.** `RuleResult.detail` is a

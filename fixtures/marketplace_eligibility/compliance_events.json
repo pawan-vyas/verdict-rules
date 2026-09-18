@@ -1,0 +1,46 @@
+{
+  "event_high_value": {
+    "note": "Only the amount is unusual.",
+    "amount_cents": 60000,
+    "country": "us",
+    "seller_age_days": 200,
+    "expected": {
+      "high_value_flag": true,
+      "blocked_country_flag": false,
+      "new_seller_flag": false
+    }
+  },
+  "event_blocked_country": {
+    "note": "Only the country is unusual.",
+    "amount_cents": 10000,
+    "country": "ir",
+    "seller_age_days": 200,
+    "expected": {
+      "high_value_flag": false,
+      "blocked_country_flag": true,
+      "new_seller_flag": false
+    }
+  },
+  "event_new_seller": {
+    "note": "Only the seller's age is unusual.",
+    "amount_cents": 10000,
+    "country": "us",
+    "seller_age_days": 10,
+    "expected": {
+      "high_value_flag": false,
+      "blocked_country_flag": false,
+      "new_seller_flag": true
+    }
+  },
+  "event_clean": {
+    "note": "Nothing unusual -- every flag independently false.",
+    "amount_cents": 10000,
+    "country": "us",
+    "seller_age_days": 200,
+    "expected": {
+      "high_value_flag": false,
+      "blocked_country_flag": false,
+      "new_seller_flag": false
+    }
+  }
+}

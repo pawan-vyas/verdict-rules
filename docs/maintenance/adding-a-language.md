@@ -143,6 +143,15 @@ belongs in `.agents/scratch/`, not in the repo's public surfaces.
       additive
 - [ ] All seven types: `Rule`, `FunctionRule`, `AndRule`, `OrRule`,
       `RulesEngine`, `RuleResult`, `RunResult`
+- [ ] **`Rule` and the types that hold it are generic over the context
+      they read (`Rule<TContext>` or that language's own idiom for it)
+      from the first commit** — this is the settled cross-language
+      shape, not a later addition. A plain-dict context stays first
+      class (see [`../architecture/README.md`](../architecture/README.md#generic-context));
+      it is just the dict-typed instance of the same generic type, never
+      a separate non-generic `Rule` that a future PR has to migrate.
+      `RuleResult`/`RunResult` stay non-generic — see the same section
+      for why
 - [ ] **Sequential evaluation**, in a plain loop with `await` — never
       the language's "run these concurrently" primitive. See
       [`../architecture/`](../architecture/README.md)

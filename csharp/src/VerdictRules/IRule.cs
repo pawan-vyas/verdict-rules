@@ -1,7 +1,9 @@
 namespace VerdictRules;
 
 /// <summary>
-/// The contract every rule satisfies.
+/// The contract every dict-context rule satisfies — a closed specialization
+/// of <see cref="IRule{TContext}"/> over
+/// <see cref="IReadOnlyDictionary{TKey, TValue}"/>, not an independent type.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -20,27 +22,22 @@ namespace VerdictRules;
 /// escape hatch back to shape-based rules, and most rules should use it
 /// rather than declaring a type.
 /// </para>
+/// <para>
+/// <c>IRule</c> and <c>IRule&lt;TContext&gt;</c> coexist as independent types
+/// differentiated by generic arity, the same relationship
+/// <see cref="IComparer{T}"/> has to the non-generic <c>IComparer</c> in the
+/// BCL — not the direction <c>IEnumerable&lt;T&gt; : IEnumerable</c> takes,
+/// which only works because that interface's type parameter sits in
+/// covariant/output position. <c>TContext</c> here is in input position
+/// (a parameter to <see cref="IRule{TContext}.EvaluateAsync"/>), so the
+/// only sound relationship is this one: closing the open generic to a
+/// concrete type. This is fully additive — every existing <c>: IRule</c>
+/// implementation keeps compiling unchanged, because its own
+/// <c>EvaluateAsync(IReadOnlyDictionary&lt;string, object?&gt;, ...)</c>
+/// already satisfies <see cref="IRule{TContext}"/> once <c>TContext</c> is
+/// closed to that same dictionary type.
+/// </para>
 /// </remarks>
-public interface IRule
+public interface IRule : IRule<IReadOnlyDictionary<string, object?>>
 {
-    /// <summary>
-    /// Unique identifier for this rule, used for engine lookups and to
-    /// attribute a <see cref="RuleResult"/> back to its source.
-    /// </summary>
-    string Name { get; }
-
-    /// <summary>
-    /// Optional group label. Rules sharing one can be run together.
-    /// </summary>
-    string? Group { get; }
-
-    /// <summary>Evaluates this rule against <paramref name="context"/>.</summary>
-    /// <param name="context">The facts this rule's predicate reads from.</param>
-    /// <param name="cancellationToken">
-    /// Observed between sub-rules by every composite and by
-    /// <see cref="RulesEngine"/>'s own run methods; whether a leaf rule's own
-    /// predicate observes it depends on that predicate's implementation.
-    /// </param>
-    /// <returns>The outcome, attributed back to this rule by <see cref="Name"/>.</returns>
-    Task<RuleResult> EvaluateAsync(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default);
 }

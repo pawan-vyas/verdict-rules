@@ -42,13 +42,23 @@ python/
                             docs/, src/verdict/, tests/
 ```
 
-Two things the workspace changes, both easy to get wrong:
+Three things the workspace changes, all easy to get wrong:
 
 - **`uv build` needs `--package verdict-rules`.** The root has no `[project]`,
   so a bare `uv build` tries to build the root and emits a garbage
   `packages-0.0.0` artifact rather than failing cleanly.
 - **Build output lands in `python/dist/`**, the workspace root's, not the
   member's.
+- **A fresh clone shows "Import could not be resolved" in VS Code/Pylance**
+  on every `from verdict import ...`, even after `uv sync` — Pylance's own
+  workspace-root auto-detection doesn't look one level down into `python/`
+  for the `.venv` `uv sync` creates there. The repo-root
+  [`.vscode/settings.json`](../.vscode/settings.json) points
+  `python.defaultInterpreterPath` at it, which fixes this on macOS/Linux/WSL
+  automatically; on native Windows (`.venv/Scripts/python.exe` instead of
+  `.venv/bin/python`), use "Python: Select Interpreter" once instead. Only
+  affects someone working in this repo — a downstream `pip install
+  verdict-rules` needs none of this.
 
 ## Conventions
 

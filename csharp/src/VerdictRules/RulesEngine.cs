@@ -13,10 +13,10 @@ public sealed class RulesEngine
     /// <summary>Every registered rule, in registration order.</summary>
     private readonly IReadOnlyList<IRule> _rules;
 
-    /// <summary>Registered rules, indexed by <see cref="IRule.Name"/> for <see cref="TryRunNamedAsync"/>.</summary>
+    /// <summary>Registered rules, indexed by <see cref="IRule{TContext}.Name"/> for <see cref="TryRunNamedAsync"/>.</summary>
     private readonly Dictionary<string, IRule> _byName;
 
-    /// <summary>Registered rules, bucketed by <see cref="IRule.Group"/> for <see cref="TryRunGroupAsync"/>.</summary>
+    /// <summary>Registered rules, bucketed by <see cref="IRule{TContext}.Group"/> for <see cref="TryRunGroupAsync"/>.</summary>
     private readonly Dictionary<string, List<IRule>> _byGroup;
 
     /// <summary>Creates an engine over the given rules, in order.</summary>
@@ -103,9 +103,9 @@ public sealed class RulesEngine
     /// <see cref="RuleResult.Passed"/> false.
     /// </para>
     /// </remarks>
-    /// <param name="name">The rule name to look up, matching some <see cref="IRule.Name"/>.</param>
+    /// <param name="name">The rule name to look up, matching some <see cref="IRule{TContext}.Name"/>.</param>
     /// <param name="context">The facts the matched rule's predicate reads from.</param>
-    /// <param name="cancellationToken">Forwarded to the matched rule's own <see cref="IRule.EvaluateAsync"/>.</param>
+    /// <param name="cancellationToken">Forwarded to the matched rule's own <see cref="IRule{TContext}.EvaluateAsync"/>.</param>
     /// <returns>The rule's outcome, or <c>null</c> if <paramref name="name"/> matches no rule.</returns>
     public async Task<RuleResult?> TryRunNamedAsync(string name, IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
     {
@@ -124,9 +124,9 @@ public sealed class RulesEngine
     /// immediately. Use <see cref="TryRunNamedAsync"/> when absence is a state
     /// your own domain has an answer for.
     /// </remarks>
-    /// <param name="name">The rule name to look up, matching some <see cref="IRule.Name"/>.</param>
+    /// <param name="name">The rule name to look up, matching some <see cref="IRule{TContext}.Name"/>.</param>
     /// <param name="context">The facts the matched rule's predicate reads from.</param>
-    /// <param name="cancellationToken">Forwarded to the matched rule's own <see cref="IRule.EvaluateAsync"/>.</param>
+    /// <param name="cancellationToken">Forwarded to the matched rule's own <see cref="IRule{TContext}.EvaluateAsync"/>.</param>
     /// <returns>The rule's outcome.</returns>
     /// <exception cref="KeyNotFoundException">No rule has this name.</exception>
     public async Task<RuleResult> RunNamedAsync(string name, IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
@@ -154,7 +154,7 @@ public sealed class RulesEngine
     /// a misspelled group silently approves.
     /// </para>
     /// </remarks>
-    /// <param name="group">The group label to look up, matching some <see cref="IRule.Group"/>.</param>
+    /// <param name="group">The group label to look up, matching some <see cref="IRule{TContext}.Group"/>.</param>
     /// <param name="context">The facts every rule in the matched group reads from.</param>
     /// <param name="cancellationToken">Checked between rules, so a cancellation raised mid-run stops before the next rule starts.</param>
     /// <returns>The group's aggregate result, or <c>null</c> if <paramref name="group"/> matches no rule.</returns>
@@ -184,7 +184,7 @@ public sealed class RulesEngine
     /// has an answer for. This is the one place the package is strict:
     /// emptiness folds to an identity, absence is an error.
     /// </remarks>
-    /// <param name="group">The group label to look up, matching some <see cref="IRule.Group"/>.</param>
+    /// <param name="group">The group label to look up, matching some <see cref="IRule{TContext}.Group"/>.</param>
     /// <param name="context">The facts every rule in the matched group reads from.</param>
     /// <param name="cancellationToken">Checked between rules, so a cancellation raised mid-run stops before the next rule starts.</param>
     /// <returns>The group's aggregate result.</returns>

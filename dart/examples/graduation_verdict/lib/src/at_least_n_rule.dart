@@ -8,22 +8,22 @@ import 'package:verdict_rules/verdict_rules.dart';
 /// express directly. Evaluates every sub-rule unconditionally (no
 /// short-circuit is possible for a threshold count), unlike
 /// [AndRule]/[OrRule].
-class AtLeastNRule implements Rule {
+class AtLeastNRule implements Rule<Context> {
   @override
   final String name;
 
   @override
   final String? group;
 
-  final List<Rule> _rules;
+  final List<Rule<Context>> _rules;
   final int _minimum;
 
-  AtLeastNRule(this.name, List<Rule> rules, int minimum, {this.group})
+  AtLeastNRule(this.name, List<Rule<Context>> rules, int minimum, {this.group})
       : _rules = rules,
         _minimum = minimum;
 
   @override
-  Future<RuleResult> evaluate(Map<String, Object?> context) async {
+  Future<RuleResult> evaluate(Context context) async {
     final subResults = <RuleResult>[];
     for (final rule in _rules) {
       subResults.add(await rule.evaluate(context));

@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, Callable
 
 from verdict import AndRule, FunctionRule, OrRule, Rule, RuleResult, RulesEngine
 
@@ -61,13 +62,15 @@ class AtLeastNRule:
     threshold count), unlike `AndRule`/`OrRule`.
     """
 
-    def __init__(self, name: str, rules: list[Rule], minimum: int, group: str | None = None) -> None:
+    def __init__(
+        self, name: str, rules: list[Rule[dict[str, Any]]], minimum: int, group: str | None = None
+    ) -> None:
         self.name = name
         self.group = group
         self._rules = rules
         self._minimum = minimum
 
-    async def evaluate(self, context: dict) -> RuleResult:
+    async def evaluate(self, context: dict[str, Any]) -> RuleResult:
         sub_results = [await rule.evaluate(context) for rule in self._rules]
         passed_count = sum(1 for r in sub_results if r.passed)
         return RuleResult(
@@ -78,8 +81,8 @@ class AtLeastNRule:
         )
 
 
-def _written_rule(policy: SubjectPolicy, *, name: str) -> FunctionRule:
-    async def predicate(context: dict) -> RuleResult:
+def _written_rule(policy: SubjectPolicy, *, name: str) -> FunctionRule[dict[str, Any]]:
+    async def predicate(context: dict[str, Any]) -> RuleResult:
         pct = context["scores"][policy.subject_id]["written_pct"]
         return RuleResult(
             rule_name=name,
@@ -89,8 +92,8 @@ def _written_rule(policy: SubjectPolicy, *, name: str) -> FunctionRule:
     return FunctionRule(name, predicate)
 
 
-def _practical_rule(policy: SubjectPolicy, *, name: str) -> FunctionRule:
-    async def predicate(context: dict) -> RuleResult:
+def _practical_rule(policy: SubjectPolicy, *, name: str) -> FunctionRule[dict[str, Any]]:
+    async def predicate(context: dict[str, Any]) -> RuleResult:
         pct = context["scores"][policy.subject_id]["practical_pct"]
         return RuleResult(
             rule_name=name,
@@ -100,14 +103,44 @@ def _practical_rule(policy: SubjectPolicy, *, name: str) -> FunctionRule:
     return FunctionRule(name, predicate)
 
 
-def _exemption_rule(policy: SubjectPolicy, *, name: str) -> FunctionRule:
-    async def predicate(context: dict) -> RuleResult:
+def _exemption_rule(policy: SubjectPolicy, *, name: str) -> FunctionRule[dict[str, Any]]:
+    async def predicate(context: dict[str, Any]) -> RuleResult:
         exempt = context["scores"][policy.subject_id].get("has_exemption", False)
         return RuleResult(rule_name=name, passed=exempt)
     return FunctionRule(name, predicate)
 
 
-def rule_for_subject(policy: SubjectPolicy) -> Rule:
+def _vocational_subject_rule(policy: SubjectPolicy, sid: str, group: str) -> Rule[dict[str, Any]]:
+    return AndRule(sid, [
+        _written_rule(policy, name=f"{sid}:written"),
+        _practical_rule(policy, name=f"{sid}:practical"),
+    ], group=group)
+
+
+def _language_subject_rule(policy: SubjectPolicy, sid: str, group: str) -> Rule[dict[str, Any]]:
+    if policy.exemption_allowed:
+        return OrRule(sid, [
+            _written_rule(policy, name=f"{sid}:written"),
+            _exemption_rule(policy, name=f"{sid}:exemption"),
+        ], group=group)
+    return FunctionRule(sid, _written_rule(policy, name=sid)._predicate, group=group)
+
+
+def _academic_subject_rule(policy: SubjectPolicy, sid: str, group: str) -> Rule[dict[str, Any]]:
+    return FunctionRule(sid, _written_rule(policy, name=sid)._predicate, group=group)
+
+
+# One builder per subject_type, keyed by the value itself — adding a fifth
+# subject type is a new function plus a new row here, never a new branch in
+# rule_for_subject.
+_SUBJECT_RULE_BUILDERS: dict[str, Callable[[SubjectPolicy, str, str], Rule[dict[str, Any]]]] = {
+    "vocational": _vocational_subject_rule,
+    "language": _language_subject_rule,
+    "academic": _academic_subject_rule,
+}
+
+
+def rule_for_subject(policy: SubjectPolicy) -> Rule[dict[str, Any]]:
     """Turn one subject's policy into a Rule — the shape depends on its type.
 
     Args:
@@ -126,31 +159,17 @@ def rule_for_subject(policy: SubjectPolicy) -> Rule:
     group = "elective" if policy.is_elective else "core"
     sid = policy.subject_id
 
-    if policy.subject_type == "vocational":
-        return AndRule(sid, [
-            _written_rule(policy, name=f"{sid}:written"),
-            _practical_rule(policy, name=f"{sid}:practical"),
-        ], group=group)
-
-    if policy.subject_type == "language":
-        if policy.exemption_allowed:
-            return OrRule(sid, [
-                _written_rule(policy, name=f"{sid}:written"),
-                _exemption_rule(policy, name=f"{sid}:exemption"),
-            ], group=group)
-        return FunctionRule(sid, _written_rule(policy, name=sid)._predicate, group=group)
-
-    if policy.subject_type == "academic":
-        return FunctionRule(sid, _written_rule(policy, name=sid)._predicate, group=group)
-
-    raise ValueError(f"unknown subject_type {policy.subject_type!r} for subject {sid!r}")
+    builder = _SUBJECT_RULE_BUILDERS.get(policy.subject_type)
+    if builder is None:
+        raise ValueError(f"unknown subject_type {policy.subject_type!r} for subject {sid!r}")
+    return builder(policy, sid, group)
 
 
-async def cgpa_met(context: dict) -> RuleResult:
+async def cgpa_met(context: dict[str, Any]) -> RuleResult:
     return RuleResult(rule_name="cgpa_met", passed=context["cgpa"] >= context["cgpa_floor"])
 
 
-async def attendance_met(context: dict) -> RuleResult:
+async def attendance_met(context: dict[str, Any]) -> RuleResult:
     return RuleResult(
         rule_name="attendance_met",
         passed=context["attendance_pct"] >= context["attendance_floor"],
@@ -204,7 +223,7 @@ def load_students(path: Path) -> dict[str, dict]:
 
 def build_graduation_check(
     policies: list[SubjectPolicy], elective_minimum: int
-) -> tuple[RulesEngine, AndRule]:
+) -> tuple[RulesEngine[dict[str, Any]], AndRule[dict[str, Any]]]:
     """Build both structures from one policy list: a diagnostic engine and a fast verdict.
 
     Args:
@@ -228,7 +247,7 @@ def build_graduation_check(
     core_rules = [r for r in subject_rules if r.group == "core"]
     elective_rules = [r for r in subject_rules if r.group == "elective"]
 
-    graduates = AndRule("graduates", [
+    graduates: AndRule[dict[str, Any]] = AndRule("graduates", [
         AndRule("all_core_subjects_pass", core_rules),
         AtLeastNRule("elective_requirement", elective_rules, minimum=elective_minimum),
         FunctionRule("cgpa_met", cgpa_met),

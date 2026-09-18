@@ -11,3 +11,4 @@
 | Project | What it demonstrates |
 | --- | --- |
 | [`graduation_verdict/`](graduation_verdict/README.md) | The full breadth of the engine at once — `FunctionRule`/`AndRule`/`OrRule`, a custom `Rule` shape, all three `RulesEngine` run modes, and data-driven rule construction — against a graduation-eligibility policy. Also doubles as an integration/e2e regression test for `verdict` itself; see the shared [fixture contract](../../fixtures/graduation_verdict/README.md) for how to extend the curriculum. |
+| [`marketplace_eligibility/`](marketplace_eligibility/README.md) | `Rule[TContext]`'s generic-context design — two typed contexts sharing no fields, one rule reused across both via a `ProjectingRule` adapter, and a dict-context catalog coexisting in the same codebase. See the shared [fixture contract](../../fixtures/marketplace_eligibility/README.md) for the data every language's own port asserts against. |

@@ -26,14 +26,15 @@ the namespace are the same word.
 ## The API, in one screen
 
 ```csharp
-public interface IRule {                            // nominal -- must `: IRule` explicitly
+public interface IRule<TContext> {                   // nominal -- must `: IRule<TContext>` explicitly
     string Name { get; }
     string? Group { get; }
-    Task<RuleResult> EvaluateAsync(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default);
+    Task<RuleResult> EvaluateAsync(TContext context, CancellationToken cancellationToken = default);
 }
-public delegate Task<RuleResult> RulePredicate(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default);
+public interface IRule : IRule<IReadOnlyDictionary<string, object?>> { }  // the dict-context closure
+public delegate Task<RuleResult> RulePredicate<TContext>(TContext context, CancellationToken cancellationToken = default);
 
-new FunctionRule(name, predicate, group: null)       // wraps a plain async predicate
+new FunctionRule(name, predicate, group: null)       // wraps a plain async predicate (dict-context)
 new AndRule(name, rules, group: null)                // passes only if every sub-rule passes
 new OrRule(name, rules, group: null)                 // passes as soon as one does
 
@@ -55,6 +56,16 @@ pass a real token when the caller has one (a request-scoped
 to satisfy — construct them directly:
 `new RuleResult(ruleName, passed, detail: "", data: null)` and
 `new RunResult(passed, results)`.
+
+**A typed, non-dict context** reaches for the generic siblings instead:
+`FunctionRule<OrderContext>`, `AndRule<OrderContext>`,
+`OrRule<OrderContext>`, `RulesEngine<OrderContext>` — same names,
+different generic arity, an independent implementation from the
+dict-context forms rather than a wrapper. `TContext` is usually inferred
+from the predicate's own parameter type, so the type argument is rarely
+spelled out at the constructor call site. Every sub-rule inside one
+`AndRule<TContext>`/`OrRule<TContext>` must implement `IRule<TContext>`
+for the exact same `TContext` — the compiler rejects mixing contexts.
 
 ## Mistakes that show up in generated C# specifically
 
@@ -105,6 +116,15 @@ to satisfy — construct them directly:
 - **Missing `ConfigureAwait(false)`** inside a custom `IRule`
   implementation meant to be reusable library code, not application
   code — this package's own source does it on every internal `await`.
+- **Assuming `IRule<TContext> : IRule`.** The inheritance runs the other
+  way: `IRule : IRule<IReadOnlyDictionary<string, object?>>`. A generic
+  `IRule<TContext>` value cannot be passed anywhere a bare `IRule` is
+  expected unless `TContext` is that same dictionary type.
+- **Mixing sub-rules of different `TContext`s inside one
+  `AndRule<TContext>`/`OrRule<TContext>`.** The compiler rejects this —
+  reuse a rule across two shapes via an explicit projecting adapter
+  (`docs/extending/reusing-a-rule-across-contexts/csharp.md`) instead of
+  trying to loosen the composite's own type parameter.
 
 ## Testing what matters
 

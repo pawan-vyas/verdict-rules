@@ -17,17 +17,20 @@ serves as an integration/e2e regression net for `verdict` itself.
 | Spec concept | `graduation_verdict.py` |
 | --- | --- |
 | Policies → the factory function | `load_curriculum()`, `rule_for_subject()` |
-| The three rule shapes | `_written_rule()`, `_practical_rule()`, `_exemption_rule()` compose into whichever shape `rule_for_subject()` returns |
+| The three rule shapes | `_written_rule()`, `_practical_rule()`, `_exemption_rule()` compose into whichever shape each `subject_type`'s own builder returns |
+| Dispatch by `subject_type` | `_SUBJECT_RULE_BUILDERS`, a table of one builder per type — `rule_for_subject()` itself is a lookup, never a branch |
 | The custom at-least-N rule shape | `AtLeastNRule` |
 | The engine and the AND composite, built once | `build_graduation_check()` |
 | The demo's two halves | `_demo()` (the detailed `alice` walkthrough, then the batch loop) |
 
 **Adding a subject of a genuinely new type** — not just a new row of an
-existing type — needs a new branch in `rule_for_subject()`, a real code
-change, since a new *kind* of pass condition is a new concept, not new
-data. Every other curriculum change (a threshold, a new subject of an
-existing type, a student scenario, the elective-count minimum) is a
-data-only edit to the shared fixture — see
+existing type — is a new builder function plus a new entry in
+`_SUBJECT_RULE_BUILDERS`, a real code change, since a new *kind* of pass
+condition is a new concept, not new data — but it's additive: nothing
+existing moves, and `rule_for_subject()` itself never changes. Every
+other curriculum change (a threshold, a new subject of an existing
+type, a student scenario, the elective-count minimum) is a data-only
+edit to the shared fixture — see
 [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md).
 
 ## Related

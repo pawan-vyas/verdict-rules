@@ -14,6 +14,7 @@
 | [`content-moderation-routing/`](content-moderation-routing/README.md) | Auto-publish, queue for review, or auto-reject? |
 | [`data-driven-rule-sets/`](data-driven-rule-sets/README.md) | How do we avoid redeploying every time a business rule changes? |
 | [`graduation-requirement-verdict/`](graduation-requirement-verdict/README.md) | Does this student qualify to graduate? |
+| [`marketplace-eligibility/`](marketplace-eligibility/README.md) | Does this seller's listing or this buyer's purchase clear the bar, and can a compliance rule set flag either without knowing their shape? |
 | [`admin-eligibility-lookup/`](admin-eligibility-lookup/README.md) | Why did this specific customer not qualify, when the check name is user-typed? |
 | [`signup-form-readiness/`](signup-form-readiness/README.md) | Should the "Create account" button be enabled right now? |
 | [`premium-upsell-panel/`](premium-upsell-panel/README.md) | Should we show the upsell panel, without a real-time billing check running on every render? |

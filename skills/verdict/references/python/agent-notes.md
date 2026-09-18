@@ -24,7 +24,7 @@ file is not evidence it is declared.
 ## The API, in one screen
 
 ```python
-Rule                      # Protocol: name, group, async evaluate(context) -> RuleResult
+Rule[TContext]             # Protocol: name, group, async evaluate(context: TContext) -> RuleResult
 FunctionRule(name, predicate, group=None)
 AndRule(name, rules, group=None)          # passes only if every sub-rule passes
 OrRule(name, rules, group=None)           # passes as soon as one does
@@ -37,6 +37,14 @@ await engine.try_run_named(name, context) # -> RuleResult | None
 await engine.try_run_group(group, context)# -> RunResult  | None
 engine.rule_names, engine.group_names     # tuples of what exists
 ```
+
+`Rule` is generic over its context (`TContext`), inferred from a
+predicate's own annotation — `FunctionRule("x", predicate)` needs no
+explicit type argument as long as `predicate` is typed. A plain `dict`
+context (`Rule[dict[str, Any]]`) is exactly as first-class as a typed
+one (a dataclass, a `TypedDict`); default to whichever the rule set
+naturally needs, never assume the typed form is "more correct." Every
+sub-rule inside one `AndRule`/`OrRule` must share the same `TContext`.
 
 `RuleResult(rule_name, passed, detail="", data=None)` and
 `RunResult(passed, results)` are frozen dataclasses.

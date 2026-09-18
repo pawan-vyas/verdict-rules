@@ -11,11 +11,11 @@
 ```bash
 $ cd python/
 $ uv run pytest -q
-...........................................                             [100%]
-43 passed in 0.03s
+............................................................            [100%]
+60 passed in 0.03s
 ```
 
-41 test functions (43 runtime cases once `test_fallback_matrix`'s three
+58 test functions (60 runtime cases once `test_fallback_matrix`'s three
 parametrized cases are counted individually), 100% line coverage,
 sub-tenth-of-a-second runtime. Line coverage alone doesn't prove the
 contracts in [`README.md`](README.md) are actually enforced (a test can
@@ -24,11 +24,13 @@ what the number above doesn't tell you.
 
 **`tests/test_rule.py` and `tests/test_engine.py` are the core contract
 suite — the reference every other language's own suite ports against
-1:1.** `tests/test_python_idioms.py` sits beside them, not inside them:
-it proves something true only because of how Python itself works (see
-its own module docstring), and has no counterpart to port anywhere
-else. Auditing this package's own suite against another language's
-means comparing against the first two files only.
+1:1.** `tests/test_python_idioms.py` and `tests/test_generics.py` sit
+beside them, not inside them: each proves something true only because
+of how Python itself works (see each file's own module docstring —
+implicit truthiness for `test_python_idioms.py`, `TContext`'s generic
+mechanics for `test_generics.py`) and has no counterpart to port
+anywhere else. Auditing this package's own suite against another
+language's means comparing against the first two files only.
 
 **No CI pipeline runs this suite today.** This suite is run manually,
 by whoever is making a change, before it's merged — not automatically
@@ -36,7 +38,7 @@ gated anywhere. That's a real gap, not a deliberate design choice; see
 [`../future_plan.md`](../future_plan.md) if it's ever picked up.
 
 **The second, complementary layer**: `python/examples/graduation_verdict/`
-adds 523 more tests (547 total with the numbers above — 23 curated
+adds 557 more tests (617 total with the numbers above — 57 curated
 scenarios plus a 500-case chaos suite checked against an independent
 oracle), auto-discovered by the same bare `uv run pytest` with no
 configuration. Its own
@@ -54,6 +56,7 @@ graph LR
     RuleTest[["🧪 tests/test_rule.py"]]
     EngineTest[["🧪 tests/test_engine.py"]]
     IdiomTest[["🧪 tests/test_python_idioms.py"]]
+    GenericsTest[["🧪 tests/test_generics.py"]]
     ExampleTest[["🧪 examples/graduation_verdict/<br/>test_graduation_verdict.py"]]
 
     %% Link 0: RuleSrc -> RuleTest
@@ -68,6 +71,8 @@ graph LR
     EngineSrc -.->|"[5]<br/>exercised together,<br/>not in isolation"| ExampleTest
     %% Link 5: EngineSrc -> IdiomTest
     EngineSrc -.->|"[6]<br/>a Python-only idiom,<br/>not a portable contract"| IdiomTest
+    %% Link 6: RuleSrc -> GenericsTest
+    RuleSrc -.->|"[7]<br/>TContext's generic mechanics,<br/>not a portable contract"| GenericsTest
 
     style RuleSrc fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
     style EngineSrc fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
@@ -75,6 +80,7 @@ graph LR
     style RuleTest fill:#FFB84D,stroke:#E69500,stroke-width:2px,color:#000
     style EngineTest fill:#FFB84D,stroke:#E69500,stroke-width:2px,color:#000
     style IdiomTest fill:#B47EFF,stroke:#9654E8,stroke-width:2px,color:#000
+    style GenericsTest fill:#B47EFF,stroke:#9654E8,stroke-width:2px,color:#000
     style ExampleTest fill:#51CF66,stroke:#37B24D,stroke-width:2px,color:#000
 
     %% Link Index:
@@ -83,12 +89,14 @@ graph LR
     %% 2: result.py is a plain frozen dataclass, exercised as a side effect of the above — no behavior of its own to test in isolation
     %% 3-4: the example project exercises both modules together, as a real consumer would, not each in isolation
     %% 5: test_python_idioms.py proves a Python-specific idiom against engine.py's own result types -- not part of the portable contract suite
+    %% 6: test_generics.py proves TContext's Python-specific generic mechanics (erasure, subscription) -- not part of the portable contract suite
     linkStyle 0 stroke:#FFCB7A,stroke-width:2px
     linkStyle 1 stroke:#FFCB7A,stroke-width:2px
     linkStyle 2 stroke:#E0E0E0,stroke-width:2px,stroke-dasharray:5 5
     linkStyle 3 stroke:#7EDB8F,stroke-width:2px,stroke-dasharray:5 5
     linkStyle 4 stroke:#7EDB8F,stroke-width:2px,stroke-dasharray:5 5
     linkStyle 5 stroke:#D0AFFF,stroke-width:2px,stroke-dasharray:5 5
+    linkStyle 6 stroke:#D0AFFF,stroke-width:2px,stroke-dasharray:5 5
 ```
 
 > **Why `result.py` has no dedicated test file**: `RuleResult`/`RunResult`

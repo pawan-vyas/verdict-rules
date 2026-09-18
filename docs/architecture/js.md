@@ -32,32 +32,32 @@ at all: it's not a special case the engine recognizes, it's an ordinary
 
 ```mermaid
 classDiagram
-    class Rule {
+    class Rule~TContext~ {
         <<Interface>>
         +name: string
         +group?: string
-        +evaluate(context: Context)* Promise~RuleResult~
+        +evaluate(context: TContext)* Promise~RuleResult~
     }
-    class FunctionRule {
-        -predicate: RulePredicate
-        +evaluate(context: Context) Promise~RuleResult~
+    class FunctionRule~TContext~ {
+        -predicate: RulePredicate~TContext~
+        +evaluate(context: TContext) Promise~RuleResult~
     }
-    class AndRule {
-        -rules: readonly Rule[]
-        +evaluate(context: Context) Promise~RuleResult~
+    class AndRule~TContext~ {
+        -rules: readonly Rule~TContext~[]
+        +evaluate(context: TContext) Promise~RuleResult~
     }
-    class OrRule {
-        -rules: readonly Rule[]
-        +evaluate(context: Context) Promise~RuleResult~
+    class OrRule~TContext~ {
+        -rules: readonly Rule~TContext~[]
+        +evaluate(context: TContext) Promise~RuleResult~
     }
-    class RulesEngine {
-        -byName: Map~string, Rule~
-        -byGroup: Map~string, Rule[]~
-        +runAll(context: Context) Promise~RunResult~
-        +runNamed(name: string, context: Context) Promise~RuleResult~
-        +runGroup(group: string, context: Context) Promise~RunResult~
-        +tryRunNamed(name: string, context: Context) Promise~RuleResult|undefined~
-        +tryRunGroup(group: string, context: Context) Promise~RunResult|undefined~
+    class RulesEngine~TContext~ {
+        -byName: Map~string, Rule~TContext~~
+        -byGroup: Map~string, Rule~TContext~[]~
+        +runAll(context: TContext) Promise~RunResult~
+        +runNamed(name: string, context: TContext) Promise~RuleResult~
+        +runGroup(group: string, context: TContext) Promise~RunResult~
+        +tryRunNamed(name: string, context: TContext) Promise~RuleResult|undefined~
+        +tryRunGroup(group: string, context: TContext) Promise~RunResult|undefined~
         +ruleNames readonly string[]
         +groupNames readonly string[]
     }
@@ -99,6 +99,66 @@ If code genuinely needs to confirm an unknown value is rule-shaped at
 runtime, that's a plain duck-typed check
 (`typeof x.evaluate === "function"`), not a language feature this
 package can hand over.
+
+## Generic context, concretely
+
+`Rule<TContext>` — and `FunctionRule`, `AndRule`, `OrRule`,
+`RulesEngine` alongside it — is generic over the context it reads from,
+with **no default type parameter**. This was considered and rejected:
+a `Rule<TContext = Context>` default would make "deliberately chose
+dict-context" and "forgot to type this" look identical in source, a
+real inconsistency in a codebase this strict elsewhere (`strict: true`,
+`noUncheckedIndexedAccess: true`). Dict-context is `Rule<Context>`,
+written out every time:
+
+```ts
+import { AndRule, FunctionRule, RulesEngine, type Context } from "verdict-rules";
+
+interface OrderContext {
+  total: number;
+  isMember: boolean;
+}
+
+const orderTotalMet = async (ctx: OrderContext) => ({
+  ruleName: "order_total_met",
+  passed: ctx.total >= 50,
+});
+
+// TContext is inferred from orderTotalMet's own parameter type -- no
+// explicit type argument needed at the constructor call site.
+const rule = new FunctionRule("order_total_met", orderTotalMet);
+
+// A cohesive family of rules sharing one context can now say so:
+const engine = new RulesEngine<OrderContext>([rule]);
+```
+
+**Dict-context stays first-class, permanently — not an "escape hatch."**
+`FunctionRule<Context>`/`RulesEngine<Context>` are exactly as valid as
+any interface-typed rule. A rule meant to be reused across genuinely
+different aggregate shapes — an `isVerifiedUser` check wanted inside
+both a checkout flow and an onboarding flow, where the fact lives at a
+different nesting path in each — is naturally served by dict-context; a
+strictly-typed rule would need an explicit projecting adapter at every
+reuse site (see
+[`../extending/reusing-a-rule-across-contexts/`](../extending/reusing-a-rule-across-contexts/README.md)).
+
+**`AndRule<TContext>`/`OrRule<TContext>` require every sub-rule to
+share the exact same `TContext`** — `tsc` rejects mixing
+`Rule<OrderContext>` and `Rule<SignupContext>` inside one
+`AndRule<OrderContext>` at compile time. This is the real guarantee a
+typed composite buys over dict-context: today, two rules secretly
+expecting different shapes of a plain object can be combined and only
+fail at runtime on a missing property; once typed, that mismatch never
+compiles.
+
+**Why `RuleResult`/`RunResult` stay non-generic.** Context is input,
+read at every predicate call site; `data` is output, written once and
+already documented as opaque — a caller already expects to
+runtime-check its shape. Genericizing `data` would force every rule
+that might ever compose under one `AndRule` to share one `TData`, which
+a composite's own `data` (a `readonly RuleResult[]` of sub-results, each
+possibly carrying an unrelated domain object in its own `data`) already
+contradicts.
 
 ## Execution model, concretely
 

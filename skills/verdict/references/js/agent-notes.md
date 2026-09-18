@@ -31,12 +31,12 @@ install for it.
 ## The API, in one screen
 
 ```ts
-interface Rule {                          // structural — any object of this shape is a Rule
+interface Rule<TContext> {                // structural — any object of this shape is a Rule
   readonly name: string;
   readonly group?: string;
-  evaluate(context: Context): Promise<RuleResult>;
+  evaluate(context: TContext): Promise<RuleResult>;
 }
-type RulePredicate = (context: Context) => Promise<RuleResult>;
+type RulePredicate<TContext> = (context: TContext) => Promise<RuleResult>;
 type Context = Record<string, unknown>;   // never `any`
 
 new FunctionRule(name, predicate, group?)
@@ -82,6 +82,16 @@ and `{ passed, results }`.
   clause is required either.
 - **`ruleName` set to something other than the rule's own `name`.** A
   caller walking a `RunResult` attributes outcomes by that field.
+- **Writing bare `Rule` or `FunctionRule` with no type argument and
+  expecting dict-context.** There is no default type parameter,
+  deliberately — `Rule<Context>`/`FunctionRule<Context>` is the
+  dict-context spelling, written out every time. An untyped `Rule`
+  alone is a type error, not a silent `Rule<Context>`.
+- **Mixing sub-rules of different `TContext`s inside one
+  `AndRule`/`OrRule`.** `tsc` rejects this once a type argument is
+  named — reuse a rule across two shapes via an explicit projecting
+  adapter (`docs/extending/reusing-a-rule-across-contexts/js.md`)
+  instead of loosening the composite's own type.
 
 ## Testing what matters
 

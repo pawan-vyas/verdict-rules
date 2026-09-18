@@ -21,7 +21,7 @@ public sealed class RuleResult(string ruleName, bool passed, string detail = "",
 {
     /// <summary>
     /// Name of the rule this result came from, matching that rule's own
-    /// <see cref="IRule.Name"/>, so a caller walking a <see cref="RunResult"/>
+    /// <see cref="IRule{TContext}.Name"/>, so a caller walking a <see cref="RunResult"/>
     /// can attribute each outcome back to the rule that produced it.
     /// </summary>
     public string RuleName { get; } = ruleName;

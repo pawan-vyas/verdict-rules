@@ -11,6 +11,7 @@
 | Fixture | Proves |
 | --- | --- |
 | [`graduation_verdict/`](graduation_verdict/README.md) | Short-circuiting, vacuous-truth polarity, and emptiness-vs-absence, across a curriculum of subjects, students, and edge-case policies. |
+| [`marketplace_eligibility/`](marketplace_eligibility/README.md) | `Rule<TContext>`'s generic-context design: two typed contexts sharing no fields, one rule reused across both via a `ProjectingRule` adapter, and a dict-context catalog coexisting in the same domain. |
 
 ## Why this directory exists separately from `docs/samples/` and each language's own tree
 

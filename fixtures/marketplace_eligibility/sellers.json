@@ -1,0 +1,42 @@
+{
+  "seller_alice": {
+    "note": "Clean pass -- verified, price above floor, an allowed category.",
+    "seller_verified": true,
+    "listing_price_cents": 500,
+    "category": "books",
+    "expected": {
+      "seller_verified": true,
+      "listing_eligible": true
+    }
+  },
+  "seller_bob": {
+    "note": "Unverified, otherwise perfect -- proves the identity check alone fails him.",
+    "seller_verified": false,
+    "listing_price_cents": 500,
+    "category": "books",
+    "expected": {
+      "seller_verified": false,
+      "listing_eligible": false
+    }
+  },
+  "seller_carla": {
+    "note": "Verified, allowed category, but the price is under the floor.",
+    "seller_verified": true,
+    "listing_price_cents": 50,
+    "category": "books",
+    "expected": {
+      "seller_verified": true,
+      "listing_eligible": false
+    }
+  },
+  "seller_dan": {
+    "note": "Verified, price above floor, but the category isn't allowed.",
+    "seller_verified": true,
+    "listing_price_cents": 500,
+    "category": "weapons",
+    "expected": {
+      "seller_verified": true,
+      "listing_eligible": false
+    }
+  }
+}

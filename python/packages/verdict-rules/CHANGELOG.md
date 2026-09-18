@@ -8,6 +8,21 @@ which keeps its own changelog beside its own manifest.
 
 Tagged `python-vX.Y.Z`.
 
+## [0.3.0] - 2026-09-18
+
+### Added
+
+- `Rule` is now generic over the context it reads from
+  (`Rule[TContext]`), along with `FunctionRule`, `AndRule`, `OrRule`,
+  and `RulesEngine`. Erased at runtime. `TContext` is inferred from a
+  predicate's own annotation.
+- `TContext` exported from the package root.
+
+### Changed
+
+- `docs/architecture/python.md` gained a "Generic context, concretely"
+  section.
+
 ## [0.2.9] - 2026-09-17
 
 ### Changed

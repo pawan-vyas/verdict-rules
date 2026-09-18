@@ -11,6 +11,21 @@ than that convention's bracketed, dated one.
 
 Tagged `dart-vX.Y.Z`.
 
+## 0.3.0
+
+**Breaking**: `Rule` is now generic over the context it reads from
+(`Rule<TContext>`), along with `FunctionRule`, `AndRule`, `OrRule`, and
+`RulesEngine`. An explicit `implements Rule` declaration no longer
+compiles on its own -- it becomes `implements Rule<Context>` (using the
+new `Context` typedef, now exported) or `implements
+Rule<SomeTypedContext>`. Constructor call sites (`FunctionRule(...)`,
+`AndRule(...)`, `RulesEngine(...)`) are unaffected.
+
+- **Added**: `Context`, a `typedef` for `Map<String, Object?>`, exported
+  from the package root.
+- **Added**: every sub-rule inside one `AndRule<TContext>`/
+  `OrRule<TContext>` must now be a `Rule` of the exact same `TContext`.
+
 ## 0.0.3
 
 - **`## Install`'s dependency constraint now reads `^0.0.2`**, matching

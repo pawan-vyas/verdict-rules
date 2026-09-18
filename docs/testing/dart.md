@@ -11,17 +11,19 @@
 ```bash
 $ cd dart/packages/verdict_rules
 $ dart test
-00:00 +44: All tests passed!
+00:00 +54: All tests passed!
 ```
 
-Three files, not one. `rule_test.dart` and `engine_test.dart` are a
+Four files, not one. `rule_test.dart` and `engine_test.dart` are a
 strict, 1:1 port of Python's own `test_rule.py`/`test_engine.py` — same
 `group` groupings, same tests, same assertions, in Dart idiom — and are
 the two files to check when auditing this package against Python's own
-suite. `dart_idioms_test.dart` holds exactly the coverage with no
-Python counterpart on purpose (structural typing for function types, an
-explicit `Rule` implementation) and is deliberately not part of that
-mirror.
+suite. `dart_idioms_test.dart` holds the coverage with no Python
+counterpart on purpose (structural typing for function types, an
+explicit `Rule<TContext>` implementation, and the fact that an
+`implements Rule` declaration from before generics existed no longer
+compiles on its own). `generics_test.dart` proves a typed, non-dict
+context runs through every generic primitive end to end.
 
 No coverage tool is wired in yet.
 
@@ -52,6 +54,7 @@ graph LR
     RuleTest[["🧪 test/rule_test.dart"]]
     EngineTest[["🧪 test/engine_test.dart"]]
     IdiomTest[["🧪 test/dart_idioms_test.dart"]]
+    GenericsTest[["🧪 test/generics_test.dart"]]
 
     %% Link 0: RuleSrc -> RuleTest
     RuleSrc -->|"[1]<br/>FunctionRule / AndRule / OrRule"| RuleTest
@@ -60,7 +63,9 @@ graph LR
     %% Link 2: ResultSrc -> RuleTest
     ResultSrc -.->|"[3]<br/>exercised indirectly,<br/>no dedicated test file"| RuleTest
     %% Link 3: RuleSrc -> IdiomTest
-    RuleSrc -.->|"[4]<br/>structural typing for function types,<br/>not a portable contract"| IdiomTest
+    RuleSrc -.->|"[4]<br/>structural typing, the breaking migration,<br/>not a portable contract"| IdiomTest
+    %% Link 4: RuleSrc -> GenericsTest
+    RuleSrc -.->|"[5]<br/>typed context end to end,<br/>not a portable contract"| GenericsTest
 
     style RuleSrc fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
     style EngineSrc fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
@@ -68,16 +73,18 @@ graph LR
     style RuleTest fill:#FFB84D,stroke:#E69500,stroke-width:2px,color:#000
     style EngineTest fill:#FFB84D,stroke:#E69500,stroke-width:2px,color:#000
     style IdiomTest fill:#B47EFF,stroke:#9654E8,stroke-width:2px,color:#000
+    style GenericsTest fill:#B47EFF,stroke:#9654E8,stroke-width:2px,color:#000
 
     %% Link Index:
     %% 0: rule.dart's three concrete shapes are covered directly
     %% 1: engine.dart's five run modes are covered directly
     %% 2: result.dart is plain immutable data, exercised as a side effect of the above -- no behavior of its own to test in isolation
-    %% 3: structural typing for function types and an explicit Rule implementation are Dart-specific, not part of the Python-parity mirror
+    %% 3-4: structural typing/the breaking migration and typed-context mechanics are Dart-specific, not part of the Python-parity mirror
     linkStyle 0 stroke:#FFCB7A,stroke-width:2px
     linkStyle 1 stroke:#FFCB7A,stroke-width:2px
     linkStyle 2 stroke:#E0E0E0,stroke-width:2px,stroke-dasharray:5 5
     linkStyle 3 stroke:#D0AFFF,stroke-width:2px,stroke-dasharray:5 5
+    linkStyle 4 stroke:#D0AFFF,stroke-width:2px,stroke-dasharray:5 5
 ```
 
 > **Why `result.dart` has no dedicated test file**: `RuleResult`/`RunResult`
@@ -106,11 +113,14 @@ graph LR
 Not part of this table on purpose — `dart_idioms_test.dart` proves
 structural typing for function types (a plain top-level function,
 passed as a tear-off, is a `Rule` through `FunctionRule` with nothing
-declared) and that a plain class satisfying `Rule`'s multi-member
-interface needs an explicit `implements Rule` -- Dart has no structural
-typing there the way Python's `Protocol` or TypeScript would allow.
-Neither is a universal contract; neither gets ported to another
-language's own suite.
+declared), that a plain class satisfying `Rule`'s multi-member interface
+needs an explicit `implements Rule<TContext>`, and the breaking-migration
+fact itself (an `implements Rule` declaration from before generics
+existed no longer compiles on its own). `generics_test.dart` proves a
+typed, non-dict context runs through `FunctionRule`, `AndRule`, `OrRule`,
+and all three `RulesEngine` run modes end to end, including
+short-circuiting surviving a typed context. None of these are universal
+contracts; none get ported to another language's own suite.
 
 Confirmed to actually bite, not just present: the fallback-matrix test
 is parametrized over the exact three-state table verdict's own design

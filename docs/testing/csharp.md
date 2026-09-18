@@ -11,17 +11,23 @@
 ```text
 $ cd csharp/
 $ dotnet test tests/VerdictRules.Tests/VerdictRules.Tests.csproj
-Passed!  - Failed: 0, Passed: 48, Skipped: 0, Total: 48, Duration: 7 ms
+Passed!  - Failed: 0, Passed: 61, Skipped: 0, Total: 61, Duration: 9 ms
 ```
 
-Three files, not one. `RuleTests.cs` and `EngineTests.cs` are a strict,
+Four files, not one. `RuleTests.cs` and `EngineTests.cs` are a strict,
 1:1 port of Python's own `test_rule.py`/`test_engine.py` — same test
 classes, same tests, same assertions, in C# idiom — and are the two files
 to check when auditing this package against Python's own suite.
 `CSharpIdiomTests.cs` holds exactly the coverage with no Python
 counterpart on purpose (`CancellationToken` propagation, structural typing
 for delegates only, an explicit `IRule` implementation) and is deliberately
-not part of that mirror.
+not part of that mirror. `GenericsTests.cs` proves `IRule<TContext>`'s
+own arity-coexistence relationship with `IRule` and that a typed context
+runs through every generic primitive identically to how a dict-context
+one runs through the non-generic primitives — including
+`CancellationToken` propagation proven separately for the generic
+composites, since they are independent implementations rather than
+wrappers around the non-generic ones.
 
 This SDK also has the second testing layer — a full, tested example
 project checked against the shared graduation fixture (see
@@ -41,9 +47,11 @@ graph LR
     RuleSrc["📄 FunctionRule.cs / AndRule.cs / OrRule.cs"]
     EngineSrc["📄 RulesEngine.cs"]
     ResultSrc["📄 RuleResult.cs / RunResult.cs"]
+    GenericSrc["📄 IRuleT.cs / FunctionRuleT.cs /<br/>AndRuleT.cs / OrRuleT.cs /<br/>RulesEngineT.cs"]
     RuleTest[["🧪 RuleTests.cs"]]
     EngineTest[["🧪 EngineTests.cs"]]
     IdiomTest[["🧪 CSharpIdiomTests.cs"]]
+    GenericsTest[["🧪 GenericsTests.cs"]]
 
     %% Link 0: RuleSrc -> RuleTest
     RuleSrc -->|"[1]<br/>FunctionRule / AndRule / OrRule"| RuleTest
@@ -55,24 +63,30 @@ graph LR
     RuleSrc -.->|"[4]<br/>CancellationToken, structural typing,<br/>not a portable contract"| IdiomTest
     %% Link 4: EngineSrc -> IdiomTest
     EngineSrc -.->|"[5]<br/>CancellationToken,<br/>not a portable contract"| IdiomTest
+    %% Link 5: GenericSrc -> GenericsTest
+    GenericSrc -->|"[6]<br/>arity coexistence, typed contexts,<br/>CancellationToken propagation"| GenericsTest
 
     style RuleSrc fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
     style EngineSrc fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
     style ResultSrc fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
+    style GenericSrc fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
     style RuleTest fill:#FFB84D,stroke:#E69500,stroke-width:2px,color:#000
     style EngineTest fill:#FFB84D,stroke:#E69500,stroke-width:2px,color:#000
     style IdiomTest fill:#B47EFF,stroke:#9654E8,stroke-width:2px,color:#000
+    style GenericsTest fill:#B47EFF,stroke:#9654E8,stroke-width:2px,color:#000
 
     %% Link Index:
     %% 0: the three rule types are covered directly, one test class each
     %% 1: the engine's run modes are covered directly
     %% 2: RuleResult/RunResult are plain immutable classes, exercised as a side effect of the above -- no behavior of their own to test in isolation
     %% 3-4: CancellationToken propagation and structural typing for delegates only are C#-specific, not part of the Python-parity mirror
+    %% 5: the generic siblings are independent implementations, tested directly rather than assumed to inherit non-generic behavior
     linkStyle 0 stroke:#FFCB7A,stroke-width:2px
     linkStyle 1 stroke:#FFCB7A,stroke-width:2px
     linkStyle 2 stroke:#E0E0E0,stroke-width:2px,stroke-dasharray:5 5
     linkStyle 3 stroke:#D0AFFF,stroke-width:2px,stroke-dasharray:5 5
     linkStyle 4 stroke:#D0AFFF,stroke-width:2px,stroke-dasharray:5 5
+    linkStyle 5 stroke:#FFCB7A,stroke-width:2px
 ```
 
 ## Which test proves which contract
@@ -92,8 +106,11 @@ graph LR
 Not part of this table on purpose — `CSharpIdiomTests.cs` proves
 `CancellationToken` propagation (checked between sub-rules, not just once
 at entry), C#'s structural typing for delegates only, and an explicit
-`IRule` implementation composing like any other. None of these are
-universal contracts; none get ported to another language's own suite.
+`IRule` implementation composing like any other. `GenericsTests.cs`
+proves `IRule<TContext>`'s own generic mechanics (arity coexistence, a
+typed context running through every generic primitive, generic
+`CancellationToken` propagation). None of these are universal
+contracts; none get ported to another language's own suite.
 
 ## Running tests
 

@@ -10,6 +10,24 @@ from this file, so the csproj points here instead of carrying a copy.
 
 Tagged `csharp-vX.Y.Z`.
 
+## [0.3.0] - 2026-09-18
+
+### Added
+
+- `IRule<TContext>`, generic over the context a rule reads from,
+  alongside new generic siblings `FunctionRule<TContext>`,
+  `AndRule<TContext>`, `OrRule<TContext>`, and `RulesEngine<TContext>`.
+  `IRule` is now the closed specialization
+  `IRule : IRule<IReadOnlyDictionary<string, object?>>`; every existing
+  `: IRule` implementation keeps compiling unchanged. Fully additive;
+  zero breaking changes.
+- `RulePredicate<TContext>`, the generic sibling of `RulePredicate`.
+
+### Changed
+
+- `docs/architecture/csharp.md` gained a "Generic context, concretely"
+  section.
+
 ## [0.0.1] - 2026-09-17
 
 Initial publish.

@@ -15,6 +15,48 @@ import 'package:verdict_rules/verdict_rules.dart';
 import 'at_least_n_rule.dart';
 import 'subject_policy.dart';
 
+Rule<Context> _vocationalSubjectRule(
+        SubjectPolicy policy, String sid, String group) =>
+    AndRule(
+      sid,
+      [
+        FunctionRule('$sid:written', _writtenPredicate(policy, '$sid:written')),
+        FunctionRule(
+            '$sid:practical', _practicalPredicate(policy, '$sid:practical')),
+      ],
+      group: group,
+    );
+
+Rule<Context> _languageSubjectRule(
+    SubjectPolicy policy, String sid, String group) {
+  if (policy.exemptionAllowed) {
+    return OrRule(
+      sid,
+      [
+        FunctionRule('$sid:written', _writtenPredicate(policy, '$sid:written')),
+        FunctionRule(
+            '$sid:exemption', _exemptionPredicate(policy, '$sid:exemption')),
+      ],
+      group: group,
+    );
+  }
+  return FunctionRule(sid, _writtenPredicate(policy, sid), group: group);
+}
+
+Rule<Context> _academicSubjectRule(
+        SubjectPolicy policy, String sid, String group) =>
+    FunctionRule(sid, _writtenPredicate(policy, sid), group: group);
+
+/// One builder per subjectType, keyed by the value itself -- adding a
+/// fifth subject type is a new function plus a new entry here, never a
+/// new branch in [ruleForSubject].
+final _subjectRuleBuilders =
+    <String, Rule<Context> Function(SubjectPolicy, String, String)>{
+  'vocational': _vocationalSubjectRule,
+  'language': _languageSubjectRule,
+  'academic': _academicSubjectRule,
+};
+
 /// Turn one subject's policy into a rule -- the shape depends on its type.
 ///
 /// Returns an [AndRule] (written AND practical) for a vocational subject,
@@ -24,45 +66,19 @@ import 'subject_policy.dart';
 /// Throws [ArgumentError] if [policy.subjectType] isn't one of the known
 /// types -- deliberately loud rather than silently building a
 /// vacuously-passing rule for an unrecognized policy.
-Rule ruleForSubject(SubjectPolicy policy) {
+Rule<Context> ruleForSubject(SubjectPolicy policy) {
   final group = policy.isElective ? 'elective' : 'core';
   final sid = policy.subjectId;
 
-  switch (policy.subjectType) {
-    case 'vocational':
-      return AndRule(
-        sid,
-        [
-          FunctionRule(
-              '$sid:written', _writtenPredicate(policy, '$sid:written')),
-          FunctionRule(
-              '$sid:practical', _practicalPredicate(policy, '$sid:practical')),
-        ],
-        group: group,
-      );
-    case 'language':
-      if (policy.exemptionAllowed) {
-        return OrRule(
-          sid,
-          [
-            FunctionRule(
-                '$sid:written', _writtenPredicate(policy, '$sid:written')),
-            FunctionRule('$sid:exemption',
-                _exemptionPredicate(policy, '$sid:exemption')),
-          ],
-          group: group,
-        );
-      }
-      return FunctionRule(sid, _writtenPredicate(policy, sid), group: group);
-    case 'academic':
-      return FunctionRule(sid, _writtenPredicate(policy, sid), group: group);
-    default:
-      throw ArgumentError.value(
-        policy.subjectType,
-        'subjectType',
-        "unknown subjectType for subject '$sid'",
-      );
+  final builder = _subjectRuleBuilders[policy.subjectType];
+  if (builder == null) {
+    throw ArgumentError.value(
+      policy.subjectType,
+      'subjectType',
+      "unknown subjectType for subject '$sid'",
+    );
   }
+  return builder(policy, sid, group);
 }
 
 RulePredicate _writtenPredicate(SubjectPolicy policy, String name) =>
@@ -203,7 +219,7 @@ Map<String, Object?> contextFromJson(Map<String, Object?> row) {
 /// rule objects -- `engine` serves runNamed/runGroup/runAll lookups,
 /// `graduates` is the fast, short-circuiting pass/fail composite. See
 /// docs/samples/graduation-requirement-verdict/README.md's second diagram.
-(RulesEngine, AndRule) buildGraduationCheck(
+(RulesEngine<Context>, AndRule<Context>) buildGraduationCheck(
     List<SubjectPolicy> policies, int electiveMinimum) {
   final subjectRules = policies.map(ruleForSubject).toList();
   final engine = RulesEngine(subjectRules);

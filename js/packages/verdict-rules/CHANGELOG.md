@@ -5,6 +5,16 @@ Release history for the `verdict-rules` JS/TS package. Format follows
 [semantic versioning](https://semver.org/), scoped to this package — it
 releases independently of the other language SDKs and of the AI-agent skill.
 
+## [0.3.0] - 2026-09-18
+
+- `Rule<TContext>` is now generic over the context it reads from, along
+  with `FunctionRule`, `AndRule`, `OrRule`, and `RulesEngine` — no
+  default type parameter. Dict-context is `Rule<Context>`, written out
+  explicitly. `TContext` is inferred from a predicate's own parameter
+  type.
+- `docs/architecture/js.md` gained a "Generic context, concretely"
+  section.
+
 ## [0.0.7] - 2026-09-17
 
 - **The CDN section no longer hardcodes a version+hash pair for the
