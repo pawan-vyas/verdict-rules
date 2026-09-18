@@ -1,24 +1,12 @@
-"""Chaos/differential testing: does the engine ever disagree with an independent oracle?
+"""Chaos/differential testing: compares
+`graduation_verdict.build_graduation_check` against
+`oracle.expected_graduates` across a wide, randomly-generated space of
+curricula and students.
 
-test_graduation_verdict.py proves 8 hand-picked, hand-verified scenarios come
-out right. That doesn't say anything about the enormous space of curricula
-and students nobody hand-picked. This file checks a much wider space by
-comparing two independent implementations against each other instead of
-against a fixed expected value:
+Every case is generated from a seeded `random.Random`, never the global
+`random` module, so a disagreement is exactly reproducible from its seed.
 
-- `graduation_verdict.build_graduation_check` — the real, `verdict`-based
-  implementation this whole project exists to demonstrate.
-- `oracle.expected_graduates` — a plain, verdict-free re-implementation,
-  deliberately dumb so it's trustworthy by inspection.
-
-If they ever disagree, one of them is wrong — and because every case is
-generated from a *seeded* random.Random (never the global `random` module),
-that disagreement is exactly reproducible: the same seed always regenerates
-the exact same case. "The chaos suite didn't cause any breakdown" is
-therefore a real, re-checkable claim across runs, not a one-off observation
-about whatever numbers came up this time.
-
-See docs/testing/README.md for the full design reasoning.
+See docs/testing/README.md for the full design.
 """
 
 from __future__ import annotations
@@ -44,12 +32,10 @@ async def test_engine_agrees_with_independent_oracle(case_index: int) -> None:
     """For a deterministically-generated, schema-valid random case, the real
     engine's verdict and the independent oracle's verdict must always match.
 
-    Each case is seeded from `CHAOS_SEED + case_index` — not from a single
-    shared generator advanced across all `NUM_CASES` calls — specifically so
-    any one failing case reproduces on its own: re-run
-    `random.Random(CHAOS_SEED + case_index)` through `generate_case` and
-    you get the exact same policies/context/elective_minimum that failed,
-    with no need to replay every earlier case first.
+    Each case is seeded from `CHAOS_SEED + case_index`, not a single shared
+    generator advanced across all `NUM_CASES` calls, so a failing case
+    reproduces on its own via `random.Random(CHAOS_SEED + case_index)`
+    through `generate_case`.
     """
     rng = random.Random(CHAOS_SEED + case_index)
     policies, context, elective_minimum = generate_case(rng)
