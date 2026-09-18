@@ -99,6 +99,21 @@ cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skil
   and re-opinionated inside a file meant to stay a plain reference.
   Each `agent-notes.md` is now exactly three sections: install/import,
   the API in one screen, and which run mode to reach for.
+- **Each SDK's trailing prose is folded into its own "API in one screen"
+  block.** What was there described the API in sentences — a constructor
+  signature, which types are frozen/immutable/plain-interface, that
+  `TContext` is inferred from the predicate, that a dict context is no
+  less first-class than a typed one, where C#'s `cancellationToken` is
+  actually checked — all of it API surface, and all of it shorter as a
+  comment or a literal call form beside the thing it describes. Every
+  signature was re-verified against real source and, where cheap, run:
+  C#'s results are primary-constructor `sealed class`es, Dart's are
+  `const` constructors with named parameters, Python's are frozen
+  dataclasses, JS/TS's are readonly interfaces built as object literals.
+  One claim was overstated and is now scoped: C# checks cancellation
+  between rules in every composite and in each engine run that evaluates
+  more than one rule — not in the single-rule lookups, where there is
+  nothing in between. The four files are now 46 to 62 lines.
 - Two follow-on cleanups from the above: `SKILL.md`'s own opening
   paragraphs no longer restate the frontmatter description in different
   words, and the three SDKs that restated the new context-homogeneity

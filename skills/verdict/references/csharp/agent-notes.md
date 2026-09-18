@@ -24,6 +24,9 @@ public interface IRule<TContext> {                   // nominal -- must `: IRule
 public interface IRule : IRule<IReadOnlyDictionary<string, object?>> { }  // the dict-context closure
 public delegate Task<RuleResult> RulePredicate<TContext>(TContext context, CancellationToken cancellationToken = default);
 
+// cancellationToken is checked between rules -- by every composite, and by each engine run
+// that evaluates more than one rule; pass a real token when the caller has one.
+
 // Dict-context (IRule's own closure) -- non-generic, independent classes:
 new FunctionRule(name, predicate, group: null)       // wraps a plain async predicate (dict-context)
 new AndRule(name, rules, group: null)                // passes only if every sub-rule passes
@@ -37,29 +40,17 @@ await engine.TryRunGroupAsync(group, context, cancellationToken); // -> RunResul
 engine.RuleNames, engine.GroupNames                   // IReadOnlyCollection<string> of what exists
 
 // Typed context (e.g. OrderContext) -- the generic siblings, an independent
-// implementation from the dict-context forms above, not a wrapper:
+// implementation from the dict-context forms above, not a wrapper. TContext is
+// usually inferred from the predicate, so the type argument is rarely spelled out:
 new FunctionRule<OrderContext>(name, predicate, group: null)
 new AndRule<OrderContext>(name, rules, group: null)
 new OrRule<OrderContext>(name, rules, group: null)
 var typedEngine = new RulesEngine<OrderContext>(rules);
 await typedEngine.RunAllAsync(context, cancellationToken);  // same run methods as above, TContext in place of the dictionary
+
+new RuleResult(ruleName, passed, detail: "", data: null)   // immutable classes, construct directly
+new RunResult(passed, results)
 ```
-
-`cancellationToken` defaults to `default` everywhere above and is checked
-between rules by every composite and by `RulesEngine`'s own run methods —
-pass a real token when the caller has one (a request-scoped
-`HttpContext.RequestAborted`, for instance); omit it entirely otherwise.
-
-`RuleResult` and `RunResult` are plain immutable classes, not interfaces
-to satisfy — construct them directly:
-`new RuleResult(ruleName, passed, detail: "", data: null)` and
-`new RunResult(passed, results)`.
-
-**A typed, non-dict context** reaches for the generic siblings shown
-above — a different generic arity, an independent implementation from
-the dict-context forms, not a wrapper. `TContext` is usually inferred
-from the predicate's own parameter type, so the type argument is rarely
-spelled out at the constructor call site.
 
 ## Which run mode
 
