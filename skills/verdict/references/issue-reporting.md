@@ -22,8 +22,8 @@ or the skill's or a doc's guidance is wrong. Not a defect: the
 application's own rules, contexts, or data are wrong — that is the
 application's bug, not verdict's.
 
-Report body, one defect per issue, title stating the observed fault in
-one line:
+Checked for a duplicate first (see above)? Then write the report body,
+one defect per issue, title stating the observed fault in one line:
 
 1. **Environment** — language, verdict package version, runtime version.
 2. **Reproduction** — the smallest self-contained, deterministic program
@@ -55,7 +55,8 @@ pattern is worth first-classing is the maintainer's call — your job is
 only to make sure the evidence reaches them instead of staying buried in
 however many separate codebases rediscovered it.
 
-Report body, title stating the recurring need in one line:
+Checked for a duplicate first (see above)? Then write the report body,
+title stating the recurring need in one line:
 
 1. **The gap** — what verdict doesn't do today that the workaround
    exists to cover.
@@ -70,6 +71,10 @@ Report body, title stating the recurring need in one line:
 4. **Why a workaround wasn't enough** — what the hand-rolled version
    cost each time (boilerplate, a guarantee it was easy to get wrong,
    divergent behavior between the copies), if you noticed anything.
+5. **Not a request** — a closing line stating plainly that this report
+   is evidence for the maintainer to weigh, and that whether to
+   first-class it is their call, not a position this report is arguing
+   for.
 
 Label the issue `enhancement`.
 
