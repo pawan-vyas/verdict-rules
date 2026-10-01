@@ -45,6 +45,9 @@ jobs:
           pip install --quiet pyyaml
           python3 scripts/check_api_snapshots.py
 
+      - name: The graduation_verdict fixture covers what its own README claims
+        run: python3 scripts/check_fixture_coverage.py
+
       - name: The skill artifacts build, and carry what get.sh needs
         run: |
           set -euo pipefail
