@@ -13,7 +13,7 @@ branch has anything to do with the other's language.
 
 A `git checkout` refused to switch branches:
 
-```
+```text
 error: The following untracked working tree files would be overwritten
 ```
 

@@ -1,0 +1,67 @@
+{
+  // Rule configuration lives in .markdownlint.jsonc, found by
+  // markdownlint-cli2's own cascading config lookup -- not duplicated here,
+  // so there is exactly one place rule settings are declared.
+
+  // Also skip anything .gitignore already excludes, on top of the explicit
+  // list below -- most of it (js/node_modules/, .agents/scratch/) is already
+  // gitignored, so this is a backstop against the two lists drifting apart,
+  // not a replacement for the explicit entries that cover committed-but-not-
+  // linted content.
+  "gitignore": true,
+
+  "globs": ["**/*.md"],
+
+  "ignores": [
+    // Vendored or generated content -- not authored here, never linted.
+    "js/node_modules/",
+    ".agents/skills/",
+    ".claude/skills/",
+
+    // A recorded snapshot of a past eval run's model output, kept for
+    // reference -- historical, not living prose. See
+    // skills/verdict-workspace/evals/README.md.
+    "skills/verdict-workspace/iteration-1/",
+
+    // A one-line Claude Code include shim (`@AGENTS.md`). Its entire content
+    // is that one directive; a heading would be extra content in a file
+    // whose only job is the include itself.
+    "CLAUDE.md",
+
+    // Every harness's own dropin/append snippet under scripts/ -- short
+    // instruction blurbs scripts/install.sh vendors into a *consumer's* own
+    // project in whatever format that harness expects (Cline rules, Kiro
+    // steering, an OpenHands skill, a Copilot instructions append carrying
+    // its own `<!-- verdict:marker v1 -->` idempotency comment install.sh
+    // matches on exactly). None of these are standalone docs of ours, and
+    // none are meant to start with a heading the way a real doc would --
+    // same reasoning as CLAUDE.md above, just for every harness rather than
+    // one file. A directory ignore rather than naming each file so a new
+    // harness template added later is covered automatically, the same
+    // "adding a variant is a new file" property the templates themselves
+    // already follow.
+    "scripts/harness-templates/",
+
+    // GitHub's own issue-form convention: short field labels as
+    // **bold** text, not full headings -- a real heading would render
+    // oversized in the actual issue-creation UI for what's meant to be a
+    // compact form.
+    ".github/ISSUE_TEMPLATE/",
+
+    // Throwaway working material (research notes, drafts, recap scratch
+    // files), gitignored and never committed -- see AGENTS.md's "Throwaway
+    // material goes in .agents/scratch/" section. Held to no doc-authoring
+    // bar because nothing here ships or is read by anyone but the session
+    // that wrote it; requiring lint-clean prose here would fight the exact
+    // purpose of having a scratch space at all.
+    ".agents/scratch/",
+
+    // Legal boilerplate, not authored prose -- never meant to follow this
+    // repo's doc conventions (a blockquote opener, a title as H1, etc.) even
+    // on the rare occasion one ships with a .md extension (most of this
+    // repo's LICENSE files have none, so the **/*.md glob already misses
+    // them; this covers the case where one doesn't, including a vendored
+    // one under a package's own tree).
+    "**/LICENSE*.md"
+  ]
+}

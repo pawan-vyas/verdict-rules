@@ -11,7 +11,7 @@ succeeded (confirmed live via pub.dev's own API), but the following `release`
 job — which calls the shared `release-github.yml` to create the GitHub
 Release — failed at its very first step:
 
-```
+```text
 Tag dart-v0.0.2 already exists, pointing at a different commit
 (3ef2b95b22716ab114ecd46d372b8e25f85ec493). A release is being attempted
 for a version that has already shipped.
