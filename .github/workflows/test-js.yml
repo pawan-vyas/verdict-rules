@@ -83,6 +83,17 @@ jobs:
         working-directory: js
         run: npm test
 
+      # Production mode (no --local): fails by design if dist/index.d.ts no
+      # longer matches the committed etc/verdict-rules.api.md -- see
+      # docs/maintenance/api-snapshots.md for what this snapshot is for and
+      # how to update it when a change is deliberate. Runs once, not once
+      # per Node version in the matrix: the public surface a consumer sees
+      # doesn't vary by which Node version built it.
+      - name: Check public API surface snapshot
+        if: matrix.node-version == '22'
+        working-directory: js/packages/verdict-rules
+        run: npx api-extractor run --verbose
+
   # THE JOB TO MARK REQUIRED IN BRANCH PROTECTION. See test-python.yml for why
   # it must distinguish success/skipped from failure/cancelled, and why an
   # empty result set fails rather than passing vacuously.

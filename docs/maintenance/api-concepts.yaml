@@ -1,0 +1,198 @@
+# The cross-language concept map scripts/check_api_snapshots.py diffs every
+# language's own public-API snapshot against. See
+# docs/maintenance/api-snapshots.md for what this file is for and how to
+# update it.
+#
+# Each entry is one concept that exists in every language this package
+# ships for, with that concept's own spelling in each language's own idiom
+# (PascalCase vs. camelCase vs. snake_case, an Async suffix where that
+# language's convention calls for one, etc.). The check asserts every
+# concept row resolves in all four snapshots, and that every symbol each
+# snapshot actually exports is accounted for by either a concept row here
+# or a language-specific entry in api-surface-allowlist.yaml. A concept
+# silently missing in one language, or a new symbol nobody classified yet,
+# both fail the gate.
+#
+# member: "" means the concept itself has no further members to track
+# (a type-level concept, like a delegate/predicate type).
+
+- concept: Rule (the structural contract every rule satisfies)
+  type: { csharp: IRule, python: Rule, js: Rule, dart: Rule }
+  member: ""
+
+- concept: Rule.name
+  type: { csharp: IRule, python: Rule, js: Rule, dart: Rule }
+  member: { csharp: Name, python: name, js: name, dart: name }
+
+- concept: Rule.group
+  type: { csharp: IRule, python: Rule, js: Rule, dart: Rule }
+  member: { csharp: Group, python: group, js: group, dart: group }
+
+- concept: Rule.evaluate
+  type: { csharp: IRule, python: Rule, js: Rule, dart: Rule }
+  member: { csharp: EvaluateAsync, python: evaluate, js: evaluate, dart: evaluate }
+
+- concept: RulePredicate (the function shape FunctionRule wraps)
+  type: { csharp: RulePredicate, python: "", js: RulePredicate, dart: RulePredicate }
+  member: ""
+
+- concept: FunctionRule
+  type: { csharp: FunctionRule, python: FunctionRule, js: FunctionRule, dart: FunctionRule }
+  member: ""
+
+- concept: AndRule
+  type: { csharp: AndRule, python: AndRule, js: AndRule, dart: AndRule }
+  member: ""
+
+- concept: OrRule
+  type: { csharp: OrRule, python: OrRule, js: OrRule, dart: OrRule }
+  member: ""
+
+# Every concrete rule type independently re-exports name/group/evaluate --
+# each tool reports members per concrete type, not just once on the
+# abstract Rule/IRule interface those three implement. Same per-language
+# spelling as Rule.name/Rule.group/Rule.evaluate above, repeated per type
+# rather than inferred from an implements/satisfies relationship this
+# concept map doesn't otherwise track.
+- concept: FunctionRule.name
+  type: { csharp: FunctionRule, python: FunctionRule, js: FunctionRule, dart: FunctionRule }
+  member: { csharp: Name, python: name, js: name, dart: name }
+
+- concept: FunctionRule.group
+  type: { csharp: FunctionRule, python: FunctionRule, js: FunctionRule, dart: FunctionRule }
+  member: { csharp: Group, python: group, js: group, dart: group }
+
+- concept: FunctionRule.evaluate
+  type: { csharp: FunctionRule, python: FunctionRule, js: FunctionRule, dart: FunctionRule }
+  member: { csharp: EvaluateAsync, python: evaluate, js: evaluate, dart: evaluate }
+
+- concept: AndRule.name
+  type: { csharp: AndRule, python: AndRule, js: AndRule, dart: AndRule }
+  member: { csharp: Name, python: name, js: name, dart: name }
+
+- concept: AndRule.group
+  type: { csharp: AndRule, python: AndRule, js: AndRule, dart: AndRule }
+  member: { csharp: Group, python: group, js: group, dart: group }
+
+- concept: AndRule.evaluate
+  type: { csharp: AndRule, python: AndRule, js: AndRule, dart: AndRule }
+  member: { csharp: EvaluateAsync, python: evaluate, js: evaluate, dart: evaluate }
+
+- concept: OrRule.name
+  type: { csharp: OrRule, python: OrRule, js: OrRule, dart: OrRule }
+  member: { csharp: Name, python: name, js: name, dart: name }
+
+- concept: OrRule.group
+  type: { csharp: OrRule, python: OrRule, js: OrRule, dart: OrRule }
+  member: { csharp: Group, python: group, js: group, dart: group }
+
+- concept: OrRule.evaluate
+  type: { csharp: OrRule, python: OrRule, js: OrRule, dart: OrRule }
+  member: { csharp: EvaluateAsync, python: evaluate, js: evaluate, dart: evaluate }
+
+- concept: RulesEngine
+  type: { csharp: RulesEngine, python: RulesEngine, js: RulesEngine, dart: RulesEngine }
+  member: ""
+
+- concept: RulesEngine.ruleNames
+  type: { csharp: RulesEngine, python: RulesEngine, js: RulesEngine, dart: RulesEngine }
+  member: { csharp: RuleNames, python: rule_names, js: ruleNames, dart: ruleNames }
+
+- concept: RulesEngine.groupNames
+  type: { csharp: RulesEngine, python: RulesEngine, js: RulesEngine, dart: RulesEngine }
+  member: { csharp: GroupNames, python: group_names, js: groupNames, dart: groupNames }
+
+- concept: RulesEngine.runAll
+  type: { csharp: RulesEngine, python: RulesEngine, js: RulesEngine, dart: RulesEngine }
+  member: { csharp: RunAllAsync, python: run_all, js: runAll, dart: runAll }
+
+- concept: RulesEngine.runNamed
+  type: { csharp: RulesEngine, python: RulesEngine, js: RulesEngine, dart: RulesEngine }
+  member: { csharp: RunNamedAsync, python: run_named, js: runNamed, dart: runNamed }
+
+- concept: RulesEngine.tryRunNamed
+  type: { csharp: RulesEngine, python: RulesEngine, js: RulesEngine, dart: RulesEngine }
+  member: { csharp: TryRunNamedAsync, python: try_run_named, js: tryRunNamed, dart: tryRunNamed }
+
+- concept: RulesEngine.runGroup
+  type: { csharp: RulesEngine, python: RulesEngine, js: RulesEngine, dart: RulesEngine }
+  member: { csharp: RunGroupAsync, python: run_group, js: runGroup, dart: runGroup }
+
+- concept: RulesEngine.tryRunGroup
+  type: { csharp: RulesEngine, python: RulesEngine, js: RulesEngine, dart: RulesEngine }
+  member: { csharp: TryRunGroupAsync, python: try_run_group, js: tryRunGroup, dart: tryRunGroup }
+
+- concept: RuleResult
+  type: { csharp: RuleResult, python: RuleResult, js: RuleResult, dart: RuleResult }
+  member: ""
+
+- concept: RuleResult.ruleName
+  type: { csharp: RuleResult, python: RuleResult, js: RuleResult, dart: RuleResult }
+  member: { csharp: RuleName, python: rule_name, js: ruleName, dart: ruleName }
+
+- concept: RuleResult.passed
+  type: { csharp: RuleResult, python: RuleResult, js: RuleResult, dart: RuleResult }
+  member: { csharp: Passed, python: passed, js: passed, dart: passed }
+
+- concept: RuleResult.detail
+  type: { csharp: RuleResult, python: RuleResult, js: RuleResult, dart: RuleResult }
+  member: { csharp: Detail, python: detail, js: detail, dart: detail }
+
+- concept: RuleResult.data
+  type: { csharp: RuleResult, python: RuleResult, js: RuleResult, dart: RuleResult }
+  member: { csharp: Data, python: data, js: data, dart: data }
+
+- concept: RunResult
+  type: { csharp: RunResult, python: RunResult, js: RunResult, dart: RunResult }
+  member: ""
+
+- concept: RunResult.passed
+  type: { csharp: RunResult, python: RunResult, js: RunResult, dart: RunResult }
+  member: { csharp: Passed, python: passed, js: passed, dart: passed }
+
+- concept: RunResult.results
+  type: { csharp: RunResult, python: RunResult, js: RunResult, dart: RunResult }
+  member: { csharp: Results, python: results, js: results, dart: results }
+
+# Issue #98's diagnostics pass. Corrected after actually wiring each
+# language's real snapshot tool (not guessed up front): each tool's own
+# visibility into this concept differs, so the member field only lists
+# what that tool can and does verify, not everything the language itself
+# actually ships. Full story in each language's own row below; none of
+# this changes that every language genuinely has the behavior -- #98's own
+# cross-language tests already prove that -- only what this particular
+# mechanism can mechanically re-confirm on every future change.
+#
+# - C#: PublicApiAnalyzers only ever sees ToString -- DebuggerDisplay is a
+#   private property and DebuggerTypeProxy names an internal nested type,
+#   neither is public API surface to begin with.
+# - Python: griffe sees __repr__ directly, no gap.
+# - JS/TS: api-extractor only ever sees toString -- a computed class member
+#   keyed by Symbol.for(...) (not a `unique symbol`) cannot be expressed in
+#   emitted .d.ts output, so inspect.custom is structurally invisible to
+#   any .d.ts-based tool, not just this one.
+# - Dart: dart_apitool's own element collector drops every @override member
+#   outright (treated as "already part of the source"), so toString() is
+#   invisible in its entirety -- confirmed empirically: diffing 0.3.1
+#   against 0.4.0 reports "No changes detected!" despite toString() being
+#   this version's whole changelog entry. type: "" here means "not
+#   tracked for Dart," the same convention RulePredicate's python/js rows
+#   already use for "this language has no such type" -- except here the
+#   type and the behavior both genuinely exist, only this one tool cannot
+#   see it, which is exactly why it is left empty rather than asserted
+#   and permanently unresolvable.
+- concept: FunctionRule has a readable string/debugger representation
+  type: { csharp: FunctionRule, python: FunctionRule, js: FunctionRule, dart: "" }
+  member: { csharp: ToString, python: __repr__, js: toString, dart: "" }
+
+- concept: AndRule has a readable string/debugger representation
+  type: { csharp: AndRule, python: AndRule, js: AndRule, dart: "" }
+  member: { csharp: ToString, python: __repr__, js: toString, dart: "" }
+
+- concept: OrRule has a readable string/debugger representation
+  type: { csharp: OrRule, python: OrRule, js: OrRule, dart: "" }
+  member: { csharp: ToString, python: __repr__, js: toString, dart: "" }
+
+- concept: RulesEngine has a readable string/debugger representation
+  type: { csharp: RulesEngine, python: RulesEngine, js: RulesEngine, dart: "" }
+  member: { csharp: ToString, python: __repr__, js: toString, dart: "" }

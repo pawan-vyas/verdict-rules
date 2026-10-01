@@ -64,7 +64,7 @@ export class RulesEngine<TContext> {
   /**
    * Evaluate exactly one rule, looked up by name.
    *
-   * @throws {UnknownLookupError} if no rule has this name.
+   * @throws {@link UnknownLookupError} if no rule has this name.
    */
   async runNamed(name: string, context: TContext): Promise<RuleResult> {
     const result = await this.tryRunNamed(name, context);
@@ -95,7 +95,7 @@ export class RulesEngine<TContext> {
   /**
    * Evaluate every rule sharing a group label. Never short-circuits.
    *
-   * @throws {UnknownLookupError} if no rule carries this label.
+   * @throws {@link UnknownLookupError} if no rule carries this label.
    */
   async runGroup(group: string, context: TContext): Promise<RunResult> {
     const result = await this.tryRunGroup(group, context);

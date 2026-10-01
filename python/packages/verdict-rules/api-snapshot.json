@@ -1,0 +1,2125 @@
+{
+  "verdict": {
+    "analysis": "static",
+    "docstring": {
+      "endlineno": 10,
+      "lineno": 1,
+      "value": "Verdict \u2014 a small, zero-dependency, async-native rule-evaluation engine.\n\nRules are named, composable units (:class:`FunctionRule` for a plain\npredicate, :class:`AndRule`/:class:`OrRule` for short-circuiting\ncomposition); a :class:`RulesEngine` runs a set of them against a\ncontext, by any of three modes (all, one named rule, one group).\n\nSee ``README.md`` for a quickstart and a worked example, and\n``docs/architecture/`` for the full architecture write-up."
+    },
+    "exports": [
+      "AndRule",
+      "FunctionRule",
+      "OrRule",
+      "Rule",
+      "RuleResult",
+      "RulesEngine",
+      "RunResult",
+      "TContext"
+    ],
+    "filepath": "/Users/blackmambo/Projects/personal/verdict-rules/python/packages/verdict-rules/src/verdict/__init__.py",
+    "git_info": {
+      "commit_hash": "97547017e9163c0997eff7dd9f4557ae14406669",
+      "remote_url": "https://github.com/pawan-vyas/verdict-rules",
+      "repository": "/Users/blackmambo/Projects/personal/verdict-rules",
+      "service": "github"
+    },
+    "imports": {
+      "AndRule": "verdict.rule.AndRule",
+      "FunctionRule": "verdict.rule.FunctionRule",
+      "OrRule": "verdict.rule.OrRule",
+      "Rule": "verdict.rule.Rule",
+      "RuleResult": "verdict.result.RuleResult",
+      "RulesEngine": "verdict.engine.RulesEngine",
+      "RunResult": "verdict.result.RunResult",
+      "TContext": "verdict.rule.TContext"
+    },
+    "kind": "module",
+    "members": {
+      "AndRule": {
+        "analysis": "static",
+        "endlineno": 14,
+        "inherited": false,
+        "kind": "alias",
+        "lineno": 14,
+        "name": "AndRule",
+        "runtime": true,
+        "target_path": "verdict.rule.AndRule"
+      },
+      "FunctionRule": {
+        "analysis": "static",
+        "endlineno": 14,
+        "inherited": false,
+        "kind": "alias",
+        "lineno": 14,
+        "name": "FunctionRule",
+        "runtime": true,
+        "target_path": "verdict.rule.FunctionRule"
+      },
+      "OrRule": {
+        "analysis": "static",
+        "endlineno": 14,
+        "inherited": false,
+        "kind": "alias",
+        "lineno": 14,
+        "name": "OrRule",
+        "runtime": true,
+        "target_path": "verdict.rule.OrRule"
+      },
+      "Rule": {
+        "analysis": "static",
+        "endlineno": 14,
+        "inherited": false,
+        "kind": "alias",
+        "lineno": 14,
+        "name": "Rule",
+        "runtime": true,
+        "target_path": "verdict.rule.Rule"
+      },
+      "RuleResult": {
+        "analysis": "static",
+        "endlineno": 13,
+        "inherited": false,
+        "kind": "alias",
+        "lineno": 13,
+        "name": "RuleResult",
+        "runtime": true,
+        "target_path": "verdict.result.RuleResult"
+      },
+      "RulesEngine": {
+        "analysis": "static",
+        "endlineno": 12,
+        "inherited": false,
+        "kind": "alias",
+        "lineno": 12,
+        "name": "RulesEngine",
+        "runtime": true,
+        "target_path": "verdict.engine.RulesEngine"
+      },
+      "RunResult": {
+        "analysis": "static",
+        "endlineno": 13,
+        "inherited": false,
+        "kind": "alias",
+        "lineno": 13,
+        "name": "RunResult",
+        "runtime": true,
+        "target_path": "verdict.result.RunResult"
+      },
+      "TContext": {
+        "analysis": "static",
+        "endlineno": 14,
+        "inherited": false,
+        "kind": "alias",
+        "lineno": 14,
+        "name": "TContext",
+        "runtime": true,
+        "target_path": "verdict.rule.TContext"
+      },
+      "__all__": {
+        "analysis": "static",
+        "endlineno": 25,
+        "kind": "attribute",
+        "labels": [
+          "module-attribute"
+        ],
+        "lineno": 16,
+        "name": "__all__",
+        "runtime": true,
+        "value": {
+          "cls": "ExprList",
+          "elements": [
+            "'AndRule'",
+            "'FunctionRule'",
+            "'OrRule'",
+            "'Rule'",
+            "'RuleResult'",
+            "'RulesEngine'",
+            "'RunResult'",
+            "'TContext'"
+          ]
+        }
+      },
+      "engine": {
+        "analysis": "static",
+        "docstring": {
+          "endlineno": 1,
+          "lineno": 1,
+          "value": "The engine that runs rules against a context."
+        },
+        "filepath": "/Users/blackmambo/Projects/personal/verdict-rules/python/packages/verdict-rules/src/verdict/engine.py",
+        "imports": {
+          "Generic": "typing.Generic",
+          "Rule": "verdict.rule.Rule",
+          "RuleResult": "verdict.result.RuleResult",
+          "RunResult": "verdict.result.RunResult",
+          "TContext": "verdict.rule.TContext",
+          "annotations": "__future__.annotations",
+          "defaultdict": "collections.defaultdict"
+        },
+        "kind": "module",
+        "members": {
+          "Generic": {
+            "analysis": "static",
+            "endlineno": 6,
+            "inherited": false,
+            "kind": "alias",
+            "lineno": 6,
+            "name": "Generic",
+            "runtime": true,
+            "target_path": "typing.Generic"
+          },
+          "Rule": {
+            "analysis": "static",
+            "endlineno": 9,
+            "inherited": false,
+            "kind": "alias",
+            "lineno": 9,
+            "name": "Rule",
+            "runtime": true,
+            "target_path": "verdict.rule.Rule"
+          },
+          "RuleResult": {
+            "analysis": "static",
+            "endlineno": 8,
+            "inherited": false,
+            "kind": "alias",
+            "lineno": 8,
+            "name": "RuleResult",
+            "runtime": true,
+            "target_path": "verdict.result.RuleResult"
+          },
+          "RulesEngine": {
+            "analysis": "static",
+            "bases": [
+              {
+                "cls": "ExprSubscript",
+                "left": {
+                  "cls": "ExprName",
+                  "member": "RulesEngine",
+                  "name": "Generic"
+                },
+                "slice": {
+                  "cls": "ExprName",
+                  "member": "RulesEngine",
+                  "name": "TContext"
+                }
+              }
+            ],
+            "decorators": [],
+            "docstring": {
+              "endlineno": 18,
+              "lineno": 13,
+              "value": "Holds a set of rules and runs them against a context.\n\nEvery ``run_*`` method evaluates every matching rule unconditionally\n\u2014 no short-circuiting. Generic over ``TContext``, the same way\n:class:`~verdict.rule.Rule` is."
+            },
+            "endlineno": 139,
+            "kind": "class",
+            "lineno": 12,
+            "members": {
+              "__init__": {
+                "analysis": "static",
+                "decorators": [],
+                "docstring": {
+                  "endlineno": 27,
+                  "lineno": 21,
+                  "value": "Initialise with the full rule set this engine will serve.\n\nArgs:\n    rules: Every rule this engine can run. Names must be unique\n        within this list \u2014 a duplicate name shadows the earlier\n        one in :meth:`run_named`'s lookup."
+                },
+                "endlineno": 33,
+                "kind": "function",
+                "lineno": 20,
+                "name": "__init__",
+                "parameters": [
+                  {
+                    "annotation": null,
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "self"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprSubscript",
+                      "left": {
+                        "cls": "ExprName",
+                        "member": "__init__",
+                        "name": "list"
+                      },
+                      "slice": {
+                        "cls": "ExprSubscript",
+                        "left": {
+                          "cls": "ExprName",
+                          "member": "__init__",
+                          "name": "Rule"
+                        },
+                        "slice": {
+                          "cls": "ExprName",
+                          "member": "__init__",
+                          "name": "TContext"
+                        }
+                      }
+                    },
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "rules"
+                  }
+                ],
+                "returns": "None",
+                "runtime": true
+              },
+              "__repr__": {
+                "analysis": "static",
+                "decorators": [],
+                "endlineno": 139,
+                "kind": "function",
+                "lineno": 138,
+                "name": "__repr__",
+                "parameters": [
+                  {
+                    "annotation": null,
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "self"
+                  }
+                ],
+                "returns": {
+                  "cls": "ExprName",
+                  "member": "__repr__",
+                  "name": "str"
+                },
+                "runtime": true
+              },
+              "_by_group": {
+                "analysis": "static",
+                "annotation": {
+                  "cls": "ExprSubscript",
+                  "left": {
+                    "cls": "ExprName",
+                    "member": null,
+                    "name": "dict"
+                  },
+                  "slice": {
+                    "cls": "ExprTuple",
+                    "elements": [
+                      {
+                        "cls": "ExprName",
+                        "member": null,
+                        "name": "str"
+                      },
+                      {
+                        "cls": "ExprSubscript",
+                        "left": {
+                          "cls": "ExprName",
+                          "member": null,
+                          "name": "list"
+                        },
+                        "slice": {
+                          "cls": "ExprSubscript",
+                          "left": {
+                            "cls": "ExprName",
+                            "member": null,
+                            "name": "Rule"
+                          },
+                          "slice": {
+                            "cls": "ExprName",
+                            "member": null,
+                            "name": "TContext"
+                          }
+                        }
+                      }
+                    ],
+                    "implicit": true
+                  }
+                },
+                "endlineno": 30,
+                "kind": "attribute",
+                "labels": [
+                  "instance-attribute"
+                ],
+                "lineno": 30,
+                "name": "_by_group",
+                "runtime": true,
+                "value": {
+                  "arguments": [
+                    {
+                      "cls": "ExprName",
+                      "member": null,
+                      "name": "list"
+                    }
+                  ],
+                  "cls": "ExprCall",
+                  "function": {
+                    "cls": "ExprName",
+                    "member": null,
+                    "name": "defaultdict"
+                  }
+                }
+              },
+              "_by_name": {
+                "analysis": "static",
+                "annotation": {
+                  "cls": "ExprSubscript",
+                  "left": {
+                    "cls": "ExprName",
+                    "member": null,
+                    "name": "dict"
+                  },
+                  "slice": {
+                    "cls": "ExprTuple",
+                    "elements": [
+                      {
+                        "cls": "ExprName",
+                        "member": null,
+                        "name": "str"
+                      },
+                      {
+                        "cls": "ExprSubscript",
+                        "left": {
+                          "cls": "ExprName",
+                          "member": null,
+                          "name": "Rule"
+                        },
+                        "slice": {
+                          "cls": "ExprName",
+                          "member": null,
+                          "name": "TContext"
+                        }
+                      }
+                    ],
+                    "implicit": true
+                  }
+                },
+                "endlineno": 29,
+                "kind": "attribute",
+                "labels": [
+                  "instance-attribute"
+                ],
+                "lineno": 29,
+                "name": "_by_name",
+                "runtime": true,
+                "value": {
+                  "cls": "ExprDictComp",
+                  "generators": [
+                    {
+                      "cls": "ExprComprehension",
+                      "conditions": [],
+                      "is_async": false,
+                      "iterable": {
+                        "cls": "ExprName",
+                        "member": null,
+                        "name": "rules"
+                      },
+                      "target": {
+                        "cls": "ExprName",
+                        "member": null,
+                        "name": "r"
+                      }
+                    }
+                  ],
+                  "key": {
+                    "cls": "ExprAttribute",
+                    "values": [
+                      {
+                        "cls": "ExprName",
+                        "member": null,
+                        "name": "r"
+                      },
+                      {
+                        "cls": "ExprName",
+                        "member": null,
+                        "name": "name"
+                      }
+                    ]
+                  },
+                  "value": {
+                    "cls": "ExprName",
+                    "member": null,
+                    "name": "r"
+                  }
+                }
+              },
+              "_rules": {
+                "analysis": "static",
+                "endlineno": 28,
+                "kind": "attribute",
+                "labels": [
+                  "instance-attribute"
+                ],
+                "lineno": 28,
+                "name": "_rules",
+                "runtime": true,
+                "value": {
+                  "cls": "ExprName",
+                  "member": null,
+                  "name": "rules"
+                }
+              },
+              "group_names": {
+                "analysis": "static",
+                "annotation": {
+                  "cls": "ExprSubscript",
+                  "left": {
+                    "cls": "ExprName",
+                    "member": "group_names",
+                    "name": "tuple"
+                  },
+                  "slice": {
+                    "cls": "ExprTuple",
+                    "elements": [
+                      {
+                        "cls": "ExprName",
+                        "member": "group_names",
+                        "name": "str"
+                      },
+                      "..."
+                    ],
+                    "implicit": true
+                  }
+                },
+                "docstring": {
+                  "endlineno": 135,
+                  "lineno": 135,
+                  "value": "Every group label carried by at least one rule on this engine."
+                },
+                "endlineno": 136,
+                "kind": "attribute",
+                "labels": [
+                  "property"
+                ],
+                "lineno": 134,
+                "name": "group_names",
+                "runtime": true
+              },
+              "rule_names": {
+                "analysis": "static",
+                "annotation": {
+                  "cls": "ExprSubscript",
+                  "left": {
+                    "cls": "ExprName",
+                    "member": "rule_names",
+                    "name": "tuple"
+                  },
+                  "slice": {
+                    "cls": "ExprTuple",
+                    "elements": [
+                      {
+                        "cls": "ExprName",
+                        "member": "rule_names",
+                        "name": "str"
+                      },
+                      "..."
+                    ],
+                    "implicit": true
+                  }
+                },
+                "docstring": {
+                  "endlineno": 130,
+                  "lineno": 130,
+                  "value": "Every rule name registered on this engine, in registration order."
+                },
+                "endlineno": 131,
+                "kind": "attribute",
+                "labels": [
+                  "property"
+                ],
+                "lineno": 129,
+                "name": "rule_names",
+                "runtime": true
+              },
+              "run_all": {
+                "analysis": "static",
+                "decorators": [],
+                "docstring": {
+                  "endlineno": 47,
+                  "lineno": 36,
+                  "value": "Evaluate every rule in this engine against ``context``.\n\nArgs:\n    context: Passed through unchanged to every rule's own\n        ``evaluate()``.\n\nReturns:\n    A :class:`~verdict.result.RunResult` \u2014 ``passed`` is\n    ``True`` only if every rule passed; ``results`` holds one\n    entry per rule, in the order the engine was constructed\n    with."
+                },
+                "endlineno": 49,
+                "kind": "function",
+                "labels": [
+                  "async"
+                ],
+                "lineno": 35,
+                "name": "run_all",
+                "parameters": [
+                  {
+                    "annotation": null,
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "self"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprName",
+                      "member": "run_all",
+                      "name": "TContext"
+                    },
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "context"
+                  }
+                ],
+                "returns": {
+                  "cls": "ExprName",
+                  "member": "run_all",
+                  "name": "RunResult"
+                },
+                "runtime": true
+              },
+              "run_group": {
+                "analysis": "static",
+                "decorators": [],
+                "docstring": {
+                  "endlineno": 122,
+                  "lineno": 107,
+                  "value": "Evaluate every rule sharing a given group label.\n\nArgs:\n    group: The group label to match against each rule's own\n        ``group`` attribute.\n    context: Passed through unchanged to every matching rule's\n        ``evaluate()``.\n\nReturns:\n    A :class:`~verdict.result.RunResult` scoped to just this\n    group \u2014 ``passed`` is ``True`` only if every rule in the\n    group passed; ``results`` holds one entry per matching rule.\n\nRaises:\n    KeyError: No rule in this engine carries this group label."
+                },
+                "endlineno": 126,
+                "kind": "function",
+                "labels": [
+                  "async"
+                ],
+                "lineno": 106,
+                "name": "run_group",
+                "parameters": [
+                  {
+                    "annotation": null,
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "self"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprName",
+                      "member": "run_group",
+                      "name": "str"
+                    },
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "group"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprName",
+                      "member": "run_group",
+                      "name": "TContext"
+                    },
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "context"
+                  }
+                ],
+                "returns": {
+                  "cls": "ExprName",
+                  "member": "run_group",
+                  "name": "RunResult"
+                },
+                "runtime": true
+              },
+              "run_named": {
+                "analysis": "static",
+                "decorators": [],
+                "docstring": {
+                  "endlineno": 79,
+                  "lineno": 68,
+                  "value": "Evaluate exactly one rule, looked up by name.\n\nArgs:\n    name: The rule's own ``name`` attribute.\n    context: Passed through unchanged to the rule's ``evaluate()``.\n\nReturns:\n    That rule's own :class:`~verdict.result.RuleResult`.\n\nRaises:\n    KeyError: No rule with this name exists in this engine."
+                },
+                "endlineno": 83,
+                "kind": "function",
+                "labels": [
+                  "async"
+                ],
+                "lineno": 67,
+                "name": "run_named",
+                "parameters": [
+                  {
+                    "annotation": null,
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "self"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprName",
+                      "member": "run_named",
+                      "name": "str"
+                    },
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "name"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprName",
+                      "member": "run_named",
+                      "name": "TContext"
+                    },
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "context"
+                  }
+                ],
+                "returns": {
+                  "cls": "ExprName",
+                  "member": "run_named",
+                  "name": "RuleResult"
+                },
+                "runtime": true
+              },
+              "try_run_group": {
+                "analysis": "static",
+                "decorators": [],
+                "docstring": {
+                  "endlineno": 99,
+                  "lineno": 88,
+                  "value": "Evaluate a group, or return ``None`` if no such group exists.\n\nArgs:\n    group: The group label to match against each rule's own\n        ``group`` attribute.\n    context: Passed through unchanged to every matching rule's\n        ``evaluate()``.\n\nReturns:\n    A :class:`~verdict.result.RunResult` scoped to just this group,\n    or ``None`` if no rule carries this label."
+                },
+                "endlineno": 104,
+                "kind": "function",
+                "labels": [
+                  "async"
+                ],
+                "lineno": 85,
+                "name": "try_run_group",
+                "parameters": [
+                  {
+                    "annotation": null,
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "self"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprName",
+                      "member": "try_run_group",
+                      "name": "str"
+                    },
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "group"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprName",
+                      "member": "try_run_group",
+                      "name": "TContext"
+                    },
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "context"
+                  }
+                ],
+                "returns": {
+                  "cls": "ExprBinOp",
+                  "left": {
+                    "cls": "ExprName",
+                    "member": "try_run_group",
+                    "name": "RunResult"
+                  },
+                  "operator": "|",
+                  "right": "None"
+                },
+                "runtime": true
+              },
+              "try_run_named": {
+                "analysis": "static",
+                "decorators": [],
+                "docstring": {
+                  "endlineno": 61,
+                  "lineno": 52,
+                  "value": "Evaluate one rule by name, or return ``None`` if no such rule exists.\n\nArgs:\n    name: The rule's own ``name`` attribute.\n    context: Passed through unchanged to the rule's ``evaluate()``.\n\nReturns:\n    That rule's own :class:`~verdict.result.RuleResult`, or ``None``\n    if no rule carries this name."
+                },
+                "endlineno": 65,
+                "kind": "function",
+                "labels": [
+                  "async"
+                ],
+                "lineno": 51,
+                "name": "try_run_named",
+                "parameters": [
+                  {
+                    "annotation": null,
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "self"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprName",
+                      "member": "try_run_named",
+                      "name": "str"
+                    },
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "name"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprName",
+                      "member": "try_run_named",
+                      "name": "TContext"
+                    },
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "context"
+                  }
+                ],
+                "returns": {
+                  "cls": "ExprBinOp",
+                  "left": {
+                    "cls": "ExprName",
+                    "member": "try_run_named",
+                    "name": "RuleResult"
+                  },
+                  "operator": "|",
+                  "right": "None"
+                },
+                "runtime": true
+              }
+            },
+            "name": "RulesEngine",
+            "runtime": true
+          },
+          "RunResult": {
+            "analysis": "static",
+            "endlineno": 8,
+            "inherited": false,
+            "kind": "alias",
+            "lineno": 8,
+            "name": "RunResult",
+            "runtime": true,
+            "target_path": "verdict.result.RunResult"
+          },
+          "TContext": {
+            "analysis": "static",
+            "endlineno": 9,
+            "inherited": false,
+            "kind": "alias",
+            "lineno": 9,
+            "name": "TContext",
+            "runtime": true,
+            "target_path": "verdict.rule.TContext"
+          },
+          "annotations": {
+            "analysis": "static",
+            "endlineno": 3,
+            "inherited": false,
+            "kind": "alias",
+            "lineno": 3,
+            "name": "annotations",
+            "runtime": true,
+            "target_path": "__future__.annotations"
+          },
+          "defaultdict": {
+            "analysis": "static",
+            "endlineno": 5,
+            "inherited": false,
+            "kind": "alias",
+            "lineno": 5,
+            "name": "defaultdict",
+            "runtime": true,
+            "target_path": "collections.defaultdict"
+          }
+        },
+        "name": "engine",
+        "runtime": true
+      },
+      "result": {
+        "analysis": "static",
+        "docstring": {
+          "endlineno": 1,
+          "lineno": 1,
+          "value": "Result types returned by rule evaluation."
+        },
+        "filepath": "/Users/blackmambo/Projects/personal/verdict-rules/python/packages/verdict-rules/src/verdict/result.py",
+        "imports": {
+          "annotations": "__future__.annotations",
+          "dataclass": "dataclasses.dataclass",
+          "field": "dataclasses.field"
+        },
+        "kind": "module",
+        "members": {
+          "RuleResult": {
+            "analysis": "static",
+            "bases": [],
+            "decorators": [
+              {
+                "endlineno": 8,
+                "lineno": 8,
+                "value": {
+                  "arguments": [
+                    {
+                      "cls": "ExprKeyword",
+                      "function": {
+                        "cls": "ExprName",
+                        "member": null,
+                        "name": "dataclass"
+                      },
+                      "name": "frozen",
+                      "value": "True"
+                    }
+                  ],
+                  "cls": "ExprCall",
+                  "function": {
+                    "cls": "ExprName",
+                    "member": null,
+                    "name": "dataclass"
+                  }
+                }
+              }
+            ],
+            "docstring": {
+              "endlineno": 19,
+              "lineno": 10,
+              "value": "Outcome of evaluating a single :class:`~verdict.rule.Rule`.\n\nAttributes:\n    rule_name: The name of the rule this result came from.\n    passed: Whether the rule's condition was satisfied.\n    detail: Optional human-readable explanation of the outcome.\n        Empty string when there's nothing to say beyond the boolean.\n    data: Optional payload a caller can attach; opaque to this\n        package."
+            },
+            "endlineno": 24,
+            "kind": "class",
+            "labels": [
+              "dataclass"
+            ],
+            "lineno": 8,
+            "members": {
+              "__init__": {
+                "decorators": [],
+                "endlineno": 0,
+                "kind": "function",
+                "lineno": 0,
+                "name": "__init__",
+                "parameters": [
+                  {
+                    "annotation": null,
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "self"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprName",
+                      "member": null,
+                      "name": "str"
+                    },
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "rule_name"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprName",
+                      "member": null,
+                      "name": "bool"
+                    },
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "passed"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprName",
+                      "member": null,
+                      "name": "str"
+                    },
+                    "default": "''",
+                    "kind": "positional or keyword",
+                    "name": "detail"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprBinOp",
+                      "left": {
+                        "cls": "ExprName",
+                        "member": null,
+                        "name": "object"
+                      },
+                      "operator": "|",
+                      "right": "None"
+                    },
+                    "default": "None",
+                    "kind": "positional or keyword",
+                    "name": "data"
+                  }
+                ],
+                "returns": "None",
+                "runtime": true
+              },
+              "data": {
+                "analysis": "static",
+                "annotation": {
+                  "cls": "ExprBinOp",
+                  "left": {
+                    "cls": "ExprName",
+                    "member": null,
+                    "name": "object"
+                  },
+                  "operator": "|",
+                  "right": "None"
+                },
+                "endlineno": 24,
+                "kind": "attribute",
+                "labels": [
+                  "class-attribute",
+                  "instance-attribute"
+                ],
+                "lineno": 24,
+                "name": "data",
+                "runtime": true,
+                "value": "None"
+              },
+              "detail": {
+                "analysis": "static",
+                "annotation": {
+                  "cls": "ExprName",
+                  "member": null,
+                  "name": "str"
+                },
+                "endlineno": 23,
+                "kind": "attribute",
+                "labels": [
+                  "class-attribute",
+                  "instance-attribute"
+                ],
+                "lineno": 23,
+                "name": "detail",
+                "runtime": true,
+                "value": "''"
+              },
+              "passed": {
+                "analysis": "static",
+                "annotation": {
+                  "cls": "ExprName",
+                  "member": null,
+                  "name": "bool"
+                },
+                "endlineno": 22,
+                "kind": "attribute",
+                "labels": [
+                  "instance-attribute"
+                ],
+                "lineno": 22,
+                "name": "passed",
+                "runtime": true
+              },
+              "rule_name": {
+                "analysis": "static",
+                "annotation": {
+                  "cls": "ExprName",
+                  "member": null,
+                  "name": "str"
+                },
+                "endlineno": 21,
+                "kind": "attribute",
+                "labels": [
+                  "instance-attribute"
+                ],
+                "lineno": 21,
+                "name": "rule_name",
+                "runtime": true
+              }
+            },
+            "name": "RuleResult",
+            "runtime": true
+          },
+          "RunResult": {
+            "analysis": "static",
+            "bases": [],
+            "decorators": [
+              {
+                "endlineno": 27,
+                "lineno": 27,
+                "value": {
+                  "arguments": [
+                    {
+                      "cls": "ExprKeyword",
+                      "function": {
+                        "cls": "ExprName",
+                        "member": null,
+                        "name": "dataclass"
+                      },
+                      "name": "frozen",
+                      "value": "True"
+                    }
+                  ],
+                  "cls": "ExprCall",
+                  "function": {
+                    "cls": "ExprName",
+                    "member": null,
+                    "name": "dataclass"
+                  }
+                }
+              }
+            ],
+            "docstring": {
+              "endlineno": 39,
+              "lineno": 29,
+              "value": "Aggregate outcome of running a whole set of rules\n(:meth:`~verdict.engine.RulesEngine.run_all` or\n:meth:`~verdict.engine.RulesEngine.run_group`).\n\nAttributes:\n    passed: ``True`` only if every rule in :attr:`results` passed.\n    results: One :class:`RuleResult` per rule that was evaluated, in\n        evaluation order. A composite rule's own sub-results are\n        nested inside its own :attr:`RuleResult.data`, not\n        flattened into this list."
+            },
+            "endlineno": 42,
+            "kind": "class",
+            "labels": [
+              "dataclass"
+            ],
+            "lineno": 27,
+            "members": {
+              "__init__": {
+                "decorators": [],
+                "endlineno": 0,
+                "kind": "function",
+                "lineno": 0,
+                "name": "__init__",
+                "parameters": [
+                  {
+                    "annotation": null,
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "self"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprName",
+                      "member": null,
+                      "name": "bool"
+                    },
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "passed"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprSubscript",
+                      "left": {
+                        "cls": "ExprName",
+                        "member": null,
+                        "name": "list"
+                      },
+                      "slice": {
+                        "cls": "ExprName",
+                        "member": null,
+                        "name": "RuleResult"
+                      }
+                    },
+                    "default": {
+                      "arguments": [],
+                      "cls": "ExprCall",
+                      "function": {
+                        "cls": "ExprName",
+                        "member": null,
+                        "name": "list"
+                      }
+                    },
+                    "kind": "positional or keyword",
+                    "name": "results"
+                  }
+                ],
+                "returns": "None",
+                "runtime": true
+              },
+              "passed": {
+                "analysis": "static",
+                "annotation": {
+                  "cls": "ExprName",
+                  "member": null,
+                  "name": "bool"
+                },
+                "endlineno": 41,
+                "kind": "attribute",
+                "labels": [
+                  "instance-attribute"
+                ],
+                "lineno": 41,
+                "name": "passed",
+                "runtime": true
+              },
+              "results": {
+                "analysis": "static",
+                "annotation": {
+                  "cls": "ExprSubscript",
+                  "left": {
+                    "cls": "ExprName",
+                    "member": null,
+                    "name": "list"
+                  },
+                  "slice": {
+                    "cls": "ExprName",
+                    "member": null,
+                    "name": "RuleResult"
+                  }
+                },
+                "endlineno": 42,
+                "kind": "attribute",
+                "labels": [
+                  "class-attribute",
+                  "instance-attribute"
+                ],
+                "lineno": 42,
+                "name": "results",
+                "runtime": true,
+                "value": {
+                  "arguments": [
+                    {
+                      "cls": "ExprKeyword",
+                      "function": {
+                        "cls": "ExprName",
+                        "member": null,
+                        "name": "field"
+                      },
+                      "name": "default_factory",
+                      "value": {
+                        "cls": "ExprName",
+                        "member": null,
+                        "name": "list"
+                      }
+                    }
+                  ],
+                  "cls": "ExprCall",
+                  "function": {
+                    "cls": "ExprName",
+                    "member": null,
+                    "name": "field"
+                  }
+                }
+              }
+            },
+            "name": "RunResult",
+            "runtime": true
+          },
+          "annotations": {
+            "analysis": "static",
+            "endlineno": 3,
+            "inherited": false,
+            "kind": "alias",
+            "lineno": 3,
+            "name": "annotations",
+            "runtime": true,
+            "target_path": "__future__.annotations"
+          },
+          "dataclass": {
+            "analysis": "static",
+            "endlineno": 5,
+            "inherited": false,
+            "kind": "alias",
+            "lineno": 5,
+            "name": "dataclass",
+            "runtime": true,
+            "target_path": "dataclasses.dataclass"
+          },
+          "field": {
+            "analysis": "static",
+            "endlineno": 5,
+            "inherited": false,
+            "kind": "alias",
+            "lineno": 5,
+            "name": "field",
+            "runtime": true,
+            "target_path": "dataclasses.field"
+          }
+        },
+        "name": "result",
+        "runtime": true
+      },
+      "rule": {
+        "analysis": "static",
+        "docstring": {
+          "endlineno": 12,
+          "lineno": 1,
+          "value": "Rule definitions \u2014 the unit of evaluation this package is built around.\n\nA :class:`Rule` has a ``name``, an optional ``group``, and an\n``evaluate(context)`` coroutine returning a :class:`~verdict.result.RuleResult`.\n:class:`FunctionRule` wraps a plain predicate. :class:`AndRule`/:class:`OrRule`\ncompose other rules, short-circuiting the same way a boolean ``and``/``or``\nexpression does.\n\n``Rule`` is generic over the context it reads from (``TContext``), erased at\nruntime. ``Rule[dict[str, Any]]`` is the dict-context spelling; the bare\n``Rule`` erases to ``Rule[Any]``."
+        },
+        "filepath": "/Users/blackmambo/Projects/personal/verdict-rules/python/packages/verdict-rules/src/verdict/rule.py",
+        "imports": {
+          "Awaitable": "typing.Awaitable",
+          "Callable": "typing.Callable",
+          "Generic": "typing.Generic",
+          "Protocol": "typing.Protocol",
+          "RuleResult": "verdict.result.RuleResult",
+          "TypeVar": "typing.TypeVar",
+          "annotations": "__future__.annotations",
+          "runtime_checkable": "typing.runtime_checkable"
+        },
+        "kind": "module",
+        "members": {
+          "AndRule": {
+            "analysis": "static",
+            "bases": [
+              {
+                "cls": "ExprSubscript",
+                "left": {
+                  "cls": "ExprName",
+                  "member": "AndRule",
+                  "name": "Generic"
+                },
+                "slice": {
+                  "cls": "ExprName",
+                  "member": "AndRule",
+                  "name": "TContext"
+                }
+              }
+            ],
+            "decorators": [],
+            "docstring": {
+              "endlineno": 108,
+              "lineno": 99,
+              "value": "Composite rule that passes only if every sub-rule passes.\n\nShort-circuits on the first failing sub-rule.\n\nEvery sub-rule must share the same ``TContext``.\n\nAttributes:\n    name: See :class:`Rule`.\n    group: See :class:`Rule`."
+            },
+            "endlineno": 150,
+            "kind": "class",
+            "lineno": 98,
+            "members": {
+              "__init__": {
+                "analysis": "static",
+                "decorators": [],
+                "docstring": {
+                  "endlineno": 118,
+                  "lineno": 111,
+                  "value": "Initialise with the ordered sub-rules to combine.\n\nArgs:\n    name: Unique identifier for this composite rule.\n    rules: Sub-rules evaluated in order until one fails (or all\n        pass). An empty list vacuously passes.\n    group: Optional group label, see :class:`Rule`."
+                },
+                "endlineno": 121,
+                "kind": "function",
+                "lineno": 110,
+                "name": "__init__",
+                "parameters": [
+                  {
+                    "annotation": null,
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "self"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprName",
+                      "member": "__init__",
+                      "name": "str"
+                    },
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "name"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprSubscript",
+                      "left": {
+                        "cls": "ExprName",
+                        "member": "__init__",
+                        "name": "list"
+                      },
+                      "slice": {
+                        "cls": "ExprSubscript",
+                        "left": {
+                          "cls": "ExprName",
+                          "member": "__init__",
+                          "name": "Rule"
+                        },
+                        "slice": {
+                          "cls": "ExprName",
+                          "member": "__init__",
+                          "name": "TContext"
+                        }
+                      }
+                    },
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "rules"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprBinOp",
+                      "left": {
+                        "cls": "ExprName",
+                        "member": "__init__",
+                        "name": "str"
+                      },
+                      "operator": "|",
+                      "right": "None"
+                    },
+                    "default": "None",
+                    "kind": "positional or keyword",
+                    "name": "group"
+                  }
+                ],
+                "returns": "None",
+                "runtime": true
+              },
+              "__repr__": {
+                "analysis": "static",
+                "decorators": [],
+                "endlineno": 150,
+                "kind": "function",
+                "lineno": 148,
+                "name": "__repr__",
+                "parameters": [
+                  {
+                    "annotation": null,
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "self"
+                  }
+                ],
+                "returns": {
+                  "cls": "ExprName",
+                  "member": "__repr__",
+                  "name": "str"
+                },
+                "runtime": true
+              },
+              "_rules": {
+                "analysis": "static",
+                "endlineno": 121,
+                "kind": "attribute",
+                "labels": [
+                  "instance-attribute"
+                ],
+                "lineno": 121,
+                "name": "_rules",
+                "runtime": true,
+                "value": {
+                  "cls": "ExprName",
+                  "member": null,
+                  "name": "rules"
+                }
+              },
+              "evaluate": {
+                "analysis": "static",
+                "decorators": [],
+                "docstring": {
+                  "endlineno": 134,
+                  "lineno": 124,
+                  "value": "Evaluate sub-rules in order, stopping at the first failure.\n\nArgs:\n    context: See :meth:`Rule.evaluate`.\n\nReturns:\n    A :class:`~verdict.result.RuleResult` for this composite\n    rule itself \u2014 ``passed`` is ``True`` only if every sub-rule\n    evaluated passed; ``data`` carries the list of per-sub-rule\n    results gathered so far."
+                },
+                "endlineno": 146,
+                "kind": "function",
+                "labels": [
+                  "async"
+                ],
+                "lineno": 123,
+                "name": "evaluate",
+                "parameters": [
+                  {
+                    "annotation": null,
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "self"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprName",
+                      "member": "evaluate",
+                      "name": "TContext"
+                    },
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "context"
+                  }
+                ],
+                "returns": {
+                  "cls": "ExprName",
+                  "member": "evaluate",
+                  "name": "RuleResult"
+                },
+                "runtime": true
+              },
+              "group": {
+                "analysis": "static",
+                "endlineno": 120,
+                "kind": "attribute",
+                "labels": [
+                  "instance-attribute"
+                ],
+                "lineno": 120,
+                "name": "group",
+                "runtime": true,
+                "value": {
+                  "cls": "ExprName",
+                  "member": null,
+                  "name": "group"
+                }
+              },
+              "name": {
+                "analysis": "static",
+                "endlineno": 119,
+                "kind": "attribute",
+                "labels": [
+                  "instance-attribute"
+                ],
+                "lineno": 119,
+                "name": "name",
+                "runtime": true,
+                "value": {
+                  "cls": "ExprName",
+                  "member": null,
+                  "name": "name"
+                }
+              }
+            },
+            "name": "AndRule",
+            "runtime": true
+          },
+          "Awaitable": {
+            "analysis": "static",
+            "endlineno": 16,
+            "inherited": false,
+            "kind": "alias",
+            "lineno": 16,
+            "name": "Awaitable",
+            "runtime": true,
+            "target_path": "typing.Awaitable"
+          },
+          "Callable": {
+            "analysis": "static",
+            "endlineno": 16,
+            "inherited": false,
+            "kind": "alias",
+            "lineno": 16,
+            "name": "Callable",
+            "runtime": true,
+            "target_path": "typing.Callable"
+          },
+          "FunctionRule": {
+            "analysis": "static",
+            "bases": [
+              {
+                "cls": "ExprSubscript",
+                "left": {
+                  "cls": "ExprName",
+                  "member": "FunctionRule",
+                  "name": "Generic"
+                },
+                "slice": {
+                  "cls": "ExprName",
+                  "member": "FunctionRule",
+                  "name": "TContext"
+                }
+              }
+            ],
+            "decorators": [],
+            "docstring": {
+              "endlineno": 62,
+              "lineno": 54,
+              "value": "Wraps a plain async predicate as a :class:`Rule`.\n\n``TContext`` is inferred from the wrapped predicate's own type\nannotation. An untyped predicate infers ``Any``.\n\nAttributes:\n    name: See :class:`Rule`.\n    group: See :class:`Rule`."
+            },
+            "endlineno": 95,
+            "kind": "class",
+            "lineno": 53,
+            "members": {
+              "__init__": {
+                "analysis": "static",
+                "decorators": [],
+                "docstring": {
+                  "endlineno": 77,
+                  "lineno": 70,
+                  "value": "Initialise with a name and the predicate to run.\n\nArgs:\n    name: Unique identifier for this rule.\n    predicate: Async callable that inspects ``context`` and\n        returns the full :class:`~verdict.result.RuleResult`.\n    group: Optional group label, see :class:`Rule`."
+                },
+                "endlineno": 80,
+                "kind": "function",
+                "lineno": 64,
+                "name": "__init__",
+                "parameters": [
+                  {
+                    "annotation": null,
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "self"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprName",
+                      "member": "__init__",
+                      "name": "str"
+                    },
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "name"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprSubscript",
+                      "left": {
+                        "cls": "ExprName",
+                        "member": "__init__",
+                        "name": "Callable"
+                      },
+                      "slice": {
+                        "cls": "ExprTuple",
+                        "elements": [
+                          {
+                            "cls": "ExprList",
+                            "elements": [
+                              {
+                                "cls": "ExprName",
+                                "member": "__init__",
+                                "name": "TContext"
+                              }
+                            ]
+                          },
+                          {
+                            "cls": "ExprSubscript",
+                            "left": {
+                              "cls": "ExprName",
+                              "member": "__init__",
+                              "name": "Awaitable"
+                            },
+                            "slice": {
+                              "cls": "ExprName",
+                              "member": "__init__",
+                              "name": "RuleResult"
+                            }
+                          }
+                        ],
+                        "implicit": true
+                      }
+                    },
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "predicate"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprBinOp",
+                      "left": {
+                        "cls": "ExprName",
+                        "member": "__init__",
+                        "name": "str"
+                      },
+                      "operator": "|",
+                      "right": "None"
+                    },
+                    "default": "None",
+                    "kind": "positional or keyword",
+                    "name": "group"
+                  }
+                ],
+                "returns": "None",
+                "runtime": true
+              },
+              "__repr__": {
+                "analysis": "static",
+                "decorators": [],
+                "endlineno": 95,
+                "kind": "function",
+                "lineno": 93,
+                "name": "__repr__",
+                "parameters": [
+                  {
+                    "annotation": null,
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "self"
+                  }
+                ],
+                "returns": {
+                  "cls": "ExprName",
+                  "member": "__repr__",
+                  "name": "str"
+                },
+                "runtime": true
+              },
+              "_predicate": {
+                "analysis": "static",
+                "endlineno": 80,
+                "kind": "attribute",
+                "labels": [
+                  "instance-attribute"
+                ],
+                "lineno": 80,
+                "name": "_predicate",
+                "runtime": true,
+                "value": {
+                  "cls": "ExprName",
+                  "member": null,
+                  "name": "predicate"
+                }
+              },
+              "evaluate": {
+                "analysis": "static",
+                "decorators": [],
+                "docstring": {
+                  "endlineno": 90,
+                  "lineno": 83,
+                  "value": "Run the wrapped predicate against ``context``.\n\nArgs:\n    context: See :meth:`Rule.evaluate`.\n\nReturns:\n    Whatever the wrapped predicate returns, unchanged."
+                },
+                "endlineno": 91,
+                "kind": "function",
+                "labels": [
+                  "async"
+                ],
+                "lineno": 82,
+                "name": "evaluate",
+                "parameters": [
+                  {
+                    "annotation": null,
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "self"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprName",
+                      "member": "evaluate",
+                      "name": "TContext"
+                    },
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "context"
+                  }
+                ],
+                "returns": {
+                  "cls": "ExprName",
+                  "member": "evaluate",
+                  "name": "RuleResult"
+                },
+                "runtime": true
+              },
+              "group": {
+                "analysis": "static",
+                "endlineno": 79,
+                "kind": "attribute",
+                "labels": [
+                  "instance-attribute"
+                ],
+                "lineno": 79,
+                "name": "group",
+                "runtime": true,
+                "value": {
+                  "cls": "ExprName",
+                  "member": null,
+                  "name": "group"
+                }
+              },
+              "name": {
+                "analysis": "static",
+                "endlineno": 78,
+                "kind": "attribute",
+                "labels": [
+                  "instance-attribute"
+                ],
+                "lineno": 78,
+                "name": "name",
+                "runtime": true,
+                "value": {
+                  "cls": "ExprName",
+                  "member": null,
+                  "name": "name"
+                }
+              }
+            },
+            "name": "FunctionRule",
+            "runtime": true
+          },
+          "Generic": {
+            "analysis": "static",
+            "endlineno": 16,
+            "inherited": false,
+            "kind": "alias",
+            "lineno": 16,
+            "name": "Generic",
+            "runtime": true,
+            "target_path": "typing.Generic"
+          },
+          "OrRule": {
+            "analysis": "static",
+            "bases": [
+              {
+                "cls": "ExprSubscript",
+                "left": {
+                  "cls": "ExprName",
+                  "member": "OrRule",
+                  "name": "Generic"
+                },
+                "slice": {
+                  "cls": "ExprName",
+                  "member": "OrRule",
+                  "name": "TContext"
+                }
+              }
+            ],
+            "decorators": [],
+            "docstring": {
+              "endlineno": 162,
+              "lineno": 154,
+              "value": "Composite rule that passes if any sub-rule passes.\n\nShort-circuits on the first passing sub-rule. The same\nsame-``TContext`` requirement across sub-rules applies here too.\n\nAttributes:\n    name: See :class:`Rule`.\n    group: See :class:`Rule`."
+            },
+            "endlineno": 204,
+            "kind": "class",
+            "lineno": 153,
+            "members": {
+              "__init__": {
+                "analysis": "static",
+                "decorators": [],
+                "docstring": {
+                  "endlineno": 172,
+                  "lineno": 165,
+                  "value": "Initialise with the ordered sub-rules to combine.\n\nArgs:\n    name: Unique identifier for this composite rule.\n    rules: Sub-rules evaluated in order until one passes (or all\n        fail). An empty list vacuously fails.\n    group: Optional group label, see :class:`Rule`."
+                },
+                "endlineno": 175,
+                "kind": "function",
+                "lineno": 164,
+                "name": "__init__",
+                "parameters": [
+                  {
+                    "annotation": null,
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "self"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprName",
+                      "member": "__init__",
+                      "name": "str"
+                    },
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "name"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprSubscript",
+                      "left": {
+                        "cls": "ExprName",
+                        "member": "__init__",
+                        "name": "list"
+                      },
+                      "slice": {
+                        "cls": "ExprSubscript",
+                        "left": {
+                          "cls": "ExprName",
+                          "member": "__init__",
+                          "name": "Rule"
+                        },
+                        "slice": {
+                          "cls": "ExprName",
+                          "member": "__init__",
+                          "name": "TContext"
+                        }
+                      }
+                    },
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "rules"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprBinOp",
+                      "left": {
+                        "cls": "ExprName",
+                        "member": "__init__",
+                        "name": "str"
+                      },
+                      "operator": "|",
+                      "right": "None"
+                    },
+                    "default": "None",
+                    "kind": "positional or keyword",
+                    "name": "group"
+                  }
+                ],
+                "returns": "None",
+                "runtime": true
+              },
+              "__repr__": {
+                "analysis": "static",
+                "decorators": [],
+                "endlineno": 204,
+                "kind": "function",
+                "lineno": 202,
+                "name": "__repr__",
+                "parameters": [
+                  {
+                    "annotation": null,
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "self"
+                  }
+                ],
+                "returns": {
+                  "cls": "ExprName",
+                  "member": "__repr__",
+                  "name": "str"
+                },
+                "runtime": true
+              },
+              "_rules": {
+                "analysis": "static",
+                "endlineno": 175,
+                "kind": "attribute",
+                "labels": [
+                  "instance-attribute"
+                ],
+                "lineno": 175,
+                "name": "_rules",
+                "runtime": true,
+                "value": {
+                  "cls": "ExprName",
+                  "member": null,
+                  "name": "rules"
+                }
+              },
+              "evaluate": {
+                "analysis": "static",
+                "decorators": [],
+                "docstring": {
+                  "endlineno": 188,
+                  "lineno": 178,
+                  "value": "Evaluate sub-rules in order, stopping at the first pass.\n\nArgs:\n    context: See :meth:`Rule.evaluate`.\n\nReturns:\n    A :class:`~verdict.result.RuleResult` for this composite\n    rule itself \u2014 ``passed`` is ``True`` as soon as any sub-rule\n    passes; ``data`` carries the list of per-sub-rule results\n    gathered so far."
+                },
+                "endlineno": 200,
+                "kind": "function",
+                "labels": [
+                  "async"
+                ],
+                "lineno": 177,
+                "name": "evaluate",
+                "parameters": [
+                  {
+                    "annotation": null,
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "self"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprName",
+                      "member": "evaluate",
+                      "name": "TContext"
+                    },
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "context"
+                  }
+                ],
+                "returns": {
+                  "cls": "ExprName",
+                  "member": "evaluate",
+                  "name": "RuleResult"
+                },
+                "runtime": true
+              },
+              "group": {
+                "analysis": "static",
+                "endlineno": 174,
+                "kind": "attribute",
+                "labels": [
+                  "instance-attribute"
+                ],
+                "lineno": 174,
+                "name": "group",
+                "runtime": true,
+                "value": {
+                  "cls": "ExprName",
+                  "member": null,
+                  "name": "group"
+                }
+              },
+              "name": {
+                "analysis": "static",
+                "endlineno": 173,
+                "kind": "attribute",
+                "labels": [
+                  "instance-attribute"
+                ],
+                "lineno": 173,
+                "name": "name",
+                "runtime": true,
+                "value": {
+                  "cls": "ExprName",
+                  "member": null,
+                  "name": "name"
+                }
+              }
+            },
+            "name": "OrRule",
+            "runtime": true
+          },
+          "Protocol": {
+            "analysis": "static",
+            "endlineno": 16,
+            "inherited": false,
+            "kind": "alias",
+            "lineno": 16,
+            "name": "Protocol",
+            "runtime": true,
+            "target_path": "typing.Protocol"
+          },
+          "Rule": {
+            "analysis": "static",
+            "bases": [
+              {
+                "cls": "ExprSubscript",
+                "left": {
+                  "cls": "ExprName",
+                  "member": "Rule",
+                  "name": "Protocol"
+                },
+                "slice": {
+                  "cls": "ExprName",
+                  "member": "Rule",
+                  "name": "TContext"
+                }
+              }
+            ],
+            "decorators": [
+              {
+                "endlineno": 23,
+                "lineno": 23,
+                "value": {
+                  "cls": "ExprName",
+                  "member": null,
+                  "name": "runtime_checkable"
+                }
+              }
+            ],
+            "docstring": {
+              "endlineno": 36,
+              "lineno": 25,
+              "value": "Structural interface every rule (plain or composite) satisfies.\n\nAttributes:\n    name: Unique identifier for this rule within a\n        :class:`~verdict.engine.RulesEngine` \u2014 used for\n        :meth:`~verdict.engine.RulesEngine.run_named` lookups and to\n        label this rule's own entry in a\n        :class:`~verdict.result.RunResult`.\n    group: Optional group label \u2014 rules sharing a group can be run\n        together via :meth:`~verdict.engine.RulesEngine.run_group`.\n        ``None`` if this rule doesn't belong to any group."
+            },
+            "endlineno": 50,
+            "kind": "class",
+            "lineno": 23,
+            "members": {
+              "evaluate": {
+                "analysis": "static",
+                "decorators": [],
+                "docstring": {
+                  "endlineno": 49,
+                  "lineno": 42,
+                  "value": "Evaluate this rule against ``context``.\n\nArgs:\n    context: Data the rule's condition reads from.\n\nReturns:\n    The outcome of evaluating this rule."
+                },
+                "endlineno": 50,
+                "kind": "function",
+                "labels": [
+                  "async"
+                ],
+                "lineno": 41,
+                "name": "evaluate",
+                "parameters": [
+                  {
+                    "annotation": null,
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "self"
+                  },
+                  {
+                    "annotation": {
+                      "cls": "ExprName",
+                      "member": "evaluate",
+                      "name": "TContext"
+                    },
+                    "default": null,
+                    "kind": "positional or keyword",
+                    "name": "context"
+                  }
+                ],
+                "returns": {
+                  "cls": "ExprName",
+                  "member": "evaluate",
+                  "name": "RuleResult"
+                },
+                "runtime": true
+              },
+              "group": {
+                "analysis": "static",
+                "annotation": {
+                  "cls": "ExprBinOp",
+                  "left": {
+                    "cls": "ExprName",
+                    "member": null,
+                    "name": "str"
+                  },
+                  "operator": "|",
+                  "right": "None"
+                },
+                "endlineno": 39,
+                "kind": "attribute",
+                "labels": [
+                  "instance-attribute"
+                ],
+                "lineno": 39,
+                "name": "group",
+                "runtime": true
+              },
+              "name": {
+                "analysis": "static",
+                "annotation": {
+                  "cls": "ExprName",
+                  "member": null,
+                  "name": "str"
+                },
+                "endlineno": 38,
+                "kind": "attribute",
+                "labels": [
+                  "instance-attribute"
+                ],
+                "lineno": 38,
+                "name": "name",
+                "runtime": true
+              }
+            },
+            "name": "Rule",
+            "runtime": true
+          },
+          "RuleResult": {
+            "analysis": "static",
+            "endlineno": 18,
+            "inherited": false,
+            "kind": "alias",
+            "lineno": 18,
+            "name": "RuleResult",
+            "runtime": true,
+            "target_path": "verdict.result.RuleResult"
+          },
+          "TContext": {
+            "analysis": "static",
+            "endlineno": 20,
+            "kind": "attribute",
+            "labels": [
+              "module-attribute"
+            ],
+            "lineno": 20,
+            "name": "TContext",
+            "runtime": true,
+            "value": {
+              "arguments": [
+                "'TContext'"
+              ],
+              "cls": "ExprCall",
+              "function": {
+                "cls": "ExprName",
+                "member": null,
+                "name": "TypeVar"
+              }
+            }
+          },
+          "TypeVar": {
+            "analysis": "static",
+            "endlineno": 16,
+            "inherited": false,
+            "kind": "alias",
+            "lineno": 16,
+            "name": "TypeVar",
+            "runtime": true,
+            "target_path": "typing.TypeVar"
+          },
+          "annotations": {
+            "analysis": "static",
+            "endlineno": 14,
+            "inherited": false,
+            "kind": "alias",
+            "lineno": 14,
+            "name": "annotations",
+            "runtime": true,
+            "target_path": "__future__.annotations"
+          },
+          "runtime_checkable": {
+            "analysis": "static",
+            "endlineno": 16,
+            "inherited": false,
+            "kind": "alias",
+            "lineno": 16,
+            "name": "runtime_checkable",
+            "runtime": true,
+            "target_path": "typing.runtime_checkable"
+          }
+        },
+        "name": "rule",
+        "runtime": true
+      }
+    },
+    "name": "verdict",
+    "runtime": true
+  }
+}

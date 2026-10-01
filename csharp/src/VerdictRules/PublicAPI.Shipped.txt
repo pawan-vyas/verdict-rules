@@ -1,0 +1,78 @@
+#nullable enable
+override VerdictRules.AndRule.ToString() -> string!
+override VerdictRules.AndRule<TContext>.ToString() -> string!
+override VerdictRules.FunctionRule.ToString() -> string!
+override VerdictRules.FunctionRule<TContext>.ToString() -> string!
+override VerdictRules.OrRule.ToString() -> string!
+override VerdictRules.OrRule<TContext>.ToString() -> string!
+override VerdictRules.RuleResult.ToString() -> string!
+override VerdictRules.RulesEngine.ToString() -> string!
+override VerdictRules.RulesEngine<TContext>.ToString() -> string!
+override VerdictRules.RunResult.ToString() -> string!
+VerdictRules.AndRule
+VerdictRules.AndRule.AndRule(string! name, System.Collections.Generic.IReadOnlyList<VerdictRules.IRule!>! rules, string? group = null) -> void
+VerdictRules.AndRule.EvaluateAsync(System.Collections.Generic.IReadOnlyDictionary<string!, object?>! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<VerdictRules.RuleResult!>!
+VerdictRules.AndRule.Group.get -> string?
+VerdictRules.AndRule.Name.get -> string!
+VerdictRules.AndRule<TContext>
+VerdictRules.AndRule<TContext>.AndRule(string! name, System.Collections.Generic.IReadOnlyList<VerdictRules.IRule<TContext>!>! rules, string? group = null) -> void
+VerdictRules.AndRule<TContext>.EvaluateAsync(TContext context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<VerdictRules.RuleResult!>!
+VerdictRules.AndRule<TContext>.Group.get -> string?
+VerdictRules.AndRule<TContext>.Name.get -> string!
+VerdictRules.FunctionRule
+VerdictRules.FunctionRule.EvaluateAsync(System.Collections.Generic.IReadOnlyDictionary<string!, object?>! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<VerdictRules.RuleResult!>!
+VerdictRules.FunctionRule.FunctionRule(string! name, VerdictRules.RulePredicate! predicate, string? group = null) -> void
+VerdictRules.FunctionRule.Group.get -> string?
+VerdictRules.FunctionRule.Name.get -> string!
+VerdictRules.FunctionRule<TContext>
+VerdictRules.FunctionRule<TContext>.EvaluateAsync(TContext context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<VerdictRules.RuleResult!>!
+VerdictRules.FunctionRule<TContext>.FunctionRule(string! name, VerdictRules.RulePredicate<TContext>! predicate, string? group = null) -> void
+VerdictRules.FunctionRule<TContext>.Group.get -> string?
+VerdictRules.FunctionRule<TContext>.Name.get -> string!
+VerdictRules.IRule
+VerdictRules.IRule<TContext>
+VerdictRules.IRule<TContext>.EvaluateAsync(TContext context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<VerdictRules.RuleResult!>!
+VerdictRules.IRule<TContext>.Group.get -> string?
+VerdictRules.IRule<TContext>.Name.get -> string!
+VerdictRules.OrRule
+VerdictRules.OrRule.EvaluateAsync(System.Collections.Generic.IReadOnlyDictionary<string!, object?>! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<VerdictRules.RuleResult!>!
+VerdictRules.OrRule.Group.get -> string?
+VerdictRules.OrRule.Name.get -> string!
+VerdictRules.OrRule.OrRule(string! name, System.Collections.Generic.IReadOnlyList<VerdictRules.IRule!>! rules, string? group = null) -> void
+VerdictRules.OrRule<TContext>
+VerdictRules.OrRule<TContext>.EvaluateAsync(TContext context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<VerdictRules.RuleResult!>!
+VerdictRules.OrRule<TContext>.Group.get -> string?
+VerdictRules.OrRule<TContext>.Name.get -> string!
+VerdictRules.OrRule<TContext>.OrRule(string! name, System.Collections.Generic.IReadOnlyList<VerdictRules.IRule<TContext>!>! rules, string? group = null) -> void
+VerdictRules.RulePredicate
+VerdictRules.RulePredicate<TContext>
+VerdictRules.RuleResult
+VerdictRules.RuleResult.Data.get -> object?
+VerdictRules.RuleResult.Detail.get -> string!
+VerdictRules.RuleResult.Passed.get -> bool
+VerdictRules.RuleResult.RuleName.get -> string!
+VerdictRules.RuleResult.RuleResult(string! ruleName, bool passed, string! detail = "", object? data = null) -> void
+VerdictRules.RulesEngine
+VerdictRules.RulesEngine.GroupNames.get -> System.Collections.Generic.IReadOnlyCollection<string!>!
+VerdictRules.RulesEngine.RuleNames.get -> System.Collections.Generic.IReadOnlyCollection<string!>!
+VerdictRules.RulesEngine.RulesEngine(System.Collections.Generic.IReadOnlyList<VerdictRules.IRule!>! rules) -> void
+VerdictRules.RulesEngine.RunAllAsync(System.Collections.Generic.IReadOnlyDictionary<string!, object?>! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<VerdictRules.RunResult!>!
+VerdictRules.RulesEngine.RunGroupAsync(string! group, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<VerdictRules.RunResult!>!
+VerdictRules.RulesEngine.RunNamedAsync(string! name, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<VerdictRules.RuleResult!>!
+VerdictRules.RulesEngine.TryRunGroupAsync(string! group, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<VerdictRules.RunResult?>!
+VerdictRules.RulesEngine.TryRunNamedAsync(string! name, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<VerdictRules.RuleResult?>!
+VerdictRules.RulesEngine<TContext>
+VerdictRules.RulesEngine<TContext>.GroupNames.get -> System.Collections.Generic.IReadOnlyCollection<string!>!
+VerdictRules.RulesEngine<TContext>.RuleNames.get -> System.Collections.Generic.IReadOnlyCollection<string!>!
+VerdictRules.RulesEngine<TContext>.RulesEngine(System.Collections.Generic.IReadOnlyList<VerdictRules.IRule<TContext>!>! rules) -> void
+VerdictRules.RulesEngine<TContext>.RunAllAsync(TContext context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<VerdictRules.RunResult!>!
+VerdictRules.RulesEngine<TContext>.RunGroupAsync(string! group, TContext context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<VerdictRules.RunResult!>!
+VerdictRules.RulesEngine<TContext>.RunNamedAsync(string! name, TContext context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<VerdictRules.RuleResult!>!
+VerdictRules.RulesEngine<TContext>.TryRunGroupAsync(string! group, TContext context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<VerdictRules.RunResult?>!
+VerdictRules.RulesEngine<TContext>.TryRunNamedAsync(string! name, TContext context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<VerdictRules.RuleResult?>!
+VerdictRules.RunResult
+VerdictRules.RunResult.Passed.get -> bool
+VerdictRules.RunResult.Results.get -> System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>!
+VerdictRules.RunResult.RunResult(bool passed, System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>! results) -> void
+virtual VerdictRules.RulePredicate.Invoke(System.Collections.Generic.IReadOnlyDictionary<string!, object?>! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<VerdictRules.RuleResult!>!
+virtual VerdictRules.RulePredicate<TContext>.Invoke(TContext context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<VerdictRules.RuleResult!>!

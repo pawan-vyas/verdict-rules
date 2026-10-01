@@ -1,0 +1,69 @@
+# Every public symbol any language's snapshot exports that is NOT covered
+# by a row in api-concepts.yaml must appear here instead, with a one-line
+# reason. scripts/check_api_snapshots.py fails on anything in neither file --
+# an unclassified symbol is exactly the silent drift this gate exists to
+# catch, whether it's a genuine one-language-only feature or a concept that
+# should have been added to api-concepts.yaml instead and wasn't.
+#
+# `symbol` values are strict: a bare `TypeName` (the whole type, no
+# specific member) or `TypeName.Member`, comma-separated for more than one
+# in the same language. No free-text descriptions here -- a value that
+# doesn't match a real extracted symbol is a no-op allow-list entry, which
+# defeats the point. A structural fact worth recording that names no real
+# symbol (e.g. "this interface has no runtime shape") belongs in a comment,
+# not a `symbol` entry.
+#
+# See docs/maintenance/api-snapshots.md for how the two files are used
+# together.
+
+- symbol: { js: "UnknownLookupError,UnknownLookupError.kind,UnknownLookupError.key" }
+  reason: >
+    The only language with a custom error type for an unknown rule/group
+    lookup. The other three raise/throw a built-in exception type already
+    named inline in their own agent-notes.md (Python KeyError, Dart
+    ArgumentError, C# KeyNotFoundException) -- JS has no equivalent
+    built-in that carries structured kind/key fields, so it defines one.
+
+- symbol: { csharp: RulePredicate.Invoke }
+  reason: >
+    Every C# delegate type automatically exposes Invoke as part of the
+    delegate pattern itself -- an artifact of declaring RulePredicate as a
+    delegate, not a member this package chose to add.
+
+- symbol: { python: TContext }
+  reason: >
+    The exported TypeVar generic signatures are written against. Needed
+    because Python's typing module requires an actual importable object
+    for a consumer to reference the same type variable in their own
+    generic code -- C#, JS, and Dart's generics are pure syntax at the
+    call site and export nothing equivalent.
+
+- symbol: { js: Context, dart: Context }
+  reason: >
+    A named alias for the dict-context shape (JS's Record<string,
+    unknown>, Dart's Map<String, Object?>), exported so a consumer doesn't
+    repeat the full generic instantiation at every call site. Python's
+    structural dict typing and C#'s explicit IReadOnlyDictionary<string,
+    object?> don't gain anything from a named alias the way a
+    nominally-typed language's own generic instantiation does, so neither
+    defines one.
+
+# RuleResult/RunResult's own string representation predates the concept
+# map (shipped at csharp-v0.0.1, before issue #98 standardized this as a
+# tracked concept for the other four rule/engine types) and is already
+# structurally asymmetric across languages -- Dart has toString(), Python
+# gets one for free from @dataclass, C# has ToString() on a public type
+# with a private DebuggerDisplay alongside it, and JS's RuleResult/
+# RunResult are plain interfaces with no runtime shape to attach a method
+# to at all. There is no shared shape to assert as a concept row, only a
+# per-language fact -- entries below are whatever each language's real
+# tool actually reports; see api-snapshots.md if a future tool version
+# starts (or stops) reporting one of these and this file needs updating.
+- symbol: { csharp: "RuleResult.ToString,RunResult.ToString" }
+  reason: >
+    Both public overrides, predating the concept map (see note above).
+    DebuggerDisplay on both and RunResult's DebuggerTypeProxy are not
+    separate entries here because neither is public surface to begin
+    with -- DebuggerDisplay is a private property and DebuggerTypeProxy
+    names an internal nested type, so PublicApiAnalyzers never reports
+    them regardless.
