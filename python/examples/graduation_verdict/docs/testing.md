@@ -9,18 +9,21 @@
 > [`../../../../fixtures/graduation_verdict/README.md`](../../../../fixtures/graduation_verdict/README.md)
 > for how to extend the curriculum.
 
-## Two suites, two different jobs
+## Four suites, four different jobs
 
 | File | Style | Proves |
 | --- | --- | --- |
 | `test_graduation_verdict.py` | Curated scenarios | Each subject type builds the right `Rule` shape; `run_named`/`run_group`/`run_all` each behave as documented; all 8 hand-picked, hand-verified students get exactly the verdict their own `expected_passed` says. |
 | `test_chaos.py` | Differential/property-based | The real engine agrees with an independent oracle across 500 deterministically-generated, schema-valid random curricula and students — a much wider space than anyone would hand-curate. |
+| `test_chaos_structural.py` | Structural, over the same cases | Every generated case's result *tree* — not just its top-level boolean — has the short-circuit shape its rule tree implies; see [below](#the-structural-suite-walking-the-result-tree-not-just-its-boolean). |
+| `test_fuzz_curriculum.py` | Fuzzing | `load_curriculum` never crashes with an undocumented error on malformed `policies.json` input; see [below](#fuzzing-load_curriculum). |
 
-`uv run pytest examples/graduation_verdict/` runs both (547 tests
-across the whole package as of this writing — 24 in `verdict`'s own
-core suite, 23 curated scenarios here, 500 chaos cases). Also
-auto-discovered by the package's own bare `uv run pytest`, no
-configuration needed.
+`uv run pytest examples/graduation_verdict/` runs all four (1217 tests
+as of this writing — 57 curated scenarios, 500 chaos cases, 510
+structural cases, 150 fuzz cases). Also auto-discovered by the
+package's own bare `uv run pytest` (1319 tests — this project's 1217
+plus `verdict`'s own 69-test core suite and the sibling
+`marketplace_eligibility` example's 33), no configuration needed.
 
 ## Why this project is a regression net for `verdict` itself, not just a sample
 
@@ -168,6 +171,86 @@ graph LR
 > replay first. `CHAOS_SEED` is pinned deliberately — bumping it
 > reshuffles every case's data, which trades away coverage rather than
 > adding to it; raise `NUM_CASES` instead to test more.
+
+## The structural suite: walking the result tree, not just its boolean
+
+`test_chaos.py` only ever compares the final `passed` boolean against
+the oracle. `test_chaos_structural.py` reuses the exact same
+`CHAOS_SEED + case_index` generation — the same 500 cases, not a new
+generator — and instead walks the real `(Rule, RuleResult)` tree
+together, recursively, asserting a shape invariant that depends on the
+rule's own concrete type:
+
+- `AndRule`: a failing result ran every sub-rule up to and including
+  the first failure, and no further; a passing result ran — and
+  passed — every sub-rule.
+- `OrRule`: the mirror image — a passing result ran, and failed, every
+  sub-rule up to the one that passed; a failing result ran every
+  sub-rule, since only a pass stops it early.
+- `AtLeastNRule`: never short-circuits at all — `result.data` always
+  has exactly one entry per sub-rule, regardless of `passed`. This is
+  the deliberate contrast case; applying the `AndRule`/`OrRule` rule to
+  it would be wrong.
+- `FunctionRule`: a leaf — no further recursion, and its own
+  `result.data` is never list-shaped.
+
+Dispatch on the rule's concrete type is a lookup table
+(`_RULE_RESULT_CHECKERS`) keyed by `type(rule)`, not an `isinstance`
+ladder — adding a fifth `Rule` shape to this example is a new checker
+function plus a new row, never a new branch in the walker itself.
+
+The same file also proves two properties `test_chaos.py` doesn't touch:
+`run_all` returns exactly one result per registered subject rule (a
+structural count, not a verdict), and evaluating the same built rule
+tree against the same context twice produces two result trees that are
+`==` — `RuleResult` is a frozen dataclass, so equality already recurses
+through `data` field by field, so no separate deep-equality helper is
+needed to prove purity.
+
+## Fuzzing `load_curriculum`
+
+`load_curriculum` does no schema validation beyond the key accesses it
+needs to build each `SubjectPolicy` — see its own docstring in
+`graduation_verdict.py`. `test_fuzz_curriculum.py` generates 150
+deliberately malformed `policies.json` documents from a seeded RNG (a
+wrong-typed field, a dropped required key, an unexpected extra key,
+deeply nested junk in place of a scalar, a truncated document, an
+empty `subjects` array, `null` in place of an object) and asserts the
+reader only ever does one of two things: parses into a valid policy
+list, or raises one of the errors its own dict/list access and
+`json.loads` naturally produce (`json.JSONDecodeError`, `KeyError`,
+`TypeError`) — never an unrelated crash, and never a silently wrong
+policy list. As of this writing, fuzzing hasn't found a genuine reader
+bug; the reader's own narrow contract already holds.
+
+## Shrinking a failing case to a minimal fixture
+
+[`shrinking.py`](../shrinking.py) is a shrinking *mechanism*, not a
+test by itself: given a `(policies, context, elective_minimum)` case
+that reproduces some failure and a `still_reproduces` predicate, `shrink_case`
+greedily drops subjects and pushes scalar fields toward their simplest
+value — re-checking the same predicate after each change — until no
+further simplification keeps the failure reproducing, then
+`write_shrunk_fixture` serializes the result to
+[`testdata/shrunk_failures/`](../testdata/shrunk_failures/README.md),
+a per-language debugging aid, not the shared cross-language fixture
+contract.
+
+Because the chaos suite, the structural invariants, and the oracle
+comparison all pass on every generated case, there has never been a
+real failure to shrink. The mechanism was instead demonstrated against
+a deliberately injected, throwaway bug: a scratch script (never part of
+this repo's tracked files) defined a local, intentionally-wrong oracle
+variant that skips the attendance check entirely, searched the 500
+generated cases for one where the real engine and that broken oracle
+disagreed, and fed that disagreement to `shrink_case`. It reduced a
+7-subject, fully-populated case down to zero subjects — exactly the
+`attendance_floor`/`attendance_pct` pair the injected bug was blind to,
+with every other field simplified away — confirming the shrinker finds
+the actually-relevant difference rather than an arbitrary smaller case.
+The script, its injected bug, and the fixture it wrote were all deleted
+once this was confirmed; nothing from that demonstration is part of
+the shipped suite.
 
 ## Running the tests
 
