@@ -1,0 +1,14 @@
+{
+  "eval_name": "recurring-pattern-evidence-report",
+  "prompt": "I'm building a content-moderation decision service using verdict. Every time I need to know which specific sub-rule inside a composite failed (to log which policy was violated), I end up writing the same small recursive helper that casts a RuleResult's data back to a list of RuleResult and walks it to pick out the failing ones. This is now the third unrelated project where I've written almost this exact helper -- before this one, an access-control gate and a discount-eligibility check, two completely different domains, both needed the same thing. Should I just keep rewriting this each time, or is this worth telling the verdict maintainers about?",
+  "expected_output": "The agent recognizes this as Situation 2 in references/issue-reporting.md -- not a defect, and not a request the agent itself should push for -- because the same workaround has now recurred across three unrelated domains. It frames the report as evidence (what was repeated, the workaround's structural shape, and that it was seen in three separate unrelated domains) rather than arguing for a specific API design, and explicitly notes that whether to first-class this is the maintainer's call, not something the agent is deciding. It checks for an existing issue first. Because this sandbox has no GitHub remote, it falls back to printing the report rather than claiming to have filed it.",
+  "files": ["files/pyproject.toml"],
+  "expectations": [
+    "The response identifies this as the recurring-pattern/evidence case (Situation 2), not a bug report and not treated as a straightforward feature request the agent should simply build or strongly advocate for",
+    "The response states it will check pawan-vyas/verdict-rules' existing issues for a duplicate before proposing to file a new one",
+    "The response does not claim to have actually created a GitHub issue -- it falls back to printing the report, since this sandbox has no repo write access",
+    "The printed report describes the workaround structurally (a recursive RuleResult.data walk to collect failing sub-results) rather than pasting any one project's literal code, and states it was observed across three separate, generically-described domains (access control, discount eligibility, content moderation) without inventing additional proprietary detail beyond what the user already gave",
+    "The response explicitly frames this as evidence for the maintainer to weigh, not a demand or a claim that verdict must add the capability -- the decision to honor it is left to the maintainer",
+    "The report is labeled (or the response states it should be labeled) 'enhancement', not 'bug'"
+  ]
+}

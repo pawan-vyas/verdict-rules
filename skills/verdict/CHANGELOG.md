@@ -6,6 +6,20 @@ Release history for the verdict AI-agent skill. Format follows
 This versions **the guidance**, not any language's API, so it moves on its own
 cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skill-vX.Y.Z`.
 
+## [0.7.0] - 2026-10-01
+
+- **New: `references/issue-reporting.md`.** Tells an agent using verdict
+  in a real application when and how to report back to
+  `pawan-vyas/verdict-rules` instead of silently working around
+  something: a genuine verdict-side defect (reproduces without the
+  application's own code), or the same workaround for a gap in verdict
+  recurring across separate, unrelated projects — evidence worth
+  surfacing even though the agent itself never decides whether to act on
+  it. Both report shapes share the same redaction rules: no domain
+  names, no context values or application data, no logs or stack frames
+  beyond verdict's own. Linked from `SKILL.md`'s "If you find something
+  worth telling verdict about" section.
+
 ## [0.6.2] - 2026-09-18
 
 - **The fetch tier is gone.** `fetch-docs.sh`, its generated

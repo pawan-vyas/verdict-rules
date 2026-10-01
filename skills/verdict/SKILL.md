@@ -85,3 +85,12 @@ read at the tag matching what this project has installed, never the
 default branch. A project pinned to an older release shown current
 documentation is told about an API it does not have, which is worse
 than not reading it at all.
+
+## If you find something worth telling verdict about
+
+A genuine defect in verdict itself, or the same workaround around a gap
+in verdict recurring across unrelated projects, is worth reporting back
+rather than silently re-solving every time. See
+[`references/issue-reporting.md`](references/issue-reporting.md) for
+when each applies, what the report should contain, and what must be
+redacted out of it first.

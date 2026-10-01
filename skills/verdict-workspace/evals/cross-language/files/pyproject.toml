@@ -1,0 +1,17 @@
+# A minimal, deliberately ordinary project manifest, reused here (not
+# shared with python/files/pyproject.toml) because these evals test
+# behavior that applies the same way regardless of which language the
+# project happens to be in — Python is just the concrete instance.
+#
+# No GitHub remote is configured anywhere in this fixture's working
+# directory on purpose: these evals must never actually be able to call
+# `gh issue create` against the real pawan-vyas/verdict-rules repository,
+# so the only safe, correct behavior in this sandbox is the "print the
+# report for the user to file" branch of references/issue-reporting.md.
+[project]
+name = "ledger-service"
+version = "2.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "verdict-rules==0.3.1",
+]
