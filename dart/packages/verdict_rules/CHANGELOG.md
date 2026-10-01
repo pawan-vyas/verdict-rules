@@ -11,6 +11,16 @@ than that convention's bracketed, dated one.
 
 Tagged `dart-vX.Y.Z`.
 
+## 0.4.0
+
+- **Added**: `FunctionRule`, `AndRule`, `OrRule`, and `RulesEngine` now
+  override `toString()`, matching `RuleResult`/`RunResult`'s existing
+  treatment. A rule or engine printed in a log line or the debugger
+  previously showed only `Instance of 'AndRule<...>'`; it now shows
+  `FunctionRule "name"` (or `"name" (group)`), `AndRule "name" (group) —
+  N sub-rule(s)`, `OrRule "name" (group) — N sub-rule(s)`, or
+  `RulesEngine — N rule(s), M group(s)`.
+
 ## 0.3.1
 
 - **Changed**: every doc comment and inline comment in the package's

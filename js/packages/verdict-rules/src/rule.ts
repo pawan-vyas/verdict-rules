@@ -56,6 +56,16 @@ export class FunctionRule<TContext> implements Rule<TContext> {
   evaluate(context: TContext): Promise<RuleResult> {
     return this.#predicate(context);
   }
+
+  /** @returns A one-line summary -- the name, and the group when set. */
+  toString(): string {
+    return `FunctionRule "${this.name}"` + (this.group ? ` (${this.group})` : "");
+  }
+
+  /** So `console.log`/the Node REPL show the same summary as {@link toString}. */
+  [Symbol.for("nodejs.util.inspect.custom")](): string {
+    return this.toString();
+  }
 }
 
 /**
@@ -92,6 +102,20 @@ export class AndRule<TContext> implements Rule<TContext> {
       }
     }
     return { ruleName: this.name, passed: true, data: subResults };
+  }
+
+  /** @returns A one-line summary -- the name, group, and sub-rule count. */
+  toString(): string {
+    return (
+      `AndRule "${this.name}"` +
+      (this.group ? ` (${this.group})` : "") +
+      ` — ${this.#rules.length} sub-rule(s)`
+    );
+  }
+
+  /** So `console.log`/the Node REPL show the same summary as {@link toString}. */
+  [Symbol.for("nodejs.util.inspect.custom")](): string {
+    return this.toString();
   }
 }
 
@@ -130,5 +154,19 @@ export class OrRule<TContext> implements Rule<TContext> {
       detail: "no sub-rule passed",
       data: subResults,
     };
+  }
+
+  /** @returns A one-line summary -- the name, group, and sub-rule count. */
+  toString(): string {
+    return (
+      `OrRule "${this.name}"` +
+      (this.group ? ` (${this.group})` : "") +
+      ` — ${this.#rules.length} sub-rule(s)`
+    );
+  }
+
+  /** So `console.log`/the Node REPL show the same summary as {@link toString}. */
+  [Symbol.for("nodejs.util.inspect.custom")](): string {
+    return this.toString();
   }
 }

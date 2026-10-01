@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
+import { inspect } from "node:util";
 import { describe, it } from "node:test";
 
-import { AndRule, RulesEngine, UnknownLookupError } from "../dist/index.js";
-import { pass } from "./helpers.js";
+import { AndRule, FunctionRule, OrRule, RulesEngine, UnknownLookupError } from "../dist/index.js";
+import { fail, pass } from "./helpers.js";
 
 /**
  * Coverage for JavaScript-specific idioms, not universal contracts.
@@ -56,5 +57,45 @@ describe("UnknownLookupError", () => {
         return true;
       },
     );
+  });
+});
+
+describe("console.log / util.inspect representation", () => {
+  // RuleResult/RunResult are plain object literals (TS interfaces have no
+  // runtime shape to attach a method to), so only rule and engine types get
+  // this -- see rule.test.js/engine.test.js for their ordinary behavior.
+
+  it("FunctionRule shows its name", () => {
+    const rule = new FunctionRule("over_18", async () => ({ ruleName: "over_18", passed: true }));
+    assert.equal(rule.toString(), 'FunctionRule "over_18"');
+    assert.equal(inspect(rule), 'FunctionRule "over_18"');
+  });
+
+  it("FunctionRule shows its group when present", () => {
+    const rule = new FunctionRule("over_18", async () => ({ ruleName: "over_18", passed: true }), "age");
+    assert.equal(inspect(rule), 'FunctionRule "over_18" (age)');
+  });
+
+  it("AndRule shows its name and sub-rule count", () => {
+    const rule = new AndRule("all", [pass("a"), pass("b")]);
+    assert.equal(rule.toString(), 'AndRule "all" — 2 sub-rule(s)');
+    assert.equal(inspect(rule), 'AndRule "all" — 2 sub-rule(s)');
+  });
+
+  it("AndRule shows its group when present", () => {
+    const rule = new AndRule("all", [pass("a")], "checkout");
+    assert.equal(inspect(rule), 'AndRule "all" (checkout) — 1 sub-rule(s)');
+  });
+
+  it("OrRule shows its name and sub-rule count", () => {
+    const rule = new OrRule("any", [fail("a"), pass("b")]);
+    assert.equal(rule.toString(), 'OrRule "any" — 2 sub-rule(s)');
+    assert.equal(inspect(rule), 'OrRule "any" — 2 sub-rule(s)');
+  });
+
+  it("RulesEngine shows its rule and group counts", () => {
+    const engine = new RulesEngine([pass("a", "g1"), pass("b", "g2"), pass("c")]);
+    assert.equal(engine.toString(), "RulesEngine — 3 rule(s), 2 group(s)");
+    assert.equal(inspect(engine), "RulesEngine — 3 rule(s), 2 group(s)");
   });
 });

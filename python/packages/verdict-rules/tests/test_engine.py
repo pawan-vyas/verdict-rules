@@ -251,6 +251,10 @@ class TestIntrospection:
         assert engine.rule_names == ()
         assert engine.group_names == ()
 
+    def test_repr_shows_rule_and_group_counts(self) -> None:
+        engine = RulesEngine([_pass("a", group="g1"), _pass("b", group="g2"), _pass("c")])
+        assert repr(engine) == "RulesEngine — 3 rule(s), 2 group(s)"
+
 
 class TestConstruction:
     def test_duplicate_names_last_one_wins_in_by_name_lookup(self) -> None:

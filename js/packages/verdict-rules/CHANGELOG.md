@@ -5,6 +5,17 @@ Release history for the `verdict-rules` JS/TS package. Format follows
 [semantic versioning](https://semver.org/), scoped to this package — it
 releases independently of the other language SDKs and of the AI-agent skill.
 
+## [0.4.0] - 2026-10-01
+
+- `FunctionRule`, `AndRule`, `OrRule`, and `RulesEngine` now define
+  `toString()` and `[Symbol.for('nodejs.util.inspect.custom')]`. A rule
+  or engine printed via `console.log` or in the Node REPL previously
+  showed only the bare class dump; it now shows `FunctionRule "name"`
+  (or `"name" (group)`), `AndRule "name" (group) — N sub-rule(s)`,
+  `OrRule "name" (group) — N sub-rule(s)`, or `RulesEngine — N rule(s),
+  M group(s)`. `RuleResult`/`RunResult` are unaffected -- they are plain
+  interfaces with no runtime shape to attach a method to.
+
 ## [0.3.1] - 2026-09-18
 
 - Every doc comment and inline comment in the package's own source

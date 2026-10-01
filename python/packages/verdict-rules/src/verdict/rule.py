@@ -90,6 +90,10 @@ class FunctionRule(Generic[TContext]):
         """
         return await self._predicate(context)
 
+    def __repr__(self) -> str:
+        suffix = f" ({self.group})" if self.group else ""
+        return f'FunctionRule "{self.name}"{suffix}'
+
 
 class AndRule(Generic[TContext]):
     """Composite rule that passes only if every sub-rule passes.
@@ -141,6 +145,10 @@ class AndRule(Generic[TContext]):
                 )
         return RuleResult(rule_name=self.name, passed=True, data=sub_results)
 
+    def __repr__(self) -> str:
+        suffix = f" ({self.group})" if self.group else ""
+        return f'AndRule "{self.name}"{suffix} — {len(self._rules)} sub-rule(s)'
+
 
 class OrRule(Generic[TContext]):
     """Composite rule that passes if any sub-rule passes.
@@ -190,3 +198,7 @@ class OrRule(Generic[TContext]):
             detail="no sub-rule passed",
             data=sub_results,
         )
+
+    def __repr__(self) -> str:
+        suffix = f" ({self.group})" if self.group else ""
+        return f'OrRule "{self.name}"{suffix} — {len(self._rules)} sub-rule(s)'

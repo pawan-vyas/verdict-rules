@@ -134,3 +134,6 @@ class RulesEngine(Generic[TContext]):
     def group_names(self) -> tuple[str, ...]:
         """Every group label carried by at least one rule on this engine."""
         return tuple(self._by_group)
+
+    def __repr__(self) -> str:
+        return f"RulesEngine — {len(self._rules)} rule(s), {len(self._by_group)} group(s)"

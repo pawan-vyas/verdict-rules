@@ -10,6 +10,23 @@ from this file, so the csproj points here instead of carrying a copy.
 
 Tagged `csharp-vX.Y.Z`.
 
+## [0.4.0] - 2026-10-01
+
+### Added
+
+- **`FunctionRule`/`FunctionRule<TContext>`, `AndRule`/`AndRule<TContext>`,
+  `OrRule`/`OrRule<TContext>`, and `RulesEngine`/`RulesEngine<TContext>` now
+  carry `[DebuggerDisplay]` and `ToString()`**, matching the treatment
+  `RuleResult`/`RunResult` already had. A rule or engine printed in a
+  debugger, a log line, or a REPL previously showed only its type name;
+  it now shows `FunctionRule "name"` (or `"name" (group)`), `AndRule "name"
+  (group) — N sub-rule(s)`, `OrRule "name" (group) — N sub-rule(s)`, or
+  `RulesEngine — N rule(s), M group(s)`.
+- **`AndRule`/`AndRule<TContext>`, `OrRule`/`OrRule<TContext>`, and
+  `RulesEngine`/`RulesEngine<TContext>` also carry `[DebuggerTypeProxy]`**,
+  so a debugger expands a composite or an engine straight to its sub-rules
+  rather than through an extra, unlabeled field.
+
 ## [0.3.2] - 2026-09-19
 
 ### Fixed

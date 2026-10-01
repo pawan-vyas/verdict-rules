@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace VerdictRules;
 
 /// <summary>
@@ -11,6 +13,7 @@ namespace VerdictRules;
 /// <param name="name"><inheritdoc cref="IRule{TContext}.Name" path="/summary/node()" /></param>
 /// <param name="predicate">The wrapped predicate <see cref="EvaluateAsync"/> delegates to.</param>
 /// <param name="group"><inheritdoc cref="IRule{TContext}.Group" path="/summary/node()" /></param>
+[DebuggerDisplay("{DebuggerDisplay,nq}")]
 public sealed class FunctionRule<TContext>(string name, RulePredicate<TContext> predicate, string? group = null) : IRule<TContext>
 {
     /// <summary>The wrapped predicate, run unchanged by <see cref="EvaluateAsync"/>.</summary>
@@ -38,4 +41,11 @@ public sealed class FunctionRule<TContext>(string name, RulePredicate<TContext> 
         cancellationToken.ThrowIfCancellationRequested();
         return _predicate(context, cancellationToken);
     }
+
+    /// <inheritdoc />
+    public override string ToString() =>
+        $"FunctionRule \"{Name}\"" + (string.IsNullOrEmpty(Group) ? string.Empty : $" ({Group})");
+
+    /// <summary>What a debugger shows without expanding the object.</summary>
+    private string DebuggerDisplay => ToString();
 }

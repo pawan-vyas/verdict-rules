@@ -1,6 +1,6 @@
 [project]
 name = "verdict-rules"
-version = "0.3.1"
+version = "0.4.0"
 description = "A small, zero-dependency, async-native rule-evaluation engine for Python."
 readme = "README.md"
 authors = [

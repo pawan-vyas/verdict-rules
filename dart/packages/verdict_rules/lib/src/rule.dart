@@ -40,6 +40,10 @@ class FunctionRule<TContext> implements Rule<TContext> {
   /// Runs the wrapped predicate and returns whatever it returns, unchanged.
   @override
   Future<RuleResult> evaluate(TContext context) => _predicate(context);
+
+  @override
+  String toString() =>
+      group == null ? 'FunctionRule "$name"' : 'FunctionRule "$name" ($group)';
 }
 
 /// Composite that passes only if every sub-rule passes.
@@ -80,6 +84,12 @@ class AndRule<TContext> implements Rule<TContext> {
     }
     return RuleResult(ruleName: name, passed: true, data: subResults);
   }
+
+  @override
+  String toString() {
+    final groupSuffix = group == null ? '' : ' ($group)';
+    return 'AndRule "$name"$groupSuffix — ${_rules.length} sub-rule(s)';
+  }
 }
 
 /// Composite that passes as soon as any sub-rule passes.
@@ -115,5 +125,11 @@ class OrRule<TContext> implements Rule<TContext> {
       detail: 'no sub-rule passed',
       data: subResults,
     );
+  }
+
+  @override
+  String toString() {
+    final groupSuffix = group == null ? '' : ' ($group)';
+    return 'OrRule "$name"$groupSuffix — ${_rules.length} sub-rule(s)';
   }
 }

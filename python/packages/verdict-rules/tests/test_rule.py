@@ -61,6 +61,14 @@ class TestFunctionRule:
         rule = FunctionRule("r1", _noop_predicate)
         assert rule.group is None
 
+    def test_repr_shows_the_name(self) -> None:
+        rule = FunctionRule("over_18", _noop_predicate)
+        assert repr(rule) == 'FunctionRule "over_18"'
+
+    def test_repr_shows_the_group_when_present(self) -> None:
+        rule = FunctionRule("over_18", _noop_predicate, group="age")
+        assert repr(rule) == 'FunctionRule "over_18" (age)'
+
 
 class TestAndRule:
     async def test_all_pass_yields_pass(self) -> None:
@@ -97,6 +105,14 @@ class TestAndRule:
         result = await rule.evaluate({})
         assert result.passed is True
 
+    def test_repr_shows_the_name_and_sub_rule_count(self) -> None:
+        rule = AndRule("and1", [_pass("a"), _pass("b")])
+        assert repr(rule) == 'AndRule "and1" — 2 sub-rule(s)'
+
+    def test_repr_shows_the_group_when_present(self) -> None:
+        rule = AndRule("and1", [_pass("a")], group="checkout")
+        assert repr(rule) == 'AndRule "and1" (checkout) — 1 sub-rule(s)'
+
 
 class TestOrRule:
     async def test_any_pass_yields_pass(self) -> None:
@@ -125,6 +141,14 @@ class TestOrRule:
         rule = OrRule("or1", [])
         result = await rule.evaluate({})
         assert result.passed is False
+
+    def test_repr_shows_the_name_and_sub_rule_count(self) -> None:
+        rule = OrRule("or1", [_fail("a"), _pass("b")])
+        assert repr(rule) == 'OrRule "or1" — 2 sub-rule(s)'
+
+    def test_repr_shows_the_group_when_present(self) -> None:
+        rule = OrRule("or1", [_pass("a")], group="checkout")
+        assert repr(rule) == 'OrRule "or1" (checkout) — 1 sub-rule(s)'
 
 
 class TestExceptionPropagation:

@@ -8,6 +8,19 @@ which keeps its own changelog beside its own manifest.
 
 Tagged `python-vX.Y.Z`.
 
+## [0.4.0] - 2026-10-01
+
+### Added
+
+- `FunctionRule`, `AndRule`, `OrRule`, and `RulesEngine` now define
+  `__repr__`, matching `RuleResult`/`RunResult`'s existing
+  dataclass-generated reprs. A rule or engine printed in a debugger, a
+  log line, or a REPL previously showed only
+  `<verdict.rule.AndRule object at 0x...>`; it now shows `FunctionRule
+  "name"` (or `"name" (group)`), `AndRule "name" (group) — N
+  sub-rule(s)`, `OrRule "name" (group) — N sub-rule(s)`, or
+  `RulesEngine — N rule(s), M group(s)`.
+
 ## [0.3.1] - 2026-09-18
 
 ### Changed

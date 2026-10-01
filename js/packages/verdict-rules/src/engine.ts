@@ -104,4 +104,14 @@ export class RulesEngine<TContext> {
     }
     return result;
   }
+
+  /** @returns A one-line summary -- the rule and group counts. */
+  toString(): string {
+    return `RulesEngine — ${this.#rules.length} rule(s), ${this.#byGroup.size} group(s)`;
+  }
+
+  /** So `console.log`/the Node REPL show the same summary as {@link toString}. */
+  [Symbol.for("nodejs.util.inspect.custom")](): string {
+    return this.toString();
+  }
 }
