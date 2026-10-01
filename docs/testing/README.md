@@ -98,6 +98,24 @@ tests that prove these:
   needs its own dedicated test: a composite's own `evaluate`, and each
   of the engine's own run modes.
 
+## Fixing a defect
+
+A fix's own commit adds the failing test **first** — a test that fails
+against the code as it stood before the fix, proving the defect was
+real and that this test would have caught it — then the code change
+that makes it pass. A fix with no failing-first test is unverifiable:
+nothing distinguishes "this actually fixes the reported defect" from
+"this happens to change behavior in the area someone complained about."
+
+**A defect present identically in more than one language becomes one
+shared fixture**, in whichever format the cross-language fixture system
+already uses (see
+[`../../fixtures/graduation_verdict/README.md`](../../fixtures/graduation_verdict/README.md)
+for the shape), run by every affected language — not a separately
+hand-written regression test per language that can drift out of sync
+with the others over time. A defect specific to one language's own
+idiom or implementation stays a language-local test, same as any other.
+
 ## Checklist for a new contribution
 
 | You added... | Your test must also prove |
