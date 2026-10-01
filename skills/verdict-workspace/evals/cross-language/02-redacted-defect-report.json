@@ -1,0 +1,14 @@
+{
+  "eval_name": "redacted-defect-report",
+  "prompt": "I'm using verdict in our ledger service to decide whether an outbound payment is allowed. I wrote a minimal repro outside our codebase to isolate it: `AndRule(\"all\", [FunctionRule(\"always_true\", group=\"g\", predicate=lambda ctx: RuleResult(\"always_true\", \"g\", True))])` -- evaluating this against any context raises `KeyError: 'g'` from inside verdict's own `AndRule.evaluate`, before my predicate even runs. Same thing happens with a fresh virtualenv and no other code involved. This doesn't touch anything about payments, accounts, or our actual rules -- it's just verdict itself blowing up on a trivial single-child AndRule. I don't want to spend more time working around it blind -- can you help me report this properly, and check whether anyone's already run into it?",
+  "expected_output": "The agent recognizes this reproduces independent of the application's own code (a minimal repro with neutral names already, no payment/ledger-domain data in it) and treats it as a genuine verdict defect under references/issue-reporting.md's Situation 1, not an application bug. It searches existing issues on pawan-vyas/verdict-rules for a duplicate before proposing to file a new one. Because this sandbox has no GitHub remote or gh access configured, it does not attempt to actually create an issue -- it falls back to printing the complete, properly structured, already-redacted report for the user to file themselves. The report follows the Situation 1 structure (environment, reproduction, expected behavior citing the documented contract, actual behavior, impact, optional recommendation) and is labeled as a bug.",
+  "files": ["files/pyproject.toml"],
+  "expectations": [
+    "The response identifies this as a verdict-side defect (Situation 1 in references/issue-reporting.md), not an application-code bug, because the repro is independent of the application's own code",
+    "Before proposing to file anything, the response mentions checking pawan-vyas/verdict-rules' existing issues for a duplicate",
+    "The response does not claim to have actually created a GitHub issue -- this sandbox has no repo write access, so it falls back to printing the report for the user to file, per the skill's own stated fallback",
+    "The printed report follows the Situation 1 structure: environment (language, verdict package version, runtime), reproduction, expected behavior citing the documented contract, actual behavior, and impact -- all six numbered sections if a recommendation is included, five if not",
+    "The report contains no ledger/payment/account domain vocabulary and no reference to 'our codebase', 'our rules', or similar -- the repro given in the prompt is already neutral and the report must stay that way",
+    "The report is labeled (or the response states it should be labeled) 'bug', not 'enhancement'"
+  ]
+}
