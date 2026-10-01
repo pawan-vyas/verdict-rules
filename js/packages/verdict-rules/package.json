@@ -2,6 +2,10 @@
   "name": "verdict-rules",
   "version": "0.4.0",
   "description": "A small, zero-dependency, async-native rule-evaluation engine. Compose conditions into one explainable pass/fail verdict, with sequential evaluation and real short-circuiting as a guarantee.",
+  "author": {
+    "name": "Pawan Vyas",
+    "email": "pawan.vyas.self@gmail.com"
+  },
   "keywords": [
     "rules-engine",
     "rule-evaluation",
