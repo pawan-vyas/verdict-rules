@@ -45,6 +45,7 @@ describe("UnknownLookupError", () => {
         assert.equal(err.name, "UnknownLookupError");
         assert.equal(err.kind, "rule");
         assert.equal(err.key, "nope");
+        assert.equal(err.message, "No rule named 'nope' in this engine");
         return true;
       },
     );
@@ -54,6 +55,7 @@ describe("UnknownLookupError", () => {
       (err) => {
         assert.equal(err.kind, "group");
         assert.equal(err.key, "no-such-group");
+        assert.equal(err.message, "No rules in group 'no-such-group' in this engine");
         return true;
       },
     );
@@ -91,6 +93,11 @@ describe("console.log / util.inspect representation", () => {
     const rule = new OrRule("any", [fail("a"), pass("b")]);
     assert.equal(rule.toString(), 'OrRule "any" — 2 sub-rule(s)');
     assert.equal(inspect(rule), 'OrRule "any" — 2 sub-rule(s)');
+  });
+
+  it("OrRule shows its group when present", () => {
+    const rule = new OrRule("any", [pass("a")], "checkout");
+    assert.equal(inspect(rule), 'OrRule "any" (checkout) — 1 sub-rule(s)');
   });
 
   it("RulesEngine shows its rule and group counts", () => {

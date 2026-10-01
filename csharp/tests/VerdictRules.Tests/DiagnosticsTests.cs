@@ -62,6 +62,69 @@ public class ToStringTests
     }
 
     [Fact]
+    public void OrRuleShowsItsGroupWhenPresent()
+    {
+        var rule = new OrRule("any", new IRule[] { Rules.Pass("a") }, "checkout");
+        Assert.Equal("OrRule \"any\" (checkout) — 1 sub-rule(s)", rule.ToString());
+    }
+
+    [Fact]
+    public void GenericOrRuleShowsItsNameAndSubRuleCount()
+    {
+        var rule = new OrRule<int>("any", new IRule<int>[] { new FunctionRule<int>("a", (_, _) => Task.FromResult(new RuleResult("a", false))) });
+        Assert.Equal("OrRule \"any\" — 1 sub-rule(s)", rule.ToString());
+    }
+
+    [Fact]
+    public void GenericOrRuleShowsItsGroupWhenPresent()
+    {
+        var rule = new OrRule<int>("any", Array.Empty<IRule<int>>(), "checkout");
+        Assert.Equal("OrRule \"any\" (checkout) — 0 sub-rule(s)", rule.ToString());
+    }
+
+    [Fact]
+    public void RuleResultShowsThePassOutcomeWithNoDetail()
+    {
+        var result = new RuleResult("over_18", true);
+        Assert.Equal("over_18: PASS", result.ToString());
+    }
+
+    [Fact]
+    public void RuleResultShowsTheFailOutcomeWithNoDetail()
+    {
+        var result = new RuleResult("over_18", false);
+        Assert.Equal("over_18: FAIL", result.ToString());
+    }
+
+    [Fact]
+    public void RuleResultShowsTheFailOutcomeWithDetail()
+    {
+        var result = new RuleResult("over_18", false, "too young");
+        Assert.Equal("over_18: FAIL (too young)", result.ToString());
+    }
+
+    [Fact]
+    public void RuleResultShowsThePassOutcomeWithDetail()
+    {
+        var result = new RuleResult("over_18", true, "bonus eligible");
+        Assert.Equal("over_18: PASS (bonus eligible)", result.ToString());
+    }
+
+    [Fact]
+    public void RunResultShowsThePassOutcomeAndRuleCount()
+    {
+        var run = new RunResult(true, new List<RuleResult> { new("a", true) });
+        Assert.Equal("PASS (1 rule(s))", run.ToString());
+    }
+
+    [Fact]
+    public void RunResultShowsTheFailOutcomeAndRuleCount()
+    {
+        var run = new RunResult(false, new List<RuleResult> { new("a", false), new("b", true) });
+        Assert.Equal("FAIL (2 rule(s))", run.ToString());
+    }
+
+    [Fact]
     public void RulesEngineShowsRuleAndGroupCounts()
     {
         var engine = new RulesEngine(new IRule[]
@@ -104,5 +167,64 @@ public class AllPublicTypesCarryDebuggerDisplayTests
             .ToArray();
 
         Assert.True(missing.Length == 0, $"Missing [DebuggerDisplay]: {string.Join(", ", missing)}");
+    }
+}
+
+/// <summary>
+/// Direct coverage of <see cref="RuleResult"/>'s and <see cref="RunResult"/>'s
+/// own private <c>DebuggerDisplay</c> properties, read via
+/// <see cref="DebuggerDisplayReflection"/> — the only types whose debugger
+/// text is assembled with its own extra formatting (an em dash, an optional
+/// detail, an optional sub-result count) rather than delegating straight to
+/// <see cref="object.ToString"/> like every rule and engine type does.
+/// </summary>
+public class RuleResultAndRunResultDebuggerDisplayTests
+{
+    [Fact]
+    public void RuleResultDebuggerDisplayOmitsDetailWhenEmpty()
+    {
+        var result = new RuleResult("over_18", true);
+        Assert.Equal("over_18 = PASS", DebuggerDisplayReflection.Of(result));
+    }
+
+    [Fact]
+    public void RuleResultDebuggerDisplayShowsDetailWhenPresent()
+    {
+        var result = new RuleResult("over_18", false, "too young");
+        Assert.Equal("over_18 = FAIL — too young", DebuggerDisplayReflection.Of(result));
+    }
+
+    [Fact]
+    public void RuleResultDebuggerDisplayShowsSubResultCountWhenDataIsSubResults()
+    {
+        var subs = new List<RuleResult> { new("a", true), new("b", false) };
+        var result = new RuleResult("all", false, data: subs);
+        Assert.Equal("all = FAIL [2 sub-result(s)]", DebuggerDisplayReflection.Of(result));
+    }
+
+    [Fact]
+    public void RuleResultDebuggerDisplayOmitsSubResultCountWhenDataIsNotSubResults()
+    {
+        var result = new RuleResult("over_18", true, data: 42);
+        Assert.Equal("over_18 = PASS", DebuggerDisplayReflection.Of(result));
+    }
+
+    [Fact]
+    public void RunResultDebuggerDisplayCountsFailuresSeparatelyFromTheTotal()
+    {
+        var run = new RunResult(false, new List<RuleResult>
+        {
+            new("a", true),
+            new("b", false),
+            new("c", false),
+        });
+        Assert.Equal("FAIL — 3 rule(s), 2 failing", DebuggerDisplayReflection.Of(run));
+    }
+
+    [Fact]
+    public void RunResultDebuggerDisplayShowsNoFailingWhenEveryRulePassed()
+    {
+        var run = new RunResult(true, new List<RuleResult> { new("a", true), new("b", true) });
+        Assert.Equal("PASS — 2 rule(s), 0 failing", DebuggerDisplayReflection.Of(run));
     }
 }

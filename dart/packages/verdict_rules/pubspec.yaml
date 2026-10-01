@@ -19,3 +19,4 @@ environment:
 dev_dependencies:
   test: ^1.24.0
   lints: ^5.0.0
+  mutation_test: ^1.8.1

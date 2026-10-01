@@ -22,6 +22,7 @@ verdict-rules = { workspace = true }
 dev = [
     "anyio>=4.0",
     "griffe>=2.3.0",
+    "mutmut>=3.3.1",
     "pytest>=8.0",
     "pytest-asyncio>=0.24",
     "pytest-cov>=6.0",
@@ -30,3 +31,10 @@ dev = [
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+# mutmut's own working copy (packages/verdict-rules/mutants/) carries a full
+# duplicate of tests/ with no __init__.py namespacing, so once it exists on
+# disk -- gitignored, but not deleted between runs -- pytest's import-mode
+# collection raises "import file mismatch" against the real tests/ of the
+# same name. Excluded unconditionally rather than relying on every mutation
+# run cleaning up after itself.
+norecursedirs = ["mutants"]

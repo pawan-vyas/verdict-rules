@@ -76,13 +76,36 @@ class TestAndRule:
         result = await rule.evaluate({})
         assert result.passed is True
         assert result.rule_name == "and1"
+        assert [r.rule_name for r in result.data] == ["a", "b"]
 
     async def test_one_failure_yields_fail(self) -> None:
         rule = AndRule("and1", [_pass("a"), _fail("b", detail="bad")])
         result = await rule.evaluate({})
         assert result.passed is False
+        assert result.rule_name == "and1"
         assert "b" in result.detail
         assert "bad" in result.detail
+
+    async def test_failure_detail_strips_a_trailing_colon_when_sub_detail_is_empty(
+        self,
+    ) -> None:
+        """The failing sub-rule's own ``detail`` is empty, so the format
+        string's trailing ``": "`` separator is dangling and must be
+        stripped from the *end* of the string, not the start."""
+        rule = AndRule("and1", [_fail("b")])
+        result = await rule.evaluate({})
+        assert result.detail == "'b' failed"
+
+    async def test_failure_detail_does_not_strip_a_sub_detail_ending_in_x(
+        self,
+    ) -> None:
+        """A sub-detail that happens to end in characters the ``rstrip``
+        call's own argument contains (``X``) must survive untouched --
+        only a literal trailing ``": "`` is a separator artifact, never
+        arbitrary trailing characters from the sub-rule's own detail."""
+        rule = AndRule("and1", [_fail("b", detail="XX")])
+        result = await rule.evaluate({})
+        assert result.detail == "'b' failed: XX"
 
     async def test_short_circuits_after_first_failure(self) -> None:
         calls: list[str] = []
@@ -119,12 +142,16 @@ class TestOrRule:
         rule = OrRule("or1", [_fail("a"), _pass("b")])
         result = await rule.evaluate({})
         assert result.passed is True
+        assert result.rule_name == "or1"
+        assert [r.rule_name for r in result.data] == ["a", "b"]
 
     async def test_all_fail_yields_fail(self) -> None:
         rule = OrRule("or1", [_fail("a"), _fail("b")])
         result = await rule.evaluate({})
         assert result.passed is False
+        assert result.rule_name == "or1"
         assert result.detail == "no sub-rule passed"
+        assert [r.rule_name for r in result.data] == ["a", "b"]
 
     async def test_short_circuits_after_first_pass(self) -> None:
         calls: list[str] = []

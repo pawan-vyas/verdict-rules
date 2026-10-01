@@ -136,6 +136,22 @@ void main() {
       final result = await OrRule<Context>('or1', []).evaluate({});
       expect(result.passed, isFalse);
     });
+
+    // No Python counterpart yet (found via this package's own mutation
+    // testing run, which flagged the sibling `AndRule` test above as the
+    // only one of the pair actually proving `data` is populated). Proves
+    // the same thing `AndRule`'s "data carries sub-results up to failure"
+    // does, mirrored for the success path: `data` must carry every
+    // sub-result seen before -- and including -- the one that ended the
+    // loop, not just an empty list a dropped `subResults.add` would also
+    // satisfy for `passed`/`detail` alone.
+    test('data carries sub-results up to success', () async {
+      final rule =
+          OrRule<Context>('or1', [failing('a'), pass('b'), pass('c')]);
+      final result = await rule.evaluate({});
+      final data = result.data! as List<RuleResult>;
+      expect(data.map((r) => r.ruleName), ['a', 'b']);
+    });
   });
 
   // Mirrors Python's TestExceptionPropagation in test_rule.py -- AndRule/

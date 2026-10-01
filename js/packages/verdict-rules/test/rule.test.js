@@ -72,6 +72,15 @@ describe("AndRule", () => {
     assert.match(result.detail, /bad/);
   });
 
+  // Not Python-mirrored -- added to kill a mutation-testing survivor: the
+  // plain "'name' failed" branch (no sub-rule detail) was only ever
+  // exercised alongside the detail-bearing branch above, never on its own.
+  it("failure detail omits the colon when the sub-rule provides none", async () => {
+    const rule = new AndRule("and1", [pass("a"), fail("b")]);
+    const result = await rule.evaluate({});
+    assert.equal(result.detail, "'b' failed");
+  });
+
   // Mirrors test_short_circuits_after_first_failure.
   it("short-circuits after first failure", async () => {
     const log = [];
@@ -137,6 +146,18 @@ describe("OrRule", () => {
   it("empty rule list vacuously fails", async () => {
     const result = await new OrRule("or1", []).evaluate({});
     assert.equal(result.passed, false);
+  });
+
+  // Not Python-mirrored -- added to kill a mutation-testing survivor: no
+  // existing test inspected OrRule's `data`, so dropping the sub-result push
+  // entirely went unnoticed.
+  it("data carries every evaluated sub-result, including the one that passed", async () => {
+    const rule = new OrRule("or1", [fail("a"), fail("b"), pass("c")]);
+    const result = await rule.evaluate({});
+    assert.deepEqual(
+      result.data.map((r) => r.ruleName),
+      ["a", "b", "c"],
+    );
   });
 });
 

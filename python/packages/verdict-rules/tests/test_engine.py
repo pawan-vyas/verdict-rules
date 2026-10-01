@@ -57,7 +57,7 @@ class TestRunNamed:
 
     async def test_unknown_name_raises_key_error(self) -> None:
         engine = RulesEngine([_pass("a")])
-        with pytest.raises(KeyError):
+        with pytest.raises(KeyError, match="missing"):
             await engine.run_named("missing", {})
 
 
