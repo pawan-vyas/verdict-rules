@@ -160,10 +160,20 @@ class SequentialEvaluator<TContext> {
       soFar.add(latest);
       final early = _decider(latest, soFar, rules.length);
       if (early != null) {
+        // Generic default, correct for a custom decider with no simpler
+        // shortcut available: decided with items still unevaluated -> just
+        // the one that flipped it; decided only once everything was seen
+        // -> all of them. Provably wrong for ShortCircuitEvaluator
+        // specifically, which overrides this below using the one extra
+        // fact (stopOn) a fully generic decider has no access to.
+        final decidedBy = soFar.length == rules.length
+            ? List<RuleResult>.unmodifiable(soFar)
+            : <RuleResult>[latest];
         return RuleResult(
           ruleName: name,
           passed: early,
           subResults: List.unmodifiable(soFar),
+          decidedBy: decidedBy,
         );
       }
     }
@@ -172,6 +182,7 @@ class SequentialEvaluator<TContext> {
       ruleName: name,
       passed: decided ?? _vacuousResult,
       subResults: List.unmodifiable(soFar),
+      decidedBy: List.unmodifiable(soFar),
     );
   }
 
@@ -205,13 +216,34 @@ class ShortCircuitEvaluator<TContext> {
           vacuousResult: !stopOn,
         );
 
-  /// See [SequentialEvaluator.evaluate] -- forwards unchanged.
+  /// See [SequentialEvaluator.evaluate] -- same result, except [decidedBy]
+  /// is recomputed here rather than trusting [SequentialEvaluator]'s own
+  /// generic rule.
+  ///
+  /// That generic rule can't distinguish "found the trigger, which
+  /// happened to be the last item evaluated" from "genuinely exhausted
+  /// every item without ever finding it" using count alone -- an
+  /// [AndRule] failing on its *last* sub-rule has
+  /// `subResults.length == total` exactly like a genuine full pass does.
+  /// [_stopOn] is the one extra fact that tells them apart.
   Future<RuleResult> evaluate(
     String name,
     List<Rule<TContext>> rules,
     TContext context,
-  ) =>
-      _inner.evaluate(name, rules, context);
+  ) async {
+    final result = await _inner.evaluate(name, rules, context);
+    final last = result.subResults.isNotEmpty ? result.subResults.last : null;
+    final decidedBy =
+        last != null && last.passed == _stopOn ? [last] : result.subResults;
+    return RuleResult(
+      ruleName: result.ruleName,
+      passed: result.passed,
+      detail: result.detail,
+      data: result.data,
+      subResults: result.subResults,
+      decidedBy: decidedBy,
+    );
+  }
 
   @override
   String toString() => 'ShortCircuitEvaluator<$TContext> (stopOn: $_stopOn)';
@@ -263,34 +295,6 @@ class AndRule<TContext> implements Rule<TContext> {
     final groupSuffix = group == null ? '' : ' ($group)';
     return 'AndRule "$name"$groupSuffix — ${_rules.length} sub-rule(s)';
   }
-
-  /// The sole sub-result that decided a failed [AndRule]'s own outcome, or
-  /// `null` when [result] passed (or has no sub-results at all, which only
-  /// a vacuous pass ever does).
-  ///
-  /// Because evaluation stops the moment the outcome is decided,
-  /// `result.subResults.last` is always the one sub-result that decided it
-  /// -- the sole failure for a failed [AndRule], since everything before it
-  /// passed. Reads only [RuleResult.subResults], so nesting composes for
-  /// free: when the decisive sub-result is itself a composite,
-  /// `AndRule.failed(result)?.failingLeaves` drills straight through it.
-  /// Not gated behind any check that [result] actually came from an
-  /// [AndRule] -- passing the wrong family's result in is wrong at the call
-  /// site, visibly, not a silent misread.
-  static RuleResult? failed(RuleResult result) =>
-      result.subResults.isNotEmpty && !result.subResults.last.passed
-          ? result.subResults.last
-          : null;
-
-  /// Every sub-result that passed on the way to [result]'s own outcome --
-  /// every sub-result when it passed, or every one except the decisive
-  /// failure (see [failed]) when it failed.
-  static List<RuleResult> passing(RuleResult result) {
-    final failure = failed(result);
-    return failure == null
-        ? result.subResults
-        : result.subResults.sublist(0, result.subResults.length - 1);
-  }
 }
 
 /// Composite that passes as soon as any sub-rule passes.
@@ -328,28 +332,6 @@ class OrRule<TContext> implements Rule<TContext> {
     final groupSuffix = group == null ? '' : ' ($group)';
     return 'OrRule "$name"$groupSuffix — ${_rules.length} sub-rule(s)';
   }
-
-  /// The sole sub-result that decided a passed [OrRule]'s own outcome, or
-  /// `null` when [result] failed (or has no sub-results at all, which only
-  /// a vacuous fail ever does).
-  ///
-  /// Mirrors [AndRule.failed] with the opposite polarity -- the last entry
-  /// in `result.subResults` is always the one that decided it, here the
-  /// sole pass (everything before it failed).
-  static RuleResult? passed(RuleResult result) =>
-      result.subResults.isNotEmpty && result.subResults.last.passed
-          ? result.subResults.last
-          : null;
-
-  /// Every sub-result that failed on the way to [result]'s own outcome --
-  /// every sub-result when it failed, or every one except the decisive pass
-  /// (see [passed]) when it passed.
-  static List<RuleResult> failing(RuleResult result) {
-    final pass = passed(result);
-    return pass == null
-        ? result.subResults
-        : result.subResults.sublist(0, result.subResults.length - 1);
-  }
 }
 
 /// Composite that passes exactly when its one wrapped rule fails.
@@ -377,23 +359,22 @@ class NotRule<TContext> implements Rule<TContext> {
   /// [RuleResult.failingLeaves] safe to call on any [RuleResult] at all, so
   /// [NotRule] doesn't get to special-case it away just because a failed
   /// [NotRule]'s own `failingLeaves` can otherwise read as misleadingly
-  /// empty (the cause is a pass, not a failure) -- [negated] is the
-  /// dedicated accessor that answers "why," the same role
-  /// [AndRule.failed]/[OrRule.passed] play for their own families.
+  /// empty (the cause is a pass, not a failure). `decidedBy` is `[inner]`
+  /// unconditionally, in both directions -- correct either way, since
+  /// "inner passed" is genuinely why a failing [NotRule] failed, not an
+  /// inconsistency.
   @override
   Future<RuleResult> evaluate(TContext context) async {
     final inner = await _rule.evaluate(context);
     return RuleResult(
-        ruleName: name, passed: !inner.passed, subResults: [inner]);
+      ruleName: name,
+      passed: !inner.passed,
+      subResults: [inner],
+      decidedBy: [inner],
+    );
   }
 
   @override
   String toString() =>
       group == null ? 'NotRule "$name"' : 'NotRule "$name" ($group)';
-
-  /// The one inner result this [NotRule] negated to produce [result].
-  ///
-  /// Non-nullable, unlike [AndRule.failed]/[OrRule.passed] -- fixed arity
-  /// means the inner result is never absent.
-  static RuleResult negated(RuleResult result) => result.subResults[0];
 }

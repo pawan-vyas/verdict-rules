@@ -107,8 +107,7 @@ void main() {
       expect(notResult.failingLeaves, [notResult]);
     });
 
-    test('negation nested in a passing sibling is still the whole failure',
-        () {
+    test('negation nested in a passing sibling is still the whole failure', () {
       // A nested negation pins the recursion more precisely than a
       // top-level one: all(a, not(b)) with both a and b passing -- not(b)
       // fails (b passed), the outer composite's failingLeaves has to be
@@ -179,8 +178,7 @@ void main() {
     //       c1 = AndRule("c1", [c1x (fails), c1y])
     //       c2 = NotRule("c2", c2Inner)
 
-    test(
-        'leaves flatten across every rule kind even when everything passes',
+    test('leaves flatten across every rule kind even when everything passes',
         () async {
       final a1 = _pass('a1');
       final a2 = OrRule('a2', [_fail('a2x'), _pass('a2y')]);
@@ -206,10 +204,35 @@ void main() {
       // c1 failed internally three branches deep, on the way to c's own
       // pass via c2.
       expect(result.failingLeaves, isEmpty);
+
+      // decidedBy, traced at multiple levels. root/a both fully pass with
+      // every top-level member evaluated (no early stop ever triggered),
+      // so decidedBy names all of them, same as subResults.
+      final aResult = result.subResults[0];
+      final cResult = result.subResults[2];
+      expect(result.decidedBy, [aResult, result.subResults[1], cResult]);
+      expect(aResult.decidedBy, aResult.subResults); // [a1, a2, a3]
+
+      // a2 (OrRule) passes via its second/last sub-rule -- decidedBy is
+      // just that one, not both, even though it's the last item evaluated.
+      final a2Result = aResult.subResults[1];
+      expect(a2Result.decidedBy.map((r) => r.ruleName), ['a2y']);
+
+      // a3 (NotRule) -- decidedBy is always [inner], here the failing inner
+      // that made the NotRule pass.
+      final a3Result = aResult.subResults[2];
+      expect(a3Result.decidedBy.map((r) => r.ruleName), ['a3-inner']);
+
+      // c (OrRule) short-circuits on c2 (its second/last item) -- decidedBy
+      // is just c2, not both c1 and c2.
+      expect(cResult.decidedBy, [cResult.subResults[1]]);
+
+      // c1 (AndRule) fails on its first item -- decidedBy is just that one.
+      final c1Result = cResult.subResults[0];
+      expect(c1Result.decidedBy.map((r) => r.ruleName), ['c1x']);
     });
 
-    test(
-        'failingLeaves pinpoints the exact failure through multiple levels',
+    test('failingLeaves pinpoints the exact failure through multiple levels',
         () async {
       final a1 = _pass('a1');
       final a2 = OrRule('a2', [_fail('a2x'), _pass('a2y')]);
@@ -235,12 +258,25 @@ void main() {
       // a1/a2 (passing siblings of a3) contributing nothing and b/c
       // (never evaluated) not appearing at all.
       expect(result.failingLeaves, [a3Result]);
+
+      // decidedBy -- this tree hits the exact case a first implementation
+      // pass got wrong: `a` is a 3-item AndRule that fails on its *last*
+      // evaluated sub-rule (a3), so subResults.length == total here exactly
+      // like a genuine full pass would. decidedBy must still be just [a3],
+      // never all three -- position in the list is irrelevant to blame.
+      final aResult = result.subResults[0];
+      expect(aResult.decidedBy, [a3Result]);
+      // a3 (NotRule) -- decidedBy is always [inner], here the passing inner
+      // that made the NotRule fail.
+      expect(a3Result.decidedBy.map((r) => r.ruleName), ['a3-inner']);
+      // root itself fails early (on its first item, 'a') -- decidedBy names
+      // just that one; b/c never evaluated at all.
+      expect(result.decidedBy, [aResult]);
     });
 
     test(
         'NotRule wrapping a short-circuited composite with an earlier '
-        'passing sibling',
-        () async {
+        'passing sibling', () async {
       // Stacks everything that could plausibly go wrong at once: an
       // earlier AndRule sibling that passes despite an internal failure
       // (ordering independence -- the real failure comes later), NotRule
@@ -248,8 +284,7 @@ void main() {
       // OrRule short-circuiting internally, and the outer AndRule *also*
       // short-circuiting -- two independent prunings at different depths
       // in the same tree.
-      final innerOr =
-          OrRule('inner_or', [_fail('w'), _pass('x')]); // passes
+      final innerOr = OrRule('inner_or', [_fail('w'), _pass('x')]); // passes
 
       final innerOrForNot = OrRule(
           'inner_or_for_not', [_pass('p'), _pass('q')]); // short-circuits
@@ -262,12 +297,26 @@ void main() {
 
       expect(result.passed, isFalse);
       expect(result.leaves.map((l) => l.ruleName).toList(), ['w', 'x', 'p']);
-      expect(
-          result.failingLeaves.map((l) => l.ruleName).toList(), ['not1']);
+      expect(result.failingLeaves.map((l) => l.ruleName).toList(), ['not1']);
+
+      // decidedBy, traced through both short-circuits. root (AndRule)
+      // fails early at its second item ('not1') -- 'z' (the third) never
+      // ran, and decidedBy names just the decisive failure, not 'z' too.
+      final innerOrResult = result.subResults[0];
+      final notRuleResult = result.subResults[1];
+      expect(result.decidedBy, [notRuleResult]);
+      // innerOr (OrRule) passes via its second/last item ('x').
+      expect(innerOrResult.decidedBy.map((r) => r.ruleName), ['x']);
+      // notRuleResult (NotRule) -- decidedBy is always [inner], here the
+      // passing inner_or_for_not that made it fail.
+      final innerOrForNotResult = notRuleResult.subResults[0];
+      expect(notRuleResult.decidedBy, [innerOrForNotResult]);
+      // inner_or_for_not (OrRule) short-circuits on its very first item
+      // ('p') -- 'q' never ran, decidedBy is just ['p'].
+      expect(innerOrForNotResult.decidedBy.map((r) => r.ruleName), ['p']);
     });
 
-    test(
-        'OrRule all-fail interleaves real leaves and Not fallbacks in order',
+    test('OrRule all-fail interleaves real leaves and Not fallbacks in order',
         () async {
       final rule = OrRule('root', [
         _fail('a'),
@@ -279,14 +328,22 @@ void main() {
 
       expect(result.passed, isFalse);
       final failing = result.failingLeaves;
-      expect(failing.map((l) => l.ruleName).toList(),
-          ['a', 'notB', 'c', 'notD']);
+      expect(
+          failing.map((l) => l.ruleName).toList(), ['a', 'notB', 'c', 'notD']);
       expect(identical(failing[0], result.subResults[0]), isTrue);
       expect(identical(failing[1], result.subResults[1]), isTrue);
+
+      // decidedBy -- every sub-rule failed (an OrRule exhausted without
+      // ever finding its stopOn trigger), so decidedBy names all four,
+      // mirroring the AndRule last-item case with the opposite polarity:
+      // genuinely collective, not attributable to the last one alone.
+      expect(result.decidedBy, result.subResults);
+      // Each NotRule still reports [inner] regardless of its own verdict.
+      expect(result.subResults[1].decidedBy.map((r) => r.ruleName), ['b']);
+      expect(result.subResults[3].decidedBy.map((r) => r.ruleName), ['d']);
     });
 
-    test(
-        'a genuinely vacuous composite nested inside a larger failing tree',
+    test('a genuinely vacuous composite nested inside a larger failing tree',
         () async {
       final innerOr = OrRule('inner_or', [_fail('a3'), _pass('b3')]);
       final emptyOr = OrRule('empty_or', <Rule<Context>>[]);
@@ -298,8 +355,17 @@ void main() {
       expect(result.passed, isFalse);
       expect(result.leaves.map((l) => l.ruleName).toList(),
           ['a3', 'b3', 'empty_or']);
-      expect(result.failingLeaves.map((l) => l.ruleName).toList(),
-          ['empty_or']);
+      expect(
+          result.failingLeaves.map((l) => l.ruleName).toList(), ['empty_or']);
+
+      // decidedBy -- root (AndRule) fails early at its second item
+      // ('empty_or'); 'z' (the third) never ran. The vacuous empty_or is
+      // both the sole failing leaf and the sole decider here.
+      final emptyOrResult = result.subResults[1];
+      expect(emptyOrResult.ruleName, 'empty_or');
+      expect(result.decidedBy, [emptyOrResult]);
+      // A vacuous composite has no sub-results to decide it by.
+      expect(emptyOrResult.decidedBy, isEmpty);
     });
   });
 }

@@ -248,6 +248,19 @@ void main() {
         expect(failingLeaves, expected['failing_leaves']);
       });
 
+      test('$studentId: decidedBy matches', () async {
+        // One-level explanation for the top-level composite's own verdict
+        // -- exactly the decisive member regardless of position (gita
+        // fails on the *last* of four), or every member on a full pass.
+        final (_, graduates) =
+            buildGraduationCheck(_policies, _electiveMinimum);
+        final record = _students[studentId]!;
+        final expected = record.expected;
+        final result = await graduates.evaluate(record.context);
+        final decidedBy = result.decidedBy.map((r) => r.ruleName).toList();
+        expect(decidedBy, expected['decided_by']);
+      });
+
       test('$studentId: runAll never short-circuits', () async {
         final (engine, _) = buildGraduationCheck(_policies, _electiveMinimum);
         final record = _students[studentId]!;

@@ -26,12 +26,29 @@ class RuleResult {
   /// sub-results it actually evaluated -- never padded, never flattened.
   final List<RuleResult> subResults;
 
+  /// Which of [subResults] explain *this* result's own verdict -- a
+  /// one-level, non-recursive fact, populated once by whatever built this
+  /// result (the same principle [PredicateOutcome] already follows: the
+  /// producer records the fact because only the producer knows it
+  /// unambiguously). Empty for a leaf or a vacuous composite.
+  ///
+  /// This is **not** the same question [failingLeaves] answers.
+  /// [failingLeaves] recurses to the terminal failures; [decidedBy] stops
+  /// after one level and says nothing about pass/fail polarity -- a
+  /// passing [AndRule] has every sub-result in [decidedBy], not none. Do
+  /// not chain `result.decidedBy[0].decidedBy[0]...` expecting it to land
+  /// on the same thing [failingLeaves] would: it breaks for a failed
+  /// `NotRule`, whose [decidedBy] is its *passing* inner child -- correct
+  /// for "what explains this verdict," wrong for "what failed."
+  final List<RuleResult> decidedBy;
+
   const RuleResult({
     required this.ruleName,
     required this.passed,
     this.detail = '',
     this.data,
     this.subResults = const [],
+    this.decidedBy = const [],
   });
 
   /// Every leaf result reachable from this one, in evaluation order --

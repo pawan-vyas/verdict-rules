@@ -1,9 +1,8 @@
 /// Unit tests for the composition primitives behind AndRule/OrRule, and the
-/// new shipped NotRule: SequentialEvaluator, ShortCircuitEvaluator, and the
-/// AndRule.failed/passing, OrRule.passed/failing, NotRule.negated
-/// accessors.
+/// new shipped NotRule: SequentialEvaluator, ShortCircuitEvaluator, and
+/// RuleResult.decidedBy.
 ///
-/// See .agents/plans/composite-rule-and-leaves-redesign/README.md §3-§3e
+/// See .agents/plans/composite-rule-and-leaves-redesign/README.md §3-§3d
 /// for the design this pins down. A Dart-idiom sibling of Python's own
 /// test_composition.py -- not a strict 1:1 port (this package's test
 /// suite doesn't maintain that discipline the way rule_test.dart/
@@ -135,72 +134,68 @@ void main() {
     });
   });
 
-  group('AndRule accessors', () {
-    test('failed returns the sole decisive failure', () async {
-      final rule = AndRule<Context>('and1', [_pass('a'), _fail('b')]);
+  group('RuleResult.decidedBy', () {
+    // The one-level, non-recursive explanation for a composite's own
+    // verdict. Supersedes AndRule.failed/passing and OrRule.passed/failing
+    // (removed): those were static methods a caller could apply to the
+    // wrong family's result and get a plausible, silently wrong answer --
+    // confirmed with concrete cases from a real adopter review, not
+    // hypothetical. decidedBy closes that structurally: there is no second
+    // method to reach for, every result carries its own correctly-populated
+    // field.
+
+    test('AndRule failing early names just the decisive failure', () async {
+      final rule = AndRule<Context>(
+          'and1', [_pass('a'), _fail('b'), _pass('c'), _pass('d')]);
       final result = await rule.evaluate({});
-      final failed = AndRule.failed(result);
-      expect(failed, isNotNull);
-      expect(failed!.ruleName, 'b');
+      expect(result.decidedBy.map((r) => r.ruleName), ['b']);
     });
 
-    test('failed returns null when the AndRule passed', () async {
-      final rule = AndRule<Context>('and1', [_pass('a'), _pass('b')]);
-      final result = await rule.evaluate({});
-      expect(AndRule.failed(result), isNull);
-    });
-
-    test('failed returns null for an empty AndRule', () async {
-      final rule = AndRule<Context>('and1', const []);
-      final result = await rule.evaluate({});
-      expect(AndRule.failed(result), isNull);
-    });
-
-    test('passing returns every sub-result when the AndRule passed', () async {
-      final rule = AndRule<Context>('and1', [_pass('a'), _pass('b')]);
-      final result = await rule.evaluate({});
-      expect(AndRule.passing(result).map((r) => r.ruleName), ['a', 'b']);
-    });
-
-    test('passing excludes the decisive failure', () async {
+    test('AndRule failing on its last item still names just that one',
+        () async {
+      // The case a first attempt at this got wrong: subResults.length ==
+      // total holds here exactly like it does for a genuine full pass, so
+      // a rule based on count alone can't tell them apart -- position in
+      // the list is irrelevant to blame; ShortCircuitEvaluator's own
+      // stopOn is what actually distinguishes them.
       final rule =
           AndRule<Context>('and1', [_pass('a'), _pass('b'), _fail('c')]);
       final result = await rule.evaluate({});
-      expect(AndRule.passing(result).map((r) => r.ruleName), ['a', 'b']);
+      expect(result.decidedBy.map((r) => r.ruleName), ['c']);
     });
-  });
 
-  group('OrRule accessors', () {
-    test('passed returns the sole decisive pass', () async {
-      final rule = OrRule<Context>('or1', [_fail('a'), _pass('b')]);
+    test('AndRule fully passing names every sub-result', () async {
+      final rule =
+          AndRule<Context>('and1', [_pass('a'), _pass('b'), _pass('c')]);
       final result = await rule.evaluate({});
-      final passed = OrRule.passed(result);
-      expect(passed, isNotNull);
-      expect(passed!.ruleName, 'b');
+      expect(result.decidedBy.map((r) => r.ruleName), ['a', 'b', 'c']);
     });
 
-    test('passed returns null when the OrRule failed', () async {
-      final rule = OrRule<Context>('or1', [_fail('a'), _fail('b')]);
+    test('AndRule vacuous pass names nothing', () async {
+      final rule = AndRule<Context>('and1', const []);
       final result = await rule.evaluate({});
-      expect(OrRule.passed(result), isNull);
+      expect(result.decidedBy, isEmpty);
     });
 
-    test('passed returns null for an empty OrRule', () async {
+    test('OrRule passing early names just the decisive pass', () async {
+      final rule = OrRule<Context>('or1', [_fail('a'), _pass('b'), _fail('c')]);
+      final result = await rule.evaluate({});
+      expect(result.decidedBy.map((r) => r.ruleName), ['b']);
+    });
+
+    test('OrRule all-fail names every sub-result', () async {
+      // Mirrors the AndRule last-item case with the opposite polarity --
+      // OrRule's all-fail verdict is only known once every item is seen,
+      // genuinely collective, not attributable to the last one alone.
+      final rule = OrRule<Context>('or1', [_fail('a'), _fail('b'), _fail('c')]);
+      final result = await rule.evaluate({});
+      expect(result.decidedBy.map((r) => r.ruleName), ['a', 'b', 'c']);
+    });
+
+    test('OrRule vacuous fail names nothing', () async {
       final rule = OrRule<Context>('or1', const []);
       final result = await rule.evaluate({});
-      expect(OrRule.passed(result), isNull);
-    });
-
-    test('failing returns every sub-result when the OrRule failed', () async {
-      final rule = OrRule<Context>('or1', [_fail('a'), _fail('b')]);
-      final result = await rule.evaluate({});
-      expect(OrRule.failing(result).map((r) => r.ruleName), ['a', 'b']);
-    });
-
-    test('failing excludes the decisive pass', () async {
-      final rule = OrRule<Context>('or1', [_fail('a'), _fail('b'), _pass('c')]);
-      final result = await rule.evaluate({});
-      expect(OrRule.failing(result).map((r) => r.ruleName), ['a', 'b']);
+      expect(result.decidedBy, isEmpty);
     });
   });
 
@@ -224,12 +219,17 @@ void main() {
       expect(result.subResults[0].ruleName, 'inner');
     });
 
-    test('negated returns the inner result', () async {
-      final rule = NotRule<Context>('not1', _fail('inner'));
-      final result = await rule.evaluate({});
-      final inner = NotRule.negated(result);
-      expect(inner.ruleName, 'inner');
-      expect(inner.passed, isFalse);
+    test('decidedBy is the inner result in both directions', () async {
+      // Unconditional, unlike failingLeaves' own self-as-leaf rule --
+      // 'inner passed' is genuinely why a failing NotRule failed, not an
+      // inconsistency to paper over.
+      final failing =
+          await NotRule<Context>('not1', _fail('inner')).evaluate({});
+      expect(failing.decidedBy.map((r) => r.ruleName), ['inner']);
+
+      final passing =
+          await NotRule<Context>('not2', _pass('inner')).evaluate({});
+      expect(passing.decidedBy.map((r) => r.ruleName), ['inner']);
     });
 
     test('a failed NotRule has itself as its own failing leaf', () async {

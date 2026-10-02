@@ -44,6 +44,7 @@ class AtLeastNRule implements Rule<Context> {
       passed: result.passed,
       detail: '$passedCount of ${_rules.length} passed, needed $_minimum',
       subResults: result.subResults,
+      decidedBy: result.decidedBy,
     );
   }
 }
