@@ -47,13 +47,13 @@
 - [x] AGENTS.md
 - [x] CLAUDE.md
 - [x] CONTRIBUTING.md
-- [ ] csharp/AGENTS.md
-- [ ] csharp/examples/GraduationVerdict/docs/testing.md
-- [ ] csharp/examples/GraduationVerdict/README.md
-- [ ] csharp/examples/MarketplaceEligibility/README.md
-- [ ] csharp/src/VerdictRules/CHANGELOG.md
-- [ ] csharp/src/VerdictRules/docs/quickstart.md
-- [ ] csharp/src/VerdictRules/README.md
+- [x] csharp/AGENTS.md
+- [x] csharp/examples/GraduationVerdict/docs/testing.md
+- [x] csharp/examples/GraduationVerdict/README.md
+- [x] csharp/examples/MarketplaceEligibility/README.md
+- [x] csharp/src/VerdictRules/CHANGELOG.md
+- [x] csharp/src/VerdictRules/docs/quickstart.md
+- [x] csharp/src/VerdictRules/README.md
 - [ ] dart/AGENTS.md
 - [ ] dart/examples/graduation_verdict/docs/testing.md
 - [ ] dart/examples/graduation_verdict/README.md
