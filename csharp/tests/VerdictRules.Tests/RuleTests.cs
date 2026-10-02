@@ -195,6 +195,100 @@ public class OrRuleTests
     }
 }
 
+/// <summary>Mirrors Python's <c>TestNotRule</c>.</summary>
+public class NotRuleTests
+{
+    /// <summary>Mirrors <c>test_passes_when_the_inner_rule_fails</c>.</summary>
+    [Fact]
+    public async Task PassesWhenTheInnerRuleFails()
+    {
+        var rule = new NotRule("not1", Rules.Fail("inner"));
+        var result = await rule.EvaluateAsync(Rules.Empty);
+        Assert.True(result.Passed);
+    }
+
+    /// <summary>Mirrors <c>test_fails_when_the_inner_rule_passes</c>.</summary>
+    [Fact]
+    public async Task FailsWhenTheInnerRulePasses()
+    {
+        var rule = new NotRule("not1", Rules.Pass("inner"));
+        var result = await rule.EvaluateAsync(Rules.Empty);
+        Assert.False(result.Passed);
+    }
+
+    /// <summary>Mirrors <c>test_sub_results_truthfully_carries_the_one_inner_result</c>.</summary>
+    [Fact]
+    public async Task SubResultsTruthfullyCarriesTheOneInnerResult()
+    {
+        var rule = new NotRule("not1", Rules.Pass("inner"));
+        var result = await rule.EvaluateAsync(Rules.Empty);
+        var inner = Assert.Single(result.SubResults);
+        Assert.Equal("inner", inner.RuleName);
+    }
+
+    /// <summary>Mirrors <c>test_negated_returns_the_inner_result</c>.</summary>
+    [Fact]
+    public async Task NegatedReturnsTheInnerResult()
+    {
+        var rule = new NotRule("not1", Rules.Fail("inner"));
+        var result = await rule.EvaluateAsync(Rules.Empty);
+        var inner = NotRule.Negated(result);
+        Assert.Equal("inner", inner.RuleName);
+        Assert.False(inner.Passed);
+    }
+
+    /// <summary>Mirrors <c>test_a_failed_not_rule_has_itself_as_its_own_failing_leaf</c>.</summary>
+    [Fact]
+    public async Task AFailedNotRuleHasItselfAsItsOwnFailingLeaf()
+    {
+        var rule = new NotRule("not1", Rules.Pass("inner"));
+        var result = await rule.EvaluateAsync(Rules.Empty);
+        Assert.Equal(new[] { result }, result.FailingLeaves);
+    }
+
+    /// <summary>
+    /// Mirrors <c>test_negation_nested_in_a_passing_sibling_is_still_the_whole_failure</c>
+    /// -- a nested negation pins the recursion more precisely than a
+    /// top-level one: <c>all(a, not(b))</c> with both <c>a</c> and
+    /// <c>b</c> passing, <c>not(b)</c> fails, and the outer
+    /// <see cref="AndRule"/>'s <see cref="RuleResult.FailingLeaves"/> has
+    /// to be exactly <c>[not(b)]</c>.
+    /// </summary>
+    [Fact]
+    public async Task NegationNestedInAPassingSiblingIsStillTheWholeFailure()
+    {
+        var notB = new NotRule("not1", Rules.Pass("b"));
+        var rule = new AndRule("and1", new IRule[] { Rules.Pass("a"), notB });
+        var result = await rule.EvaluateAsync(Rules.Empty);
+        var notBResult = result.SubResults[1];
+        Assert.Equal(new[] { notBResult }, result.FailingLeaves);
+    }
+
+    /// <summary>Mirrors <c>test_repr_shows_the_name</c>.</summary>
+    [Fact]
+    public void ToStringShowsTheName()
+    {
+        var rule = new NotRule("not1", Rules.Pass("inner"));
+        Assert.Equal("NotRule \"not1\"", rule.ToString());
+    }
+
+    /// <summary>Mirrors <c>test_repr_shows_the_group_when_present</c>.</summary>
+    [Fact]
+    public void ToStringShowsTheGroupWhenPresent()
+    {
+        var rule = new NotRule("not1", Rules.Pass("inner"), group: "g1");
+        Assert.Equal("NotRule \"not1\" (g1)", rule.ToString());
+    }
+
+    /// <summary>Mirrors <c>test_does_not_catch_the_inner_rule_s_exception</c>.</summary>
+    [Fact]
+    public async Task DoesNotCatchTheInnerRulesException()
+    {
+        var rule = new NotRule("flaky-not", new FunctionRule("flaky", (_, _) => throw new InvalidOperationException("boom")));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => rule.EvaluateAsync(Rules.Empty));
+    }
+}
+
 /// <summary>
 /// Mirrors Python's <c>TestExceptionPropagation</c> in <c>test_rule.py</c> —
 /// <see cref="AndRule"/>/<see cref="OrRule"/> catch nothing either; a

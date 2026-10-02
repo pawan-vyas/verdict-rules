@@ -88,6 +88,19 @@ class TestFailingLeaves:
 
         assert not_result.failing_leaves == [not_result]
 
+    def test_negation_nested_in_a_passing_sibling_is_still_the_whole_failure(self) -> None:
+        """A nested negation pins the recursion more precisely than a
+        top-level one: `all(a, not(b))` with both `a` and `b` passing --
+        `not(b)` fails (b passed), the outer composite's `failing_leaves`
+        has to be exactly `[not(b)]`, not an empty list (every leaf below
+        it, `a` and `b`, passed) and not `[]` concatenated wrong because
+        `not(b)`'s own self-as-leaf result was the only failure among
+        siblings rather than the sole child."""
+        a = _leaf("a", True)
+        not_b = _composite("not1", False, _leaf("b", True))
+        outer_and = _composite("and1", False, a, not_b)
+        assert outer_and.failing_leaves == [not_b]
+
     def test_nested_failure_flattens_to_the_deepest_actual_failures(self) -> None:
         a, b, c = _leaf("a", True), _leaf("b", False), _leaf("c", True)
         inner_or = _composite("inner_or", False, b)  # OrRule, only 'b' ran and failed

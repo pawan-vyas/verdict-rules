@@ -110,6 +110,20 @@ describe("RuleResult.failingLeaves", () => {
     assert.deepEqual(result.failingLeaves, [result]);
   });
 
+  it("negation nested in a passing sibling is still the whole failure", async () => {
+    // A nested negation pins the recursion more precisely than a
+    // top-level one: all(a, not(b)) with both a and b passing -- not(b)
+    // fails (b passed), the outer composite's failingLeaves has to be
+    // exactly [not(b)], not empty (every actual leaf below it passed)
+    // and not wrong because not(b)'s own self-as-leaf result was the
+    // only failure among siblings rather than the sole child.
+    const notB = new NotRule("not1", leaf("b", true));
+    const rule = new AndRule("and1", [leaf("a", true), notB]);
+    const result = await rule.evaluate({});
+    const notBResult = result.subResults[1];
+    assert.deepEqual(result.failingLeaves, [notBResult]);
+  });
+
   it("nested failure flattens to the deepest actual failures", async () => {
     // inner_or: only 'b' is evaluated and fails; outer_and never reaches 'c'.
     const innerOr = new OrRule("inner_or", [leaf("b", false)]);

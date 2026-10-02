@@ -12,16 +12,52 @@
 
 **Implemented in all four languages** (C#, Python, JS/TS, Dart — each
 green on its own full test suite), committed as four separate commits
-on this PR branch and pushed. Remaining, in this order: (1) the queued
-doc-verbosity audit, sweeping `docs/extending/*/`, `docs/samples/*/`,
-and `docs/architecture/` for every language consistently (currently
-uneven — C#'s implementation pass already swept its own
-`docs/*/csharp.md` tree; Python and Dart deferred the whole tree;
-JS/TS fixed only what would otherwise throw); (2) the cross-language
-API concept map (`docs/maintenance/api-concepts.yaml`), deliberately
-done last, after the docs are actually settled, since redoing it a
-second time if the docs pass changes any public-surface shape would
-be wasted work.
+on this PR branch and pushed.
+
+**Shared fixture (`fixtures/graduation_verdict/students.json`) now pins
+`leaves`/`failing_leaves`** per student, regenerated from the Python
+reference implementation and wired into each language's own
+fixture-contract test. Running it against C# surfaced a real,
+previously-missed cross-language gap: its `AtLeastNRule` example had
+only had the positional-argument bug fixed, never the actual
+`SequentialEvaluator` short-circuit rewrite Python/JS/Dart already had
+— fixed, and its stale "never short-circuits" structural invariant
+rewritten to assert the real short-circuit timing, matching the other
+three languages.
+
+**Queued, not yet done**: a nested-negation test case
+(`all(a, not(b))` with both `a` and `b` passing →
+`FailingLeaves == [not(b)]`) in each language's own composition/result
+test suite — proposed via an issue #100 comment, verified correct by
+hand-tracing the recursion, and genuinely closes a gap neither the
+top-level-only negation test nor the sibling-aggregation tests cover
+individually. No natural home in the shared JSON fixture (the
+`graduation_verdict` curriculum has no negation in it), so this is
+per-language unit tests only.
+
+**Sequencing for what's left, recorded, not yet started**:
+
+1. **Mutation-testing re-run**, against the new composable pieces this
+   redesign actually introduced (`SequentialEvaluator`/
+   `ShortCircuitEvaluator` especially — one shared implementation four
+   call sites now depend on, never mutation-tested). The pinned scores
+   in `docs/maintenance/mutation-survivors-*.md` (C# 93.64%, Python
+   100%, JS/TS 99.17%, Dart 100%) are a pre-redesign baseline against
+   the old hand-rolled `AndRule`/`OrRule`, not a validation of what's
+   on this branch now.
+2. **Doc-verbosity audit** — held, deliberately, until (1) is done.
+   Scope confirmed: every `*.md` in the repo except `.agents/plans/`
+   and `skills/`/`.claude/skills/` (roughly 200 files — root docs,
+   almost all of `docs/`, each language's own `AGENTS.md`/`README.md`/
+   `CHANGELOG.md`/quickstart/example docs, `fixtures/*/README.md`,
+   `.agents/memory/`+`.agents/incidents/`, `.github/` templates).
+   Currently uneven going in — C#'s implementation pass already swept
+   its own `docs/*/csharp.md` tree; Python and Dart deferred the whole
+   tree; JS/TS fixed only what would otherwise throw.
+3. **Cross-language API concept map**
+   (`docs/maintenance/api-concepts.yaml`), last — redoing it twice if
+   the docs pass changes any public-surface shape would be wasted
+   work.
 
 ## 1 · Origin
 
