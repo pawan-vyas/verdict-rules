@@ -27,6 +27,20 @@ void main() {
       expect(result.detail, 'nope');
     });
 
+    // Mirrors test_a_leaf_result_names_nothing_in_decided_by. A bare leaf
+    // result -- FunctionRule.evaluate's own output, never built by
+    // SequentialEvaluator/ShortCircuitEvaluator/NotRule -- has no subResults
+    // to point into, so decidedBy must be empty for both a passing and a
+    // failing outcome. Nothing previously read decidedBy on a leaf at all;
+    // every other decidedBy test in this suite exercises a composite built
+    // on top of one.
+    test('a leaf result names nothing in decidedBy', () async {
+      final passingResult = await pass('r1').evaluate({});
+      final failingResult = await failing('r1').evaluate({});
+      expect(passingResult.decidedBy, isEmpty);
+      expect(failingResult.decidedBy, isEmpty);
+    });
+
     // Mirrors test_predicate_receives_the_context.
     test('predicate receives the context', () async {
       Context? seen;

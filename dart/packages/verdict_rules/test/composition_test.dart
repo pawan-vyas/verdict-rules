@@ -82,6 +82,51 @@ void main() {
       final result = await evaluator.evaluate('e', rules, {});
       expect(result.subResults.map((r) => r.ruleName), ['a', 'b', 'c']);
     });
+
+    // AndRule/OrRule always route through ShortCircuitEvaluator, which
+    // unconditionally discards and recomputes decidedBy from its own stopOn
+    // after delegating here -- so no AndRule/OrRule test, however thorough,
+    // can ever exercise SequentialEvaluator's own generic decidedBy rule
+    // directly. Only a test instantiating SequentialEvaluator itself, the
+    // way a custom composite would, can reach it. Found by this package's
+    // own mutation testing run, which survived a `soFar.length ==
+    // rules.length` -> `!=` mutant at the line computing this.
+    test(
+        'decided in-loop with items left unevaluated names only the deciding sub-result',
+        () async {
+      final rules = [_pass('a'), _pass('b'), _pass('c')];
+      final evaluator = SequentialEvaluator<Context>(
+        // Resolves on the second of three rules -- soFar has two evaluated
+        // sub-results at that point, not just one, so this genuinely
+        // distinguishes "every sub-result seen so far" from "just the one
+        // that decided it" (deciding on the very first rule can't: a
+        // one-element soFar looks identical either way).
+        decider: (latest, soFar, total) => soFar.length == 2 ? true : null,
+        vacuousResult: true,
+      );
+      final result = await evaluator.evaluate('e', rules, {});
+      expect(result.subResults.map((r) => r.ruleName), ['a', 'b']);
+      expect(result.decidedBy.map((r) => r.ruleName), ['b']);
+    });
+
+    test(
+        'decided in-loop on exactly the last sub-rule names every evaluated sub-result',
+        () async {
+      final rules = [_pass('a'), _pass('b'), _pass('c')];
+      final evaluator = SequentialEvaluator<Context>(
+        // Resolves only once every rule has been evaluated -- soFar.length
+        // == total holds here exactly like it would for the post-loop
+        // fallback below, but this decision is reached through the in-loop
+        // `early != null` branch, on the loop's own final iteration, never
+        // through the fallback. decidedBy must still be every evaluated
+        // sub-result, not just the one that happened to decide it.
+        decider: (latest, soFar, total) => soFar.length == total ? true : null,
+        vacuousResult: false,
+      );
+      final result = await evaluator.evaluate('e', rules, {});
+      expect(result.subResults.map((r) => r.ruleName), ['a', 'b', 'c']);
+      expect(result.decidedBy.map((r) => r.ruleName), ['a', 'b', 'c']);
+    });
   });
 
   group('ShortCircuitEvaluator', () {
