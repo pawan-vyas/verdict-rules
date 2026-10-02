@@ -209,6 +209,42 @@ describe("mixed composite tree", () => {
     // failed internally three branches deep, on the way to c's own pass
     // via c2.
     assert.deepEqual(result.failingLeaves, []);
+
+    // decidedBy, traced at every composite node in this tree: root/a both
+    // fully pass (exhausted without an early stop-on-false trigger), so
+    // every evaluated child explains them; a2/c each stop early on their
+    // one decisive sub-result; a3/c2 (NotRule) are unconditionally [inner].
+    assert.deepEqual(
+      result.decidedBy.map((r) => r.ruleName),
+      ["a", "b", "c"],
+    );
+    const [aResult, , cResult] = result.subResults;
+    assert.deepEqual(
+      aResult.decidedBy.map((r) => r.ruleName),
+      ["a1", "a2", "a3"],
+    );
+    const [, a2Result, a3Result] = aResult.subResults;
+    assert.deepEqual(
+      a2Result.decidedBy.map((r) => r.ruleName),
+      ["a2y"],
+    );
+    assert.deepEqual(
+      a3Result.decidedBy.map((r) => r.ruleName),
+      ["a3-inner"],
+    );
+    assert.deepEqual(
+      cResult.decidedBy.map((r) => r.ruleName),
+      ["c2"],
+    );
+    const [c1Result, c2Result] = cResult.subResults;
+    assert.deepEqual(
+      c1Result.decidedBy.map((r) => r.ruleName),
+      ["c1x"],
+    );
+    assert.deepEqual(
+      c2Result.decidedBy.map((r) => r.ruleName),
+      ["c2-inner"],
+    );
   });
 
   it("failingLeaves pinpoints the exact failure through multiple levels", async () => {
@@ -235,6 +271,25 @@ describe("mixed composite tree", () => {
     // a1/a2 (passing siblings of a3) contributing nothing and b/c (never
     // evaluated) not appearing at all.
     assert.deepEqual(result.failingLeaves, [a3Result]);
+
+    // decidedBy tells the same story one level at a time: root short-
+    // circuited on 'a' (its one sub-result, by construction here, so this
+    // doesn't exercise the last-item subtlety -- see composition.test.js
+    // for that), and 'a' itself short-circuited on its own last-evaluated
+    // child, a3 -- the AndRule.failing-on-its-last-item shape, nested.
+    assert.deepEqual(
+      result.decidedBy.map((r) => r.ruleName),
+      ["a"],
+    );
+    const aResult = result.subResults[0];
+    assert.deepEqual(
+      aResult.decidedBy.map((r) => r.ruleName),
+      ["a3"],
+    );
+    assert.deepEqual(
+      a3Result.decidedBy.map((r) => r.ruleName),
+      ["a3-inner"],
+    );
   });
 
   it("NotRule wrapping a short-circuited composite with an earlier passing sibling", async () => {
@@ -258,6 +313,29 @@ describe("mixed composite tree", () => {
     assert.equal(result.passed, false);
     assert.deepEqual(result.leaves.map((l) => l.ruleName), ["w", "x", "p"]);
     assert.deepEqual(result.failingLeaves.map((l) => l.ruleName), ["not1"]);
+
+    // root short-circuits on notResult (its last-evaluated sub-result,
+    // z never runs) -- decidedBy is just [not1], not [innerOr, not1].
+    assert.deepEqual(
+      result.decidedBy.map((r) => r.ruleName),
+      ["not1"],
+    );
+    const notResultValue = result.subResults[1];
+    // NotRule's own decidedBy is unconditionally [inner], here the
+    // short-circuited OrRule result itself -- not flattened/recursed into
+    // its own decisive sub-result ('p'). This is exactly the scope
+    // boundary RuleResult.decidedBy's own doc comment warns about: do not
+    // expect decidedBy[0].decidedBy[0]... to land on the same answer as
+    // failingLeaves.
+    assert.deepEqual(
+      notResultValue.decidedBy.map((r) => r.ruleName),
+      ["inner_or_for_not"],
+    );
+    const innerOrForNotResult = notResultValue.subResults[0];
+    assert.deepEqual(
+      innerOrForNotResult.decidedBy.map((r) => r.ruleName),
+      ["p"],
+    );
   });
 
   it("OrRule all-fail interleaves real leaves and Not fallbacks in order", async () => {
@@ -274,6 +352,21 @@ describe("mixed composite tree", () => {
     assert.deepEqual(failing.map((l) => l.ruleName), ["a", "notB", "c", "notD"]);
     assert.equal(failing[0], result.subResults[0]);
     assert.equal(failing[1], result.subResults[1]);
+
+    // All-fail OrRule: exhausted without ever finding stopOn (true), so
+    // decidedBy is every evaluated sub-result, same four as failingLeaves
+    // here -- not because decidedBy and failingLeaves are the same
+    // question in general (NotRule proves they aren't), but because every
+    // one of these four sub-results happens to be itself a failing leaf.
+    assert.deepEqual(
+      result.decidedBy.map((r) => r.ruleName),
+      ["a", "notB", "c", "notD"],
+    );
+    const notBResult = result.subResults[1];
+    assert.deepEqual(
+      notBResult.decidedBy.map((r) => r.ruleName),
+      ["b"],
+    );
   });
 
   it("a genuinely vacuous composite nested inside a larger failing tree", async () => {
@@ -287,5 +380,17 @@ describe("mixed composite tree", () => {
     assert.equal(result.passed, false);
     assert.deepEqual(result.leaves.map((l) => l.ruleName), ["a3", "b3", "empty_or"]);
     assert.deepEqual(result.failingLeaves.map((l) => l.ruleName), ["empty_or"]);
+
+    // root short-circuits on empty_or's own vacuous failure -- z never
+    // runs, so decidedBy is just [empty_or].
+    assert.deepEqual(
+      result.decidedBy.map((r) => r.ruleName),
+      ["empty_or"],
+    );
+    const emptyOrResult = result.subResults[1];
+    assert.equal(emptyOrResult.ruleName, "empty_or");
+    // The vacuous composite's own decidedBy is empty -- nothing decided
+    // it, same as its own empty subResults.
+    assert.deepEqual(emptyOrResult.decidedBy, []);
   });
 });

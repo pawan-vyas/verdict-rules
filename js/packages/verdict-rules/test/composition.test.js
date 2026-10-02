@@ -6,11 +6,10 @@ import { counting, fail, pass } from "./helpers.js";
 
 /**
  * Unit tests for the composition primitives behind AndRule/OrRule, and the
- * new shipped NotRule: SequentialEvaluator, ShortCircuitEvaluator, and the
- * AndRule.failed/passing / OrRule.passed/failing / NotRule.negated
- * accessors. A 1:1 port of Python's `test_composition.py`.
+ * new shipped NotRule: SequentialEvaluator, ShortCircuitEvaluator, and
+ * RuleResult.decidedBy. A 1:1 port of Python's `test_composition.py`.
  *
- * See .agents/plans/composite-rule-and-leaves-redesign/README.md §3-§3e for
+ * See .agents/plans/composite-rule-and-leaves-redesign/README.md §3-§3d for
  * the design this pins down.
  */
 
@@ -121,83 +120,79 @@ describe("ShortCircuitEvaluator", () => {
   });
 });
 
-describe("AndRule accessors", () => {
-  it("failed returns the sole decisive failure", async () => {
-    const rule = new AndRule("and1", [pass("a"), fail("b")]);
-    const result = await rule.evaluate({});
-    const failed = AndRule.failed(result);
-    assert.notEqual(failed, undefined);
-    assert.equal(failed.ruleName, "b");
-  });
+describe("RuleResult.decidedBy", () => {
+  // decidedBy -- the one-level, non-recursive explanation for a
+  // composite's own verdict. Supersedes AndRule.failed/passing and
+  // OrRule.passed/failing (removed): those were static methods a caller
+  // could apply to the wrong family's result and get a plausible, silently
+  // wrong answer -- confirmed with concrete cases from a real adopter
+  // review, not hypothetical. decidedBy closes that structurally: there is
+  // no second method to reach for, every result carries its own
+  // correctly-populated field.
 
-  it("failed returns undefined when the AndRule passed", async () => {
-    const rule = new AndRule("and1", [pass("a"), pass("b")]);
-    const result = await rule.evaluate({});
-    assert.equal(AndRule.failed(result), undefined);
-  });
-
-  it("failed returns undefined for an empty AndRule", async () => {
-    const rule = new AndRule("and1", []);
-    const result = await rule.evaluate({});
-    assert.equal(AndRule.failed(result), undefined);
-  });
-
-  it("passing returns every sub-result when the AndRule passed", async () => {
-    const rule = new AndRule("and1", [pass("a"), pass("b")]);
+  it("AndRule failing early names just the decisive failure", async () => {
+    const rule = new AndRule("and1", [pass("a"), fail("b"), pass("c"), pass("d")]);
     const result = await rule.evaluate({});
     assert.deepEqual(
-      AndRule.passing(result).map((r) => r.ruleName),
-      ["a", "b"],
+      result.decidedBy.map((r) => r.ruleName),
+      ["b"],
     );
   });
 
-  it("passing excludes the decisive failure", async () => {
+  it("AndRule failing on its last item still names just that one", async () => {
+    // The case a first attempt at this got wrong: subResults.length===total
+    // holds here exactly like it does for a genuine full pass, so a rule
+    // based on count alone can't tell them apart -- position in the list
+    // is irrelevant to blame; ShortCircuitEvaluator's own stopOn is what
+    // actually distinguishes them.
     const rule = new AndRule("and1", [pass("a"), pass("b"), fail("c")]);
     const result = await rule.evaluate({});
     assert.deepEqual(
-      AndRule.passing(result).map((r) => r.ruleName),
-      ["a", "b"],
+      result.decidedBy.map((r) => r.ruleName),
+      ["c"],
     );
   });
-});
 
-describe("OrRule accessors", () => {
-  it("passed returns the sole decisive pass", async () => {
-    const rule = new OrRule("or1", [fail("a"), pass("b")]);
+  it("AndRule fully passing names every sub-result", async () => {
+    const rule = new AndRule("and1", [pass("a"), pass("b"), pass("c")]);
     const result = await rule.evaluate({});
-    const passed = OrRule.passed(result);
-    assert.notEqual(passed, undefined);
-    assert.equal(passed.ruleName, "b");
+    assert.deepEqual(
+      result.decidedBy.map((r) => r.ruleName),
+      ["a", "b", "c"],
+    );
   });
 
-  it("passed returns undefined when the OrRule failed", async () => {
-    const rule = new OrRule("or1", [fail("a"), fail("b")]);
+  it("AndRule vacuous pass names nothing", async () => {
+    const rule = new AndRule("and1", []);
     const result = await rule.evaluate({});
-    assert.equal(OrRule.passed(result), undefined);
+    assert.deepEqual(result.decidedBy, []);
   });
 
-  it("passed returns undefined for an empty OrRule", async () => {
+  it("OrRule passing early names just the decisive pass", async () => {
+    const rule = new OrRule("or1", [fail("a"), pass("b"), fail("c")]);
+    const result = await rule.evaluate({});
+    assert.deepEqual(
+      result.decidedBy.map((r) => r.ruleName),
+      ["b"],
+    );
+  });
+
+  it("OrRule all-fail names every sub-result", async () => {
+    // Mirrors the AndRule last-item case with the opposite polarity --
+    // OrRule's all-fail verdict is only known once every item is seen,
+    // genuinely collective, not attributable to the last one alone.
+    const rule = new OrRule("or1", [fail("a"), fail("b"), fail("c")]);
+    const result = await rule.evaluate({});
+    assert.deepEqual(
+      result.decidedBy.map((r) => r.ruleName),
+      ["a", "b", "c"],
+    );
+  });
+
+  it("OrRule vacuous fail names nothing", async () => {
     const rule = new OrRule("or1", []);
     const result = await rule.evaluate({});
-    assert.equal(OrRule.passed(result), undefined);
-  });
-
-  it("failing returns every sub-result when the OrRule failed", async () => {
-    const rule = new OrRule("or1", [fail("a"), fail("b")]);
-    const result = await rule.evaluate({});
-    assert.deepEqual(
-      OrRule.failing(result).map((r) => r.ruleName),
-      ["a", "b"],
-    );
-  });
-
-  it("failing excludes the decisive pass", async () => {
-    const rule = new OrRule("or1", [fail("a"), fail("b"), pass("c")]);
-    const result = await rule.evaluate({});
-    assert.deepEqual(
-      OrRule.failing(result).map((r) => r.ruleName),
-      ["a", "b"],
-    );
+    assert.deepEqual(result.decidedBy, []);
   });
 });
 
@@ -221,12 +216,21 @@ describe("NotRule", () => {
     assert.equal(result.subResults[0].ruleName, "inner");
   });
 
-  it("negated returns the inner result", async () => {
-    const rule = new NotRule("not1", fail("inner"));
-    const result = await rule.evaluate({});
-    const inner = NotRule.negated(result);
-    assert.equal(inner.ruleName, "inner");
-    assert.equal(inner.passed, false);
+  it("decidedBy is the inner result in both directions", async () => {
+    // Unconditional, unlike failingLeaves' own self-as-leaf rule -- "inner
+    // passed" is genuinely why a failing NotRule failed, not an
+    // inconsistency to paper over.
+    const failing = await new NotRule("not1", fail("inner")).evaluate({});
+    assert.deepEqual(
+      failing.decidedBy.map((r) => r.ruleName),
+      ["inner"],
+    );
+
+    const passing = await new NotRule("not2", pass("inner")).evaluate({});
+    assert.deepEqual(
+      passing.decidedBy.map((r) => r.ruleName),
+      ["inner"],
+    );
   });
 
   it("a failed NotRule has itself as its own failing leaf", async () => {

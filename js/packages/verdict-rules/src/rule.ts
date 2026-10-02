@@ -14,7 +14,7 @@ import { buildRuleResult, type RuleResult } from "./result.js";
  * const overEighteen: Rule<Context> = {
  *   name: "over_18",
  *   async evaluate(ctx) {
- *     return { ruleName: "over_18", passed: (ctx.age as number) >= 18, subResults: [], leaves: [], failingLeaves: [] };
+ *     return { ruleName: "over_18", passed: (ctx.age as number) >= 18, subResults: [], decidedBy: [], leaves: [], failingLeaves: [] };
  *   },
  * };
  * ```
@@ -199,14 +199,22 @@ export class SequentialEvaluator {
       soFar.push(latest);
       const early = this.#decider(latest, soFar, rules.length);
       if (early !== undefined) {
-        return buildRuleResult(name, early, { subResults: soFar });
+        // Generic default, correct for a custom decider with no simpler
+        // shortcut available: decided with items still unevaluated ->
+        // just the one sub-result that flipped it; decided only once
+        // every item has been seen -> all of them. Provably wrong for
+        // ShortCircuitEvaluator specifically, which overrides this below
+        // using the one extra fact (its own stopOn) a fully generic
+        // decider doesn't have access to -- see ShortCircuitEvaluator.evaluate.
+        const decidedBy = soFar.length === rules.length ? soFar : [latest];
+        return buildRuleResult(name, early, { subResults: soFar, decidedBy });
       }
     }
     // Non-null: `rules.length === 0` already returned above, so the loop
     // ran at least once and `soFar` is never empty here.
     const lastEvaluated = soFar[soFar.length - 1]!;
     const final = this.#decider(lastEvaluated, soFar, rules.length);
-    return buildRuleResult(name, final ?? this.#vacuousResult, { subResults: soFar });
+    return buildRuleResult(name, final ?? this.#vacuousResult, { subResults: soFar, decidedBy: soFar });
   }
 }
 
@@ -218,6 +226,7 @@ export class SequentialEvaluator {
  */
 export class ShortCircuitEvaluator {
   readonly #inner: SequentialEvaluator;
+  readonly #stopOn: boolean;
 
   /**
    * @param stopOn - The sub-result `passed` value that ends evaluation
@@ -232,6 +241,7 @@ export class ShortCircuitEvaluator {
    * information.
    */
   constructor(stopOn: boolean) {
+    this.#stopOn = stopOn;
     this.#inner = new SequentialEvaluator(
       (latest, soFar, total) => {
         if (latest.passed === stopOn) return stopOn;
@@ -242,13 +252,38 @@ export class ShortCircuitEvaluator {
     );
   }
 
-  /** See {@link SequentialEvaluator.evaluate} -- forwards unchanged. */
-  evaluate<TContext>(
+  /**
+   * See {@link SequentialEvaluator.evaluate} -- same result, except
+   * `decidedBy` is recomputed here rather than trusting
+   * {@link SequentialEvaluator}'s own generic rule.
+   *
+   * That generic rule can't distinguish "found the trigger, which
+   * happened to be the last item evaluated" from "genuinely exhausted
+   * every item without ever finding it" using count alone -- an `AndRule`
+   * failing on its *last* sub-rule has `subResults.length === total`
+   * exactly like a genuine full pass does. `stopOn` is the one extra fact
+   * that tells them apart: the trigger was found if and only if the last
+   * evaluated sub-result's own `passed` equals `stopOn`, regardless of
+   * where in the list it landed.
+   */
+  async evaluate<TContext>(
     name: string,
     rules: readonly Rule<TContext>[],
     context: TContext,
   ): Promise<RuleResult> {
-    return this.#inner.evaluate(name, rules, context);
+    const result = await this.#inner.evaluate(name, rules, context);
+    const last = result.subResults.length > 0 ? result.subResults[result.subResults.length - 1] : undefined;
+    const decidedBy = last !== undefined && last.passed === this.#stopOn ? [last] : result.subResults;
+    // Through buildRuleResult, not a `{ ...result, decidedBy }` spread --
+    // every library-constructed RuleResult is frozen (buildRuleResult's own
+    // job), and a plain spread of a frozen object produces a new, unfrozen
+    // one, silently breaking that invariant for every AndRule/OrRule result.
+    return buildRuleResult(result.ruleName, result.passed, {
+      detail: result.detail,
+      data: result.data,
+      subResults: result.subResults,
+      decidedBy,
+    });
   }
 }
 
@@ -308,36 +343,6 @@ export class AndRule<TContext> implements Rule<TContext> {
   [Symbol.for("nodejs.util.inspect.custom")](): string {
     return this.toString();
   }
-
-  /**
-   * The sole sub-result that decided a failed `AndRule`'s own outcome, or
-   * `undefined` when `result` passed (or has no sub-results at all, which
-   * only a vacuous pass ever does).
-   *
-   * Because evaluation stops the moment the outcome is decided,
-   * `result.subResults.at(-1)` is always the one sub-result that decided
-   * it -- the sole failure for a failed `AndRule`, since everything before
-   * it passed. Reads only `result.subResults`, so nesting composes for
-   * free: when the decisive sub-result is itself a composite,
-   * `AndRule.failed(result)?.failingLeaves` drills straight through it.
-   * Not gated behind any check that `result` actually came from an
-   * `AndRule` -- passing the wrong family's result in is wrong at the call
-   * site, visibly, not a silent misread.
-   */
-  static failed(result: RuleResult): RuleResult | undefined {
-    const last = result.subResults.at(-1);
-    return last !== undefined && !last.passed ? last : undefined;
-  }
-
-  /**
-   * Every sub-result that passed on the way to `result`'s own outcome --
-   * every sub-result when it passed, or every one except the decisive
-   * failure (see {@link AndRule.failed}) when it failed.
-   */
-  static passing(result: RuleResult): readonly RuleResult[] {
-    const failed = AndRule.failed(result);
-    return failed === undefined ? result.subResults : result.subResults.slice(0, -1);
-  }
 }
 
 /**
@@ -380,29 +385,6 @@ export class OrRule<TContext> implements Rule<TContext> {
   [Symbol.for("nodejs.util.inspect.custom")](): string {
     return this.toString();
   }
-
-  /**
-   * The sole sub-result that decided a passed `OrRule`, or `undefined` if
-   * `result` failed (or has no sub-results at all).
-   *
-   * Mirrors {@link AndRule.failed} with the opposite polarity -- the last
-   * entry in `subResults` is always the one that decided it, here the sole
-   * pass (everything before it failed).
-   */
-  static passed(result: RuleResult): RuleResult | undefined {
-    const last = result.subResults.at(-1);
-    return last !== undefined && last.passed ? last : undefined;
-  }
-
-  /**
-   * Every sub-result that failed before `result`'s own outcome was decided
-   * -- all of `subResults` if the `OrRule` failed, all but the last (the
-   * pass returned by {@link OrRule.passed}) if it didn't.
-   */
-  static failing(result: RuleResult): readonly RuleResult[] {
-    const passed = OrRule.passed(result);
-    return passed === undefined ? result.subResults : result.subResults.slice(0, -1);
-  }
 }
 
 /**
@@ -433,13 +415,13 @@ export class NotRule<TContext> implements Rule<TContext> {
    * any `RuleResult` at all, so `NotRule` doesn't get to special-case it
    * away just because a failed `NotRule`'s own `failingLeaves` can
    * otherwise read as misleadingly empty (the cause is a pass, not a
-   * failure) -- {@link NotRule.negated} is the dedicated accessor that
-   * answers "why," the same role `AndRule.failed`/`OrRule.passed` play for
-   * their own families.
+   * failure). `decidedBy` is `[inner]` unconditionally, in both
+   * directions -- correct either way, since "inner passed" is genuinely
+   * why a failing `NotRule` failed, not an inconsistency.
    */
   async evaluate(context: TContext): Promise<RuleResult> {
     const inner = await this.#rule.evaluate(context);
-    return buildRuleResult(this.name, !inner.passed, { subResults: [inner] });
+    return buildRuleResult(this.name, !inner.passed, { subResults: [inner], decidedBy: [inner] });
   }
 
   /** @returns A one-line summary -- the name, and the group when set. */
@@ -450,17 +432,5 @@ export class NotRule<TContext> implements Rule<TContext> {
   /** So `console.log`/the Node REPL show the same summary as {@link toString}. */
   [Symbol.for("nodejs.util.inspect.custom")](): string {
     return this.toString();
-  }
-
-  /**
-   * The one inner result this `NotRule` negated to produce `result`.
-   *
-   * Non-nullable, unlike `AndRule.failed`/`OrRule.passed` -- fixed arity
-   * means the inner result is never absent.
-   */
-  static negated(result: RuleResult): RuleResult {
-    // Non-null: a NotRule's own evaluate() always builds subResults as the
-    // one-element [inner] -- fixed arity, never absent.
-    return result.subResults[0]!;
   }
 }

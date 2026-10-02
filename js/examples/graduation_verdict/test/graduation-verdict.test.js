@@ -305,6 +305,22 @@ describe("shared fixture contract", () => {
       );
     });
 
+    it(`${studentId}: decided_by matches`, async () => {
+      // One-level explanation for the top-level composite's own verdict --
+      // exactly the decisive member regardless of position (gita fails on
+      // the *last* of four), or every member on a full pass.
+      const { graduates } = buildGraduationCheck(POLICIES, ELECTIVE_MINIMUM);
+      const context = STUDENTS[studentId];
+      const expected = context.expected;
+      const result = await graduates.evaluate(context);
+      const decidedBy = result.decidedBy.map((r) => r.ruleName);
+      assert.deepEqual(
+        decidedBy,
+        expected.decided_by,
+        `${studentId}: expected decided_by ${expected.decided_by}, got ${decidedBy}`,
+      );
+    });
+
     it(`${studentId}: runAll never short-circuits`, async () => {
       const { engine } = buildGraduationCheck(POLICIES, ELECTIVE_MINIMUM);
       const context = STUDENTS[studentId];

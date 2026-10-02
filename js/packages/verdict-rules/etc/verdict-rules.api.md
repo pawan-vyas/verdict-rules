@@ -9,12 +9,10 @@ export class AndRule<TContext> implements Rule<TContext> {
     constructor(name: string, rules: readonly Rule<TContext>[], group?: string);
     // (undocumented)
     evaluate(context: TContext): Promise<RuleResult>;
-    static failed(result: RuleResult): RuleResult | undefined;
     // (undocumented)
     readonly group: string | undefined;
     // (undocumented)
     readonly name: string;
-    static passing(result: RuleResult): readonly RuleResult[];
     // (undocumented)
     toString(): string;
     static readonly VACUOUS_RESULT = true;
@@ -43,7 +41,6 @@ export class NotRule<TContext> implements Rule<TContext> {
     readonly group: string | undefined;
     // (undocumented)
     readonly name: string;
-    static negated(result: RuleResult): RuleResult;
     // (undocumented)
     toString(): string;
 }
@@ -53,12 +50,10 @@ export class OrRule<TContext> implements Rule<TContext> {
     constructor(name: string, rules: readonly Rule<TContext>[], group?: string);
     // (undocumented)
     evaluate(context: TContext): Promise<RuleResult>;
-    static failing(result: RuleResult): readonly RuleResult[];
     // (undocumented)
     readonly group: string | undefined;
     // (undocumented)
     readonly name: string;
-    static passed(result: RuleResult): RuleResult | undefined;
     // (undocumented)
     toString(): string;
     static readonly VACUOUS_RESULT = false;
@@ -84,6 +79,7 @@ export type RulePredicate<TContext> = (context: TContext) => Promise<PredicateOu
 // @public
 export interface RuleResult {
     readonly data?: unknown;
+    readonly decidedBy: readonly RuleResult[];
     readonly detail?: string;
     readonly failingLeaves: readonly RuleResult[];
     readonly leaves: readonly RuleResult[];

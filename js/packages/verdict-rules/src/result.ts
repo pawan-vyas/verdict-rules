@@ -18,8 +18,8 @@ export interface RuleResult {
    * `AndRule`/`OrRule`/`NotRule` never set this — composing
    * {@link ShortCircuitEvaluator}/{@link SequentialEvaluator} leaves no
    * channel richer than a boolean to build a descriptive string from. Read
-   * {@link RuleResult.failingLeaves} (or `AndRule.failed`/`OrRule.passed`/
-   * `NotRule.negated`) for a composite's own reason instead.
+   * {@link RuleResult.failingLeaves} (or {@link RuleResult.decidedBy}) for a
+   * composite's own reason instead.
    */
   readonly detail?: string;
 
@@ -59,6 +59,27 @@ export interface RuleResult {
    * failed result.
    */
   readonly failingLeaves: readonly RuleResult[];
+
+  /**
+   * Which of {@link RuleResult.subResults} explain *this* result's own
+   * verdict — populated once, by whatever built this result, the same
+   * principle a predicate's own `PredicateOutcome` already follows: the
+   * producer records the fact because only the producer knows it
+   * unambiguously. Empty for a leaf or a vacuous composite — nothing else
+   * decided it.
+   *
+   * **Scope, read carefully**: this is a one-level, non-recursive
+   * question — "which immediate child (or children) explain this node's
+   * own verdict" — not the same question {@link RuleResult.failingLeaves}
+   * answers ("recursively, what are the terminal failures"). Do not chain
+   * `result.decidedBy[0]!.decidedBy[0]!...` expecting it to converge on
+   * the same answer as `failingLeaves` — it doesn't: a failed `NotRule`'s
+   * `decidedBy` is its one *passing* inner child (correct for "why did
+   * this fail"), and walking further from there drifts straight into "why
+   * did the inner rule pass," a different question with no relationship
+   * to the original failure.
+   */
+  readonly decidedBy: readonly RuleResult[];
 }
 
 /** This result's own leaves, computed purely from `subResults`/`passed`. */
@@ -83,6 +104,7 @@ export interface RuleResultInit {
   readonly detail?: string | undefined;
   readonly data?: unknown;
   readonly subResults?: readonly RuleResult[] | undefined;
+  readonly decidedBy?: readonly RuleResult[] | undefined;
 }
 
 /**
@@ -107,6 +129,7 @@ export function buildRuleResult(
     detail: init.detail ?? "",
     data: init.data,
     subResults: init.subResults ?? [],
+    decidedBy: init.decidedBy ?? [],
     leaves: [] as readonly RuleResult[],
     failingLeaves: [] as readonly RuleResult[],
   };

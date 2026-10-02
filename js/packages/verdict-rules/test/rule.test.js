@@ -89,10 +89,10 @@ describe("AndRule", () => {
     // build a descriptive string from a sub-rule's own name/detail (see
     // StepDecider's own signature: boolean | undefined, nothing richer).
     // The failing sub-rule and its own detail are still fully recoverable
-    // from `subResults`/`AndRule.failed` instead.
+    // from `subResults`/`decidedBy` instead.
     assert.equal(result.detail, "");
-    const failing = AndRule.failed(result);
-    assert.notEqual(failing, undefined);
+    assert.equal(result.decidedBy.length, 1);
+    const failing = result.decidedBy[0];
     assert.equal(failing.ruleName, "b");
     assert.equal(failing.detail, "bad");
   });
@@ -145,8 +145,8 @@ describe("OrRule", () => {
     const result = await rule.evaluate({});
     assert.equal(result.passed, false);
     // OrRule's own `detail` is empty too, for the same reason AndRule's is
-    // -- see the matching comment above. `failingLeaves`/`OrRule.failing`
-    // are the replacement.
+    // -- see the matching comment above. `failingLeaves`/`decidedBy` are
+    // the replacement.
     assert.equal(result.detail, "");
     assert.deepEqual(
       result.failingLeaves.map((r) => r.ruleName),
