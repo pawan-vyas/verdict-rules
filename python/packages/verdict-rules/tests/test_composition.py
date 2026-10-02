@@ -56,14 +56,43 @@ class TestSequentialEvaluator:
         rules = [_tracked_pass("a", calls), _tracked_pass("b", calls), _tracked_pass("c", calls)]
 
         def decider(latest: RuleResult, so_far: list[RuleResult], total: int) -> bool | None:
-            return False if len(so_far) == 1 else None
+            return False if len(so_far) == 2 else None
 
         evaluator = SequentialEvaluator(decider=decider, vacuous_result=True)
         result = await evaluator.evaluate("e", rules, {})
 
         assert result.passed is False
-        assert calls == ["a"], "evaluation must stop after the first rule, never reach b/c"
-        assert [r.rule_name for r in result.sub_results] == ["a"]
+        assert calls == ["a", "b"], "evaluation must stop after the second rule, never reach c"
+        assert [r.rule_name for r in result.sub_results] == ["a", "b"]
+        # Decided with an item still unevaluated (so_far has 2 of 3) --
+        # SequentialEvaluator's own generic decided_by rule says this is
+        # just the one sub-result that flipped the verdict (b), not the
+        # whole so_far list (a, b) -- deciding on the *first* evaluated
+        # rule alone couldn't distinguish the two, since a one-element
+        # so_far is identical to "just the latest" either way.
+        assert [r.rule_name for r in result.decided_by] == ["b"]
+
+    async def test_in_loop_early_decision_landing_on_the_last_item_names_every_evaluated_sub_result(self) -> None:
+        """The other half of SequentialEvaluator's own generic decided_by
+        rule: decided in-loop but only once every rule has been seen
+        (so_far.Count == total at the exact moment the decider resolves, on
+        the final iteration) -- decided_by is every evaluated child, the
+        same as a genuine full pass, not just the one that happened to run
+        last. This is the in-loop branch landing on that boundary, a
+        different code path from the post-loop fallback that
+        test_final_decider_call_after_exhaustion_sees_the_real_arguments
+        pins -- ShortCircuitEvaluator overrides this generic rule with its
+        own stop_on-aware one (see TestShortCircuitEvaluator)."""
+        rules = [_pass("a"), _pass("b"), _pass("c")]
+
+        def decider(latest: RuleResult, so_far: list[RuleResult], total: int) -> bool | None:
+            return True if len(so_far) == total else None
+
+        evaluator = SequentialEvaluator(decider=decider, vacuous_result=False)
+        result = await evaluator.evaluate("e", rules, {})
+
+        assert result.passed is True
+        assert [r.rule_name for r in result.decided_by] == ["a", "b", "c"]
 
     async def test_decider_returning_none_throughout_falls_back_to_vacuous_result(self) -> None:
         rules = [_pass("a"), _pass("b")]
@@ -120,6 +149,11 @@ class TestSequentialEvaluator:
         assert total == 3
         assert result.rule_name == "e"
         assert result.passed is False  # the vacuous_result -- decider always returned None
+        # The post-loop fallback's own decided_by -- every evaluated child,
+        # same as a genuine full pass -- unchecked by every assertion above,
+        # so a mutant corrupting or dropping this keyword on the final
+        # RuleResult survived undetected.
+        assert [r.rule_name for r in result.decided_by] == ["a", "b", "c"]
 
     async def test_final_decider_call_can_still_resolve_the_outcome(self) -> None:
         """The final, post-exhaustion decider call is a real decision point,
@@ -181,6 +215,29 @@ class TestShortCircuitEvaluator:
         result = await evaluator.evaluate("e", rules, {})
         assert result.passed is False
         assert [r.rule_name for r in result.sub_results] == ["a", "b"]
+
+    async def test_decided_by_names_only_the_trigger_when_found_before_exhaustion(self) -> None:
+        """ShortCircuitEvaluator's own override of SequentialEvaluator's
+        generic decided_by rule, using the one extra fact only it has --
+        stop_on -- to tell "found the trigger, which happened to be the
+        last item evaluated" apart from "genuinely exhausted every item
+        without ever finding it" (see ShortCircuitEvaluator.evaluate's own
+        docstring). Exercised directly against a freshly constructed
+        evaluator, not AndRule/OrRule's shared class-level instance, so a
+        mutation to __init__ itself (e.g. self._stop_on corrupted) is
+        actually attributed to this test by coverage-based test selection --
+        AndRule/OrRule only ever construct their evaluator once, at class
+        body evaluation time, before any individual test runs."""
+        evaluator: ShortCircuitEvaluator[dict] = ShortCircuitEvaluator(stop_on=False)
+        rules = [_pass("a"), _fail("b"), _pass("c")]
+        result = await evaluator.evaluate("e", rules, {})
+        assert [r.rule_name for r in result.decided_by] == ["b"]
+
+    async def test_decided_by_names_every_sub_result_when_exhausted_without_ever_triggering(self) -> None:
+        evaluator: ShortCircuitEvaluator[dict] = ShortCircuitEvaluator(stop_on=True)
+        rules = [_fail("a"), _fail("b")]
+        result = await evaluator.evaluate("e", rules, {})
+        assert [r.rule_name for r in result.decided_by] == ["a", "b"]
 
 
 class TestDecidedBy:

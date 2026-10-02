@@ -41,6 +41,18 @@ class TestFunctionRule:
         assert result.passed is False
         assert result.detail == "nope"
 
+    async def test_a_leaf_result_names_nothing_in_decided_by(self) -> None:
+        """A bare leaf result -- FunctionRule.evaluate's own output, never
+        built by SequentialEvaluator/ShortCircuitEvaluator/NotRule -- has no
+        sub_results to point into, so decided_by must be empty for both a
+        passing and a failing outcome. Nothing previously read decided_by on
+        a leaf at all; every other decided_by test in this suite exercises a
+        composite built on top of one."""
+        passing = await _pass("r1").evaluate({})
+        failing = await _fail("r1").evaluate({})
+        assert passing.decided_by == ()
+        assert failing.decided_by == ()
+
     async def test_predicate_receives_the_context(self) -> None:
         seen = {}
 
