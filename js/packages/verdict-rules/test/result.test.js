@@ -166,3 +166,74 @@ describe("RunResult forwarders", () => {
     assert.deepEqual(run.failingLeaves, []);
   });
 });
+
+describe("mixed composite tree", () => {
+  // A genuinely wide, deep tree mixing every rule kind -- AndRule,
+  // OrRule, NotRule, and a bare FunctionRule -- at multiple levels on
+  // multiple branches, to prove leaves/failingLeaves report correctly
+  // at a scale none of the other tests here exercise.
+  //
+  //   root = AndRule("root", [a, b, c])
+  //     a = AndRule("a", [a1, a2, a3])
+  //       a1 = FunctionRule (leaf)
+  //       a2 = OrRule("a2", [a2x (fails), a2y (passes)])
+  //       a3 = NotRule("a3", a3Inner)
+  //     b = FunctionRule (leaf)
+  //     c = OrRule("c", [c1, c2])
+  //       c1 = AndRule("c1", [c1x (fails), c1y])
+  //       c2 = NotRule("c2", c2Inner)
+
+  it("leaves flatten across every rule kind even when everything passes", async () => {
+    const a1 = leaf("a1", true);
+    const a2 = new OrRule("a2", [leaf("a2x", false), leaf("a2y", true)]);
+    const a3 = new NotRule("a3", leaf("a3-inner", false)); // inner fails -> passes
+    const a = new AndRule("a", [a1, a2, a3]);
+
+    const b = leaf("b", true);
+
+    const c1 = new AndRule("c1", [leaf("c1x", false), leaf("c1y", true)]); // short-circuits, fails
+    const c2 = new NotRule("c2", leaf("c2-inner", false)); // inner fails -> passes
+    const c = new OrRule("c", [c1, c2]);
+
+    const root = new AndRule("root", [a, b, c]);
+    const result = await root.evaluate({});
+
+    assert.equal(result.passed, true);
+    // c1y never ran at all (c1 short-circuited on c1x) -- absent, not
+    // present-and-passing.
+    assert.deepEqual(
+      result.leaves.map((l) => l.ruleName),
+      ["a1", "a2x", "a2y", "a3-inner", "b", "c1x", "c2-inner"],
+    );
+    // A passing root has no failing leaves, full stop -- even though c1
+    // failed internally three branches deep, on the way to c's own pass
+    // via c2.
+    assert.deepEqual(result.failingLeaves, []);
+  });
+
+  it("failingLeaves pinpoints the exact failure through multiple levels", async () => {
+    const a1 = leaf("a1", true);
+    const a2 = new OrRule("a2", [leaf("a2x", false), leaf("a2y", true)]);
+    const a3 = new NotRule("a3", leaf("a3-inner", true)); // inner passes -> fails
+    const a = new AndRule("a", [a1, a2, a3]);
+
+    // b/c are never evaluated at all -- root short-circuits on 'a'.
+    const b = leaf("b", true);
+    const c = new OrRule("c", [
+      new AndRule("c1", [leaf("c1x", false), leaf("c1y", true)]),
+      new NotRule("c2", leaf("c2-inner", false)),
+    ]);
+
+    const root = new AndRule("root", [a, b, c]);
+    const result = await root.evaluate({});
+
+    assert.equal(result.passed, false);
+    assert.deepEqual(result.subResults.map((r) => r.ruleName), ["a"]); // b, c never ran
+    const a3Result = result.subResults[0].subResults[2];
+    assert.equal(a3Result.ruleName, "a3");
+    // The one true failure, three levels deep (root -> a -> a3), with
+    // a1/a2 (passing siblings of a3) contributing nothing and b/c (never
+    // evaluated) not appearing at all.
+    assert.deepEqual(result.failingLeaves, [a3Result]);
+  });
+});

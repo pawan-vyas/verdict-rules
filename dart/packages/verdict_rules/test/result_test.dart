@@ -17,6 +17,12 @@ RuleResult _leaf(String name, bool passed, {String detail = ''}) =>
 RuleResult _composite(String name, bool passed, List<RuleResult> subResults) =>
     RuleResult(ruleName: name, passed: passed, subResults: subResults);
 
+FunctionRule<Context> _pass(String name) =>
+    FunctionRule(name, (ctx) async => const PredicateOutcome(true));
+
+FunctionRule<Context> _fail(String name) =>
+    FunctionRule(name, (ctx) async => const PredicateOutcome(false));
+
 void main() {
   group('leaves', () {
     test('a leaf result is its own single leaf', () {
@@ -153,6 +159,82 @@ void main() {
       const run = RunResult(passed: true, results: []);
       expect(run.leaves, isEmpty);
       expect(run.failingLeaves, isEmpty);
+    });
+  });
+
+  group('mixed composite tree', () {
+    // A genuinely wide, deep tree mixing every rule kind -- AndRule,
+    // OrRule, NotRule, and a bare FunctionRule -- at multiple levels on
+    // multiple branches, built through real evaluation (not hand-built
+    // RuleResult literals), to prove leaves/failingLeaves report
+    // correctly at a scale none of the other tests here exercise.
+    //
+    //   root = AndRule("root", [a, b, c])
+    //     a = AndRule("a", [a1, a2, a3])
+    //       a1 = FunctionRule (leaf)
+    //       a2 = OrRule("a2", [a2x (fails), a2y (passes)])
+    //       a3 = NotRule("a3", a3Inner)
+    //     b = FunctionRule (leaf)
+    //     c = OrRule("c", [c1, c2])
+    //       c1 = AndRule("c1", [c1x (fails), c1y])
+    //       c2 = NotRule("c2", c2Inner)
+
+    test(
+        'leaves flatten across every rule kind even when everything passes',
+        () async {
+      final a1 = _pass('a1');
+      final a2 = OrRule('a2', [_fail('a2x'), _pass('a2y')]);
+      final a3 = NotRule('a3', _fail('a3-inner')); // inner fails -> passes
+      final a = AndRule('a', [a1, a2, a3]);
+
+      final b = _pass('b');
+
+      final c1 =
+          AndRule('c1', [_fail('c1x'), _pass('c1y')]); // short-circuits, fails
+      final c2 = NotRule('c2', _fail('c2-inner')); // inner fails -> passes
+      final c = OrRule('c', [c1, c2]);
+
+      final root = AndRule('root', [a, b, c]);
+      final result = await root.evaluate(const {});
+
+      expect(result.passed, isTrue);
+      // c1y never ran at all (c1 short-circuited on c1x) -- absent, not
+      // present-and-passing.
+      expect(result.leaves.map((l) => l.ruleName).toList(),
+          ['a1', 'a2x', 'a2y', 'a3-inner', 'b', 'c1x', 'c2-inner']);
+      // A passing root has no failing leaves, full stop -- even though
+      // c1 failed internally three branches deep, on the way to c's own
+      // pass via c2.
+      expect(result.failingLeaves, isEmpty);
+    });
+
+    test(
+        'failingLeaves pinpoints the exact failure through multiple levels',
+        () async {
+      final a1 = _pass('a1');
+      final a2 = OrRule('a2', [_fail('a2x'), _pass('a2y')]);
+      final a3 = NotRule('a3', _pass('a3-inner')); // inner passes -> fails
+      final a = AndRule('a', [a1, a2, a3]);
+
+      // b/c are never evaluated at all -- root short-circuits on 'a'.
+      final b = _pass('b');
+      final c = OrRule('c', [
+        AndRule('c1', [_fail('c1x'), _pass('c1y')]),
+        NotRule('c2', _fail('c2-inner')),
+      ]);
+
+      final root = AndRule('root', [a, b, c]);
+      final result = await root.evaluate(const {});
+
+      expect(result.passed, isFalse);
+      expect(result.subResults.map((r) => r.ruleName).toList(),
+          ['a']); // b, c never ran
+      final a3Result = result.subResults[0].subResults[2];
+      expect(a3Result.ruleName, 'a3');
+      // The one true failure, three levels deep (root -> a -> a3), with
+      // a1/a2 (passing siblings of a3) contributing nothing and b/c
+      // (never evaluated) not appearing at all.
+      expect(result.failingLeaves, [a3Result]);
     });
   });
 }

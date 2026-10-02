@@ -324,3 +324,82 @@ public class RuleExceptionPropagationTests
         await Assert.ThrowsAsync<InvalidOperationException>(() => rule.EvaluateAsync(Rules.Empty));
     }
 }
+
+/// <summary>
+/// A genuinely wide, deep tree mixing every rule kind — <see cref="AndRule"/>,
+/// <see cref="OrRule"/>, <see cref="NotRule"/>, and a bare <see cref="FunctionRule"/>
+/// — at multiple levels on multiple branches, to prove <c>Leaves</c>/
+/// <c>FailingLeaves</c> report correctly at a scale none of the other
+/// tests here exercise.
+/// <code>
+/// root = AndRule("root", [a, b, c])
+///   a = AndRule("a", [a1, a2, a3])
+///     a1 = FunctionRule (leaf)
+///     a2 = OrRule("a2", [a2x (fails), a2y (passes)])
+///     a3 = NotRule("a3", a3Inner)
+///   b = FunctionRule (leaf)
+///   c = OrRule("c", [c1, c2])
+///     c1 = AndRule("c1", [c1x (fails), c1y])
+///     c2 = NotRule("c2", c2Inner)
+/// </code>
+/// </summary>
+public class MixedCompositeTreeTests
+{
+    [Fact]
+    public async Task LeavesFlattenAcrossEveryRuleKindEvenWhenEverythingPasses()
+    {
+        var a1 = Rules.Pass("a1");
+        var a2 = new OrRule("a2", new IRule[] { Rules.Fail("a2x"), Rules.Pass("a2y") });
+        var a3 = new NotRule("a3", Rules.Fail("a3-inner")); // inner fails -> passes
+        var a = new AndRule("a", new IRule[] { a1, a2, a3 });
+
+        var b = Rules.Pass("b");
+
+        var c1 = new AndRule("c1", new IRule[] { Rules.Fail("c1x"), Rules.Pass("c1y") }); // short-circuits, fails
+        var c2 = new NotRule("c2", Rules.Fail("c2-inner")); // inner fails -> passes
+        var c = new OrRule("c", new IRule[] { c1, c2 });
+
+        var root = new AndRule("root", new IRule[] { a, b, c });
+        var result = await root.EvaluateAsync(Rules.Empty);
+
+        Assert.True(result.Passed);
+        // c1y never ran at all (c1 short-circuited on c1x) -- absent, not
+        // present-and-passing.
+        Assert.Equal(
+            new[] { "a1", "a2x", "a2y", "a3-inner", "b", "c1x", "c2-inner" },
+            result.Leaves.Select(l => l.RuleName));
+        // A passing root has no failing leaves, full stop -- even though
+        // c1 failed internally three branches deep, on the way to c's
+        // own pass via c2.
+        Assert.Empty(result.FailingLeaves);
+    }
+
+    [Fact]
+    public async Task FailingLeavesPinpointsTheExactFailureThroughMultipleLevels()
+    {
+        var a1 = Rules.Pass("a1");
+        var a2 = new OrRule("a2", new IRule[] { Rules.Fail("a2x"), Rules.Pass("a2y") });
+        var a3 = new NotRule("a3", Rules.Pass("a3-inner")); // inner passes -> fails
+        var a = new AndRule("a", new IRule[] { a1, a2, a3 });
+
+        // b/c are never evaluated at all -- root short-circuits on 'a'.
+        var b = Rules.Pass("b");
+        var c = new OrRule("c", new IRule[]
+        {
+            new AndRule("c1", new IRule[] { Rules.Fail("c1x"), Rules.Pass("c1y") }),
+            new NotRule("c2", Rules.Fail("c2-inner")),
+        });
+
+        var root = new AndRule("root", new IRule[] { a, b, c });
+        var result = await root.EvaluateAsync(Rules.Empty);
+
+        Assert.False(result.Passed);
+        Assert.Equal(new[] { "a" }, result.SubResults.Select(r => r.RuleName)); // b, c never ran
+        var a3Result = result.SubResults[0].SubResults[2];
+        Assert.Equal("a3", a3Result.RuleName);
+        // The one true failure, three levels deep (root -> a -> a3), with
+        // a1/a2 (passing siblings of a3) contributing nothing and b/c
+        // (never evaluated) not appearing at all.
+        Assert.Equal(new[] { a3Result }, result.FailingLeaves);
+    }
+}

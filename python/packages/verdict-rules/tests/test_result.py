@@ -10,6 +10,19 @@ formula this file pins down case by case.
 from __future__ import annotations
 
 from verdict.result import RuleResult, RunResult
+from verdict.rule import AndRule, FunctionRule, NotRule, OrRule, PredicateOutcome
+
+
+def _pass(name: str) -> FunctionRule:
+    async def predicate(context: dict) -> PredicateOutcome:
+        return PredicateOutcome(passed=True)
+    return FunctionRule(name, predicate)
+
+
+def _fail(name: str) -> FunctionRule:
+    async def predicate(context: dict) -> PredicateOutcome:
+        return PredicateOutcome(passed=False)
+    return FunctionRule(name, predicate)
 
 
 def _leaf(name: str, passed: bool, detail: str = "") -> RuleResult:
@@ -129,3 +142,70 @@ class TestRunResultForwarders:
         run = RunResult(passed=True, results=[])
         assert run.leaves == []
         assert run.failing_leaves == []
+
+
+class TestMixedCompositeTree:
+    """A genuinely wide, deep tree mixing every rule kind -- AndRule,
+    OrRule, NotRule, and a bare FunctionRule -- at multiple levels on
+    multiple branches, built through real evaluation (not hand-built
+    RuleResult literals), to prove `leaves`/`failing_leaves` report
+    correctly at a scale none of the other tests here exercise.
+
+        root = AndRule("root", [a, b, c])
+          a = AndRule("a", [a1, a2, a3])
+            a1 = FunctionRule (leaf)
+            a2 = OrRule("a2", [a2x (fails), a2y (passes)])
+            a3 = NotRule("a3", a3_inner)
+          b = FunctionRule (leaf)
+          c = OrRule("c", [c1, c2])
+            c1 = AndRule("c1", [c1x (fails), c1y])
+            c2 = NotRule("c2", c2_inner)
+    """
+
+    async def test_leaves_flatten_across_every_rule_kind_even_when_everything_passes(self) -> None:
+        a1 = _pass("a1")
+        a2 = OrRule("a2", [_fail("a2x"), _pass("a2y")])
+        a3 = NotRule("a3", _fail("a3-inner"))  # inner fails -> NotRule passes
+        a = AndRule("a", [a1, a2, a3])
+
+        b = _pass("b")
+
+        c1 = AndRule("c1", [_fail("c1x"), _pass("c1y")])  # short-circuits at c1x, fails
+        c2 = NotRule("c2", _fail("c2-inner"))  # inner fails -> NotRule passes
+        c = OrRule("c", [c1, c2])
+
+        root = AndRule("root", [a, b, c])
+        result = await root.evaluate({})
+
+        assert result.passed is True
+        # c1y never ran at all (c1 short-circuited on c1x) -- absent, not
+        # present-and-passing.
+        assert [leaf.rule_name for leaf in result.leaves] == [
+            "a1", "a2x", "a2y", "a3-inner", "b", "c1x", "c2-inner",
+        ]
+        # A passing root has no failing leaves, full stop -- even though
+        # c1 failed internally three branches deep, on the way to c's own
+        # pass via c2.
+        assert result.failing_leaves == []
+
+    async def test_failing_leaves_pinpoints_the_exact_failure_through_multiple_levels(self) -> None:
+        a1 = _pass("a1")
+        a2 = OrRule("a2", [_fail("a2x"), _pass("a2y")])
+        a3 = NotRule("a3", _pass("a3-inner"))  # inner passes -> NotRule fails
+        a = AndRule("a", [a1, a2, a3])
+
+        # b/c are never evaluated at all -- root short-circuits on 'a'.
+        b = _pass("b")
+        c = OrRule("c", [AndRule("c1", [_fail("c1x"), _pass("c1y")]), NotRule("c2", _fail("c2-inner"))])
+
+        root = AndRule("root", [a, b, c])
+        result = await root.evaluate({})
+
+        assert result.passed is False
+        assert [r.rule_name for r in result.sub_results] == ["a"]  # b, c never ran
+        a3_result = result.sub_results[0].sub_results[2]
+        assert a3_result.rule_name == "a3"
+        # The one true failure, three levels deep (root -> a -> a3), with
+        # a1/a2 (passing siblings of a3) contributing nothing and b/c
+        # (never evaluated) not appearing at all.
+        assert result.failing_leaves == [a3_result]
