@@ -11,16 +11,17 @@
 ## 0 · Status
 
 **Implemented in all four languages** (C#, Python, JS/TS, Dart — each
-green on its own full test suite). Remaining before this is fully
-mergeable: the cross-language API concept map
-(`docs/maintenance/api-concepts.yaml`) needs updating for the new
-surface in all four languages at once (deliberately deferred until now
-— every concept row requires resolving in all four snapshots
-simultaneously), and the queued doc-verbosity audit still needs to
-sweep `docs/extending/*/`, `docs/samples/*/`, and `docs/architecture/`
-for every language consistently (currently uneven: C#'s implementation
-pass already swept its own `docs/*/csharp.md` tree; Python and Dart
-deferred the whole tree; JS/TS fixed only what would otherwise throw).
+green on its own full test suite), committed as four separate commits
+on this PR branch and pushed. Remaining, in this order: (1) the queued
+doc-verbosity audit, sweeping `docs/extending/*/`, `docs/samples/*/`,
+and `docs/architecture/` for every language consistently (currently
+uneven — C#'s implementation pass already swept its own
+`docs/*/csharp.md` tree; Python and Dart deferred the whole tree;
+JS/TS fixed only what would otherwise throw); (2) the cross-language
+API concept map (`docs/maintenance/api-concepts.yaml`), deliberately
+done last, after the docs are actually settled, since redoing it a
+second time if the docs pass changes any public-surface shape would
+be wasted work.
 
 ## 1 · Origin
 

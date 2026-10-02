@@ -90,16 +90,42 @@ public static class StructuralInvariants
     }
 
     /// <summary>
-    /// <see cref="AtLeastNRule"/> never short-circuits: its result always has
-    /// exactly one entry per sub-rule, regardless of pass/fail.
+    /// <see cref="AtLeastNRule"/> stops exactly when its minimum is
+    /// mathematically decided — as soon as enough sub-rules have passed to
+    /// guarantee it, or too many have failed for it to still be reachable —
+    /// never one sub-rule earlier (not yet decidable) and never one later
+    /// (an already-decided rule kept evaluating).
     /// </summary>
     private static void CheckAtLeastN(Node node, RuleResult result)
     {
         var data = SubResultsOf(result);
-        if (node.Children is { } children)
+        var rule = (AtLeastNRule)node.Rule;
+        var total = node.Children?.Count ?? data.Count;
+        var minimum = rule.Minimum;
+
+        var passedSoFar = 0;
+        for (var index = 0; index < data.Count; index++)
         {
-            Assert.Equal(children.Count, data.Count);
+            passedSoFar += data[index].Passed ? 1 : 0;
+            var remainingAfter = total - (index + 1);
+            var decidedTrue = passedSoFar >= minimum;
+            var decidedFalse = passedSoFar + remainingAfter < minimum;
+            var isLastEvaluated = index == data.Count - 1;
+
+            if (isLastEvaluated)
+            {
+                Assert.True(decidedTrue || decidedFalse,
+                    $"{rule.Name}: AtLeastNRule stopped after {data.Count} of {total} sub-rule(s) " +
+                    $"before its minimum ({minimum}) was mathematically decided either way");
+            }
+            else
+            {
+                Assert.False(decidedTrue || decidedFalse,
+                    $"{rule.Name}: AtLeastNRule kept evaluating past sub-rule {index} " +
+                    $"even though its minimum ({minimum}) was already decided there");
+            }
         }
+        Assert.Equal(passedSoFar >= minimum, result.Passed);
         RecurseOrAssertLeaves(node.Children, data);
     }
 

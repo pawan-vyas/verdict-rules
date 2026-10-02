@@ -283,6 +283,28 @@ describe("shared fixture contract", () => {
       assert.equal(chain.length > 0 ? chain[0] : null, expected.failing_rule);
     });
 
+    it(`${studentId}: leaves match`, async () => {
+      const { graduates } = buildGraduationCheck(POLICIES, ELECTIVE_MINIMUM);
+      const context = STUDENTS[studentId];
+      const expected = context.expected;
+      const result = await graduates.evaluate(context);
+      const leaves = result.leaves.map((leaf) => leaf.ruleName);
+      assert.deepEqual(leaves, expected.leaves, `${studentId}: expected leaves ${expected.leaves}, got ${leaves}`);
+    });
+
+    it(`${studentId}: failing leaves match`, async () => {
+      const { graduates } = buildGraduationCheck(POLICIES, ELECTIVE_MINIMUM);
+      const context = STUDENTS[studentId];
+      const expected = context.expected;
+      const result = await graduates.evaluate(context);
+      const failingLeaves = result.failingLeaves.map((leaf) => leaf.ruleName);
+      assert.deepEqual(
+        failingLeaves,
+        expected.failing_leaves,
+        `${studentId}: expected failing leaves ${expected.failing_leaves}, got ${failingLeaves}`,
+      );
+    });
+
     it(`${studentId}: runAll never short-circuits`, async () => {
       const { engine } = buildGraduationCheck(POLICIES, ELECTIVE_MINIMUM);
       const context = STUDENTS[studentId];

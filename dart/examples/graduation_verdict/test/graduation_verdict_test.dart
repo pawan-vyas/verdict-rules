@@ -227,6 +227,27 @@ void main() {
         expect(chain.isNotEmpty ? chain.first : null, expected['failing_rule']);
       });
 
+      test('$studentId: leaves match', () async {
+        final (_, graduates) =
+            buildGraduationCheck(_policies, _electiveMinimum);
+        final record = _students[studentId]!;
+        final expected = record.expected;
+        final result = await graduates.evaluate(record.context);
+        final leaves = result.leaves.map((l) => l.ruleName).toList();
+        expect(leaves, expected['leaves']);
+      });
+
+      test('$studentId: failing leaves match', () async {
+        final (_, graduates) =
+            buildGraduationCheck(_policies, _electiveMinimum);
+        final record = _students[studentId]!;
+        final expected = record.expected;
+        final result = await graduates.evaluate(record.context);
+        final failingLeaves =
+            result.failingLeaves.map((l) => l.ruleName).toList();
+        expect(failingLeaves, expected['failing_leaves']);
+      });
+
       test('$studentId: runAll never short-circuits', () async {
         final (engine, _) = buildGraduationCheck(_policies, _electiveMinimum);
         final record = _students[studentId]!;

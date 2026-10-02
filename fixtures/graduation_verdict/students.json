@@ -34,6 +34,12 @@
       "rules_evaluated": 4,
       "failing_rule": null,
       "failing_chain": [],
+      "leaves": [
+        "MATH101", "ENG101", "WORKSHOP201:written", "WORKSHOP201:practical",
+        "FRENCH101:written", "ELECTIVE_ART", "ELECTIVE_MUSIC",
+        "cgpa_met", "attendance_met"
+      ],
+      "failing_leaves": [],
       "run_all": {
         "evaluated": 7,
         "passed": true
@@ -88,6 +94,8 @@
         "all_core_subjects_pass",
         "ENG101"
       ],
+      "leaves": ["MATH101", "ENG101"],
+      "failing_leaves": ["ENG101"],
       "run_all": {
         "evaluated": 7,
         "passed": false
@@ -142,6 +150,11 @@
         "elective_requirement",
         "ELECTIVE_MUSIC"
       ],
+      "leaves": [
+        "MATH101", "ENG101", "WORKSHOP201:written", "WORKSHOP201:practical",
+        "FRENCH101:written", "ELECTIVE_ART", "ELECTIVE_MUSIC", "ELECTIVE_CS"
+      ],
+      "failing_leaves": ["ELECTIVE_MUSIC", "ELECTIVE_CS"],
       "run_all": {
         "evaluated": 7,
         "passed": false
@@ -197,6 +210,8 @@
         "WORKSHOP201",
         "WORKSHOP201:practical"
       ],
+      "leaves": ["MATH101", "ENG101", "WORKSHOP201:written", "WORKSHOP201:practical"],
+      "failing_leaves": ["WORKSHOP201:practical"],
       "run_all": {
         "evaluated": 7,
         "passed": false
@@ -249,6 +264,12 @@
       "rules_evaluated": 4,
       "failing_rule": null,
       "failing_chain": [],
+      "leaves": [
+        "MATH101", "ENG101", "WORKSHOP201:written", "WORKSHOP201:practical",
+        "FRENCH101:written", "FRENCH101:exemption",
+        "ELECTIVE_ART", "ELECTIVE_MUSIC", "cgpa_met", "attendance_met"
+      ],
+      "failing_leaves": [],
       "run_all": {
         "evaluated": 7,
         "passed": true
@@ -302,6 +323,11 @@
       "failing_chain": [
         "cgpa_met"
       ],
+      "leaves": [
+        "MATH101", "ENG101", "WORKSHOP201:written", "WORKSHOP201:practical",
+        "FRENCH101:written", "ELECTIVE_ART", "ELECTIVE_MUSIC", "cgpa_met"
+      ],
+      "failing_leaves": ["cgpa_met"],
       "run_all": {
         "evaluated": 7,
         "passed": true
@@ -355,6 +381,12 @@
       "failing_chain": [
         "attendance_met"
       ],
+      "leaves": [
+        "MATH101", "ENG101", "WORKSHOP201:written", "WORKSHOP201:practical",
+        "FRENCH101:written", "ELECTIVE_ART", "ELECTIVE_MUSIC",
+        "cgpa_met", "attendance_met"
+      ],
+      "failing_leaves": ["attendance_met"],
       "run_all": {
         "evaluated": 7,
         "passed": true
@@ -406,6 +438,12 @@
       "rules_evaluated": 4,
       "failing_rule": null,
       "failing_chain": [],
+      "leaves": [
+        "MATH101", "ENG101", "WORKSHOP201:written", "WORKSHOP201:practical",
+        "FRENCH101:written", "ELECTIVE_ART", "ELECTIVE_MUSIC",
+        "cgpa_met", "attendance_met"
+      ],
+      "failing_leaves": [],
       "run_all": {
         "evaluated": 7,
         "passed": false

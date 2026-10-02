@@ -261,6 +261,30 @@ class TestSharedFixtureContract:
         assert (chain[0] if chain else None) == expected["failing_rule"]
 
     @pytest.mark.parametrize("student_id", list(_STUDENTS.keys()))
+    async def test_leaves_match(self, student_id: str) -> None:
+        """Every actual leaf-level rule evaluated, in evaluation order."""
+        _, graduates = build_graduation_check(_POLICIES, _ELECTIVE_MINIMUM)
+        context = _STUDENTS[student_id]
+        expected = context["expected"]
+        result = await graduates.evaluate(context)
+        leaves = [leaf.rule_name for leaf in result.leaves]
+        assert leaves == expected["leaves"], (
+            f"{student_id}: expected leaves {expected['leaves']}, got {leaves}"
+        )
+
+    @pytest.mark.parametrize("student_id", list(_STUDENTS.keys()))
+    async def test_failing_leaves_match(self, student_id: str) -> None:
+        """A passing result has none; a failing one is never empty."""
+        _, graduates = build_graduation_check(_POLICIES, _ELECTIVE_MINIMUM)
+        context = _STUDENTS[student_id]
+        expected = context["expected"]
+        result = await graduates.evaluate(context)
+        failing_leaves = [leaf.rule_name for leaf in result.failing_leaves]
+        assert failing_leaves == expected["failing_leaves"], (
+            f"{student_id}: expected failing leaves {expected['failing_leaves']}, got {failing_leaves}"
+        )
+
+    @pytest.mark.parametrize("student_id", list(_STUDENTS.keys()))
     async def test_run_all_never_short_circuits(self, student_id: str) -> None:
         """run_all reports every registered rule for every student, always."""
         engine, _ = build_graduation_check(_POLICIES, _ELECTIVE_MINIMUM)

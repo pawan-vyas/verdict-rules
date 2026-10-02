@@ -239,6 +239,30 @@ public class SharedFixtureContractTests
 
     [Theory]
     [MemberData(nameof(StudentIds))]
+    public async Task LeavesMatch(string studentId)
+    {
+        var (_, graduates) = GraduationCheck.BuildGraduationCheck(SharedFixture.Curriculum.Policies, SharedFixture.Curriculum.ElectiveMinimum);
+        var record = SharedFixture.Students[studentId];
+        var expectedLeaves = record.Expected.GetProperty("leaves").EnumerateArray().Select(e => e.GetString()!).ToList();
+        var result = await graduates.EvaluateAsync(record.Context);
+        var leaves = result.Leaves.Select(l => l.RuleName).ToList();
+        Assert.Equal(expectedLeaves, leaves);
+    }
+
+    [Theory]
+    [MemberData(nameof(StudentIds))]
+    public async Task FailingLeavesMatch(string studentId)
+    {
+        var (_, graduates) = GraduationCheck.BuildGraduationCheck(SharedFixture.Curriculum.Policies, SharedFixture.Curriculum.ElectiveMinimum);
+        var record = SharedFixture.Students[studentId];
+        var expectedFailingLeaves = record.Expected.GetProperty("failing_leaves").EnumerateArray().Select(e => e.GetString()!).ToList();
+        var result = await graduates.EvaluateAsync(record.Context);
+        var failingLeaves = result.FailingLeaves.Select(l => l.RuleName).ToList();
+        Assert.Equal(expectedFailingLeaves, failingLeaves);
+    }
+
+    [Theory]
+    [MemberData(nameof(StudentIds))]
     public async Task RunAllNeverShortCircuits(string studentId)
     {
         var (engine, _) = GraduationCheck.BuildGraduationCheck(SharedFixture.Curriculum.Policies, SharedFixture.Curriculum.ElectiveMinimum);
