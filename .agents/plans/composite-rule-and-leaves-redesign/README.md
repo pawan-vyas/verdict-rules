@@ -47,15 +47,36 @@ freeze-every-constructed-`RuleResult` invariant `buildRuleResult`
 exists to enforce, for every `AndRule`/`OrRule` result. All fixed,
 all four languages fully green.
 
-**Mutation testing**: re-run against the composable pieces done for
-C# (155/165, 93.9%, up from a 67.9% baseline) and Python (190/191,
-99.5%) — **both predate `DecidedBy` and need a second pass**, since it
-added new code (untested) and removed code those runs just finished
-testing (now gone). JS/TS and Dart haven't had a first pass yet.
-Sequencing stays: mutation-test the now-settled shape once (not
-twice), then the doc-verbosity audit (~200 files, scope confirmed,
-currently uneven — see git history), then the cross-language API
-concept map last.
+**Mutation testing against the final `DecidedBy` shape: done, all four
+languages.** Run sequentially (one language at a time, after a
+mid-phase rate-limit interruption made parallel subagents unreliable),
+each committed and pushed before the next started:
+
+| Language | Result | Commit |
+| :-- | :-- | :-- |
+| C# | 150/161, 93.2% | `489f333` |
+| Python | 194/195, 99.5% | `60f4f81` |
+| JS/TS | 199/204, 97.55% | `e87d016` |
+| Dart | 53/53, 100% | `23690ab` |
+
+Each run independently found the same core gap — a leaf `RuleResult`'s
+`DecidedBy` was never asserted empty, and `SequentialEvaluator`'s
+in-loop early-decision branch lacked a test distinct from the
+post-loop fallback — confirming the design is sound and the gap was in
+test coverage, not behavior. Two tooling-specific coverage-attribution
+blind spots were also found and documented (C#'s per-closed-type
+static field, Python's import-time singleton); confirmed NOT to apply
+to Dart (no coverage-narrowed test selection, no shared static).
+Python's mutmut was also confirmed to generate zero mutants for any
+`@property` on a `@dataclass`; Dart's regex-based mutator was confirmed
+to have no ternary-swap rule and to be structurally unable to mutate an
+already-empty list literal. Every language's mutation-survivors doc
+(`docs/maintenance/mutation-survivors-{csharp,python,js,dart}.md`) is
+rewritten from scratch against the final shape — nothing stale remains.
+
+Sequencing continues: next is the doc-verbosity audit (~200 files,
+scope confirmed, currently uneven — see git history), then the
+cross-language API concept map last.
 
 **Doc-verbosity audit methodology, recorded ahead of starting it**:
 strictly one file at a time, top to bottom, full sweep — no grepping
