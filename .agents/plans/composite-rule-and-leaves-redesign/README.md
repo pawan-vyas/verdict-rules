@@ -74,9 +74,10 @@ already-empty list literal. Every language's mutation-survivors doc
 (`docs/maintenance/mutation-survivors-{csharp,python,js,dart}.md`) is
 rewritten from scratch against the final shape — nothing stale remains.
 
-Sequencing continues: next is the doc-verbosity audit (~200 files,
-scope confirmed, currently uneven — see git history), then the
-cross-language API concept map last.
+Sequencing continues: next is the doc-verbosity audit (224 files,
+scope confirmed — see
+[`.agents/plans/doc-verbosity-audit/README.md`](../doc-verbosity-audit/README.md)),
+then the cross-language API concept map last.
 
 **Doc-verbosity audit methodology, recorded ahead of starting it**:
 strictly one file at a time, top to bottom, full sweep — no grepping
