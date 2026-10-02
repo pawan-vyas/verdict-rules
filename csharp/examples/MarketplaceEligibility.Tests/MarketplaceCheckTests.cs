@@ -166,9 +166,9 @@ public class ComplianceCatalogTests
         var extended = new RulesEngine(
         [
             new FunctionRule("high_value_flag", (ctx, _) =>
-                Task.FromResult(new RuleResult("high_value_flag", (int)ctx["amount_cents"]! > 50_000))),
+                Task.FromResult(new PredicateOutcome((int)ctx["amount_cents"]! > 50_000))),
             new FunctionRule("weekend_flag", (ctx, _) =>
-                Task.FromResult(new RuleResult("weekend_flag", (bool)ctx["is_weekend"]!))),
+                Task.FromResult(new PredicateOutcome((bool)ctx["is_weekend"]!))),
         ]);
         var result = await extended.RunNamedAsync("weekend_flag", new Dictionary<string, object?>
         {

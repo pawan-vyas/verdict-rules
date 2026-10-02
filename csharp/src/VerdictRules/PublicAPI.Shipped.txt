@@ -51,7 +51,6 @@ VerdictRules.RuleResult.Data.get -> object?
 VerdictRules.RuleResult.Detail.get -> string!
 VerdictRules.RuleResult.Passed.get -> bool
 VerdictRules.RuleResult.RuleName.get -> string!
-VerdictRules.RuleResult.RuleResult(string! ruleName, bool passed, string! detail = "", object? data = null) -> void
 VerdictRules.RulesEngine
 VerdictRules.RulesEngine.GroupNames.get -> System.Collections.Generic.IReadOnlyCollection<string!>!
 VerdictRules.RulesEngine.RuleNames.get -> System.Collections.Generic.IReadOnlyCollection<string!>!
@@ -74,5 +73,3 @@ VerdictRules.RunResult
 VerdictRules.RunResult.Passed.get -> bool
 VerdictRules.RunResult.Results.get -> System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>!
 VerdictRules.RunResult.RunResult(bool passed, System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>! results) -> void
-virtual VerdictRules.RulePredicate.Invoke(System.Collections.Generic.IReadOnlyDictionary<string!, object?>! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<VerdictRules.RuleResult!>!
-virtual VerdictRules.RulePredicate<TContext>.Invoke(TContext context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<VerdictRules.RuleResult!>!

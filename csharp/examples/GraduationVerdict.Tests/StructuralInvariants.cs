@@ -28,7 +28,7 @@ public static class StructuralInvariants
     /// <summary>A rule paired with the known <see cref="IRule"/> objects of its own children, when known.</summary>
     /// <param name="Rule">The real rule object this node checks.</param>
     /// <param name="Children">
-    /// This rule's own sub-rules, in the same order <see cref="RuleResult.Data"/>
+    /// This rule's own sub-rules, in the same order <see cref="RuleResult.SubResults"/>
     /// will list their results -- or <see langword="null"/> when the concrete
     /// child objects aren't reachable from outside <see cref="GraduationCheck"/>,
     /// in which case every child is asserted to be a leaf result instead of
@@ -123,13 +123,16 @@ public static class StructuralInvariants
         }
     }
 
-    /// <summary>A leaf's own <see cref="RuleResult.Data"/> is never a sub-result list.</summary>
+    /// <summary>A leaf result has no sub-results of its own.</summary>
     private static void AssertLeafShape(RuleResult result) =>
-        Assert.False(result.Data is IReadOnlyList<RuleResult>, $"'{result.RuleName}' expected to be a leaf result");
+        Assert.True(result.SubResults.Count == 0, $"'{result.RuleName}' expected to be a leaf result");
 
-    private static IReadOnlyList<RuleResult> SubResultsOf(RuleResult result) =>
-        result.Data as IReadOnlyList<RuleResult>
-        ?? throw new InvalidOperationException($"'{result.RuleName}' composite result's Data was not a RuleResult list");
+    /// <summary>
+    /// Unlike the old <c>Data</c>-duck-typing this replaced, <see cref="RuleResult.SubResults"/>
+    /// is unambiguous by construction -- no throwing guard is needed here
+    /// anymore, including for a vacuous composite's legitimately empty list.
+    /// </summary>
+    private static IReadOnlyList<RuleResult> SubResultsOf(RuleResult result) => result.SubResults;
 
     /// <summary>
     /// Build the <see cref="Node"/> mirror of the tree
@@ -167,21 +170,11 @@ public static class StructuralInvariants
         Assert.Equal(a.RuleName, b.RuleName);
         Assert.Equal(a.Passed, b.Passed);
         Assert.Equal(a.Detail, b.Detail);
-
-        var aSubs = a.Data as IReadOnlyList<RuleResult>;
-        var bSubs = b.Data as IReadOnlyList<RuleResult>;
-        if (aSubs is null && bSubs is null)
+        Assert.Equal(a.Data, b.Data);
+        Assert.Equal(a.SubResults.Count, b.SubResults.Count);
+        for (var i = 0; i < a.SubResults.Count; i++)
         {
-            Assert.Equal(a.Data, b.Data);
-            return;
-        }
-
-        Assert.NotNull(aSubs);
-        Assert.NotNull(bSubs);
-        Assert.Equal(aSubs!.Count, bSubs!.Count);
-        for (var i = 0; i < aSubs.Count; i++)
-        {
-            AssertResultTreesEqual(aSubs[i], bSubs[i]);
+            AssertResultTreesEqual(a.SubResults[i], b.SubResults[i]);
         }
     }
 }

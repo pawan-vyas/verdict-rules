@@ -143,8 +143,8 @@ using System.Text.Json;
 
 public sealed record OrderContext(decimal Total, bool IsMember);
 
-Task<RuleResult> OrderTotalMet(OrderContext ctx, CancellationToken ct = default) =>
-    Task.FromResult(new RuleResult("order_total_met", ctx.Total >= 50m));
+Task<PredicateOutcome> OrderTotalMet(OrderContext ctx, CancellationToken ct = default) =>
+    Task.FromResult(new PredicateOutcome(ctx.Total >= 50m));
 
 // TContext is inferred from OrderTotalMet's own parameter type -- no
 // explicit type argument needed at the constructor call site.
@@ -244,7 +244,7 @@ structural typing for a multi-member interface the way Python's
 `Protocol` and TypeScript's structural `interface` do. What it has
 instead is structural typing for *delegates*: any method or lambda
 matching `RulePredicate` (`Func<IReadOnlyDictionary<string, object?>,
-CancellationToken, Task<RuleResult>>`) is a rule through `FunctionRule`,
+CancellationToken, Task<PredicateOutcome>>`) is a rule through `FunctionRule`,
 with nothing declared and no type to name — a method group works
 directly, as `new FunctionRule("quorum", HasQuorum)`, as long as
 `HasQuorum` itself carries both parameters (a defaulted

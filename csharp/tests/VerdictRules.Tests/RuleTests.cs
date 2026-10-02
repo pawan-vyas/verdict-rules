@@ -41,7 +41,7 @@ public class FunctionRuleTests
         var rule = new FunctionRule("r1", (ctx, _) =>
         {
             seen = ctx;
-            return Task.FromResult(new RuleResult("r1", true));
+            return Task.FromResult(new PredicateOutcome(true));
         });
 
         await rule.EvaluateAsync(new Dictionary<string, object?> { ["user_id"] = 42 });
@@ -81,15 +81,21 @@ public class AndRuleTests
         Assert.Equal("and1", result.RuleName);
     }
 
-    /// <summary>Mirrors <c>test_one_failure_yields_fail</c>.</summary>
+    /// <summary>
+    /// Mirrors <c>test_one_failure_yields_fail</c> -- an <see cref="AndRule"/>
+    /// no longer formats "why" into its own <see cref="RuleResult.Detail"/>;
+    /// the failing sub-rule's name and detail are reachable through
+    /// <see cref="RuleResult.FailingLeaves"/> instead.
+    /// </summary>
     [Fact]
     public async Task OneFailureYieldsFail()
     {
         var rule = new AndRule("and1", new IRule[] { Rules.Pass("a"), Rules.Fail("b", detail: "bad") });
         var result = await rule.EvaluateAsync(Rules.Empty);
         Assert.False(result.Passed);
-        Assert.Contains("b", result.Detail);
-        Assert.Contains("bad", result.Detail);
+        var failingLeaf = Assert.Single(result.FailingLeaves);
+        Assert.Equal("b", failingLeaf.RuleName);
+        Assert.Equal("bad", failingLeaf.Detail);
     }
 
     /// <summary>Mirrors <c>test_short_circuits_after_first_failure</c>.</summary>
@@ -103,7 +109,7 @@ public class AndRuleTests
             new FunctionRule("c", (_, _) =>
             {
                 log.Add("c");
-                return Task.FromResult(new RuleResult("c", true));
+                return Task.FromResult(new PredicateOutcome(true));
             }),
         });
 
@@ -112,14 +118,13 @@ public class AndRuleTests
         Assert.Empty(log); // never reached -- 'a' already failed
     }
 
-    /// <summary>Mirrors <c>test_data_carries_sub_results_up_to_failure</c>.</summary>
+    /// <summary>Mirrors <c>test_data_carries_sub_results_up_to_failure</c>, ported to <c>SubResults</c>.</summary>
     [Fact]
-    public async Task DataCarriesSubResultsUpToFailure()
+    public async Task SubResultsCarriesSubResultsUpToFailure()
     {
         var rule = new AndRule("and1", new IRule[] { Rules.Pass("a"), Rules.Fail("b"), Rules.Pass("c") });
         var result = await rule.EvaluateAsync(Rules.Empty);
-        var data = Assert.IsType<List<RuleResult>>(result.Data);
-        Assert.Equal(new[] { "a", "b" }, data.Select(r => r.RuleName));
+        Assert.Equal(new[] { "a", "b" }, result.SubResults.Select(r => r.RuleName));
     }
 
     /// <summary>Mirrors <c>test_empty_rule_list_vacuously_passes</c>.</summary>
@@ -144,14 +149,20 @@ public class OrRuleTests
         Assert.True(result.Passed);
     }
 
-    /// <summary>Mirrors <c>test_all_fail_yields_fail</c>.</summary>
+    /// <summary>
+    /// Mirrors <c>test_all_fail_yields_fail</c> -- an <see cref="OrRule"/> no
+    /// longer formats "why" into its own <see cref="RuleResult.Detail"/>;
+    /// every sub-rule's own failure is reachable through
+    /// <see cref="RuleResult.FailingLeaves"/> instead.
+    /// </summary>
     [Fact]
     public async Task AllFailYieldsFail()
     {
         var rule = new OrRule("or1", new IRule[] { Rules.Fail("a"), Rules.Fail("b") });
         var result = await rule.EvaluateAsync(Rules.Empty);
         Assert.False(result.Passed);
-        Assert.Equal("no sub-rule passed", result.Detail);
+        Assert.Equal(string.Empty, result.Detail);
+        Assert.Equal(new[] { "a", "b" }, result.FailingLeaves.Select(r => r.RuleName));
     }
 
     /// <summary>Mirrors <c>test_short_circuits_after_first_pass</c>.</summary>
@@ -165,7 +176,7 @@ public class OrRuleTests
             new FunctionRule("c", (_, _) =>
             {
                 log.Add("c");
-                return Task.FromResult(new RuleResult("c", false));
+                return Task.FromResult(new PredicateOutcome(false));
             }),
         });
 

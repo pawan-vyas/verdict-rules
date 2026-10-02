@@ -32,7 +32,7 @@ public class ArityCoexistenceTests
     [Fact]
     public void ARuleIsDirectlyAssignableToItsClosedGenericInterface()
     {
-        IRule dictRule = new FunctionRule("r1", (_, _) => Task.FromResult(new RuleResult("r1", true)));
+        IRule dictRule = new FunctionRule("r1", (_, _) => Task.FromResult(new PredicateOutcome(true)));
         IRule<IReadOnlyDictionary<string, object?>> asGeneric = dictRule;
         Assert.Same(dictRule, asGeneric);
     }
@@ -63,11 +63,11 @@ public class ArityCoexistenceTests
 /// <summary>A typed, non-dict context runs through every generic primitive.</summary>
 public class TypedContextEndToEndTests
 {
-    private static Task<RuleResult> OrderTotalMet(OrderContext context, CancellationToken ct = default) =>
-        Task.FromResult(new RuleResult("order_total_met", context.Total >= 50.0));
+    private static Task<PredicateOutcome> OrderTotalMet(OrderContext context, CancellationToken ct = default) =>
+        Task.FromResult(new PredicateOutcome(context.Total >= 50.0));
 
-    private static Task<RuleResult> IsMember(OrderContext context, CancellationToken ct = default) =>
-        Task.FromResult(new RuleResult("is_member", context.IsMember));
+    private static Task<PredicateOutcome> IsMember(OrderContext context, CancellationToken ct = default) =>
+        Task.FromResult(new PredicateOutcome(context.IsMember));
 
     [Fact]
     public async Task FunctionRuleOfTEvaluatesATypedContext()
@@ -96,7 +96,7 @@ public class TypedContextEndToEndTests
         var tracked = new FunctionRule<OrderContext>("tracked", (_, _) =>
         {
             log.Add("tracked");
-            return Task.FromResult(new RuleResult("tracked", true));
+            return Task.FromResult(new PredicateOutcome(true));
         });
         var rule = new AndRule<OrderContext>("eligible", new IRule<OrderContext>[]
         {
@@ -192,17 +192,25 @@ public class TypedContextEndToEndTests
         Assert.Equal("No rules in group 'missing-group' in this engine", ex.Message);
     }
 
+    /// <summary>
+    /// An <see cref="AndRule{TContext}"/>'s own <see cref="RuleResult.Detail"/>
+    /// is never synthesized from the failing sub-rule's name -- "why" lives in
+    /// <see cref="RuleResult.SubResults"/>/<see cref="RuleResult.FailingLeaves"/>
+    /// instead, reachable at any depth, not just one hand-formatted sentence
+    /// at the top.
+    /// </summary>
     [Fact]
-    public async Task AndRuleOfTFormatsAFailureWithNoDetailDifferentlyFromOneWithDetail()
+    public async Task AndRuleOfTLeavesItsOwnDetailEmptyAndReportsWhyThroughFailingLeaves()
     {
-        var withoutDetail = new AndRule<OrderContext>("eligible", new IRule<OrderContext>[]
+        var rule = new AndRule<OrderContext>("eligible", new IRule<OrderContext>[]
         {
-            new FunctionRule<OrderContext>("order_total_met", (_, _) => Task.FromResult(new RuleResult("order_total_met", false))),
+            new FunctionRule<OrderContext>("order_total_met", (_, _) => Task.FromResult(new PredicateOutcome(false))),
         });
-        var result = await withoutDetail.EvaluateAsync(new OrderContext(0, false));
+        var result = await rule.EvaluateAsync(new OrderContext(0, false));
 
         Assert.False(result.Passed);
-        Assert.Equal("'order_total_met' failed", result.Detail);
+        Assert.Equal(string.Empty, result.Detail);
+        Assert.Equal(new[] { "order_total_met" }, result.FailingLeaves.Select(r => r.RuleName));
     }
 
     [Fact]
@@ -210,15 +218,14 @@ public class TypedContextEndToEndTests
     {
         var rule = new OrRule<OrderContext>("any", new IRule<OrderContext>[]
         {
-            new FunctionRule<OrderContext>("a", (_, _) => Task.FromResult(new RuleResult("a", false))),
-            new FunctionRule<OrderContext>("b", (_, _) => Task.FromResult(new RuleResult("b", false))),
+            new FunctionRule<OrderContext>("a", (_, _) => Task.FromResult(new PredicateOutcome(false))),
+            new FunctionRule<OrderContext>("b", (_, _) => Task.FromResult(new PredicateOutcome(false))),
         });
 
         var result = await rule.EvaluateAsync(new OrderContext(0, false));
 
         Assert.False(result.Passed);
-        var subs = Assert.IsAssignableFrom<IReadOnlyList<RuleResult>>(result.Data);
-        Assert.Equal(new[] { "a", "b" }, subs.Select(r => r.RuleName));
+        Assert.Equal(new[] { "a", "b" }, result.SubResults.Select(r => r.RuleName));
     }
 }
 
@@ -244,12 +251,12 @@ public class GenericCancellationTests
             {
                 log.Add("a");
                 cts.Cancel();
-                return Task.FromResult(new RuleResult("a", true));
+                return Task.FromResult(new PredicateOutcome(true));
             }),
             new FunctionRule<OrderContext>("b", (_, _) =>
             {
                 log.Add("b");
-                return Task.FromResult(new RuleResult("b", true));
+                return Task.FromResult(new PredicateOutcome(true));
             }),
         });
 
@@ -271,12 +278,12 @@ public class GenericCancellationTests
             {
                 log.Add("a");
                 cts.Cancel();
-                return Task.FromResult(new RuleResult("a", true));
+                return Task.FromResult(new PredicateOutcome(true));
             }),
             new FunctionRule<OrderContext>("b", (_, _) =>
             {
                 log.Add("b");
-                return Task.FromResult(new RuleResult("b", true));
+                return Task.FromResult(new PredicateOutcome(true));
             }),
         });
 
@@ -303,7 +310,7 @@ public class GenericCancellationTests
             {
                 log.Add("a");
                 cts.Cancel();
-                return Task.FromResult(new RuleResult("a", true));
+                return Task.FromResult(new PredicateOutcome(true));
             }),
             new NonCheckingRule<OrderContext>("b", true, log),
         });
@@ -327,7 +334,7 @@ public class GenericCancellationTests
             {
                 log.Add("a");
                 cts.Cancel();
-                return Task.FromResult(new RuleResult("a", false)); // fails, so the loop keeps going
+                return Task.FromResult(new PredicateOutcome(false)); // fails, so the loop keeps going
             }),
             new NonCheckingRule<OrderContext>("b", true, log),
         });
@@ -351,7 +358,7 @@ public class GenericCancellationTests
             {
                 log.Add("a");
                 cts.Cancel();
-                return Task.FromResult(new RuleResult("a", true));
+                return Task.FromResult(new PredicateOutcome(true));
             }),
             new NonCheckingRule<OrderContext>("b", true, log),
         });
@@ -375,7 +382,7 @@ public class GenericCancellationTests
             {
                 log.Add("a");
                 cts.Cancel();
-                return Task.FromResult(new RuleResult("a", true));
+                return Task.FromResult(new PredicateOutcome(true));
             }, "g"),
             new NonCheckingRule<OrderContext>("b", true, log, "g"),
         });

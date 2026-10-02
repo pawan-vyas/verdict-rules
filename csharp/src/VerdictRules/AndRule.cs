@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Linq;
 
 namespace VerdictRules;
 
@@ -28,6 +29,36 @@ public sealed class AndRule(string name, IReadOnlyList<IRule> rules, string? gro
 
     /// <summary>What a debugger shows without expanding the object.</summary>
     private string DebuggerDisplay => ToString();
+
+    /// <summary>
+    /// The sole sub-result that decided a failed <see cref="AndRule"/>'s own
+    /// outcome, or <see langword="null"/> when <paramref name="result"/> passed
+    /// (or has no sub-results at all, which only a vacuous pass ever does).
+    /// </summary>
+    /// <remarks>
+    /// Because evaluation stops the moment the outcome is decided,
+    /// <c>result.SubResults[^1]</c> is always the one sub-result that decided
+    /// it -- the sole failure for a failed <see cref="AndRule"/>, since
+    /// everything before it passed. Reads only <see cref="RuleResult.SubResults"/>,
+    /// so nesting composes for free: when the decisive sub-result is itself a
+    /// composite, <c>AndRule.Failed(result)?.FailingLeaves</c> drills straight
+    /// through it. Not gated behind any check that <paramref name="result"/>
+    /// actually came from an <see cref="AndRule"/> -- passing the wrong
+    /// family's result in is wrong at the call site, visibly, not a silent
+    /// misread.
+    /// </remarks>
+    /// <param name="result">A result produced by evaluating an <see cref="AndRule"/>.</param>
+    public static RuleResult? Failed(RuleResult result) =>
+        result.SubResults.Count > 0 && !result.SubResults[^1].Passed ? result.SubResults[^1] : null;
+
+    /// <summary>
+    /// Every sub-result that passed on the way to <paramref name="result"/>'s
+    /// own outcome -- every sub-result when it passed, or every one except
+    /// the decisive failure (see <see cref="Failed"/>) when it failed.
+    /// </summary>
+    /// <param name="result">A result produced by evaluating an <see cref="AndRule"/>.</param>
+    public static IReadOnlyList<RuleResult> Passing(RuleResult result) =>
+        Failed(result) is null ? result.SubResults : result.SubResults.Take(result.SubResults.Count - 1).ToList();
 }
 
 /// <summary>Makes a debugger expand an <see cref="AndRule"/> straight to its sub-rules.</summary>

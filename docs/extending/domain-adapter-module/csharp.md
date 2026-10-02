@@ -33,16 +33,14 @@ sealed class VerdictRateLimiter : RateLimiter
             {
                 var used = (int)ctx[$"{window}_used"]!;
                 var status = new RateLimitStatus(window, used, quota);
-                return Task.FromResult(new RuleResult(
-                    $"{window}_under_quota",
+                return Task.FromResult(new PredicateOutcome(
                     used < quota,
                     data: status));
             });
 
         var combined = new AndRule("rate_limits", windows.Select(w => RuleFor(w.Key, w.Value)).ToArray());
         var result = await combined.EvaluateAsync(context);
-        var subResults = (IReadOnlyList<RuleResult>)result.Data!;
-        return subResults.Select(r => (RateLimitStatus)r.Data!).ToArray();
+        return result.SubResults.Select(r => (RateLimitStatus)r.Data!).ToArray();
     }
 }
 

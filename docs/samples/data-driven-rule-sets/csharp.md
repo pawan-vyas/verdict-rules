@@ -56,11 +56,11 @@ static class Operators
 // Turn one stored row into an IRule -- the only place that knows how.
 static IRule RuleFor(ConfiguredRow row)
 {
-    Task<RuleResult> Predicate(IReadOnlyDictionary<string, object?> context)
+    Task<PredicateOutcome> Predicate(IReadOnlyDictionary<string, object?> context)
     {
         context.TryGetValue(row.Field, out var actual);
         var passed = Operators.Table[row.Operator](actual, row.Value);
-        return Task.FromResult(new RuleResult($"row:{row.Id}", passed));
+        return Task.FromResult(new PredicateOutcome(passed));
     }
     return new FunctionRule($"row:{row.Id}", Predicate);
 }

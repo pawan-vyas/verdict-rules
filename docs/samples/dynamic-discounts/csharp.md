@@ -36,25 +36,25 @@ change — see the spec for the three specific ways it stops being fine.
 ```csharp
 using VerdictRules;
 
-static Task<RuleResult> CartMeetsMinimum(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
+static Task<PredicateOutcome> CartMeetsMinimum(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
 {
     var total = (double)context["cart_total"]!;
     var minimum = (double)context["promo_minimum"]!;
-    return Task.FromResult(new RuleResult(
-        "cart_meets_minimum", total >= minimum, $"cart_total={total}, needs >= {minimum}"));
+    return Task.FromResult(new PredicateOutcome(
+        total >= minimum, $"cart_total={total}, needs >= {minimum}"));
 }
 
-static Task<RuleResult> IsEligibleRegion(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
+static Task<PredicateOutcome> IsEligibleRegion(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
 {
     var region = (string)context["region"]!;
     var eligible = (HashSet<string>)context["eligible_regions"]!;
-    return Task.FromResult(new RuleResult(
-        "is_eligible_region", eligible.Contains(region),
+    return Task.FromResult(new PredicateOutcome(
+        eligible.Contains(region),
         $"region=\"{region}\" not in [{string.Join(", ", eligible.OrderBy(r => r))}]"));
 }
 
-static Task<RuleResult> IsFirstPurchase(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("is_first_purchase", (bool)context["is_first_purchase"]!));
+static Task<PredicateOutcome> IsFirstPurchase(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome((bool)context["is_first_purchase"]!));
 
 // Built once. The AndRule and the engine below both hold these same three
 // objects -- nothing is declared twice, and nothing here needs to know in

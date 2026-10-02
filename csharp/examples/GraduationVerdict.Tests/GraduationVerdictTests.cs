@@ -217,7 +217,7 @@ public class SharedFixtureContractTests
         var record = SharedFixture.Students[studentId];
         var expectedCount = record.Expected.GetProperty("rules_evaluated").GetInt32();
         var result = await graduates.EvaluateAsync(record.Context);
-        var actualCount = ((IReadOnlyList<RuleResult>)result.Data!).Count;
+        var actualCount = result.SubResults.Count;
         Assert.True(actualCount == expectedCount,
             $"{studentId}: expected {expectedCount} sub-rules to run, got {actualCount}");
     }
@@ -291,7 +291,7 @@ public class VacuousTruthEdgeCasesTests
         var result = await graduates.EvaluateAsync(student);
 
         Assert.True(result.Passed == expected.GetProperty("passed").GetBoolean(), caseName);
-        Assert.Equal(expected.GetProperty("rules_evaluated").GetInt32(), ((IReadOnlyList<RuleResult>)result.Data!).Count);
+        Assert.Equal(expected.GetProperty("rules_evaluated").GetInt32(), result.SubResults.Count);
         var chain = Fixtures.FailingChain(result);
         var expectedChain = expected.GetProperty("failing_chain").EnumerateArray().Select(e => e.GetString()!).ToList();
         Assert.Equal(expectedChain, chain);

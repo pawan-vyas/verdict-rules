@@ -43,21 +43,21 @@ record SubmissionContext(
     int MinLength,
     int AuthorPostCount);
 
-static Task<RuleResult> ContainsBannedTerms(SubmissionContext context, CancellationToken cancellationToken = default)
+static Task<PredicateOutcome> ContainsBannedTerms(SubmissionContext context, CancellationToken cancellationToken = default)
 {
     var text = context.Text.ToLowerInvariant();
     var hit = context.BannedTerms.Any(text.Contains);
-    return Task.FromResult(new RuleResult("contains_banned_terms", !hit));
+    return Task.FromResult(new PredicateOutcome(!hit));
 }
 
-static Task<RuleResult> FlaggedBySpamScore(SubmissionContext context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("flagged_by_spam_score", context.SpamScore < context.SpamThreshold));
+static Task<PredicateOutcome> FlaggedBySpamScore(SubmissionContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome(context.SpamScore < context.SpamThreshold));
 
-static Task<RuleResult> MeetsLengthMinimum(SubmissionContext context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("meets_length_minimum", context.Text.Length >= context.MinLength));
+static Task<PredicateOutcome> MeetsLengthMinimum(SubmissionContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome(context.Text.Length >= context.MinLength));
 
-static Task<RuleResult> AuthorIsEstablished(SubmissionContext context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("author_is_established", context.AuthorPostCount >= 10));
+static Task<PredicateOutcome> AuthorIsEstablished(SubmissionContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome(context.AuthorPostCount >= 10));
 
 var engine = new RulesEngine<SubmissionContext>(new IRule<SubmissionContext>[]
 {

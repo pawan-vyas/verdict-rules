@@ -25,6 +25,18 @@ public sealed class RunResult(bool passed, IReadOnlyList<RuleResult> results)
     /// </remarks>
     public IReadOnlyList<RuleResult> Results { get; } = results;
 
+    /// <summary>
+    /// Every leaf result reachable from <see cref="Results"/>, in evaluation
+    /// order -- one-line forwarder over each result's own
+    /// <see cref="RuleResult.Leaves"/>.
+    /// </summary>
+    public IReadOnlyList<RuleResult> Leaves => [.. Results.SelectMany(r => r.Leaves)];
+
+    /// <summary>
+    /// Every leaf in <see cref="Leaves"/> that failed.
+    /// </summary>
+    public IReadOnlyList<RuleResult> FailingLeaves => [.. Leaves.Where(l => !l.Passed)];
+
     /// <inheritdoc />
     public override string ToString() =>
         $"{(Passed ? "PASS" : "FAIL")} ({Results.Count} rule(s))";

@@ -48,17 +48,17 @@ record LoyaltyContext(
     double GoldMaxReturnRate,
     string AccountStatus);
 
-static Task<RuleResult> MeetsSpendThreshold(LoyaltyContext context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("meets_spend_threshold", context.Trailing12MoSpend >= context.GoldSpendThreshold));
+static Task<PredicateOutcome> MeetsSpendThreshold(LoyaltyContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome(context.Trailing12MoSpend >= context.GoldSpendThreshold));
 
-static Task<RuleResult> MeetsOrderCount(LoyaltyContext context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("meets_order_count", context.Trailing12MoOrders >= context.GoldOrderThreshold));
+static Task<PredicateOutcome> MeetsOrderCount(LoyaltyContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome(context.Trailing12MoOrders >= context.GoldOrderThreshold));
 
-static Task<RuleResult> ReturnRateBelowMax(LoyaltyContext context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("return_rate_below_max", context.ReturnRate <= context.GoldMaxReturnRate));
+static Task<PredicateOutcome> ReturnRateBelowMax(LoyaltyContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome(context.ReturnRate <= context.GoldMaxReturnRate));
 
-static Task<RuleResult> AccountInGoodStanding(LoyaltyContext context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("account_in_good_standing", context.AccountStatus == "active"));
+static Task<PredicateOutcome> AccountInGoodStanding(LoyaltyContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome(context.AccountStatus == "active"));
 
 // Registered as four independent named rules on one engine -- not nested
 // in an AndRule -- precisely so RunAllAsync() reports every criterion's

@@ -10,8 +10,17 @@
 
 ## 0 · Status
 
-**Design settled. No implementation yet — see §8 for what's still open
-before any code lands.**
+**Implemented in all four languages** (C#, Python, JS/TS, Dart — each
+green on its own full test suite). Remaining before this is fully
+mergeable: the cross-language API concept map
+(`docs/maintenance/api-concepts.yaml`) needs updating for the new
+surface in all four languages at once (deliberately deferred until now
+— every concept row requires resolving in all four snapshots
+simultaneously), and the queued doc-verbosity audit still needs to
+sweep `docs/extending/*/`, `docs/samples/*/`, and `docs/architecture/`
+for every language consistently (currently uneven: C#'s implementation
+pass already swept its own `docs/*/csharp.md` tree; Python and Dart
+deferred the whole tree; JS/TS fixed only what would otherwise throw).
 
 ## 1 · Origin
 
@@ -44,18 +53,111 @@ the five cases in §1 break.
 default — absence *is* the leaf signal, the same idiom `Group: string?`
 already uses in this type). `Data` stops carrying composite sub-results
 at all and becomes *actually* opaque, structurally enforced rather than
-only documented. `Leaves`/`FailingLeaves` are then simple recursion over
-`SubResults`:
+only documented. `Leaves` is simple recursion over `SubResults`;
+`FailingLeaves` is its own independent recursion, not a filter over
+`Leaves` — validated against real downstream requirements (a consuming
+project's blocked-request-reason use case) requiring exactly this
+shape: a failed result with no failing children is itself the leaf
+(handles negation without `NotRule` needing to misrepresent its own
+structure, §3e); a passed result contributes no failing leaves at all,
+even if an earlier short-circuited branch failed on the way to that
+pass:
 
 ```csharp
 public IReadOnlyList<RuleResult> Leaves =>
     SubResults.Count == 0 ? [this] : SubResults.SelectMany(s => s.Leaves).ToList();
-public IReadOnlyList<RuleResult> FailingLeaves => Leaves.Where(l => !l.Passed).ToList();
+
+public IReadOnlyList<RuleResult> FailingLeaves
+{
+    get
+    {
+        if (Passed) return [];
+        var childFailures = SubResults.SelectMany(s => s.FailingLeaves).ToList();
+        return childFailures.Count == 0 ? [this] : childFailures;
+    }
+}
 ```
 
 This is additive to the type (new field, new derived properties) but
 changes `AndRule`/`OrRule`'s own behavior (they stop writing sub-results
 into `Data`) — a real breaking change, accepted deliberately: see §6.
+
+## 2a · `FunctionRule`/`RulePredicate` — closing a name-divergence hole, folded into this PR
+
+Found while working through introspection, confirmed in all four
+languages' real source, not hypothetical: `RulePredicate<TContext>`
+today is `Func<TContext, CancellationToken, Task<RuleResult>>` — the
+predicate constructs the *whole* `RuleResult`, including its own
+`RuleName`, independently of the `FunctionRule.Name` the predicate is
+wrapped by. Nothing keeps them equal. This repo's own C# example,
+`csharp/examples/GraduationVerdict/GraduationCheck.cs:102`, hardcodes
+`new RuleResult("cgpa_met", ...)` as a literal inside `CgpaMet`,
+completely decoupled from whatever name a `FunctionRule` wrapping it is
+constructed with. The same shape is confirmed in the Python, JS/TS, and
+Dart sources too — every language's `FunctionRule.evaluate` documents
+itself as returning "whatever the predicate returns, unchanged." They
+happen to agree everywhere in this repo today — nothing enforces they
+must.
+
+The name is already fixed, once, at `FunctionRule` construction — a
+predicate re-stating it is never legitimate, not just inconvenient. Fix
+is structural, not a runtime check: the predicate stops constructing
+`RuleResult` at all.
+
+```csharp
+public sealed class PredicateOutcome(bool passed, string detail = "", object? data = null)
+{
+    public bool Passed { get; } = passed;
+    public string Detail { get; } = detail;
+    public object? Data { get; } = data;
+}
+
+public delegate Task<PredicateOutcome> RulePredicate<TContext>(TContext context, CancellationToken cancellationToken = default);
+
+public sealed class FunctionRule<TContext>(string name, RulePredicate<TContext> predicate, string? group = null) : IRule<TContext>
+{
+    private readonly RulePredicate<TContext> _predicate = predicate;
+    public string Name { get; } = name;
+    public string? Group { get; } = group;
+
+    public async Task<RuleResult> EvaluateAsync(TContext context, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var outcome = await _predicate(context, cancellationToken).ConfigureAwait(false);
+        return new RuleResult(Name, outcome.Passed, outcome.Detail, outcome.Data);
+    }
+
+    public override string ToString() =>
+        $"FunctionRule \"{Name}\"" + (string.IsNullOrEmpty(Group) ? "" : $" ({Group})");
+}
+```
+
+`EvaluateAsync` is no longer a straight pass-through of the predicate's
+`Task` (it was deliberately non-`async` before, forwarding the
+predicate's own `Task<RuleResult>` unchanged) — it now has to `await`
+and transform, since `RuleResult` is built here, the one place that
+owns `Name`/`Group`, never by the predicate.
+
+**`PredicateOutcome` carries no `Group` field either, permanently —
+closed now, not left open to reopen later.** `RuleResult` doesn't carry
+`Group` today (§10, still parked, unmotivated). If that ever changes,
+`Group` stays exclusively sourced from `FunctionRule.Group`, the same
+way `Name` now is — the predicate never gets a path to diverge on it,
+because it never has a path to set it at all.
+
+Generalizes beyond this one fix: any *future* rule-owned field on
+`RuleResult` gets this guarantee for free, because the predicate has
+lost `RuleResult`-construction privileges entirely, not just its
+ability to misname things.
+
+**Scope**: folded into this PR, not deferred — a breaking change to
+`RulePredicate<TContext>`'s own signature, larger in blast radius than
+§2's (every predicate implementation in every example, sample, doc
+snippet, and fixture across all four languages constructs a
+`RuleResult` today and will need rewriting to return a
+`PredicateOutcome` instead). Accepted: see §6. The doc-verbosity audit
+already queued on this PR absorbs the doc-side sweep once every design
+decision here is finalized, rather than as a separate pass.
 
 ## 3 · `SequentialEvaluator`, `ShortCircuitEvaluator` — composition, not inheritance
 
@@ -80,13 +182,13 @@ anywhere:**
 ```csharp
 /// <summary>
 /// Evaluates a list of sub-rules sequentially against one context,
-/// letting <paramref name="decide"/> choose when to stop. Composable --
+/// letting <paramref name="decider"/> choose when to stop. Composable --
 /// hold one as a field and delegate to it, the same way
 /// <see cref="FunctionRule{TContext}"/> holds a predicate.
 /// </summary>
-public sealed class SequentialEvaluator<TContext>(
-    Func<RuleResult, IReadOnlyList<RuleResult>, int, bool?> decide,
-    bool vacuousResult)
+public delegate bool? StepDecider(RuleResult latest, IReadOnlyList<RuleResult> soFar, int total);
+
+public sealed class SequentialEvaluator<TContext>(StepDecider decider, bool vacuousResult)
 {
     public async Task<RuleResult> EvaluateAsync(
         string name, IReadOnlyList<IRule<TContext>> rules, TContext context, CancellationToken cancellationToken = default)
@@ -101,16 +203,16 @@ public sealed class SequentialEvaluator<TContext>(
             cancellationToken.ThrowIfCancellationRequested();
             var latest = await rule.EvaluateAsync(context, cancellationToken).ConfigureAwait(false);
             soFar.Add(latest);
-            if (decide(latest, soFar, rules.Count) is { } early)
+            if (decider(latest, soFar, rules.Count) is { } early)
                 return new RuleResult(name, early, subResults: soFar);
         }
-        return new RuleResult(name, decide(soFar[^1], soFar, rules.Count) ?? vacuousResult, subResults: soFar);
+        return new RuleResult(name, decider(soFar[^1], soFar, rules.Count) ?? vacuousResult, subResults: soFar);
     }
 }
 
 /// <summary>
 /// Stops at the first sub-rule whose own <see cref="RuleResult.Passed"/>
-/// equals <paramref name="passed"/> -- the shape <see cref="AndRule{TContext}"/>
+/// equals <paramref name="stopOn"/> -- the shape <see cref="AndRule{TContext}"/>
 /// and <see cref="OrRule{TContext}"/> both are. Wraps
 /// <see cref="SequentialEvaluator{TContext}"/> internally; callers never
 /// need to know that type exists unless they need more than this covers.
@@ -119,16 +221,16 @@ public sealed class ShortCircuitEvaluator<TContext>
 {
     private readonly SequentialEvaluator<TContext> _inner;
 
-    public ShortCircuitEvaluator(bool passed, bool vacuousResult)
+    public ShortCircuitEvaluator(bool stopOn)
     {
         _inner = new SequentialEvaluator<TContext>(
-            decide: (latest, soFar, total) =>
+            decider: (latest, soFar, total) =>
             {
-                if (latest.Passed == passed) return passed;
-                if (soFar.Count == total) return !passed;
+                if (latest.Passed == stopOn) return stopOn;
+                if (soFar.Count == total) return !stopOn;
                 return null;
             },
-            vacuousResult: vacuousResult);
+            vacuousResult: !stopOn);
     }
 
     public Task<RuleResult> EvaluateAsync(
@@ -145,10 +247,11 @@ syntax, `ToString()`, type identity). Each holds exactly one
 ```csharp
 public sealed class AndRule<TContext>(string name, IReadOnlyList<IRule<TContext>> rules, string? group = null) : IRule<TContext>
 {
+    public const bool VacuousResult = true;   // pinned fact, not wired -- see §3a
     public string Name { get; } = name;
     public string? Group { get; } = group;
     private readonly IReadOnlyList<IRule<TContext>> _rules = rules;
-    private static readonly ShortCircuitEvaluator<TContext> Evaluator = new(passed: false, vacuousResult: true);
+    private static readonly ShortCircuitEvaluator<TContext> Evaluator = new(stopOn: false);
 
     public Task<RuleResult> EvaluateAsync(TContext context, CancellationToken cancellationToken = default) =>
         Evaluator.EvaluateAsync(Name, _rules, context, cancellationToken);
@@ -159,10 +262,11 @@ public sealed class AndRule<TContext>(string name, IReadOnlyList<IRule<TContext>
 
 public sealed class OrRule<TContext>(string name, IReadOnlyList<IRule<TContext>> rules, string? group = null) : IRule<TContext>
 {
+    public const bool VacuousResult = false;   // pinned fact, not wired -- see §3a
     public string Name { get; } = name;
     public string? Group { get; } = group;
     private readonly IReadOnlyList<IRule<TContext>> _rules = rules;
-    private static readonly ShortCircuitEvaluator<TContext> Evaluator = new(passed: true, vacuousResult: false);
+    private static readonly ShortCircuitEvaluator<TContext> Evaluator = new(stopOn: true);
 
     public Task<RuleResult> EvaluateAsync(TContext context, CancellationToken cancellationToken = default) =>
         Evaluator.EvaluateAsync(Name, _rules, context, cancellationToken);
@@ -172,10 +276,10 @@ public sealed class OrRule<TContext>(string name, IReadOnlyList<IRule<TContext>>
 }
 ```
 
-`AtLeastNRule`/`NotRule` (today example-only,
-`docs/extending/new-rule-shape/`) compose `SequentialEvaluator`
-directly, skipping `ShortCircuitEvaluator`, since their decision needs
-the running history, not just the latest result:
+`AtLeastNRule` stays a `docs/extending/new-rule-shape/` worked
+example — not shipped, no promotion planned (§7). It composes
+`SequentialEvaluator` directly, skipping `ShortCircuitEvaluator`, since
+its decision needs the running history, not just the latest result:
 
 ```csharp
 public sealed class AtLeastNRule<TContext>(
@@ -185,7 +289,7 @@ public sealed class AtLeastNRule<TContext>(
     public string? Group { get; } = group;
     private readonly IReadOnlyList<IRule<TContext>> _rules = rules;
     private readonly SequentialEvaluator<TContext> _evaluator = new(   // instance, not static -- minimum varies per instance
-        decide: (latest, soFar, total) =>
+        decider: (latest, soFar, total) =>
         {
             var passed = soFar.Count(r => r.Passed);
             if (passed >= minimum) return true;
@@ -200,7 +304,24 @@ public sealed class AtLeastNRule<TContext>(
 ```
 
 This proves the lowest layer generalizes past the two built-ins it was
-designed around, not just reshapes them.
+designed around, not just reshapes them. `docs/extending/new-rule-shape/`
+gets widened to show `SequentialEvaluator` composed against more than
+this one case — a worked set varied enough that "at least N" reads as
+one instance of a general pattern, not the only thing the evaluator is
+for (§7).
+
+**Resolves a real conflict found during implementation**: the
+pre-existing `AtLeastNRule` example in this repo had a test pinning
+"never short-circuits, every sub-rule always runs" — predating
+`SequentialEvaluator` and written against a dumber, unconditional-loop
+implementation. The `decider` above *does* short-circuit once the
+threshold is mathematically decided either way (both the `passed >=
+minimum` and `passed + remaining < minimum` branches can fire before
+exhaustion). That short-circuiting behavior is the settled design,
+not the old test's "never short-circuits" expectation — it's a
+genuine improvement (fewer unnecessary rule evaluations) consistent
+with everything else in this redesign, and the old test gets updated
+to match it, not the other way around.
 
 ## 3a · Vacuous truth
 
@@ -210,15 +331,25 @@ fallback indexing the last evaluated result, which has no last element
 when the list started empty. `AndRule([])`/`OrRule([])` must return
 their pinned `true`/`false`, never throw.
 
-`ShortCircuitEvaluator` takes `passed` and `vacuousResult` as two
-*separate* constructor arguments rather than deriving the second from
-the first. `AndRule`'s/`OrRule`'s own construction states both facts
-side by side, in the same line, in their own class body — the single
-most pinned fact in the library (`AndRule([]).Passed == true`,
-`OrRule([]).Passed == false`) stays a literal anyone reading `AndRule`
-sees directly, never a value recomputed from a sibling parameter.
-`AtLeastNRule` states its own, non-derivable polarity the same way:
-`vacuousResult: minimum <= 0`. Checked against the real pinned fixture
+`ShortCircuitEvaluator` takes only `stopOn` and derives
+`vacuousResult: !stopOn` internally — unlike `SequentialEvaluator`,
+where `vacuousResult` is a genuinely independent fact
+(`AtLeastNRule` needs `minimum <= 0`, not derivable from any single
+`stopOn`-shaped value), `ShortCircuitEvaluator`'s own `decider` already
+computes `!stopOn` for the non-empty exhaustion case; an empty list is
+the same exhaustion with zero iterations, so a second, independently-set
+constructor argument could only ever state that same fact correctly or
+contradict it — never add real information. Two arguments that must
+always agree but aren't enforced to is the same "a value anyone can set
+wrong will eventually be set wrong" gap this design exists to close
+elsewhere, so it collapses to one. Naming it `stopOn` rather than
+`passed` matters too: `passed` reads as a verdict already decided before
+`EvaluateAsync` ever runs; `stopOn` reads as what it is, a stopping
+condition. `AndRule`/`OrRule` each still carry a
+`public const bool VacuousResult` in their own class body — no longer
+wired into construction, but kept as the pinned, directly-readable
+guarantee (`AndRule([]).Passed == true`, `OrRule([]).Passed == false`),
+checked against the real pinned fixture
 (`fixtures/graduation_verdict/edge_cases.json`'s `vacuous_pass` /
 `unsatisfiable_threshold` cases) and holds.
 
@@ -272,7 +403,7 @@ implementation today (`ShortCircuitEvaluator` delegates to
 `SequentialEvaluator` rather than reimplementing it), so there's
 nothing real to abstract over yet. The one piece that *does* already
 vary per composite — the decision itself — is a plain delegate
-(`decide`), which is the right weight for the one axis that changes;
+(`decider`), which is the right weight for the one axis that changes;
 promoting it to a named interface buys naming, not capability.
 
 **`SequentialEvaluator` takes `IReadOnlyList<IRule<TContext>>`, not a
@@ -290,11 +421,155 @@ built-in `IEnumerable<T>` → `IAsyncEnumerable<T>` bridge (that's the
 zero-dependency guarantee doesn't take on lightly), and async
 enumeration carries real per-iteration overhead paid by every
 evaluation, not just ones that need it. Deferring this doesn't risk a
-second release to fix a mistake: `decide`'s own shape is already
-decoupled from how rules are sourced, so a genuine future need would
-arrive as a new sibling type reusing the same `decide` functions
-`AndRule`/`OrRule`/`AtLeastNRule` already have, not a breaking change
-to any of them.
+second release to fix a mistake, but it's not entirely free either: a
+scratch sketch of a streamed `AsyncRuleEvaluator<TContext>` (not
+committed, cost-estimate only) confirms `decider`'s `total` argument
+doesn't port — a streamed source only knows "was that the last one"
+after pulling past it, not a count up front. The three existing
+`decider` bodies that read `total` (`ShortCircuitEvaluator`'s,
+`AtLeastNRule`'s) would need rewriting against an `isLast`-shaped
+signature, not reused as-is. A genuine future need still arrives as a
+new sibling type, consistent with everything else in this section —
+just not a zero-cost one.
+
+## 3d · `AndRule.Failed`/`Passing`, `OrRule.Passed`/`Failing`
+
+`Leaves`/`FailingLeaves` (§2) is the general mechanism — correct for any
+composite, any depth, any mix of types. `ShortCircuitEvaluator`'s own
+invariant gives `AndRule`/`OrRule` specifically something more precise:
+because evaluation stops the moment the outcome is decided,
+`SubResults[^1]` is always *the one sub-result that decided it* — the
+sole failure for a failed `AndRule` (everything before it passed), or
+the sole pass for a passed `OrRule` (everything before it failed). Each
+family's own, non-generalized view — no attempt at one shared shape
+across both, since And and Or are genuine opposites here and forcing a
+common shape is exactly what the singular-helper question above already
+ruled out:
+
+```csharp
+public static class AndRule
+{
+    public static RuleResult? Failed(RuleResult result) =>
+        result.SubResults.Count > 0 && !result.SubResults[^1].Passed ? result.SubResults[^1] : null;
+    public static IReadOnlyList<RuleResult> Passing(RuleResult result) =>
+        Failed(result) is null ? result.SubResults : result.SubResults.Take(result.SubResults.Count - 1).ToList();
+}
+
+public static class OrRule
+{
+    public static RuleResult? Passed(RuleResult result) =>
+        result.SubResults.Count > 0 && result.SubResults[^1].Passed ? result.SubResults[^1] : null;
+    public static IReadOnlyList<RuleResult> Failing(RuleResult result) =>
+        Passed(result) is null ? result.SubResults : result.SubResults.Take(result.SubResults.Count - 1).ToList();
+}
+```
+
+**Found during implementation: `result.SubResults[..^1]` as originally
+written here does not compile.** `SubResults` is typed
+`IReadOnlyList<RuleResult>`, which has no `Slice`/range-indexer
+pattern — C#'s range syntax needs an actual indexer accepting `Range`
+or a `Length`+`Slice(int,int)` pair, neither of which
+`IReadOnlyList<T>` provides, regardless of what the concrete runtime
+type happens to support. Fixed above to `.Take(n).ToList()`. Worth
+flagging plainly: this was a real bug in this plan's own reference
+code, not hypothetical — caught only because an agent actually tried
+to compile it.
+
+Plain static methods over `RuleResult` alone — deliberately not
+`IRule<TContext>`-aware, not an instance method on the rule, not gated
+behind any interface. Neither derivation reads anything but
+`SubResults`, so nesting is already handled: if the decisive sub-result
+is itself a composite, `AndRule.Failed(result)?.FailingLeaves` composes
+for free. No provenance guard against passing the wrong family's result
+in — intentionally: that mistake is visible at the call site
+(`AndRule.Failed(orResult)` reads wrong immediately), unlike the
+original `Data`-duck-typing bug (§1), which broke on completely
+innocent code with no misuse involved. That distinction is why this
+doesn't need the weight `SequentialEvaluator`/`ShortCircuitEvaluator`
+carry in §3 — those close a gap in code with no misuse; this one only
+guards against an actively wrong call.
+
+## 3e · `NotRule` — shipped, not example-only
+
+No `SequentialEvaluator`/`ShortCircuitEvaluator` composed in — one
+child, no sequence to iterate, so the machinery would be indirection
+for nothing it uses. Still checks cancellation unconditionally before
+evaluating, matching `AndRule`/`OrRule`'s own "checked before anything
+runs" guarantee rather than trusting the wrapped rule to check it.
+
+```csharp
+public sealed class NotRule<TContext>(string name, IRule<TContext> rule, string? group = null) : IRule<TContext>
+{
+    public string Name { get; } = name;
+    public string? Group { get; } = group;
+
+    public async Task<RuleResult> EvaluateAsync(TContext context, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var inner = await rule.EvaluateAsync(context, cancellationToken).ConfigureAwait(false);
+        return new RuleResult(Name, !inner.Passed, subResults: [inner]);
+    }
+
+    public override string ToString() =>
+        $"NotRule \"{Name}\"" + (string.IsNullOrEmpty(Group) ? "" : $" ({Group})");
+
+    public static RuleResult Negated(RuleResult result) => result.SubResults[0];
+}
+```
+
+`SubResults = [inner]`, truthfully — not discarded. An earlier draft of
+this design flattened `NotRule` to a leaf (empty `SubResults`)
+specifically to dodge `FailingLeaves` reading misleadingly empty on a
+failed `NotRule` (the cause is a pass, not a failure). That dodge is
+wrong: `SubResults.Count == 0` has to mean *only* "this is a leaf,"
+never also "this is a composite that hid its own structure" — that's
+the entire basis §2 gives for `Leaves`/`FailingLeaves` being safe on
+the shared `RuleResult` type at all. Breaking that reliability to avoid
+one misleading read just relocates the original `Data`-ambiguity
+problem (§1) from one property to another. The actual fix is the same
+one §3d already established: a dedicated accessor, not generic
+`FailingLeaves`, answers "why." `Negated` is non-nullable, unlike
+`AndRule.Failed`/`OrRule.Passed` (§3d) — fixed arity means the inner
+result is never absent.
+
+**C#-specific completion, found during implementation**: `AndRule`/
+`OrRule`/`FunctionRule` all ship as a generic/non-generic pair — the
+generic `TContext` type, plus a non-generic wrapper (`IRule`, not
+`IRule<TContext>`) for the dict-context ecosystem, since a bare
+`NotRule<IReadOnlyDictionary<string, object?>>` doesn't structurally
+satisfy the non-generic `IRule` the dict-context world depends on.
+`NotRule` needs the same pair for parity with every other composite
+in this codebase — a non-generic `NotRule : IRule` wrapper with its
+own `Negated`, shaped exactly like the generic one above. Not called
+out explicitly before because `AtLeastNRule`/`NoneOfRule` (the other
+two composites discussed at this level of detail) never shipped, so
+this gap in the spec never surfaced until `NotRule` actually did. Only
+a C# concern — Python/JS/Dart have no generic/non-generic split to
+begin with (§5).
+
+## 3f · `NoneOfRule` — considered, not shipping
+
+All sub-rules must fail for this to pass. Would share `OrRule`'s own
+stop-on-first-pass trigger with an inverted outcome, composing
+`SequentialEvaluator` directly (not `ShortCircuitEvaluator`, whose own
+`decider` hardcodes "the trigger value *is* the result" — doesn't fit
+an inverted polarity). **Resolved: not shipping**, same reasoning as
+`AtLeastNRule` (§7) — `NotRule(OrRule(rules))` already produces the
+same `Passed`, the same short-circuit point, and (once `FailingLeaves`
+is corrected per §2) the same flattened failing leaves, once `NotRule`
+ships with its own corrected design. The only gap is one extra
+synthetic tree node and a two-step drill-down instead of one-step —
+not enough to justify a dedicated type the same way the `AtLeastNRule`
+gap wasn't. If a genuine need for the one-step ergonomics shows up
+later, it's `docs/extending/new-rule-shape/` material, not a shipped
+type.
+
+Naming note, kept for the record since it bears on the general
+cross-language safety rule, not just this one rejected type: had this
+shipped, it would have been `NoneOfRule`, never the shorter `NoneRule`
+— not merely stylistic. Python's `None` is a reserved keyword
+(capitalized, unlike the lowercase `and`/`or`/`not`), so `class None`
+is a `SyntaxError` there, not just bad style.
 
 ## 4 · `RunResult`
 
@@ -334,15 +609,61 @@ by omission.
   **stay real classes** (not factory functions, even though that's this
   package's own idiom for leaf predicates elsewhere) — they're already
   shipped, public, importable types; changing shape here would be a
-  second, unforced break on top of `Data`→`sub_results`.
+  second, unforced break on top of `Data`→`sub_results`. `StepDecider`
+  as a `TypeAlias`: `StepDecider: TypeAlias = Callable[[RuleResult, Sequence[RuleResult], int], bool | None]`.
+  **§2a's `PredicateOutcome` guarantee is weaker here than in C#,
+  found during implementation**: duck typing means `FunctionRule.evaluate`
+  reading `outcome.passed`/`.detail`/`.data` can't distinguish a real
+  `PredicateOutcome` from a stale predicate that still (incorrectly)
+  returns an old-style `RuleResult` object, since the attribute names
+  happen to coincide — it would silently keep "working" instead of
+  failing to compile the way C# does. `FunctionRule.evaluate` adds an
+  explicit `isinstance(outcome, PredicateOutcome)` check, raising
+  rather than silently accepting the wrong type — the predicate
+  boundary is exactly the externally-authored edge this package's own
+  defensive-first conventions already call out for validation.
 - **JS/TS**: same two classes, private fields via `#`, matching
-  `FunctionRule`'s existing `#predicate`/`#rules` convention. `decide`
+  `FunctionRule`'s existing `#predicate`/`#rules` convention. `decider`
   returns `boolean | undefined` (not `| null`) — matches `Rule.group`'s
-  existing `string | undefined` idiom in this codebase.
-- **Dart**: same two classes; `SequentialEvaluator`'s `decide` is a
+  existing `string | undefined` idiom in this codebase. `StepDecider`
+  as a named type alias: `type StepDecider = (latest: RuleResult, soFar: readonly RuleResult[], total: number) => boolean | undefined;`.
+  **Same duck-type gap as Python, found during implementation, worse
+  if anything — JS has no runtime type system at all.** `FunctionRule.evaluate`
+  guards against a stale predicate returning an old-style `RuleResult`
+  (checks for a `ruleName` field, the one thing `PredicateOutcome`
+  never has), same reasoning as Python's `isinstance` check above —
+  this plan's own silence on the JS case was a gap, not a deliberate
+  omission. **No per-closed-type shared static evaluator** — TypeScript
+  (like C#) forbids a `static` class member from referencing its own
+  class's type parameter, but unlike C#, `SequentialEvaluator`/
+  `ShortCircuitEvaluator` are themselves non-generic (`TContext` only
+  appears on their `evaluate<TContext>()` method), so one true
+  module-level instance is shared across every `AndRule`/`OrRule`
+  regardless of `TContext` — arguably cleaner than C#'s
+  per-closed-type static, not a compromise.
+- **Dart**: same two classes; `SequentialEvaluator`'s `decider` is a
   typed `function` field, same composition shape as the others.
+  `StepDecider` as a native `typedef`:
+  `typedef StepDecider = bool? Function(RuleResult latest, List<RuleResult> soFar, int total);`.
+  No duck-type gap — `RulePredicate<TContext>`'s typedef is a real
+  static function-type signature, so a predicate still returning the
+  old `RuleResult` shape fails to compile, same guarantee as C#, no
+  extra guard needed. **No shared static evaluator at all**: Dart
+  additionally forbids a generic class's `static` member from
+  referencing that class's own type parameter (stricter than C#/TS
+  here), so `AndRule`/`OrRule` each build their own
+  `ShortCircuitEvaluator<TContext>` as a plain instance field instead
+  — one extra allocation per rule constructed, functionally identical
+  since the evaluator is stateless beyond its closed-over `decider`.
 
-`Decide`/`decide` bodies are early-return `if`s in every language, not
+`StepDecider` (every language) names the `decider` signature once, used
+by `SequentialEvaluator` and anything composing it (`AtLeastNRule`,
+custom composites) — not parameterized by `TContext` in any language,
+since it only ever touches `RuleResult`/count, never the evaluation
+context itself. Named for what it is: invoked once per step (per
+sub-rule evaluated), not a one-shot classifier of the whole run.
+
+`StepDecider`/`decider` bodies are early-return `if`s in every language, not
 ternary chains — these are genuinely different predicates (met the
 minimum / can't reach it / exhausted), not a discriminant ladder in
 disguise; see `AGENTS.md`'s own dispatch-rule carve-out for guard
@@ -356,6 +677,31 @@ pre-1.0 takes `MINOR`, not a special exception process. What breaks
 concretely: any consumer reading `andRuleResult.Data as List<RuleResult>`
 today stops working — `Data` is `null`/`None`/`undefined` for every
 composite result going forward, full stop.
+
+**Second, larger break, folded into the same release (§2a):**
+`RulePredicate<TContext>` stops returning `RuleResult` and returns
+`PredicateOutcome` instead. Every predicate implementation in this
+repo — every example, every sample, every doc snippet, every
+fixture, across all four languages — constructs a `RuleResult`
+directly today and needs rewriting. Larger blast radius than the
+`Data`/`SubResults` change above, accepted deliberately rather than
+deferred to a second breaking release, for the same reason: one
+breaking version to adapt to, not two.
+
+**Third break, found during implementation, not originally called out
+here — worth being explicit about:** `AndRule`/`OrRule`'s own
+`RuleResult.Detail` is empty going forward. The pre-redesign
+implementations hand-built a descriptive string on construction
+(`"'x' failed: ..."` / `"no sub-rule passed"`); composing
+`SequentialEvaluator`/`ShortCircuitEvaluator` has no detail channel —
+`StepDecider` returns `bool?`, nothing richer — so that string is
+simply gone. This is accepted, not a gap to patch: `FailingLeaves`
+(§2) and the family-specific accessors (§3d, §3e) are the intended
+replacement, and they're strictly more informative than the old
+single string ever was (the full set of failing leaves, not one
+hand-picked sentence mentioning the first). Any consumer or doc
+reading `andOrResult.Detail` for a human-readable reason needs to
+read `FailingLeaves` instead.
 
 ## 7 · What this unlocks
 
@@ -382,41 +728,33 @@ composite result going forward, full stop.
 - **`docs/extending/new-rule-shape/`'s worked example gets
   dramatically shorter and more honest** — compose the two public
   pieces instead of hand-rolling a loop.
-- **Open question, not decided here**: `AtLeastNRule` drops from ~25
-  hand-rolled lines to a much smaller composed version. Worth asking,
-  separately, whether it's general enough to promote from
-  example-only into the shipped library. Not this PR's call to make
-  unprompted.
+- **Resolved**: `AtLeastNRule` stays example-only, not promoted.
+  `SequentialEvaluator` is the real generalization — anyone with a
+  genuinely different "at least"-shaped condition composes it directly
+  with their own `decider`, the same way `AtLeastNRule` itself does, so
+  shipping `AtLeastNRule` as a named type wouldn't add capability, only
+  a second, narrower name for something already public. The widened
+  `docs/extending/new-rule-shape/` (above) covers this case among
+  several varied ones instead.
 - **Fewer independent places for the four ports to drift** — one
   reference algorithm (`SequentialEvaluator`'s loop) to port correctly
   per language, not two independently hand-written ones per language
   each needing to agree with three siblings.
 
-## 8 · Before writing a line of code: the "helpers" discussion
+## 8 · Resolved before implementation
 
-- Does `Leaves`/`FailingLeaves` need a convenience singular form (the
-  original #100 motivation — "a server records refused privileged
-  changes in an audit log, keyed by the refusing rule's stable id" —
-  implies a common need for exactly *one* id, and `OrRule`'s own
-  all-fail case can produce several)? `FirstFailingLeaf`? Leave callers
-  to write `.FailingLeaves.FirstOrDefault()` themselves?
-  `docs/testing/README.md`'s own "Related" table already suggests
-  documenting evaluation order as the convention (per the adopter
-  comment's case 5) — does that need a named helper, or just a stated
-  convention?
-- Any helper needed on `RunResult` beyond the two forwarders in §4?
-- Should `SequentialEvaluator`/`ShortCircuitEvaluator` be public from
-  day one in every language, or internal until a real consumer asks?
-  §7's "pit of success for custom composites" benefit only holds if
-  they're public.
-- Test-fixture additions: new `leaves`/`failing_leaves` expectation
-  rows in `fixtures/graduation_verdict/students.json` (mirroring how
-  `rules_evaluated`/`groups` are already pinned), per the adopter
-  comment's own suggested fixture-row table (single failing
-  `FunctionRule`, nested `all(a, all(b,c))`, `any(a,b)` both-fail,
-  negation, passing composite).
-- Scope of the `fixtures/graduation_verdict/README.md` contract update
-  needed once `leaves`/`failing_leaves` are pinned there.
+- **`RunResult` helpers beyond the two forwarders**: none. Nothing
+  surfaced through this whole discussion needed more than
+  `Leaves`/`FailingLeaves`.
+- **`SequentialEvaluator`/`ShortCircuitEvaluator` public from day
+  one**: yes. §7's pit-of-success benefit only holds if they're
+  public, and the widened `docs/extending/new-rule-shape/` (§3, §7)
+  explicitly composes against them — internal-until-asked would
+  contradict that doc's own worked examples.
+- **Test-fixture additions**: not pre-designed here — resolved
+  naturally during implementation (§9), driven by what the corrected
+  `FailingLeaves` (§2) and §2a's `PredicateOutcome` change actually
+  need pinned, rather than speculated in advance.
 
 ## 9 · GitHub tracking
 
@@ -434,6 +772,24 @@ composite result going forward, full stop.
   actually lands.
 
 ## 10 · Parked, not decided, not a priority
+
+**`ICompositeRule<TContext> : IRule<TContext> { IReadOnlyList<IRule<TContext>> Rules { get; } }`.**
+Considered as a structural marker so diagnostics/tooling could
+introspect *any* composite's configured sub-rules generically. No
+present consumer: `AndRule`/`OrRule`'s own `ToString()` already reads
+`_rules.Count` directly off their own field via a per-type override,
+the same "caller already knows the concrete variant" shape as
+everywhere else in this library. Would be designing for a hypothetical
+future requirement with nothing in current scope that needs it —
+same restraint already applied to promoting `AtLeastNRule` in §7.
+Orthogonal to §3d's `Failed`/`Passing` regardless of whether it's ever
+built: that mechanism derives purely from `RuleResult`, never touches
+`IRule<TContext>`.
+
+**`RuleEvaluation` — a forward-looking `(IRule<TContext> Rule, RuleResult Result)` pairing.**
+Name settled (not `RuleContext`, which collides with the existing
+`TContext` generic parameter used everywhere) if this is ever built.
+Not motivated by anything in current scope; floated, not designed.
 
 **A Tambola/Housie ticket-check sample.** Floated as a `run_all`
 showcase — independent win-pattern checks (`early_five`/`top_line`/

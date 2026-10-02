@@ -9,11 +9,11 @@ using VerdictRules;
 
 record PromoContext(string PromoCode, bool SimulateTimeout = false);
 
-// Turn a predicate's own exception into a failing RuleResult, instead of
+// Turn a predicate's own exception into a failing outcome, instead of
 // letting it propagate out of the run that contains it.
 static FunctionRule<TContext> Defensive<TContext>(string name, RulePredicate<TContext> predicate)
 {
-    async Task<RuleResult> Wrapped(TContext context, CancellationToken cancellationToken = default)
+    async Task<PredicateOutcome> Wrapped(TContext context, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -21,20 +21,20 @@ static FunctionRule<TContext> Defensive<TContext>(string name, RulePredicate<TCo
         }
         catch (Exception exc)
         {
-            return new RuleResult(name, false, exc.Message);
+            return new PredicateOutcome(false, exc.Message);
         }
     }
     return new FunctionRule<TContext>(name, Wrapped);
 }
 
 // Stands in for a real network call that can time out.
-static Task<RuleResult> CheckPromoCodeAgainstExternalService(PromoContext context, CancellationToken cancellationToken = default)
+static Task<PredicateOutcome> CheckPromoCodeAgainstExternalService(PromoContext context, CancellationToken cancellationToken = default)
 {
     if (context.SimulateTimeout)
     {
         throw new TimeoutException("promo-validation service did not respond");
     }
-    return Task.FromResult(new RuleResult("promo_code_valid", context.PromoCode == "SAVE10"));
+    return Task.FromResult(new PredicateOutcome(context.PromoCode == "SAVE10"));
 }
 
 var rule = Defensive<PromoContext>("promo_code_valid", CheckPromoCodeAgainstExternalService);

@@ -10,11 +10,13 @@ using VerdictRules;
 
 static FunctionRule MakeRule(RuleConfig config)
 {
-    Task<RuleResult> Predicate(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
+    // The predicate never restates config.Name -- FunctionRule below is the
+    // one place that owns it, so the two can never drift apart.
+    Task<PredicateOutcome> Predicate(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
     {
         context.TryGetValue(config.Field, out var actual);
         var passed = Equals(actual, config.Expected);
-        return Task.FromResult(new RuleResult(config.Name, passed));
+        return Task.FromResult(new PredicateOutcome(passed));
     }
     return new FunctionRule(config.Name, Predicate);
 }

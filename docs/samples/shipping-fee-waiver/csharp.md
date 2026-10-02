@@ -66,17 +66,17 @@ record ShippingContext(
     string? PromoCode,
     IPromoCodeService PromoCodeService);
 
-static Task<RuleResult> OrderTotalOverThreshold(ShippingContext context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("order_total_over_threshold", context.OrderTotal >= context.FreeShippingThreshold));
+static Task<PredicateOutcome> OrderTotalOverThreshold(ShippingContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome(context.OrderTotal >= context.FreeShippingThreshold));
 
-static Task<RuleResult> HasPremiumMembership(ShippingContext context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("has_premium_membership", context.IsPremiumMember));
+static Task<PredicateOutcome> HasPremiumMembership(ShippingContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome(context.IsPremiumMember));
 
-static async Task<RuleResult> HasValidPromoCode(ShippingContext context, CancellationToken cancellationToken = default)
+static async Task<PredicateOutcome> HasValidPromoCode(ShippingContext context, CancellationToken cancellationToken = default)
 {
     // The expensive path: only reached if both cheaper checks above failed.
     var isValid = await context.PromoCodeService.Validate(context.PromoCode);
-    return new RuleResult("has_valid_promo_code", isValid);
+    return new PredicateOutcome(isValid);
 }
 
 var shipsFree = new OrRule<ShippingContext>("ships_free", new IRule<ShippingContext>[]

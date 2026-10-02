@@ -16,17 +16,17 @@ internal static class Fixtures
 
     /// <summary>
     /// Walk the first failing branch down, collecting rule names. This is
-    /// what proves a result's <see cref="RuleResult.Data"/> is never
+    /// what proves a result's <see cref="RuleResult.SubResults"/> is never
     /// flattened: a nested failure has to still be reachable by following
-    /// <c>Data</c> downward.
+    /// <c>SubResults</c> downward.
     /// </summary>
     public static List<string> FailingChain(RuleResult result)
     {
         var chain = new List<string>();
         var node = result;
-        while (node.Data is IReadOnlyList<RuleResult> subs && subs.Count > 0)
+        while (node.SubResults.Count > 0)
         {
-            var next = subs.FirstOrDefault(sub => !sub.Passed);
+            var next = node.SubResults.FirstOrDefault(sub => !sub.Passed);
             if (next is null) break;
             chain.Add(next.RuleName);
             node = next;

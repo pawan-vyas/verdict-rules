@@ -10,11 +10,11 @@ internal static class Rules
 {
     /// <summary>A rule that always passes.</summary>
     public static FunctionRule Pass(string name, string? group = null, object? data = null) =>
-        new(name, (_, _) => Task.FromResult(new RuleResult(name, true, data: data)), group);
+        new(name, (_, _) => Task.FromResult(new PredicateOutcome(true, data: data)), group);
 
     /// <summary>A rule that always fails.</summary>
     public static FunctionRule Fail(string name, string? group = null, string detail = "") =>
-        new(name, (_, _) => Task.FromResult(new RuleResult(name, false, detail)), group);
+        new(name, (_, _) => Task.FromResult(new PredicateOutcome(false, detail)), group);
 
     /// <summary>
     /// A rule that records every evaluation, so short-circuiting can be proven
@@ -26,7 +26,7 @@ internal static class Rules
         new(name, (_, _) =>
         {
             log.Add(name);
-            return Task.FromResult(new RuleResult(name, passes));
+            return Task.FromResult(new PredicateOutcome(passes));
         }, group);
 
     /// <summary>An empty context — most tests here don't care what's in it.</summary>

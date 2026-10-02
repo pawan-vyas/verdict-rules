@@ -13,8 +13,8 @@ namespace VerdictRules.Tests;
 public class FunctionRuleIdiomTests
 {
     /// <summary>A plain static method — no lambda, no type declared.</summary>
-    private static Task<RuleResult> HasQuorum(IReadOnlyDictionary<string, object?> ctx, CancellationToken cancellationToken = default) =>
-        Task.FromResult(new RuleResult("quorum", ctx.Count >= 3));
+    private static Task<PredicateOutcome> HasQuorum(IReadOnlyDictionary<string, object?> ctx, CancellationToken cancellationToken = default) =>
+        Task.FromResult(new PredicateOutcome(ctx.Count >= 3));
 
     [Fact]
     public async Task AMethodGroupIsARuleWithNothingDeclared()
@@ -35,7 +35,7 @@ public class FunctionRuleIdiomTests
     public async Task ReturnsWhateverThePredicateReturnsUnchanged()
     {
         var rule = new FunctionRule("r", (_, _) =>
-            Task.FromResult(new RuleResult("r", true, "why", new { K = 1 })));
+            Task.FromResult(new PredicateOutcome(true, "why", new { K = 1 })));
 
         var result = await rule.EvaluateAsync(Rules.Empty);
 
@@ -63,7 +63,7 @@ public class AndRuleIdiomTests
             {
                 cts.Cancel();
                 log.Add("b");
-                return Task.FromResult(new RuleResult("b", true));
+                return Task.FromResult(new PredicateOutcome(true));
             }),
             Rules.Counting("c", true, log),
         });
@@ -90,7 +90,7 @@ public class OrRuleIdiomTests
             {
                 cts.Cancel();
                 log.Add("b");
-                return Task.FromResult(new RuleResult("b", false));
+                return Task.FromResult(new PredicateOutcome(false));
             }),
             Rules.Counting("c", false, log),
         });
@@ -119,7 +119,7 @@ public class RunModeIdiomTests
             {
                 cts.Cancel();
                 log.Add("b");
-                return Task.FromResult(new RuleResult("b", true));
+                return Task.FromResult(new PredicateOutcome(true));
             }),
             Rules.Counting("c", true, log),
         });
@@ -250,7 +250,7 @@ public class CancellationContractTests
         var log = new List<string>();
         var engine = new RulesEngine<Ctx>(new IRule<Ctx>[]
         {
-            new FunctionRule<Ctx>("a", (_, _) => { log.Add("a"); return Task.FromResult(new RuleResult("a", true)); }),
+            new FunctionRule<Ctx>("a", (_, _) => { log.Add("a"); return Task.FromResult(new PredicateOutcome(true)); }),
         });
 
         await Assert.ThrowsAsync<OperationCanceledException>(
@@ -283,7 +283,7 @@ public class CancellationContractTests
     public async Task GenericFunctionRuleRunsNoPredicateOnACancelledToken()
     {
         var log = new List<string>();
-        var rule = new FunctionRule<Ctx>("a", (_, _) => { log.Add("a"); return Task.FromResult(new RuleResult("a", true)); });
+        var rule = new FunctionRule<Ctx>("a", (_, _) => { log.Add("a"); return Task.FromResult(new PredicateOutcome(true)); });
 
         await Assert.ThrowsAsync<OperationCanceledException>(
             () => rule.EvaluateAsync(new Ctx(1), Cancelled()));

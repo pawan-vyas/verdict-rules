@@ -52,10 +52,10 @@ sealed record LookupResult(CheckStatus Status, string Detail);
 
 static class EligibilityChecks
 {
-    internal static Task<RuleResult> ConditionPredicate(string field, object? expected, IReadOnlyDictionary<string, object?> context)
+    internal static Task<PredicateOutcome> ConditionPredicate(string field, object? expected, IReadOnlyDictionary<string, object?> context)
     {
         context.TryGetValue(field, out var actual);
-        return Task.FromResult(new RuleResult(field, Equals(actual, expected), $"{field}={actual}, needs {expected}"));
+        return Task.FromResult(new PredicateOutcome(Equals(actual, expected), $"{field}={actual}, needs {expected}"));
     }
 
     /// <summary>One configured check, plus whether it currently has zero

@@ -15,21 +15,21 @@ public class ToStringTests
     [Fact]
     public void FunctionRuleShowsItsName()
     {
-        var rule = new FunctionRule("over_18", (_, _) => Task.FromResult(new RuleResult("over_18", true)));
+        var rule = new FunctionRule("over_18", (_, _) => Task.FromResult(new PredicateOutcome(true)));
         Assert.Equal("FunctionRule \"over_18\"", rule.ToString());
     }
 
     [Fact]
     public void FunctionRuleShowsItsGroupWhenPresent()
     {
-        var rule = new FunctionRule("over_18", (_, _) => Task.FromResult(new RuleResult("over_18", true)), "age");
+        var rule = new FunctionRule("over_18", (_, _) => Task.FromResult(new PredicateOutcome(true)), "age");
         Assert.Equal("FunctionRule \"over_18\" (age)", rule.ToString());
     }
 
     [Fact]
     public void GenericFunctionRuleShowsItsName()
     {
-        var rule = new FunctionRule<int>("even", (n, _) => Task.FromResult(new RuleResult("even", n % 2 == 0)));
+        var rule = new FunctionRule<int>("even", (n, _) => Task.FromResult(new PredicateOutcome(n % 2 == 0)));
         Assert.Equal("FunctionRule \"even\"", rule.ToString());
     }
 
@@ -71,7 +71,7 @@ public class ToStringTests
     [Fact]
     public void GenericOrRuleShowsItsNameAndSubRuleCount()
     {
-        var rule = new OrRule<int>("any", new IRule<int>[] { new FunctionRule<int>("a", (_, _) => Task.FromResult(new RuleResult("a", false))) });
+        var rule = new OrRule<int>("any", new IRule<int>[] { new FunctionRule<int>("a", (_, _) => Task.FromResult(new PredicateOutcome(false))) });
         Assert.Equal("OrRule \"any\" — 1 sub-rule(s)", rule.ToString());
     }
 
@@ -195,15 +195,15 @@ public class RuleResultAndRunResultDebuggerDisplayTests
     }
 
     [Fact]
-    public void RuleResultDebuggerDisplayShowsSubResultCountWhenDataIsSubResults()
+    public void RuleResultDebuggerDisplayShowsSubResultCountWhenThereAreSubResults()
     {
         var subs = new List<RuleResult> { new("a", true), new("b", false) };
-        var result = new RuleResult("all", false, data: subs);
+        var result = new RuleResult("all", false, subResults: subs);
         Assert.Equal("all = FAIL [2 sub-result(s)]", DebuggerDisplayReflection.Of(result));
     }
 
     [Fact]
-    public void RuleResultDebuggerDisplayOmitsSubResultCountWhenDataIsNotSubResults()
+    public void RuleResultDebuggerDisplayOmitsSubResultCountForALeafResult()
     {
         var result = new RuleResult("over_18", true, data: 42);
         Assert.Equal("over_18 = PASS", DebuggerDisplayReflection.Of(result));

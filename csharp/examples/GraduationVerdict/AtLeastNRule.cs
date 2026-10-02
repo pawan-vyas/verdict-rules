@@ -29,6 +29,6 @@ public sealed class AtLeastNRule(string name, IReadOnlyList<IRule> rules, int mi
             Name,
             passedCount >= minimum,
             $"{passedCount} of {rules.Count} passed, needed {minimum}",
-            subResults);
+            subResults: subResults);
     }
 }

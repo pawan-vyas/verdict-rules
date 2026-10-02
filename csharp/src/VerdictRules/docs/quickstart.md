@@ -33,7 +33,10 @@
 - **`RuleResult`** / **`RunResult`** — plain, immutable outcome types.
   `RuleResult.Data` is a fully opaque slot for a caller's own domain
   object to ride through evaluation — Verdict never reads or depends on
-  its shape.
+  its shape. `RuleResult.SubResults` is the opposite: a composite's own
+  children, always exactly what it evaluated, never opaque — walk it
+  yourself, or use `Leaves`/`FailingLeaves` to flatten straight to the
+  leaf checks that actually decided the outcome.
 
 ## One complete example
 
@@ -46,17 +49,17 @@ decision above ever looked at each one:
 ```csharp
 using VerdictRules;
 
-static Task<RuleResult> InputsValid(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("inputs_valid", (bool)context["has_required_fields"]!));
+static Task<PredicateOutcome> InputsValid(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome((bool)context["has_required_fields"]!));
 
-static Task<RuleResult> AutoApproved(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("auto_approved", (bool)context["auto_approved"]!));
+static Task<PredicateOutcome> AutoApproved(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome((bool)context["auto_approved"]!));
 
-static Task<RuleResult> ReviewerAssigned(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("reviewer_assigned", (bool)context["reviewer_assigned"]!));
+static Task<PredicateOutcome> ReviewerAssigned(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome((bool)context["reviewer_assigned"]!));
 
-static Task<RuleResult> ReviewCompleted(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("review_completed", (bool)context["review_completed"]!));
+static Task<PredicateOutcome> ReviewCompleted(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome((bool)context["review_completed"]!));
 
 var taskApproved = new AndRule("task_approved", new IRule[]
 {

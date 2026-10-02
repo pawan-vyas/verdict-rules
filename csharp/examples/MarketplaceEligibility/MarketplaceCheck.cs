@@ -19,8 +19,8 @@ public static class MarketplaceCheck
     public static readonly string[] BlockedCountries = ["ir", "nk"];
     public const int NewSellerThresholdDays = 30;
 
-    private static Task<RuleResult> IsVerifiedIdentity(IdentityFlag context, CancellationToken ct = default) =>
-        Task.FromResult(new RuleResult("is_verified_identity", context.Verified));
+    private static Task<PredicateOutcome> IsVerifiedIdentity(IdentityFlag context, CancellationToken ct = default) =>
+        Task.FromResult(new PredicateOutcome(context.Verified));
 
     private static ProjectingRule<SellerListingContext, IdentityFlag> SellerIdentityRule() =>
         new(new FunctionRule<IdentityFlag>("is_verified_identity", IsVerifiedIdentity),
@@ -30,17 +30,17 @@ public static class MarketplaceCheck
         new(new FunctionRule<IdentityFlag>("is_verified_identity", IsVerifiedIdentity),
             ctx => new IdentityFlag(ctx.BuyerVerified));
 
-    private static Task<RuleResult> PriceFloorMet(SellerListingContext context, CancellationToken ct = default) =>
-        Task.FromResult(new RuleResult("price_floor_met", context.ListingPriceCents >= PriceFloorCents));
+    private static Task<PredicateOutcome> PriceFloorMet(SellerListingContext context, CancellationToken ct = default) =>
+        Task.FromResult(new PredicateOutcome(context.ListingPriceCents >= PriceFloorCents));
 
-    private static Task<RuleResult> CategoryAllowed(SellerListingContext context, CancellationToken ct = default) =>
-        Task.FromResult(new RuleResult("category_allowed", AllowedCategories.Contains(context.Category)));
+    private static Task<PredicateOutcome> CategoryAllowed(SellerListingContext context, CancellationToken ct = default) =>
+        Task.FromResult(new PredicateOutcome(AllowedCategories.Contains(context.Category)));
 
-    private static Task<RuleResult> SufficientBalance(BuyerPurchaseContext context, CancellationToken ct = default) =>
-        Task.FromResult(new RuleResult("sufficient_balance", context.BuyerBalanceCents >= context.PurchaseAmountCents));
+    private static Task<PredicateOutcome> SufficientBalance(BuyerPurchaseContext context, CancellationToken ct = default) =>
+        Task.FromResult(new PredicateOutcome(context.BuyerBalanceCents >= context.PurchaseAmountCents));
 
-    private static Task<RuleResult> PurchaseLimitNotExceeded(BuyerPurchaseContext context, CancellationToken ct = default) =>
-        Task.FromResult(new RuleResult("purchase_limit_not_exceeded", context.PurchaseAmountCents <= PurchaseLimitCents));
+    private static Task<PredicateOutcome> PurchaseLimitNotExceeded(BuyerPurchaseContext context, CancellationToken ct = default) =>
+        Task.FromResult(new PredicateOutcome(context.PurchaseAmountCents <= PurchaseLimitCents));
 
     /// <summary>
     /// Build the typed listing-eligibility composite for one seller.
@@ -77,14 +77,14 @@ public static class MarketplaceCheck
         return (purchaseEligible, buyerVerified);
     }
 
-    private static Task<RuleResult> HighValueFlag(IReadOnlyDictionary<string, object?> context, CancellationToken ct = default) =>
-        Task.FromResult(new RuleResult("high_value_flag", (int)context["amount_cents"]! > HighValueThresholdCents));
+    private static Task<PredicateOutcome> HighValueFlag(IReadOnlyDictionary<string, object?> context, CancellationToken ct = default) =>
+        Task.FromResult(new PredicateOutcome((int)context["amount_cents"]! > HighValueThresholdCents));
 
-    private static Task<RuleResult> BlockedCountryFlag(IReadOnlyDictionary<string, object?> context, CancellationToken ct = default) =>
-        Task.FromResult(new RuleResult("blocked_country_flag", BlockedCountries.Contains((string)context["country"]!)));
+    private static Task<PredicateOutcome> BlockedCountryFlag(IReadOnlyDictionary<string, object?> context, CancellationToken ct = default) =>
+        Task.FromResult(new PredicateOutcome(BlockedCountries.Contains((string)context["country"]!)));
 
-    private static Task<RuleResult> NewSellerFlag(IReadOnlyDictionary<string, object?> context, CancellationToken ct = default) =>
-        Task.FromResult(new RuleResult("new_seller_flag", (int)context["seller_age_days"]! < NewSellerThresholdDays));
+    private static Task<PredicateOutcome> NewSellerFlag(IReadOnlyDictionary<string, object?> context, CancellationToken ct = default) =>
+        Task.FromResult(new PredicateOutcome((int)context["seller_age_days"]! < NewSellerThresholdDays));
 
     /// <summary>
     /// Build the dict-context compliance catalog.

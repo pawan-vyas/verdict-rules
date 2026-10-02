@@ -34,8 +34,8 @@ into two unrelated composites:
 ```csharp
 public sealed record UserFlag(bool IsVerified);
 
-Task<RuleResult> IsVerifiedUser(UserFlag ctx, CancellationToken ct = default) =>
-    Task.FromResult(new RuleResult("is_verified_user", ctx.IsVerified));
+Task<PredicateOutcome> IsVerifiedUser(UserFlag ctx, CancellationToken ct = default) =>
+    Task.FromResult(new PredicateOutcome(ctx.IsVerified));
 
 public sealed record OrderContext(decimal Total, bool IsVerified);
 public sealed record SignupContext(string Email, bool IsVerified);

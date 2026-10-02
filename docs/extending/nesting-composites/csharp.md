@@ -14,17 +14,17 @@ record AccountContext(
     double Spend,
     double SpendThreshold);
 
-static Task<RuleResult> IsActiveAccount(AccountContext context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("is_active_account", context.AccountStatus == "active"));
+static Task<PredicateOutcome> IsActiveAccount(AccountContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome(context.AccountStatus == "active"));
 
-static Task<RuleResult> IsPremiumMember(AccountContext context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("is_premium_member", context.IsPremiumMember));
+static Task<PredicateOutcome> IsPremiumMember(AccountContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome(context.IsPremiumMember));
 
-static Task<RuleResult> HasPromoCode(AccountContext context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("has_promo_code", !string.IsNullOrEmpty(context.PromoCode)));
+static Task<PredicateOutcome> HasPromoCode(AccountContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome(!string.IsNullOrEmpty(context.PromoCode)));
 
-static Task<RuleResult> MeetsSpendThreshold(AccountContext context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("meets_spend_threshold", context.Spend >= context.SpendThreshold));
+static Task<PredicateOutcome> MeetsSpendThreshold(AccountContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome(context.Spend >= context.SpendThreshold));
 
 // Nesting doesn't care what built its sub-rules -- each of the four leaves
 // here is a plain FunctionRule, but any IRule (a custom shape, another

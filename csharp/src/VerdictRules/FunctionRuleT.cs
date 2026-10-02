@@ -16,7 +16,7 @@ namespace VerdictRules;
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
 public sealed class FunctionRule<TContext>(string name, RulePredicate<TContext> predicate, string? group = null) : IRule<TContext>
 {
-    /// <summary>The wrapped predicate, run unchanged by <see cref="EvaluateAsync"/>.</summary>
+    /// <summary>The wrapped predicate, run by <see cref="EvaluateAsync"/>.</summary>
     private readonly RulePredicate<TContext> _predicate = predicate;
 
     /// <inheritdoc />
@@ -26,20 +26,26 @@ public sealed class FunctionRule<TContext>(string name, RulePredicate<TContext> 
     public string? Group { get; } = group;
 
     /// <summary>
-    /// Runs the wrapped predicate and returns whatever it returns, unchanged.
+    /// Runs the wrapped predicate and builds the <see cref="RuleResult"/>
+    /// from whatever it reports -- this is the one place that owns
+    /// <see cref="Name"/>, never the predicate itself.
     /// </summary>
     /// <param name="context">Forwarded to the wrapped predicate as-is.</param>
     /// <param name="cancellationToken">Forwarded to the wrapped predicate as-is.</param>
-    /// <returns>Whatever the wrapped predicate returns, unchanged.</returns>
+    /// <returns>
+    /// A <see cref="RuleResult"/> attributed to <see cref="Name"/>, carrying
+    /// the wrapped predicate's own <see cref="PredicateOutcome.Passed"/>,
+    /// <see cref="PredicateOutcome.Detail"/>, and <see cref="PredicateOutcome.Data"/>.
+    /// </returns>
     /// <exception cref="OperationCanceledException">
     /// <paramref name="cancellationToken"/> is already cancelled, in which case
-    /// the predicate is not invoked at all. Thrown synchronously, as a guard on
-    /// a method that is deliberately not <c>async</c>.
+    /// the predicate is not invoked at all.
     /// </exception>
-    public Task<RuleResult> EvaluateAsync(TContext context, CancellationToken cancellationToken = default)
+    public async Task<RuleResult> EvaluateAsync(TContext context, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        return _predicate(context, cancellationToken);
+        var outcome = await _predicate(context, cancellationToken).ConfigureAwait(false);
+        return new RuleResult(Name, outcome.Passed, outcome.Detail, outcome.Data);
     }
 
     /// <inheritdoc />
