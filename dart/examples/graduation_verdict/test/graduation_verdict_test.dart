@@ -28,15 +28,13 @@ SubjectPolicy _policy(String subjectId) =>
 
 /// Walk the first failing branch down, collecting rule names.
 ///
-/// A nested failure is reachable by following data downward; a result's
-/// data is never flattened.
+/// A nested failure is reachable by following subResults downward;
+/// `RuleResult.data` plays no role here -- composites never write to it.
 List<String> _failingChain(RuleResult result) {
   final chain = <String>[];
   var node = result;
-  while (node.data is List<RuleResult> &&
-      (node.data as List<RuleResult>).isNotEmpty) {
-    final subs = node.data as List<RuleResult>;
-    final failing = subs.where((sub) => !sub.passed);
+  while (node.subResults.isNotEmpty) {
+    final failing = node.subResults.where((sub) => !sub.passed);
     if (failing.isEmpty) break;
     final next = failing.first;
     chain.add(next.ruleName);
@@ -201,8 +199,8 @@ void main() {
         expect(
           result.passed,
           expected['passed'],
-          reason:
-              '$studentId: expected passed=${expected['passed']}, got ${result.passed} (${result.detail})',
+          reason: '$studentId: expected passed=${expected['passed']}, got '
+              '${result.passed} (failing: ${result.failingLeaves.map((l) => l.ruleName).join(', ')})',
         );
       });
 
@@ -214,8 +212,7 @@ void main() {
         final record = _students[studentId]!;
         final expected = record.expected;
         final result = await graduates.evaluate(record.context);
-        final data = result.data as List<RuleResult>;
-        expect(data.length, expected['rules_evaluated']);
+        expect(result.subResults.length, expected['rules_evaluated']);
       });
 
       test('$studentId: failing chain matches', () async {
@@ -278,8 +275,8 @@ void main() {
         final result = await graduates.evaluate(student);
 
         expect(result.passed, expected['passed'], reason: caseName);
-        final data = result.data as List<RuleResult>;
-        expect(data.length, expected['rules_evaluated'], reason: caseName);
+        expect(result.subResults.length, expected['rules_evaluated'],
+            reason: caseName);
         final chain = _failingChain(result);
         expect(chain, expected['failing_chain'], reason: caseName);
 

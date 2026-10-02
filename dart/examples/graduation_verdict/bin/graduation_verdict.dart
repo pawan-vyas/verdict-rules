@@ -36,7 +36,17 @@ Future<void> main() async {
   for (final entry in students.entries) {
     final verdict = await graduates.evaluate(entry.value.context);
     final status = verdict.passed ? 'GRADUATES' : 'DOES NOT GRADUATE';
-    final reason = verdict.passed ? '' : '  (${verdict.detail})';
+    // `graduates` is a composite -- its own `detail` is always empty (a
+    // composed ShortCircuitEvaluator has no per-composite channel to build
+    // a descriptive string from). The actual reason lives in
+    // `failingLeaves` instead, flattened from wherever in the tree the
+    // short-circuit actually stopped.
+    final reasons = verdict.failingLeaves
+        .map((leaf) => leaf.detail.isEmpty
+            ? leaf.ruleName
+            : '${leaf.ruleName}: ${leaf.detail}')
+        .join('; ');
+    final reason = verdict.passed ? '' : '  ($reasons)';
     print('${entry.key.padRight(10)}: $status$reason');
   }
 }

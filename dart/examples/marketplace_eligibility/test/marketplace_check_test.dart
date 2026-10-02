@@ -136,17 +136,11 @@ void main() {
       final extended = RulesEngine<Context>([
         FunctionRule<Context>(
           'high_value_flag',
-          (ctx) async => RuleResult(
-            ruleName: 'high_value_flag',
-            passed: (ctx['amount_cents'] as int) > 50000,
-          ),
+          (ctx) async => PredicateOutcome((ctx['amount_cents'] as int) > 50000),
         ),
         FunctionRule<Context>(
           'weekend_flag',
-          (ctx) async => RuleResult(
-            ruleName: 'weekend_flag',
-            passed: ctx['is_weekend'] as bool,
-          ),
+          (ctx) async => PredicateOutcome(ctx['is_weekend'] as bool),
         ),
       ]);
       final result = await extended

@@ -4,8 +4,7 @@ import 'package:verdict_rules/verdict_rules.dart';
 FunctionRule<Context> pass(String name, {String? group, Object? data}) =>
     FunctionRule(
       name,
-      (Context ctx) async =>
-          RuleResult(ruleName: name, passed: true, data: data),
+      (Context ctx) async => PredicateOutcome(true, data: data),
       group: group,
     );
 
@@ -14,8 +13,7 @@ FunctionRule<Context> failing(String name,
         {String? group, String detail = ''}) =>
     FunctionRule(
       name,
-      (Context ctx) async =>
-          RuleResult(ruleName: name, passed: false, detail: detail),
+      (Context ctx) async => PredicateOutcome(false, detail: detail),
       group: group,
     );
 
@@ -30,5 +28,5 @@ FunctionRule<Context> counting(
 }) =>
     FunctionRule(name, (Context ctx) async {
       log.add(name);
-      return RuleResult(ruleName: name, passed: passes);
+      return PredicateOutcome(passes);
     }, group: group);

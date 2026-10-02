@@ -18,9 +18,8 @@ Rule<Context> _vocationalSubjectRule(
     AndRule(
       sid,
       [
-        FunctionRule('$sid:written', _writtenPredicate(policy, '$sid:written')),
-        FunctionRule(
-            '$sid:practical', _practicalPredicate(policy, '$sid:practical')),
+        FunctionRule('$sid:written', _writtenPredicate(policy)),
+        FunctionRule('$sid:practical', _practicalPredicate(policy)),
       ],
       group: group,
     );
@@ -31,19 +30,18 @@ Rule<Context> _languageSubjectRule(
     return OrRule(
       sid,
       [
-        FunctionRule('$sid:written', _writtenPredicate(policy, '$sid:written')),
-        FunctionRule(
-            '$sid:exemption', _exemptionPredicate(policy, '$sid:exemption')),
+        FunctionRule('$sid:written', _writtenPredicate(policy)),
+        FunctionRule('$sid:exemption', _exemptionPredicate(policy)),
       ],
       group: group,
     );
   }
-  return FunctionRule(sid, _writtenPredicate(policy, sid), group: group);
+  return FunctionRule(sid, _writtenPredicate(policy), group: group);
 }
 
 Rule<Context> _academicSubjectRule(
         SubjectPolicy policy, String sid, String group) =>
-    FunctionRule(sid, _writtenPredicate(policy, sid), group: group);
+    FunctionRule(sid, _writtenPredicate(policy), group: group);
 
 /// One builder per subjectType, keyed by the value itself -- adding a
 /// fifth subject type is a new function plus a new entry here, never a
@@ -78,46 +76,44 @@ Rule<Context> ruleForSubject(SubjectPolicy policy) {
   return builder(policy, sid, group);
 }
 
-RulePredicate _writtenPredicate(SubjectPolicy policy, String name) =>
+RulePredicate<Context> _writtenPredicate(SubjectPolicy policy) =>
     (context) async {
       final scores = context['scores'] as Map<String, Object?>;
       final subject = scores[policy.subjectId] as Map<String, Object?>;
       final pct = subject['written_pct'] as double;
-      return RuleResult(
-          ruleName: name,
-          passed: pct >= policy.writtenMinPct,
-          detail: '$pct vs ${policy.writtenMinPct}');
+      return PredicateOutcome(
+        pct >= policy.writtenMinPct,
+        detail: '$pct vs ${policy.writtenMinPct}',
+      );
     };
 
-RulePredicate _practicalPredicate(SubjectPolicy policy, String name) =>
+RulePredicate<Context> _practicalPredicate(SubjectPolicy policy) =>
     (context) async {
       final scores = context['scores'] as Map<String, Object?>;
       final subject = scores[policy.subjectId] as Map<String, Object?>;
       final pct = subject['practical_pct'] as double;
-      return RuleResult(
-        ruleName: name,
-        passed: pct >= policy.practicalMinPct!,
+      return PredicateOutcome(
+        pct >= policy.practicalMinPct!,
         detail: '$pct vs ${policy.practicalMinPct}',
       );
     };
 
-RulePredicate _exemptionPredicate(SubjectPolicy policy, String name) =>
+RulePredicate<Context> _exemptionPredicate(SubjectPolicy policy) =>
     (context) async {
       final scores = context['scores'] as Map<String, Object?>;
       final subject = scores[policy.subjectId] as Map<String, Object?>;
       final exempt = subject['has_exemption'] as bool? ?? false;
-      return RuleResult(ruleName: name, passed: exempt);
+      return PredicateOutcome(exempt);
     };
 
-Future<RuleResult> cgpaMet(Map<String, Object?> context) async => RuleResult(
-      ruleName: 'cgpa_met',
-      passed: (context['cgpa'] as double) >= (context['cgpa_floor'] as double),
+Future<PredicateOutcome> cgpaMet(Map<String, Object?> context) async =>
+    PredicateOutcome(
+      (context['cgpa'] as double) >= (context['cgpa_floor'] as double),
     );
 
-Future<RuleResult> attendanceMet(Map<String, Object?> context) async =>
-    RuleResult(
-      ruleName: 'attendance_met',
-      passed: (context['attendance_pct'] as double) >=
+Future<PredicateOutcome> attendanceMet(Map<String, Object?> context) async =>
+    PredicateOutcome(
+      (context['attendance_pct'] as double) >=
           (context['attendance_floor'] as double),
     );
 

@@ -24,11 +24,7 @@ FunctionRule atLeast(String name, String field, num floor) => FunctionRule(
       name,
       (ctx) async {
         final value = ctx[field]! as num;
-        return RuleResult(
-          ruleName: name,
-          passed: value >= floor,
-          detail: '$value vs $floor',
-        );
+        return PredicateOutcome(value >= floor, detail: '$value vs $floor');
       },
     );
 
@@ -41,7 +37,11 @@ Future<void> main() async {
   final engine = RulesEngine([eligible]);
   final verdict = await engine.runNamed('eligible', {'age': 21, 'score': 55});
   print(verdict.passed); // false
-  print(verdict.detail); // 'score_ok' failed: 55 vs 60
+  // `eligible` is an AndRule -- its own `detail` is always empty (composing
+  // ShortCircuitEvaluator leaves no channel to build one from). The actual
+  // reason lives in `failingLeaves`, the flattened leaf results that
+  // explain the failure.
+  print(verdict.failingLeaves.map((l) => '${l.ruleName}: ${l.detail}')); // (score_ok: 55 vs 60)
 }
 ```
 
@@ -52,11 +52,8 @@ the predicate signature is a rule through `FunctionRule`, with nothing declared
 and no type to name. A tear-off works directly:
 
 ```dart
-Future<RuleResult> isBusinessHours(Map<String, Object?> ctx) async =>
-    RuleResult(
-      ruleName: 'is_business_hours',
-      passed: (ctx['hour']! as int) >= 9 && (ctx['hour']! as int) < 17,
-    );
+Future<PredicateOutcome> isBusinessHours(Map<String, Object?> ctx) async =>
+    PredicateOutcome((ctx['hour']! as int) >= 9 && (ctx['hour']! as int) < 17);
 
 final rule = FunctionRule('is_business_hours', isBusinessHours);
 ```
@@ -108,8 +105,10 @@ one everybody thinks of first.
   can have. Use `ruleNames` / `groupNames` to check membership, or
   `tryRunNamed` / `tryRunGroup` where your own domain has an answer for
   absence — both return null instead of throwing.
-- **`RuleResult.data` is opaque** — only what actually ran, never padded, never
-  flattened.
+- **`RuleResult.data` is opaque** — never written to by any shipped composite.
+  A composite's own children live in `RuleResult.subResults` instead — only
+  what actually ran, never padded, never flattened. `RuleResult.leaves` /
+  `RuleResult.failingLeaves` give the flattened view across any depth.
 - **Zero runtime dependencies.**
 
 ## Where to go next

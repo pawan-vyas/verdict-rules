@@ -13,17 +13,49 @@ class RuleResult {
   /// beyond the boolean.
   final String detail;
 
-  /// Optional payload; opaque to this package.
-  ///
-  /// For composites this holds the sub-results gathered so far.
+  /// Optional payload; genuinely opaque to this package -- never read or
+  /// written by verdict itself. A composite rule's own children live in
+  /// [subResults] instead, never here.
   final Object? data;
+
+  /// This result's own children, in evaluation order. Empty for a leaf
+  /// result -- absence of any sub-result *is* the leaf signal, the same
+  /// idiom `Rule.group` already uses for "none" on this type's sibling
+  /// types. A composite rule (`AndRule`, `OrRule`, `NotRule`, or a custom
+  /// composite built the same way) populates this with exactly the
+  /// sub-results it actually evaluated -- never padded, never flattened.
+  final List<RuleResult> subResults;
 
   const RuleResult({
     required this.ruleName,
     required this.passed,
     this.detail = '',
     this.data,
+    this.subResults = const [],
   });
+
+  /// Every leaf result reachable from this one, in evaluation order --
+  /// this result itself when it has no sub-results.
+  List<RuleResult> get leaves => subResults.isEmpty
+      ? [this]
+      : [for (final sub in subResults) ...sub.leaves];
+
+  /// Every failing leaf that contributed to this result's own failure.
+  ///
+  /// Empty when this result passed -- even when an earlier, short-circuited
+  /// branch on the way to that pass itself failed. A failed result with no
+  /// failing children is itself the leaf (this is what lets a failed
+  /// `NotRule` -- whose single child actually passed -- report correctly
+  /// here, rather than misleadingly reporting no failing leaves at all on a
+  /// failed result). This is an independent recursion, not a filter over
+  /// [leaves].
+  List<RuleResult> get failingLeaves {
+    if (passed) return const [];
+    final childFailures = [
+      for (final sub in subResults) ...sub.failingLeaves,
+    ];
+    return childFailures.isEmpty ? [this] : childFailures;
+  }
 
   @override
   String toString() =>
@@ -37,11 +69,23 @@ class RunResult {
 
   /// One [RuleResult] per rule evaluated, in evaluation order.
   ///
-  /// A composite's own sub-results are nested inside its
-  /// [RuleResult.data] rather than flattened into this list.
+  /// A composite's own sub-results live in that rule's own
+  /// [RuleResult.subResults], not flattened into this list -- see [leaves]
+  /// for the flattened view across every rule this run evaluated.
   final List<RuleResult> results;
 
   const RunResult({required this.passed, this.results = const []});
+
+  /// Every leaf across every rule this run evaluated, flattened, in
+  /// evaluation order. One-line forwarder over each result's own
+  /// [RuleResult.leaves].
+  List<RuleResult> get leaves => [for (final r in results) ...r.leaves];
+
+  /// Every leaf in [leaves] that failed.
+  List<RuleResult> get failingLeaves => [
+        for (final l in leaves)
+          if (!l.passed) l
+      ];
 
   @override
   String toString() => 'RunResult(passed: $passed, results: ${results.length})';

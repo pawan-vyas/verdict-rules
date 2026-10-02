@@ -19,8 +19,8 @@ const highValueThresholdCents = 50000;
 const blockedCountries = ['ir', 'nk'];
 const newSellerThresholdDays = 30;
 
-Future<RuleResult> _isVerifiedIdentity(IdentityFlag context) async =>
-    RuleResult(ruleName: 'is_verified_identity', passed: context.verified);
+Future<PredicateOutcome> _isVerifiedIdentity(IdentityFlag context) async =>
+    PredicateOutcome(context.verified);
 
 ProjectingRule<SellerListingContext, IdentityFlag> _sellerIdentityRule() =>
     ProjectingRule(
@@ -34,30 +34,19 @@ ProjectingRule<BuyerPurchaseContext, IdentityFlag> _buyerIdentityRule() =>
       (ctx) => IdentityFlag(verified: ctx.buyerVerified),
     );
 
-Future<RuleResult> _priceFloorMet(SellerListingContext context) async =>
-    RuleResult(
-      ruleName: 'price_floor_met',
-      passed: context.listingPriceCents >= priceFloorCents,
-    );
+Future<PredicateOutcome> _priceFloorMet(SellerListingContext context) async =>
+    PredicateOutcome(context.listingPriceCents >= priceFloorCents);
 
-Future<RuleResult> _categoryAllowed(SellerListingContext context) async =>
-    RuleResult(
-      ruleName: 'category_allowed',
-      passed: allowedCategories.contains(context.category),
-    );
+Future<PredicateOutcome> _categoryAllowed(SellerListingContext context) async =>
+    PredicateOutcome(allowedCategories.contains(context.category));
 
-Future<RuleResult> _sufficientBalance(BuyerPurchaseContext context) async =>
-    RuleResult(
-      ruleName: 'sufficient_balance',
-      passed: context.buyerBalanceCents >= context.purchaseAmountCents,
-    );
-
-Future<RuleResult> _purchaseLimitNotExceeded(
+Future<PredicateOutcome> _sufficientBalance(
         BuyerPurchaseContext context) async =>
-    RuleResult(
-      ruleName: 'purchase_limit_not_exceeded',
-      passed: context.purchaseAmountCents <= purchaseLimitCents,
-    );
+    PredicateOutcome(context.buyerBalanceCents >= context.purchaseAmountCents);
+
+Future<PredicateOutcome> _purchaseLimitNotExceeded(
+        BuyerPurchaseContext context) async =>
+    PredicateOutcome(context.purchaseAmountCents <= purchaseLimitCents);
 
 /// Build the typed listing-eligibility composite for one seller.
 ///
@@ -86,20 +75,16 @@ Future<RuleResult> _purchaseLimitNotExceeded(
   return (purchaseEligible, buyerVerified);
 }
 
-Future<RuleResult> _highValueFlag(Context context) async => RuleResult(
-      ruleName: 'high_value_flag',
-      passed: (context['amount_cents'] as int) > highValueThresholdCents,
-    );
+Future<PredicateOutcome> _highValueFlag(Context context) async =>
+    PredicateOutcome(
+        (context['amount_cents'] as int) > highValueThresholdCents);
 
-Future<RuleResult> _blockedCountryFlag(Context context) async => RuleResult(
-      ruleName: 'blocked_country_flag',
-      passed: blockedCountries.contains(context['country'] as String),
-    );
+Future<PredicateOutcome> _blockedCountryFlag(Context context) async =>
+    PredicateOutcome(blockedCountries.contains(context['country'] as String));
 
-Future<RuleResult> _newSellerFlag(Context context) async => RuleResult(
-      ruleName: 'new_seller_flag',
-      passed: (context['seller_age_days'] as int) < newSellerThresholdDays,
-    );
+Future<PredicateOutcome> _newSellerFlag(Context context) async =>
+    PredicateOutcome(
+        (context['seller_age_days'] as int) < newSellerThresholdDays);
 
 /// Build the dict-context compliance catalog.
 ///

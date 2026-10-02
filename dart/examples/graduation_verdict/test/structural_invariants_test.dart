@@ -20,11 +20,7 @@ const _chaosSeed = 20260907;
 const _numCases = 500;
 
 void _checkAndRuleInvariant(RuleResult result) {
-  final data = result.data;
-  expect(data, isA<List<RuleResult>>(),
-      reason: '${result.ruleName}: an AndRule result.data must list its '
-          'sub-results');
-  final subResults = data as List<RuleResult>;
+  final subResults = result.subResults;
   if (subResults.isEmpty) {
     // Vacuous truth: AndRule([]) always passes with no sub-results.
     expect(result.passed, isTrue,
@@ -47,11 +43,7 @@ void _checkAndRuleInvariant(RuleResult result) {
 }
 
 void _checkOrRuleInvariant(RuleResult result) {
-  final data = result.data;
-  expect(data, isA<List<RuleResult>>(),
-      reason: '${result.ruleName}: an OrRule result.data must list its '
-          'sub-results');
-  final subResults = data as List<RuleResult>;
+  final subResults = result.subResults;
   if (subResults.isEmpty) {
     // Vacuous truth: OrRule([]) always fails with no sub-results.
     expect(result.passed, isFalse,
@@ -74,8 +66,52 @@ void _checkOrRuleInvariant(RuleResult result) {
   }
 }
 
+/// AtLeastNRule stops exactly when its own [minimum] is mathematically
+/// decided -- as soon as enough sub-rules have passed to guarantee it, or
+/// too many have failed for it to still be reachable -- never one sub-rule
+/// earlier (the call wouldn't have been decidable yet) and never one later
+/// (an already-decided rule kept evaluating).
+///
+/// `result.subResults`' length *is* the number of sub-rules actually
+/// called -- read back from the result tree `buildGraduationCheck` already
+/// produced for this chaos case, the same signal a dedicated `calls` list
+/// would give a call-counter test. [total] is the full elective sub-rule
+/// count (not reachable from `result` alone once short-circuited), and
+/// [minimum] is `electiveMinimum` -- both already in scope at every call
+/// site below, so neither needs reading off the private `AtLeastNRule`
+/// instance itself.
+void _checkAtLeastNRuleInvariant(RuleResult result, int total, int minimum) {
+  final subResults = result.subResults;
+
+  var passedSoFar = 0;
+  for (var index = 0; index < subResults.length; index++) {
+    if (subResults[index].passed) passedSoFar++;
+    final remainingAfter = total - (index + 1);
+    final decidedTrue = passedSoFar >= minimum;
+    final decidedFalse = passedSoFar + remainingAfter < minimum;
+    final isLastEvaluated = index == subResults.length - 1;
+
+    if (isLastEvaluated) {
+      expect(decidedTrue || decidedFalse, isTrue,
+          reason: '${result.ruleName}: AtLeastNRule stopped after '
+              '${subResults.length} of $total sub-rule(s) before its minimum '
+              '($minimum) was mathematically decided either way');
+    } else {
+      expect(decidedTrue || decidedFalse, isFalse,
+          reason: '${result.ruleName}: AtLeastNRule kept evaluating past '
+              'sub-rule $index even though its minimum ($minimum) was '
+              'already decided there');
+    }
+  }
+
+  expect(result.passed, passedSoFar >= minimum,
+      reason: "${result.ruleName}: AtLeastNRule's own passed verdict "
+          'disagrees with the pass count over the sub-rules it actually '
+          'evaluated');
+}
+
 void _checkLeafInvariant(RuleResult result) {
-  expect(result.data, isNot(isA<List<RuleResult>>()),
+  expect(result.subResults, isEmpty,
       reason: '${result.ruleName}: a FunctionRule leaf is never recursed '
           'into');
 }
@@ -118,38 +154,36 @@ Future<void> _checkStructuralInvariants(List<SubjectPolicy> policies,
   // elective_requirement, cgpa_met, attendance_met]) -- fixed by
   // buildGraduationCheck's own construction, not data-dependent.
   _checkAndRuleInvariant(result);
-  final topData = result.data as List<RuleResult>;
+  final topSubResults = result.subResults;
 
   final corePolicies = policies.where((p) => !p.isElective).toList();
   final electivePolicies = policies.where((p) => p.isElective).toList();
 
-  if (topData.isNotEmpty) {
-    final coreResult = topData[0];
+  if (topSubResults.isNotEmpty) {
+    final coreResult = topSubResults[0];
     _checkAndRuleInvariant(coreResult);
-    final coreData = coreResult.data as List<RuleResult>;
-    for (var i = 0; i < coreData.length; i++) {
-      _checkSubjectInvariant(corePolicies[i], coreData[i]);
+    final coreSubResults = coreResult.subResults;
+    for (var i = 0; i < coreSubResults.length; i++) {
+      _checkSubjectInvariant(corePolicies[i], coreSubResults[i]);
     }
   }
 
-  if (topData.length > 1) {
-    final electiveResult = topData[1];
-    final electiveData = electiveResult.data;
-    expect(electiveData, isA<List<RuleResult>>(),
-        reason: 'elective_requirement result.data must list every elective '
-            "subject's own result");
-    final electiveSubResults = electiveData as List<RuleResult>;
-    // AtLeastNRule evaluates every sub-rule unconditionally -- no
-    // short-circuit at all, unlike AndRule/OrRule above.
-    expect(electiveSubResults.length, electivePolicies.length,
-        reason: 'elective_requirement must evaluate every elective subject '
-            'regardless of pass/fail');
+  if (topSubResults.length > 1) {
+    final electiveResult = topSubResults[1];
+    final electiveSubResults = electiveResult.subResults;
+    // AtLeastNRule stops as soon as electiveMinimum is mathematically
+    // decided -- unlike AndRule/OrRule, that isn't simply "the first
+    // failure/pass", so the dedicated checker above re-derives exactly
+    // when that point was reached instead of assuming either "every
+    // sub-rule ran" or "stops at the first decisive result".
+    _checkAtLeastNRuleInvariant(
+        electiveResult, electivePolicies.length, electiveMinimum);
     for (var i = 0; i < electiveSubResults.length; i++) {
       _checkSubjectInvariant(electivePolicies[i], electiveSubResults[i]);
     }
   }
-  // topData[2]/topData[3] (cgpa_met/attendance_met), when reached, are
-  // FunctionRule leaves -- nothing further to walk.
+  // topSubResults[2]/topSubResults[3] (cgpa_met/attendance_met), when
+  // reached, are FunctionRule leaves -- nothing further to walk.
 
   // Structural count, not a verdict: runAll reports exactly one result
   // per registered rule, since it never short-circuits.
@@ -160,24 +194,18 @@ Future<void> _checkStructuralInvariants(List<SubjectPolicy> policies,
 
 /// Deep-compares two result trees field by field -- `RuleResult` has no
 /// `==` override, so comparing top-level `passed` alone would miss a
-/// divergence buried in `data`.
+/// divergence buried in `subResults`.
 bool _resultTreesIdentical(RuleResult a, RuleResult b) {
   if (a.ruleName != b.ruleName ||
       a.passed != b.passed ||
       a.detail != b.detail) {
     return false;
   }
-  final aData = a.data;
-  final bData = b.data;
-  if (aData is List<RuleResult> || bData is List<RuleResult>) {
-    if (aData is! List<RuleResult> || bData is! List<RuleResult>) return false;
-    if (aData.length != bData.length) return false;
-    for (var i = 0; i < aData.length; i++) {
-      if (!_resultTreesIdentical(aData[i], bData[i])) return false;
-    }
-    return true;
+  if (a.subResults.length != b.subResults.length) return false;
+  for (var i = 0; i < a.subResults.length; i++) {
+    if (!_resultTreesIdentical(a.subResults[i], b.subResults[i])) return false;
   }
-  return aData == bData;
+  return a.data == b.data;
 }
 
 void main() {
