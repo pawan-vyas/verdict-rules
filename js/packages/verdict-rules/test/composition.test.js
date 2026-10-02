@@ -61,6 +61,66 @@ describe("SequentialEvaluator", () => {
       ["a", "b", "c"],
     );
   });
+
+  // The next three tests target SequentialEvaluator's own generic decidedBy
+  // default directly -- AndRule/OrRule route through ShortCircuitEvaluator,
+  // which always recomputes and overwrites decidedBy using its own stopOn
+  // (see ShortCircuitEvaluator's own tests below), so every AndRule/OrRule
+  // test is blind to this evaluator's own in-loop decidedBy computation and
+  // its post-loop fallback -- only a bare SequentialEvaluator exercises them.
+
+  it("decided before every sub-rule is evaluated names only the deciding sub-result", async () => {
+    // Three rules, decided on the second -- soFar has two elements at the
+    // moment of decision, not one, so a decidedBy mistakenly set to
+    // everything-seen-so-far is distinguishable from the correct
+    // single-element answer. A decision on the very first evaluated rule
+    // couldn't tell the two apart: a one-element soFar looks identical to
+    // [latest] either way.
+    const rules = [pass("a"), fail("b"), pass("c")];
+    const decider = (latest, soFar) => (soFar.length === 2 ? false : undefined);
+    const evaluator = new SequentialEvaluator(decider, true);
+    const result = await evaluator.evaluate("e", rules, {});
+    assert.equal(result.passed, false);
+    assert.deepEqual(
+      result.decidedBy.map((r) => r.ruleName),
+      ["b"],
+    );
+  });
+
+  it("decided in-loop on exactly the last sub-rule names every evaluated sub-result", async () => {
+    // The case that looks identical to a post-loop fallback by count alone
+    // (soFar.length === total) but is a genuine in-loop decision, taken
+    // before the loop ever exits -- it must still name every evaluated
+    // sub-result, not just the last one.
+    const rules = [pass("a"), pass("b"), pass("c")];
+    const decider = (latest, soFar, total) => (soFar.length === total ? true : undefined);
+    const evaluator = new SequentialEvaluator(decider, false);
+    const result = await evaluator.evaluate("e", rules, {});
+    assert.equal(result.passed, true);
+    assert.deepEqual(
+      result.decidedBy.map((r) => r.ruleName),
+      ["a", "b", "c"],
+    );
+  });
+
+  it("post-loop fallback calls the decider against the real last-evaluated sub-result", async () => {
+    // The post-loop fallback indexes soFar[soFar.length - 1] to re-ask the
+    // decider about the actual final sub-result -- an off-by-one there would
+    // hand the decider something other than the rule genuinely evaluated
+    // last (or nothing at all).
+    const rules = [pass("a"), pass("b"), pass("c")];
+    const seenWhenExhausted = [];
+    const decider = (latest, soFar, total) => {
+      if (soFar.length === total) seenWhenExhausted.push(latest.ruleName);
+      return undefined; // never resolves early -- always falls through to the post-loop call
+    };
+    const evaluator = new SequentialEvaluator(decider, true);
+    const result = await evaluator.evaluate("e", rules, {});
+    assert.equal(result.passed, true); // the vacuousResult -- decider never resolves
+    // Called twice at exhaustion: once in-loop on the last iteration, once
+    // more by the post-loop fallback -- both must see "c".
+    assert.deepEqual(seenWhenExhausted, ["c", "c"]);
+  });
 });
 
 describe("ShortCircuitEvaluator", () => {

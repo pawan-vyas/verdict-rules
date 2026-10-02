@@ -68,6 +68,52 @@ describe("FunctionRule", () => {
     const rule = new FunctionRule("r1", async () => ({ ruleName: "wrong-shape", passed: true }));
     await assert.rejects(() => rule.evaluate({}), { name: "TypeError" });
   });
+
+  // The guard's own `||` chain has four independent clauses (not an object,
+  // null, passed isn't a boolean, carries a ruleName) -- the two tests above
+  // only ever make the first and last clause the one that's true. These two
+  // round it out with inputs that are pivotal for the middle two, each
+  // checked against the exact message so a clause silently dropped from the
+  // chain (rather than just failing to catch some other shape) still fails
+  // the assertion.
+  const guardMessage =
+    'FunctionRule "r1": predicate must return a PredicateOutcome ' +
+    "({ passed, detail?, data? }), not a RuleResult or any other shape";
+
+  it("predicate returning null raises TypeError with the exact guidance message", async () => {
+    const rule = new FunctionRule("r1", async () => null);
+    await assert.rejects(() => rule.evaluate({}), { name: "TypeError", message: guardMessage });
+  });
+
+  it("predicate returning an object without a boolean passed raises TypeError with the exact guidance message", async () => {
+    const rule = new FunctionRule("r1", async () => ({}));
+    await assert.rejects(() => rule.evaluate({}), { name: "TypeError", message: guardMessage });
+  });
+
+  // The "not an object" clause has to stand on its own, independent of the
+  // "passed isn't a boolean" clause -- a function's `typeof` is "function",
+  // never "object", but a function can still carry its own arbitrary
+  // properties, including a boolean-valued `passed`. Without a dedicated
+  // test for this, the two clauses are never pivotal independently: every
+  // other non-object value (a string, a number, undefined) fails both
+  // clauses at once, so a mutant that drops the "not an object" clause
+  // entirely still gets caught by the "passed isn't a boolean" one.
+  it("predicate returning a function raises TypeError even if it carries a boolean passed", async () => {
+    const sneaky = () => {};
+    sneaky.passed = true;
+    const rule = new FunctionRule("r1", async () => sneaky);
+    await assert.rejects(() => rule.evaluate({}), { name: "TypeError", message: guardMessage });
+  });
+
+  // Mirrors nothing in Python -- decidedBy is new to this redesign. Nothing
+  // had ever read it on a plain leaf result before this mutation-testing
+  // pass; it must default to empty, the same "absence is the signal" idiom
+  // subResults already uses.
+  it("decidedBy defaults to empty for a leaf result", async () => {
+    const rule = pass("r1");
+    const result = await rule.evaluate({});
+    assert.deepEqual(result.decidedBy, []);
+  });
 });
 
 describe("AndRule", () => {
@@ -129,6 +175,14 @@ describe("AndRule", () => {
     const result = await new AndRule("and1", []).evaluate({});
     assert.equal(result.passed, true);
   });
+
+  // The constant is no longer wired into construction (ShortCircuitEvaluator
+  // hardcodes its own vacuousResult internally), but it's kept as a pinned,
+  // directly-readable guarantee -- nothing had ever read it before this
+  // mutation-testing pass.
+  it("VACUOUS_RESULT pins the vacuous-pass fact", () => {
+    assert.equal(AndRule.VACUOUS_RESULT, true);
+  });
 });
 
 describe("OrRule", () => {
@@ -172,6 +226,11 @@ describe("OrRule", () => {
   it("empty rule list vacuously fails", async () => {
     const result = await new OrRule("or1", []).evaluate({});
     assert.equal(result.passed, false);
+  });
+
+  // See the matching AndRule test above for why this pin exists.
+  it("VACUOUS_RESULT pins the vacuous-fail fact", () => {
+    assert.equal(OrRule.VACUOUS_RESULT, false);
   });
 
   // Not Python-mirrored -- added to kill a mutation-testing survivor: no

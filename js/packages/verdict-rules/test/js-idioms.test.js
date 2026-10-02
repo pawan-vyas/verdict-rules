@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { inspect } from "node:util";
 import { describe, it } from "node:test";
 
-import { AndRule, FunctionRule, OrRule, RulesEngine, UnknownLookupError } from "../dist/index.js";
+import { AndRule, FunctionRule, NotRule, OrRule, RulesEngine, UnknownLookupError } from "../dist/index.js";
 import { fail, pass } from "./helpers.js";
 
 /**
@@ -98,6 +98,21 @@ describe("console.log / util.inspect representation", () => {
   it("OrRule shows its group when present", () => {
     const rule = new OrRule("any", [pass("a")], "checkout");
     assert.equal(inspect(rule), 'OrRule "any" (checkout) — 1 sub-rule(s)');
+  });
+
+  // NotRule shipped alongside AndRule/OrRule but was missing from this
+  // describe block entirely -- its own inspect-custom method had never been
+  // exercised by any test (StrykerJS flagged the method body as zero
+  // coverage, not just a surviving mutant).
+  it("NotRule shows its name", () => {
+    const rule = new NotRule("not1", pass("inner"));
+    assert.equal(rule.toString(), 'NotRule "not1"');
+    assert.equal(inspect(rule), 'NotRule "not1"');
+  });
+
+  it("NotRule shows its group when present", () => {
+    const rule = new NotRule("not1", pass("inner"), "g1");
+    assert.equal(inspect(rule), 'NotRule "not1" (g1)');
   });
 
   it("RulesEngine shows its rule and group counts", () => {
