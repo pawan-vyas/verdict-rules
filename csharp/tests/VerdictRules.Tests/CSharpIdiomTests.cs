@@ -168,6 +168,66 @@ public class SequentialEvaluatorIdiomTests
         Assert.False(result.Passed); // decider's own second-call answer, not vacuousResult
         Assert.Equal(new[] { "a" }, result.SubResults.Select(r => r.RuleName));
     }
+
+    /// <summary>
+    /// <see cref="SequentialEvaluator{TContext}.EvaluateAsync"/>'s own generic
+    /// <see cref="RuleResult.DecidedBy"/> rule, exercised directly rather than
+    /// through <see cref="AndRule{TContext}"/>/<see cref="OrRule{TContext}"/>
+    /// (which override it via <see cref="ShortCircuitEvaluator{TContext}"/>
+    /// instead) -- a custom decider that commits as soon as it has seen two
+    /// passes among four sub-rules, with two left unevaluated: the generic
+    /// rule's own "decided with items still unevaluated" branch names just
+    /// the one sub-result that flipped the verdict, not every sub-result seen
+    /// so far.
+    /// </summary>
+    [Fact]
+    public async Task EarlyDecisionWithItemsStillUnevaluatedNamesOnlyTheTriggeringSubResult()
+    {
+        var passCount = 0;
+        var evaluator = new SequentialEvaluator<IReadOnlyDictionary<string, object?>>(
+            decider: (latest, _, _) => latest.Passed && ++passCount == 2 ? true : null,
+            vacuousResult: false);
+
+        var result = await evaluator.EvaluateAsync(
+            "commits-on-second-pass",
+            new IRule<IReadOnlyDictionary<string, object?>>[]
+            {
+                Rules.Pass("a"), Rules.Pass("b"), Rules.Pass("c"), Rules.Pass("d"),
+            },
+            Rules.Empty);
+
+        Assert.True(result.Passed);
+        Assert.Equal(new[] { "a", "b" }, result.SubResults.Select(r => r.RuleName)); // c, d never evaluated
+        Assert.Equal(new[] { "b" }, result.DecidedBy.Select(r => r.RuleName)); // only the trigger, not [a, b]
+    }
+
+    /// <summary>
+    /// The companion case the generic rule's own count-based check (<c>soFar.Count
+    /// == total</c>) cannot distinguish from a post-loop fallback: a decider that
+    /// commits non-null during the loop's own <i>final</i> iteration, rather than
+    /// only once the loop finishes and falls through to the separate fallback
+    /// branch. <see cref="RuleResult.DecidedBy"/> still names every evaluated
+    /// sub-result here, exactly as the exhaustion case does -- proving the
+    /// in-loop "decided, and it happened to be everything" branch is handled
+    /// the same as true exhaustion, not conflated with the "still unevaluated"
+    /// branch above.
+    /// </summary>
+    [Fact]
+    public async Task EarlyDecisionThatLandsExactlyOnTheLastItemNamesEveryEvaluatedSubResult()
+    {
+        var evaluator = new SequentialEvaluator<IReadOnlyDictionary<string, object?>>(
+            decider: (latest, _, _) => latest.Passed ? true : null,
+            vacuousResult: false);
+
+        var result = await evaluator.EvaluateAsync(
+            "commits-in-loop-on-the-last-item",
+            new IRule<IReadOnlyDictionary<string, object?>>[] { Rules.Fail("a"), Rules.Fail("b"), Rules.Pass("c") },
+            Rules.Empty);
+
+        Assert.True(result.Passed);
+        Assert.Equal(new[] { "a", "b", "c" }, result.SubResults.Select(r => r.RuleName)); // every rule evaluated
+        Assert.Equal(new[] { "a", "b", "c" }, result.DecidedBy.Select(r => r.RuleName)); // all of it, not just "c"
+    }
 }
 
 /// <summary>

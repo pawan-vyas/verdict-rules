@@ -407,6 +407,24 @@ public class DecidedByTests
         var result = await rule.EvaluateAsync(Rules.Empty);
         Assert.Empty(result.DecidedBy);
     }
+
+    /// <summary>
+    /// No shipped composite ever reads a leaf's own <see cref="RuleResult.DecidedBy"/>
+    /// (every assertion above reads a composite's), so this is the only place
+    /// that proves <c>FunctionRule</c>'s own leaf result -- built via
+    /// <c>new RuleResult(Name, outcome.Passed, outcome.Detail, outcome.Data)</c>,
+    /// never passing a <c>decidedBy</c> argument at all -- actually falls
+    /// through to <see cref="RuleResult.DecidedBy"/>'s <c>decidedBy ?? []</c>
+    /// default rather than surfacing the constructor's raw <see langword="null"/>
+    /// default untouched.
+    /// </summary>
+    [Fact]
+    public async Task ALeafResultDefaultsDecidedByToEmptyRatherThanNull()
+    {
+        var result = await Rules.Pass("leaf").EvaluateAsync(Rules.Empty);
+        Assert.NotNull(result.DecidedBy);
+        Assert.Empty(result.DecidedBy);
+    }
 }
 
 /// <summary>

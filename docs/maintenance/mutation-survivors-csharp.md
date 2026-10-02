@@ -6,94 +6,95 @@
 > [Stryker.NET](https://stryker-mutator.io/docs/stryker-net/introduction/)
 > found that the test suite didn't catch, and what happened to it.
 
-## Current status: ten mutants documented below, everything else killed
+## Current status: eleven mutants documented below, everything else killed
 
 This record was rewritten from a fresh run, not patched -- the previous
-version (93.64%, 7 equivalent survivors) described the pre-redesign,
-hand-rolled `AndRule`/`OrRule`/`FunctionRule` implementations, which no
-longer exist in that form. The
+version (93.9%, 10 survivors) described the code as it stood right after the
 [composite-rule-and-leaves redesign](../../.agents/plans/composite-rule-and-leaves-redesign/README.md)
-replaced them with `SequentialEvaluator`/`ShortCircuitEvaluator`
-composition, a shipped `NotRule`, and `PredicateOutcome`/`RulePredicate`
--- none of which had ever been through mutation testing before this run.
-Every survivor below was re-investigated from scratch against the
-current source; none of the old doc's reasoning was carried over without
-re-verifying it still applies to the rebuilt code.
+landed, before `RuleResult.DecidedBy` existed and before the three static
+accessor pairs it replaced (`AndRule.Failed`/`Passing`, `OrRule.Passed`/`Failing`)
+were removed. Neither `RuleResult.DecidedBy` itself, `SequentialEvaluator`'s
+generic computation of it, nor `ShortCircuitEvaluator`'s `stopOn`-aware
+override of it (see that plan's §3d) had ever been through mutation testing
+before this run. Every survivor below was re-investigated from scratch
+against the current source; the two carried-forward equivalence findings
+(the `ConfigureAwait` class and the `ShortCircuitEvaluator.cs` line 46
+coverage-attribution artifact) were re-verified against the current code
+rather than assumed to still apply unchanged.
 
 The run (`csharp/src/VerdictRules/` via
 [`scripts/run_mutation_csharp.sh`](../../scripts/run_mutation_csharp.sh),
-Stryker.NET 5.0.0, 220 mutants across the package's thirteen source
-files) started from a first pass against the suite as it stood before
-this work: 38 `CompileError`, 17 `Ignored`, 165 scored, 112 killed, 53
-undetected (67.9%) -- 11 `Survived` plus 42 `NoCoverage`, almost all of
-it concentrated in code this redesign introduced or rebuilt and that had
-never been mutation-tested at all (`AndRule.Failed`/`Passing`,
-`OrRule.Passed`/`Failing`, `PredicateOutcome.ToString`/`DebuggerDisplay`,
-`SequentialEvaluator`'s own post-loop fallback and `ToString`,
-`NotRule<TContext>`'s own cancellation check, and `RunResult.FailingLeaves`).
-43 of those 53 were real gaps; each got a new test that kills it (21
-tests total, several killing more than one mutant), and a re-run
-confirmed 155/165 scored mutants detected (93.9%). The remaining 10
-survivors are documented below: 9 equivalent, and 1 that is neither
-equivalent nor a real gap -- a Stryker coverage-analysis blind spot,
-investigated and confirmed already caught by the existing suite when run
-without coverage-based test selection.
+Stryker.NET 5.0.0, 214 mutants across the package's fourteen source files)
+started from a first pass against the suite as it stood before this work: 35
+`CompileError`, 18 `Ignored`, 161 scored, 147 killed, 14 undetected (91.3%).
+Of those 14, two were real gaps, both concentrated in exactly the code this
+mutation run exists to exercise for the first time:
 
-## The 43 real gaps, grouped by what exposed them, and the tests that now kill them
+- `RuleResult.cs`'s own `DecidedBy` default (`decidedBy ?? []`) had never
+  been read on a bare leaf result anywhere in the suite -- every existing
+  `DecidedBy` assertion reads a *composite's* result (`AndRule`/`OrRule`/
+  `NotRule`), never a plain `FunctionRule` leaf's.
+- `SequentialEvaluator.cs`'s generic `DecidedBy` computation for an
+  early, in-loop decision (`soFar.Count == rules.Count ? soFar : [latest]`)
+  had never been exercised directly through `SequentialEvaluator` with a
+  custom decider that decides early with sub-rules still unevaluated, nor
+  with one that decides in-loop exactly on the last item -- the only
+  existing direct-`SequentialEvaluator` test exercises its *post-loop
+  fallback*, a different branch entirely.
+
+Each got a new test that kills it (two tests total). A re-run confirmed
+150/161 scored mutants detected (93.2%). The remaining 11 survivors are
+documented below: 9 in one `ConfigureAwait` equivalence class, and 2 that
+are a single, already-understood Stryker coverage-attribution artifact
+carried forward from the prior run and re-confirmed against the current code.
+
+## The two real gaps, and the tests that now kill them
 
 | Survivor | Mutation | Killed by |
 | :-- | :-- | :-- |
-| `AndRule.cs` line 52 (`Failed`, 5 mutants: both `Conditional` branches, a `Logical` `&&`->`\|\|`, an `Equality` `>0`->`>=0`, and a `LogicalNotExpression` un-negation) | `AndRule.Failed` never called by any test -- the whole static helper (§3d of the redesign plan) shipped with zero coverage | `RuleTests.cs`: `AndRuleTests.FailedReturnsTheDecisiveFailingSubResult`, `FailedReturnsNullWhenEverySubRulePassed`, `FailedReturnsNullForAVacuousPass` -- the last one specifically proves no exception is thrown when `SubResults` is empty, which is what the `Logical`/`Equality` mutants on the `Count > 0` guard would otherwise unmask |
-| `AndRule.cs` line 61 (`Passing`, 4 mutants: both `Conditional` branches, an `Equality` `is null`->`is not null`, and a `Linq` `Take()`->`Skip()`) | `AndRule.Passing` never called by any test | `RuleTests.cs`: `AndRuleTests.PassingReturnsEverySubResultWhenAllPassed`, `PassingExcludesTheDecisiveFailure` |
-| `OrRule.cs` line 50 (`Passed`, 4 mutants: both `Conditional` branches, a `Logical` `&&`->`\|\|`, an `Equality` `>0`->`>=0`) | `OrRule.Passed` never called by any test | `RuleTests.cs`: `OrRuleTests.PassedReturnsTheDecisivePassingSubResult`, `PassedReturnsNullWhenEverySubRuleFailed`, `PassedReturnsNullForAVacuousFail` |
-| `OrRule.cs` line 59 (`Failing`, 4 mutants: both `Conditional` branches, an `Equality` `is null`->`is not null`, and a `Linq` `Take()`->`Skip()`) | `OrRule.Failing` never called by any test | `RuleTests.cs`: `OrRuleTests.FailingReturnsEverySubResultWhenAllFailed`, `FailingExcludesTheDecisivePass` |
-| `NotRuleT.cs` line 41, `cancellationToken.ThrowIfCancellationRequested();` deleted from `NotRule<TContext>.EvaluateAsync`'s own entry check | Every prior `NotRule` test used a `FunctionRule`-based wrapped rule, which double-checks cancellation on its own entry -- the same blind spot the pre-redesign `AndRule`/`OrRule` cancellation survivors had, now reproduced in the one new composite that has its own unconditional check to prove | `GenericsTests.cs`: `GenericCancellationTests.NotRuleOfTChecksCancellationBeforeEvaluatingEvenWhenTheWrappedRuleDoesNotCheckItself`, built on the same `NonCheckingRule<TContext>` test double the earlier `AndRule`/`OrRule`/`RulesEngine` cancellation tests use |
-| `RunResult.cs` line 38, `Leaves.Where(l => !l.Passed)` negation removed | No test ever read `RunResult.FailingLeaves` (as opposed to `RuleResult.FailingLeaves`, which is extensively tested) with a genuine mix of passing and failing rules -- an all-pass or all-fail run can't tell "every leaf" and "only the failing ones" apart | `EngineTests.cs`: `RunAllTests.FailingLeavesIsOnlyTheFailingSubsetOfLeaves` |
-| `SequentialEvaluator.cs` line 75, the null-coalescing fallback (`decider(...) ?? vacuousResult`) replaced with just `vacuousResult` | `ShortCircuitEvaluator`'s own decider always resolves by the last sub-rule (see the equivalent-mutant investigation below for why), so nothing exercising `AndRule`/`OrRule` alone ever reaches this line; only a custom decider composing `SequentialEvaluator` directly, one that can genuinely decline to commit even on the last result, does | `CSharpIdiomTests.cs`: `SequentialEvaluatorIdiomTests.PostLoopFallbackConsultsTheDeciderRatherThanJumpingStraightToVacuousResult` -- a decider that counts its own calls, declines on the first (in-loop) call and commits to a value *different from* `vacuousResult` on the second (fallback) call, proving the fallback line actually re-invokes the decider rather than jumping straight to the sentinel |
-| `SequentialEvaluator.cs` line 79, `ToString()` blanked | `SequentialEvaluator`/`ShortCircuitEvaluator` are never referenced directly anywhere in the suite -- every prior test reached them only through `AndRule`/`OrRule`, which never calls `ToString()` on the evaluator it holds | `DiagnosticsTests.cs`: `ToStringTests.SequentialEvaluatorShowsItsContextType`, `ShortCircuitEvaluatorShowsItsContextTypeAndStopOn` |
-| `PredicateOutcome.cs` line 40 (`ToString()`, 12 mutants across both `Conditional` branches of each of the two `Passed ? "PASS" : "FAIL"` occurrences, the `Detail.Length != 0` equality flip, and four `"PASS"`/`"FAIL"`/`$""` string blankings) | `PredicateOutcome` is a brand-new type (§2a of the redesign plan) that shipped with no `ToString()` coverage at all | `DiagnosticsTests.cs`: `ToStringTests.PredicateOutcomeShowsThePassOutcomeWithNoDetail`, `ShowsTheFailOutcomeWithNoDetail`, `ShowsThePassOutcomeWithDetail`, `ShowsTheFailOutcomeWithDetail` (all four combinations of `Passed` x "has detail", mirroring the pattern `RuleResult.ToString()` already needed) |
-| `PredicateOutcome.cs` line 44 (`DebuggerDisplay`, 9 mutants across the same shape as line 40 plus a literal `"Stryker was here!"` swap) | Same as above -- no `DebuggerDisplay` coverage at all | `DiagnosticsTests.cs`: `PredicateOutcomeDebuggerDisplayTests.PredicateOutcomeDebuggerDisplayOmitsDetailWhenEmpty`, `PredicateOutcomeDebuggerDisplayShowsDetailWhenPresent` -- one `Passed` value each is enough here, the same diagonal-pair shape `RuleResult`'s own `DebuggerDisplay` tests already use |
+| `RuleResult.cs` line 72, `decidedBy ?? []` with the `?? []` removed (leaving the bare, nullable `decidedBy` parameter assigned directly) | No test ever read `DecidedBy` on a leaf result -- `FunctionRule<TContext>.EvaluateAsync` (`FunctionRuleT.cs` line 48) constructs its `RuleResult` without passing `decidedBy` at all, relying entirely on this default, and nothing exercised that path directly | `RuleTests.cs`: `DecidedByTests.ALeafResultDefaultsDecidedByToEmptyRatherThanNull` -- evaluates a bare `Rules.Pass("leaf")` and asserts `DecidedBy` is non-null and empty, rather than assuming the default is only ever reached through a composite's own vacuous case (which already has its own coverage) |
+| `SequentialEvaluator.cs` line 81, `soFar.Count == rules.Count ? soFar : [latest]`, both `Conditional` branches (force-`true`, force-`false`) | The only existing direct-`SequentialEvaluator` test (`SequentialEvaluatorIdiomTests.PostLoopFallbackConsultsTheDeciderRatherThanJumpingStraightToVacuousResult`) exercises the *post-loop fallback* at line 87, a separate line that unconditionally sets `decidedBy: soFar` -- it never reaches this line at all, since its decider always declines (`null`) during the loop itself | `CSharpIdiomTests.cs`: `SequentialEvaluatorIdiomTests.EarlyDecisionWithItemsStillUnevaluatedNamesOnlyTheTriggeringSubResult` (a decider that commits in-loop with sub-rules still unevaluated -- kills the force-`true` mutant, which would wrongly report every sub-result seen so far instead of just the trigger) and `EarlyDecisionThatLandsExactlyOnTheLastItemNamesEveryEvaluatedSubResult` (a decider that commits in-loop on exactly the last sub-rule, `soFar.Count == rules.Count` by coincidence rather than via the fallback -- kills the force-`false` mutant, which would wrongly report only the last item instead of every evaluated sub-result) |
 
-## The eight `ConfigureAwait(false)` mutants
+## The nine `ConfigureAwait(false)` mutants
 
 | Location | Mutation |
 | :-- | :-- |
 | `FunctionRuleT.cs` line 47 | `.ConfigureAwait(false)` -> `.ConfigureAwait(true)` |
-| `NotRuleT.cs` line 42 | `.ConfigureAwait(false)` -> `.ConfigureAwait(true)` |
-| `SequentialEvaluator.cs` line 67 | `.ConfigureAwait(false)` -> `.ConfigureAwait(true)` |
+| `NotRuleT.cs` line 50 | `.ConfigureAwait(false)` -> `.ConfigureAwait(true)` |
+| `SequentialEvaluator.cs` line 70 | `.ConfigureAwait(false)` -> `.ConfigureAwait(true)` |
+| `ShortCircuitEvaluator.cs` line 64 | `.ConfigureAwait(false)` -> `.ConfigureAwait(true)` |
 | `RulesEngineT.cs` line 75 (`RunAllAsync`) | `.ConfigureAwait(false)` -> `.ConfigureAwait(true)` |
 | `RulesEngineT.cs` line 102 (`TryRunNamedAsync`) | `.ConfigureAwait(false)` -> `.ConfigureAwait(true)` |
 | `RulesEngineT.cs` line 113 (`RunNamedAsync`) | `.ConfigureAwait(false)` -> `.ConfigureAwait(true)` |
 | `RulesEngineT.cs` line 142 (`TryRunGroupAsync`) | `.ConfigureAwait(false)` -> `.ConfigureAwait(true)` |
 | `RulesEngineT.cs` line 158 (`RunGroupAsync`) | `.ConfigureAwait(false)` -> `.ConfigureAwait(true)` |
 
-This is the same equivalence class the pre-redesign record already
-investigated and documented in depth, carried forward rather than
-rediscovered: `ConfigureAwait(false)` on every library `await` is a
-documented convention of this package (`csharp/AGENTS.md`), kept to
-avoid a deadlock risk in a caller with a single-threaded
-`SynchronizationContext`. Flipping it to `true` changes no value any
-consumer can observe through this package's public contract -- not a
-`RuleResult`/`RunResult` field, not an exception's type or message, not
-evaluation order, not which sub-rules run before a cancellation or a
-short-circuit. The only thing it can possibly change is which
-`SynchronizationContext`, if any, a continuation is marshalled through,
-a question the pre-redesign investigation built a dedicated test for
-(a custom `SynchronizationContext` counting its own `Post` calls, paired
-with a sub-rule that genuinely suspends) and found to be sensitive to
-unrelated thread-pool warm-up state rather than this package's own
-logic -- see that investigation's full writeup, preserved below.
+This is the same equivalence class the pre-redesign record first
+investigated in depth, carried forward rather than rediscovered:
+`ConfigureAwait(false)` on every library `await` is a documented convention
+of this package (`csharp/AGENTS.md`), kept to avoid a deadlock risk in a
+caller with a single-threaded `SynchronizationContext`. Flipping it to
+`true` changes no value any consumer can observe through this package's
+public contract -- not a `RuleResult`/`RunResult` field, not an exception's
+type or message, not evaluation order, not which sub-rules run before a
+cancellation or a short-circuit. The only thing it can possibly change is
+which `SynchronizationContext`, if any, a continuation is marshalled
+through, a question a dedicated investigation (preserved below) built a
+real test for and found to be sensitive to unrelated thread-pool warm-up
+state rather than this package's own logic.
 
-The locations changed with the redesign -- `AndRuleT.cs`/`OrRuleT.cs`
-no longer `await` anything themselves (they forward straight to a
-shared `ShortCircuitEvaluator`, which is where the `await` now lives,
-in `SequentialEvaluator.cs`), and `FunctionRuleT.cs`/`NotRuleT.cs` gained
-their own `await` for the first time (`FunctionRule<TContext>.EvaluateAsync`
-used to return the predicate's own `Task<RuleResult>` unchanged, with no
-`await` of its own at all, per §2a of the redesign plan) -- but the
-reasoning above is about `ConfigureAwait`'s own semantics, not about
-which type happens to contain the call, so it generalizes to every new
-site without needing to be re-proven from scratch.
+`ShortCircuitEvaluator.cs` line 64 is the one genuinely new site in this
+list: `ShortCircuitEvaluator<TContext>` previously had no `EvaluateAsync` of
+its own at all (`AndRule`/`OrRule` called straight through to
+`SequentialEvaluator`) -- it gained one specifically to recompute
+`DecidedBy` after delegating (§3d of the redesign plan), and that new
+method's own `await _inner.EvaluateAsync(...)` carries a `ConfigureAwait(false)`
+like every other `await` in this package. The reasoning above is about
+`ConfigureAwait`'s own semantics, not about which type happens to contain
+the call, so it applies here without needing to be re-proven from scratch --
+confirmed anyway, the same way as every other site: no `DecidedBy`,
+`Passed`, `SubResults`, `Detail`, or `Data` on the returned `RuleResult`
+depends on which continuation context resumes the `await`.
 
 <details>
 <summary>Full investigation, preserved from the pre-redesign record</summary>
@@ -135,7 +136,14 @@ investigation backs with more than inconvenience.
 
 </details>
 
-## One new genuinely equivalent mutant: `ShortCircuitEvaluator.cs` line 44
+## Two survivors, one mechanism: `ShortCircuitEvaluator.cs` lines 44 and 46
+
+Both re-verified against the current source by hand-applying the mutation
+and running the full `dotnet test` suite (143 tests, not Stryker's
+coverage-optimized subset) -- the same method the prior record used, redone
+rather than assumed.
+
+### Line 44, genuinely equivalent
 
 ```csharp
 return soFar.Count == total ? !stopOn : null;
@@ -146,7 +154,7 @@ the constant `false`, so the expression always evaluates to `null`
 regardless of whether the sub-rule list is actually exhausted. This is
 provably indistinguishable from the original, not merely hard to
 trigger: `SequentialEvaluator.EvaluateAsync`'s own post-loop fallback
-(line 75) re-invokes the *exact same decider* with the *exact same
+(line 87) re-invokes the *exact same decider* with the *exact same
 arguments* (`soFar[^1]`, `soFar`, `rules.Count`) whenever the loop
 finishes without an earlier verdict. Since this decider is a pure
 closure over `stopOn` with no side effects, that second call reaches
@@ -155,54 +163,51 @@ to `?? vacuousResult`. `ShortCircuitEvaluator`'s constructor always sets
 `vacuousResult: !stopOn` (line 46) -- exactly the value the unmutated
 ternary would have returned directly. So whether the `!stopOn` comes
 from the ternary's own true branch or from the fallback's `vacuousResult`,
-the final `RuleResult` carries the same `Passed` value and the same
-`SubResults` (built identically in the loop body regardless of what the
-decider returns). No input through `ShortCircuitEvaluator`'s public
+the final `RuleResult`'s `Passed` carries the same value and `SubResults`
+is built identically in the loop body regardless of what the decider
+returns. `ShortCircuitEvaluator.EvaluateAsync` separately recomputes
+`DecidedBy` from `result.SubResults` after delegating (lines 65-69), never
+from whatever the decider itself returned, so this mutation can't leak
+into `DecidedBy` either. No input through `ShortCircuitEvaluator`'s public
 surface can make the mutated and original code disagree.
 
-Verified empirically, not just argued: the mutation was hand-applied to
-`ShortCircuitEvaluator.cs`, and a full `dotnet test` run (all 142 tests,
-not Stryker's coverage-optimized subset) passed without a single
-failure, confirming no test -- existing or new -- can distinguish the
-two.
+Verified empirically again this run: hand-applied to `ShortCircuitEvaluator.cs`,
+full `dotnet test` (143 tests) passed without a single failure.
 
-## One survivor that is neither equivalent nor a real gap: `ShortCircuitEvaluator.cs` line 46
+### Line 46, neither equivalent nor a real gap -- the same coverage-attribution artifact as before
 
 ```csharp
 vacuousResult: !stopOn);
 ```
 
 Stryker's `LogicalNotExpression` mutation here (`!stopOn` -> `stopOn`)
-genuinely changes behavior -- confirmed empirically by hand-applying it
-and running the full `dotnet test` suite (not Stryker's coverage-based
-subset): four tests fail, including `AndRuleTests.EmptyRuleListVacuouslyPasses`
-and `OrRuleTests.EmptyRuleListVacuouslyFails`, exactly the tests that
-pin `AndRule`/`OrRule`'s own documented vacuous-truth constants
-(`AndRule.VacuousResult`/`OrRule.VacuousResult`, §3a of the redesign
-plan). This is not equivalence by any definition this project uses.
+genuinely changes behavior -- confirmed empirically again this run by
+hand-applying it and running the full `dotnet test` suite (not Stryker's
+coverage-based subset): the same four tests fail as before,
+`AndRuleTests.EmptyRuleListVacuouslyPasses`, `OrRuleTests.EmptyRuleListVacuouslyFails`,
+`RunGroupTests.EmptyCompositeStillPassesVacuously`, and
+`MixedCompositeTreeTests.AGenuinelyVacuousCompositeNestedInsideALargerFailingTree`
+-- exactly the tests that pin `AndRule`/`OrRule`'s own documented
+vacuous-truth constants (`AndRule.VacuousResult`/`OrRule.VacuousResult`,
+§3a of the redesign plan). This is not equivalence by any definition this
+project uses.
 
-It survived Stryker's actual run anyway, and re-survived identically
-after every new test above was added, for a reason specific to this
-tool's coverage-based test selection rather than anything about the
-test suite's power: `AndRule<TContext>`/`OrRule<TContext>` each hold a
-`private static readonly ShortCircuitEvaluator<TContext> Evaluator`
-field (one shared instance per closed generic type, constructed once).
-C#'s static-field initializer for a given closed generic type runs
-exactly once per process, triggered by whichever test happens to be the
-*first* in the whole suite to touch that specific closed type. Stryker's
-coverage-capture pass records only that first-toucher as "covering" the
-initializer line -- every later test that constructs a new `AndRule`/`OrRule`
-and depends on the *value* the field already holds is, from Stryker's
-instrumentation's point of view, not touching that line at all, because
-it genuinely isn't re-executing it. When Stryker then re-runs just the
-(small, coverage-selected) subset of tests it believes cover a given
-mutant, the tests that would actually catch this one -- the vacuous-result
-assertions -- are never in that subset, because none of them happened to
-be the first `AndRule`/`OrRule` test the suite ran. Confirmed directly:
-mutant 218's own `coveredBy` list (inspected in the raw
-`mutation-report.json`) consists entirely of cancellation and exception-
-propagation tests that construct an `AndRule`/`OrRule` early, none of
-which assert anything about the vacuous case.
+It survived Stryker's actual run anyway, for the same reason documented
+previously: `AndRule<TContext>`/`OrRule<TContext>` each hold a
+`private static readonly ShortCircuitEvaluator<TContext> Evaluator` field
+(one shared instance per closed generic type, constructed once). C#'s
+static-field initializer for a given closed generic type runs exactly once
+per process, triggered by whichever test happens to be the *first* in the
+whole suite to touch that specific closed type. Stryker's coverage-capture
+pass records only that first-toucher as "covering" the initializer line --
+every later test that constructs a new `AndRule`/`OrRule` and depends on the
+*value* the field already holds is, from Stryker's instrumentation's point
+of view, not touching that line at all, because it genuinely isn't
+re-executing it. When Stryker then re-runs just the (small,
+coverage-selected) subset of tests it believes cover a given mutant, the
+tests that would actually catch this one -- the vacuous-result assertions
+-- are never in that subset, because none of them happened to be the first
+`AndRule`/`OrRule` test the suite ran.
 
 No new test closes this, because the mechanism is about *when* a
 one-time static initializer runs relative to Stryker's fixed
@@ -210,15 +215,12 @@ coverage-capture ordering, not about what the suite asserts -- any new
 vacuous-result test would need to already be the first `AndRule`/`OrRule`
 test the suite happens to run to be included in Stryker's coverage set
 for this mutant, which isn't something a test can control. The behavior
-this mutation breaks is already correctly pinned by
-`AndRuleTests.EmptyRuleListVacuouslyPasses`, `OrRuleTests.EmptyRuleListVacuouslyFails`,
-`RunGroupTests.EmptyCompositeStillPassesVacuously`, and
-`MixedCompositeTreeTests.AGenuinelyVacuousCompositeNestedInsideALargerFailingTree`
--- proven by running the full suite (not Stryker's subset) against the
-hand-applied mutation and watching exactly those four fail. If Stryker
-or its coverage-analysis mode changes how it attributes coverage for
-lazily-initialized static fields in a future version, re-run and confirm
-whether this one still needs its own section.
+this mutation breaks is already correctly pinned by the four tests named
+above, re-proven by hand-applying the mutation and watching exactly those
+four fail against the full suite. If Stryker or its coverage-analysis mode
+changes how it attributes coverage for lazily-initialized static fields in
+a future version, re-run and confirm whether this one still needs its own
+section.
 
 If a future run finds another mutant genuinely indistinguishable from
 the original (no input would make the mutated and original code
