@@ -55,8 +55,17 @@ testing (now gone). JS/TS and Dart haven't had a first pass yet.
 Sequencing stays: mutation-test the now-settled shape once (not
 twice), then the doc-verbosity audit (~200 files, scope confirmed,
 currently uneven — see git history), then the cross-language API
-concept map
-last.
+concept map last.
+
+**Doc-verbosity audit methodology, recorded ahead of starting it**:
+strictly one file at a time, top to bottom, full sweep — no grepping
+or sampling to find "the verbose parts." The audit is also expected to
+surface further over-verbosity optimization patterns beyond what's
+already known, not just apply a single pre-decided fix — see
+[`.agents/memory/terse-tabulated-summaries-over-prose.md`](../../memory/terse-tabulated-summaries-over-prose.md)
+for the one pattern already confirmed (tables over prose for PR/doc
+summaries), explicitly flagged as one sample, not a template to copy
+blindly into every doc.
 
 ## 1 · Origin
 
