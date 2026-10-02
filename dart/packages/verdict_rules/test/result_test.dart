@@ -236,5 +236,70 @@ void main() {
       // (never evaluated) not appearing at all.
       expect(result.failingLeaves, [a3Result]);
     });
+
+    test(
+        'NotRule wrapping a short-circuited composite with an earlier '
+        'passing sibling',
+        () async {
+      // Stacks everything that could plausibly go wrong at once: an
+      // earlier AndRule sibling that passes despite an internal failure
+      // (ordering independence -- the real failure comes later), NotRule
+      // wrapping a genuine OrRule rather than a bare leaf, that wrapped
+      // OrRule short-circuiting internally, and the outer AndRule *also*
+      // short-circuiting -- two independent prunings at different depths
+      // in the same tree.
+      final innerOr =
+          OrRule('inner_or', [_fail('w'), _pass('x')]); // passes
+
+      final innerOrForNot = OrRule(
+          'inner_or_for_not', [_pass('p'), _pass('q')]); // short-circuits
+      final notResult = NotRule('not1', innerOrForNot); // passed -> fails
+
+      final z = _pass('z'); // never reached
+
+      final root = AndRule('root', [innerOr, notResult, z]);
+      final result = await root.evaluate(const {});
+
+      expect(result.passed, isFalse);
+      expect(result.leaves.map((l) => l.ruleName).toList(), ['w', 'x', 'p']);
+      expect(
+          result.failingLeaves.map((l) => l.ruleName).toList(), ['not1']);
+    });
+
+    test(
+        'OrRule all-fail interleaves real leaves and Not fallbacks in order',
+        () async {
+      final rule = OrRule('root', [
+        _fail('a'),
+        NotRule('notB', _pass('b')),
+        _fail('c'),
+        NotRule('notD', _pass('d')),
+      ]);
+      final result = await rule.evaluate(const {});
+
+      expect(result.passed, isFalse);
+      final failing = result.failingLeaves;
+      expect(failing.map((l) => l.ruleName).toList(),
+          ['a', 'notB', 'c', 'notD']);
+      expect(identical(failing[0], result.subResults[0]), isTrue);
+      expect(identical(failing[1], result.subResults[1]), isTrue);
+    });
+
+    test(
+        'a genuinely vacuous composite nested inside a larger failing tree',
+        () async {
+      final innerOr = OrRule('inner_or', [_fail('a3'), _pass('b3')]);
+      final emptyOr = OrRule('empty_or', <Rule<Context>>[]);
+      final z = _pass('z');
+
+      final root = AndRule('root', [innerOr, emptyOr, z]);
+      final result = await root.evaluate(const {});
+
+      expect(result.passed, isFalse);
+      expect(result.leaves.map((l) => l.ruleName).toList(),
+          ['a3', 'b3', 'empty_or']);
+      expect(result.failingLeaves.map((l) => l.ruleName).toList(),
+          ['empty_or']);
+    });
   });
 }

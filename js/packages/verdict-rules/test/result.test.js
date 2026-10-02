@@ -236,4 +236,56 @@ describe("mixed composite tree", () => {
     // evaluated) not appearing at all.
     assert.deepEqual(result.failingLeaves, [a3Result]);
   });
+
+  it("NotRule wrapping a short-circuited composite with an earlier passing sibling", async () => {
+    // Stacks everything that could plausibly go wrong at once: an
+    // earlier AndRule sibling that passes despite an internal failure
+    // (ordering independence -- the real failure comes later), NotRule
+    // wrapping a genuine OrRule rather than a bare leaf, that wrapped
+    // OrRule short-circuiting internally, and the outer AndRule *also*
+    // short-circuiting -- two independent prunings at different depths
+    // in the same tree.
+    const innerOr = new OrRule("inner_or", [leaf("w", false), leaf("x", true)]); // passes
+
+    const innerOrForNot = new OrRule("inner_or_for_not", [leaf("p", true), leaf("q", true)]); // short-circuits
+    const notResult = new NotRule("not1", innerOrForNot); // passed -> fails
+
+    const z = leaf("z", true); // never reached
+
+    const root = new AndRule("root", [innerOr, notResult, z]);
+    const result = await root.evaluate({});
+
+    assert.equal(result.passed, false);
+    assert.deepEqual(result.leaves.map((l) => l.ruleName), ["w", "x", "p"]);
+    assert.deepEqual(result.failingLeaves.map((l) => l.ruleName), ["not1"]);
+  });
+
+  it("OrRule all-fail interleaves real leaves and Not fallbacks in order", async () => {
+    const rule = new OrRule("root", [
+      leaf("a", false),
+      new NotRule("notB", leaf("b", true)),
+      leaf("c", false),
+      new NotRule("notD", leaf("d", true)),
+    ]);
+    const result = await rule.evaluate({});
+
+    assert.equal(result.passed, false);
+    const failing = result.failingLeaves;
+    assert.deepEqual(failing.map((l) => l.ruleName), ["a", "notB", "c", "notD"]);
+    assert.equal(failing[0], result.subResults[0]);
+    assert.equal(failing[1], result.subResults[1]);
+  });
+
+  it("a genuinely vacuous composite nested inside a larger failing tree", async () => {
+    const innerOr = new OrRule("inner_or", [leaf("a3", false), leaf("b3", true)]);
+    const emptyOr = new OrRule("empty_or", []);
+    const z = leaf("z", true);
+
+    const root = new AndRule("root", [innerOr, emptyOr, z]);
+    const result = await root.evaluate({});
+
+    assert.equal(result.passed, false);
+    assert.deepEqual(result.leaves.map((l) => l.ruleName), ["a3", "b3", "empty_or"]);
+    assert.deepEqual(result.failingLeaves.map((l) => l.ruleName), ["empty_or"]);
+  });
 });

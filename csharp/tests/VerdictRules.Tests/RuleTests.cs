@@ -402,4 +402,66 @@ public class MixedCompositeTreeTests
         // (never evaluated) not appearing at all.
         Assert.Equal(new[] { a3Result }, result.FailingLeaves);
     }
+
+    /// <summary>
+    /// Stacks everything that could plausibly go wrong at once: an
+    /// earlier <see cref="AndRule"/> sibling that passes despite an
+    /// internal failure (ordering independence — the real failure comes
+    /// later), <see cref="NotRule"/> wrapping a genuine <see cref="OrRule"/>
+    /// rather than a bare leaf, that wrapped <see cref="OrRule"/>
+    /// short-circuiting internally, and the outer <see cref="AndRule"/>
+    /// <i>also</i> short-circuiting — two independent prunings at
+    /// different depths in the same tree.
+    /// </summary>
+    [Fact]
+    public async Task NotRuleWrappingAShortCircuitedCompositeWithAnEarlierPassingSibling()
+    {
+        var innerOr = new OrRule("inner_or", new IRule[] { Rules.Fail("w"), Rules.Pass("x") }); // passes
+
+        var innerOrForNot = new OrRule("inner_or_for_not", new IRule[] { Rules.Pass("p"), Rules.Pass("q") }); // short-circuits
+        var notResult = new NotRule("not1", innerOrForNot); // passed -> fails
+
+        var z = Rules.Pass("z"); // never reached
+
+        var root = new AndRule("root", new IRule[] { innerOr, notResult, z });
+        var result = await root.EvaluateAsync(Rules.Empty);
+
+        Assert.False(result.Passed);
+        Assert.Equal(new[] { "w", "x", "p" }, result.Leaves.Select(l => l.RuleName));
+        Assert.Equal(new[] { "not1" }, result.FailingLeaves.Select(l => l.RuleName));
+    }
+
+    [Fact]
+    public async Task OrRuleAllFailInterleavesRealLeavesAndNotFallbacksInOrder()
+    {
+        var rule = new OrRule("root", new IRule[]
+        {
+            Rules.Fail("a"),
+            new NotRule("notB", Rules.Pass("b")),
+            Rules.Fail("c"),
+            new NotRule("notD", Rules.Pass("d")),
+        });
+        var result = await rule.EvaluateAsync(Rules.Empty);
+
+        Assert.False(result.Passed);
+        var failing = result.FailingLeaves;
+        Assert.Equal(new[] { "a", "notB", "c", "notD" }, failing.Select(l => l.RuleName));
+        Assert.Same(failing[0], result.SubResults[0]);
+        Assert.Same(failing[1], result.SubResults[1]);
+    }
+
+    [Fact]
+    public async Task AGenuinelyVacuousCompositeNestedInsideALargerFailingTree()
+    {
+        var innerOr = new OrRule("inner_or", new IRule[] { Rules.Fail("a3"), Rules.Pass("b3") });
+        var emptyOr = new OrRule("empty_or", Array.Empty<IRule>());
+        var z = Rules.Pass("z");
+
+        var root = new AndRule("root", new IRule[] { innerOr, emptyOr, z });
+        var result = await root.EvaluateAsync(Rules.Empty);
+
+        Assert.False(result.Passed);
+        Assert.Equal(new[] { "a3", "b3", "empty_or" }, result.Leaves.Select(l => l.RuleName));
+        Assert.Equal(new[] { "empty_or" }, result.FailingLeaves.Select(l => l.RuleName));
+    }
 }

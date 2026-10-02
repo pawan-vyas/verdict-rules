@@ -209,3 +209,57 @@ class TestMixedCompositeTree:
         # a1/a2 (passing siblings of a3) contributing nothing and b/c
         # (never evaluated) not appearing at all.
         assert result.failing_leaves == [a3_result]
+
+    async def test_not_wrapping_a_short_circuited_composite_with_an_earlier_passing_sibling(self) -> None:
+        """Stacks everything that could plausibly go wrong at once: an
+        earlier AndRule sibling that passes despite an internal failure
+        (ordering independence -- the real failure comes later), NotRule
+        wrapping a genuine OrRule rather than a bare leaf, that wrapped
+        OrRule short-circuiting internally, and the outer AndRule *also*
+        short-circuiting -- two independent prunings at different depths
+        in the same tree."""
+        inner_or = OrRule("inner_or", [_fail("w"), _pass("x")])  # passes; w's failure doesn't matter
+
+        inner_or_for_not = OrRule("inner_or_for_not", [_pass("p"), _pass("q")])  # short-circuits at p; q never runs
+        not_result = NotRule("not1", inner_or_for_not)  # inner_or_for_not passed -> not1 fails
+
+        z = _pass("z")  # never reached -- root short-circuits on not1
+
+        root = AndRule("root", [inner_or, not_result, z])
+        result = await root.evaluate({})
+
+        assert result.passed is False
+        assert [leaf.rule_name for leaf in result.leaves] == ["w", "x", "p"]  # q and z both absent
+        assert [leaf.rule_name for leaf in result.failing_leaves] == ["not1"]
+
+    async def test_or_rule_all_fail_interleaves_real_leaves_and_not_fallbacks_in_order(self) -> None:
+        """OrRule's all-fail case, but the failing children alternate
+        between plain failing leaves and NotRule self-as-leaf fallbacks --
+        stresses that concatenation preserves order across heterogeneous
+        failing-leaf shapes, not just same-shaped ones."""
+        rule = OrRule("root", [_fail("a"), NotRule("notB", _pass("b")), _fail("c"), NotRule("notD", _pass("d"))])
+        result = await rule.evaluate({})
+
+        assert result.passed is False
+        failing = result.failing_leaves
+        assert [leaf.rule_name for leaf in failing] == ["a", "notB", "c", "notD"]
+        # 'a'/'c' are real leaves; 'notB'/'notD' are NotRule's own results,
+        # not their (passing) inner rule.
+        assert failing[0] is result.sub_results[0]
+        assert failing[1] is result.sub_results[1]
+
+    async def test_a_genuinely_vacuous_composite_nested_inside_a_larger_failing_tree(self) -> None:
+        """An empty OrRule (vacuously fails, zero children by
+        construction -- not by recursion finding nothing) as the actual
+        failing branch, alongside an earlier sibling that passes despite
+        an internal failure, and a sibling after it that never runs."""
+        inner_or = OrRule("inner_or", [_fail("a3"), _pass("b3")])  # passes; a3's failure doesn't matter
+        empty_or = OrRule("empty_or", [])  # vacuously fails, truly no children
+        z = _pass("z")  # never reached
+
+        root = AndRule("root", [inner_or, empty_or, z])
+        result = await root.evaluate({})
+
+        assert result.passed is False
+        assert [leaf.rule_name for leaf in result.leaves] == ["a3", "b3", "empty_or"]
+        assert [leaf.rule_name for leaf in result.failing_leaves] == ["empty_or"]
