@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Generic, TypeVar
 
-from verdict import AndRule, FunctionRule, Rule, RuleResult, RulesEngine
+from verdict import AndRule, FunctionRule, PredicateOutcome, Rule, RuleResult, RulesEngine
 
 TOuter = TypeVar("TOuter")
 TInner = TypeVar("TInner")
@@ -80,9 +80,9 @@ class ProjectingRule(Generic[TOuter, TInner]):
         return await self._inner.evaluate(self._project(context))
 
 
-async def _is_verified_identity(context: IdentityFlag) -> RuleResult:
+async def _is_verified_identity(context: IdentityFlag) -> PredicateOutcome:
     """Reused on both sides via `ProjectingRule`."""
-    return RuleResult(rule_name="is_verified_identity", passed=context.verified)
+    return PredicateOutcome(passed=context.verified)
 
 
 def _seller_identity_rule() -> ProjectingRule[SellerListingContext, IdentityFlag]:
@@ -95,33 +95,29 @@ def _buyer_identity_rule() -> ProjectingRule[BuyerPurchaseContext, IdentityFlag]
     return ProjectingRule(inner, lambda ctx: IdentityFlag(verified=ctx.buyer_verified))
 
 
-async def _price_floor_met(context: SellerListingContext) -> RuleResult:
-    return RuleResult(
-        rule_name="price_floor_met",
+async def _price_floor_met(context: SellerListingContext) -> PredicateOutcome:
+    return PredicateOutcome(
         passed=context.listing_price_cents >= PRICE_FLOOR_CENTS,
         detail=f"{context.listing_price_cents} vs {PRICE_FLOOR_CENTS}",
     )
 
 
-async def _category_allowed(context: SellerListingContext) -> RuleResult:
-    return RuleResult(
-        rule_name="category_allowed",
+async def _category_allowed(context: SellerListingContext) -> PredicateOutcome:
+    return PredicateOutcome(
         passed=context.category in ALLOWED_CATEGORIES,
         detail=f"{context.category!r} not in {ALLOWED_CATEGORIES}" if context.category not in ALLOWED_CATEGORIES else "",
     )
 
 
-async def _sufficient_balance(context: BuyerPurchaseContext) -> RuleResult:
-    return RuleResult(
-        rule_name="sufficient_balance",
+async def _sufficient_balance(context: BuyerPurchaseContext) -> PredicateOutcome:
+    return PredicateOutcome(
         passed=context.buyer_balance_cents >= context.purchase_amount_cents,
         detail=f"balance {context.buyer_balance_cents} vs amount {context.purchase_amount_cents}",
     )
 
 
-async def _purchase_limit_not_exceeded(context: BuyerPurchaseContext) -> RuleResult:
-    return RuleResult(
-        rule_name="purchase_limit_not_exceeded",
+async def _purchase_limit_not_exceeded(context: BuyerPurchaseContext) -> PredicateOutcome:
+    return PredicateOutcome(
         passed=context.purchase_amount_cents <= PURCHASE_LIMIT_CENTS,
         detail=f"{context.purchase_amount_cents} vs limit {PURCHASE_LIMIT_CENTS}",
     )
@@ -165,16 +161,16 @@ def build_buyer_check(buyer_id: str) -> tuple[AndRule[BuyerPurchaseContext], Rul
     return purchase_eligible, buyer_verified
 
 
-async def _high_value_flag(context: dict) -> RuleResult:
-    return RuleResult(rule_name="high_value_flag", passed=context["amount_cents"] > HIGH_VALUE_THRESHOLD_CENTS)
+async def _high_value_flag(context: dict) -> PredicateOutcome:
+    return PredicateOutcome(passed=context["amount_cents"] > HIGH_VALUE_THRESHOLD_CENTS)
 
 
-async def _blocked_country_flag(context: dict) -> RuleResult:
-    return RuleResult(rule_name="blocked_country_flag", passed=context["country"] in BLOCKED_COUNTRIES)
+async def _blocked_country_flag(context: dict) -> PredicateOutcome:
+    return PredicateOutcome(passed=context["country"] in BLOCKED_COUNTRIES)
 
 
-async def _new_seller_flag(context: dict) -> RuleResult:
-    return RuleResult(rule_name="new_seller_flag", passed=context["seller_age_days"] < NEW_SELLER_THRESHOLD_DAYS)
+async def _new_seller_flag(context: dict) -> PredicateOutcome:
+    return PredicateOutcome(passed=context["seller_age_days"] < NEW_SELLER_THRESHOLD_DAYS)
 
 
 def build_compliance_catalog() -> RulesEngine[dict]:

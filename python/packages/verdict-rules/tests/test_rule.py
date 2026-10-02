@@ -5,27 +5,27 @@ from __future__ import annotations
 import pytest
 
 from verdict.result import RuleResult
-from verdict.rule import AndRule, FunctionRule, OrRule
+from verdict.rule import AndRule, FunctionRule, OrRule, PredicateOutcome
 
 
 def _pass(name: str, data: object = None) -> FunctionRule:
     """A FunctionRule that always passes, for composing test fixtures."""
-    async def predicate(context: dict) -> RuleResult:
-        return RuleResult(rule_name=name, passed=True, data=data)
+    async def predicate(context: dict) -> PredicateOutcome:
+        return PredicateOutcome(passed=True, data=data)
     return FunctionRule(name, predicate)
 
 
 def _fail(name: str, detail: str = "") -> FunctionRule:
     """A FunctionRule that always fails, for composing test fixtures."""
-    async def predicate(context: dict) -> RuleResult:
-        return RuleResult(rule_name=name, passed=False, detail=detail)
+    async def predicate(context: dict) -> PredicateOutcome:
+        return PredicateOutcome(passed=False, detail=detail)
     return FunctionRule(name, predicate)
 
 
-async def _noop_predicate(context: dict) -> RuleResult:
+async def _noop_predicate(context: dict) -> PredicateOutcome:
     """A predicate that always passes — used where only the rule's
     name/group matter to the test, not its evaluation outcome."""
-    return RuleResult(rule_name="noop", passed=True)
+    return PredicateOutcome(passed=True)
 
 
 class TestFunctionRule:
@@ -44,9 +44,9 @@ class TestFunctionRule:
     async def test_predicate_receives_the_context(self) -> None:
         seen = {}
 
-        async def predicate(context: dict) -> RuleResult:
+        async def predicate(context: dict) -> PredicateOutcome:
             seen.update(context)
-            return RuleResult(rule_name="r1", passed=True)
+            return PredicateOutcome(passed=True)
 
         rule = FunctionRule("r1", predicate)
         await rule.evaluate({"user_id": 42})
@@ -69,6 +69,33 @@ class TestFunctionRule:
         rule = FunctionRule("over_18", _noop_predicate, group="age")
         assert repr(rule) == 'FunctionRule "over_18" (age)'
 
+    async def test_predicate_returning_the_wrong_type_raises_type_error(self) -> None:
+        """RulePredicate's annotation is only checker-enforced, never
+        runtime-enforced — an externally-authored predicate that returns
+        the wrong shape must fail loudly, not silently duck-type through."""
+
+        async def predicate(context: dict) -> PredicateOutcome:
+            return "not a PredicateOutcome"  # type: ignore[return-value]
+
+        rule = FunctionRule("r1", predicate)
+        with pytest.raises(TypeError, match="r1"):
+            await rule.evaluate({})
+
+    async def test_predicate_returning_a_rule_result_directly_raises_type_error(self) -> None:
+        """The specific regression this check closes: a predicate built
+        against the old, pre-PredicateOutcome calling convention returns a
+        RuleResult directly. RuleResult duck-types close enough to
+        PredicateOutcome (both carry `passed`/`detail`/`data`) that this
+        would otherwise silently "work" by accident instead of surfacing
+        the mismatch."""
+
+        async def predicate(context: dict) -> PredicateOutcome:
+            return RuleResult(rule_name="wrong-shape", passed=True)  # type: ignore[return-value]
+
+        rule = FunctionRule("r1", predicate)
+        with pytest.raises(TypeError, match="r1"):
+            await rule.evaluate({})
+
 
 class TestAndRule:
     async def test_all_pass_yields_pass(self) -> None:
@@ -76,52 +103,40 @@ class TestAndRule:
         result = await rule.evaluate({})
         assert result.passed is True
         assert result.rule_name == "and1"
-        assert [r.rule_name for r in result.data] == ["a", "b"]
+        assert [r.rule_name for r in result.sub_results] == ["a", "b"]
 
     async def test_one_failure_yields_fail(self) -> None:
         rule = AndRule("and1", [_pass("a"), _fail("b", detail="bad")])
         result = await rule.evaluate({})
         assert result.passed is False
         assert result.rule_name == "and1"
-        assert "b" in result.detail
-        assert "bad" in result.detail
-
-    async def test_failure_detail_strips_a_trailing_colon_when_sub_detail_is_empty(
-        self,
-    ) -> None:
-        """The failing sub-rule's own ``detail`` is empty, so the format
-        string's trailing ``": "`` separator is dangling and must be
-        stripped from the *end* of the string, not the start."""
-        rule = AndRule("and1", [_fail("b")])
-        result = await rule.evaluate({})
-        assert result.detail == "'b' failed"
-
-    async def test_failure_detail_does_not_strip_a_sub_detail_ending_in_x(
-        self,
-    ) -> None:
-        """A sub-detail that happens to end in characters the ``rstrip``
-        call's own argument contains (``X``) must survive untouched --
-        only a literal trailing ``": "`` is a separator artifact, never
-        arbitrary trailing characters from the sub-rule's own detail."""
-        rule = AndRule("and1", [_fail("b", detail="XX")])
-        result = await rule.evaluate({})
-        assert result.detail == "'b' failed: XX"
+        # AndRule's own `detail` is empty -- composing a shared
+        # ShortCircuitEvaluator means there's no per-composite channel left
+        # to build a descriptive string from a sub-rule's own name/detail
+        # (see StepDecider's signature: bool | None, nothing else). The
+        # failing sub-rule and its own detail are still fully recoverable
+        # from `sub_results`/`AndRule.failed` instead.
+        assert result.detail == ""
+        failing = AndRule.failed(result)
+        assert failing is not None
+        assert failing.rule_name == "b"
+        assert failing.detail == "bad"
 
     async def test_short_circuits_after_first_failure(self) -> None:
         calls: list[str] = []
 
-        async def tracked_pass(context: dict) -> RuleResult:
+        async def tracked_pass(context: dict) -> PredicateOutcome:
             calls.append("c")
-            return RuleResult(rule_name="c", passed=True)
+            return PredicateOutcome(passed=True)
 
         rule = AndRule("and1", [_fail("a"), FunctionRule("c", tracked_pass)])
         await rule.evaluate({})
         assert calls == []  # never reached — 'a' already failed
 
-    async def test_data_carries_sub_results_up_to_failure(self) -> None:
+    async def test_sub_results_carries_sub_results_up_to_failure(self) -> None:
         rule = AndRule("and1", [_pass("a"), _fail("b"), _pass("c")])
         result = await rule.evaluate({})
-        assert [r.rule_name for r in result.data] == ["a", "b"]
+        assert [r.rule_name for r in result.sub_results] == ["a", "b"]
 
     async def test_empty_rule_list_vacuously_passes(self) -> None:
         rule = AndRule("and1", [])
@@ -143,22 +158,24 @@ class TestOrRule:
         result = await rule.evaluate({})
         assert result.passed is True
         assert result.rule_name == "or1"
-        assert [r.rule_name for r in result.data] == ["a", "b"]
+        assert [r.rule_name for r in result.sub_results] == ["a", "b"]
 
     async def test_all_fail_yields_fail(self) -> None:
         rule = OrRule("or1", [_fail("a"), _fail("b")])
         result = await rule.evaluate({})
         assert result.passed is False
         assert result.rule_name == "or1"
-        assert result.detail == "no sub-rule passed"
-        assert [r.rule_name for r in result.data] == ["a", "b"]
+        # OrRule's own `detail` is empty, same reasoning as AndRule's -- see
+        # the comment in TestAndRule.test_one_failure_yields_fail.
+        assert result.detail == ""
+        assert [r.rule_name for r in result.sub_results] == ["a", "b"]
 
     async def test_short_circuits_after_first_pass(self) -> None:
         calls: list[str] = []
 
-        async def tracked_fail(context: dict) -> RuleResult:
+        async def tracked_fail(context: dict) -> PredicateOutcome:
             calls.append("c")
-            return RuleResult(rule_name="c", passed=False)
+            return PredicateOutcome(passed=False)
 
         rule = OrRule("or1", [_pass("a"), FunctionRule("c", tracked_fail)])
         await rule.evaluate({})
@@ -185,7 +202,7 @@ class TestExceptionPropagation:
     for the wrapper a consumer opts into if they want the opposite."""
 
     async def test_and_rule_does_not_catch_a_sub_rule_s_exception(self) -> None:
-        async def flaky(context: dict) -> RuleResult:
+        async def flaky(context: dict) -> PredicateOutcome:
             raise RuntimeError("boom")
 
         rule = AndRule("and1", [_pass("a"), FunctionRule("flaky", flaky)])
@@ -193,7 +210,7 @@ class TestExceptionPropagation:
             await rule.evaluate({})
 
     async def test_or_rule_does_not_catch_a_sub_rule_s_exception(self) -> None:
-        async def flaky(context: dict) -> RuleResult:
+        async def flaky(context: dict) -> PredicateOutcome:
             raise RuntimeError("boom")
 
         rule = OrRule("or1", [_fail("a"), FunctionRule("flaky", flaky)])

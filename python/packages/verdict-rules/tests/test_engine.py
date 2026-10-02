@@ -5,19 +5,18 @@ from __future__ import annotations
 import pytest
 
 from verdict.engine import RulesEngine
-from verdict.result import RuleResult
-from verdict.rule import AndRule, FunctionRule, OrRule
+from verdict.rule import AndRule, FunctionRule, OrRule, PredicateOutcome
 
 
 def _pass(name: str, group: str | None = None) -> FunctionRule:
-    async def predicate(context: dict) -> RuleResult:
-        return RuleResult(rule_name=name, passed=True)
+    async def predicate(context: dict) -> PredicateOutcome:
+        return PredicateOutcome(passed=True)
     return FunctionRule(name, predicate, group=group)
 
 
 def _fail(name: str, group: str | None = None) -> FunctionRule:
-    async def predicate(context: dict) -> RuleResult:
-        return RuleResult(rule_name=name, passed=False)
+    async def predicate(context: dict) -> PredicateOutcome:
+        return PredicateOutcome(passed=False)
     return FunctionRule(name, predicate, group=group)
 
 
@@ -275,7 +274,7 @@ class TestExceptionPropagation:
     catch."""
 
     async def test_run_all_does_not_catch_a_predicate_s_exception(self) -> None:
-        async def flaky(context: dict) -> RuleResult:
+        async def flaky(context: dict) -> PredicateOutcome:
             raise TimeoutError("external check unreachable")
 
         engine = RulesEngine([_pass("a"), FunctionRule("flaky", flaky), _pass("c")])
@@ -283,7 +282,7 @@ class TestExceptionPropagation:
             await engine.run_all({})
 
     async def test_run_group_does_not_catch_a_predicate_s_exception(self) -> None:
-        async def flaky(context: dict) -> RuleResult:
+        async def flaky(context: dict) -> PredicateOutcome:
             raise ValueError("bad input")
 
         engine = RulesEngine([FunctionRule("flaky", flaky, group="g")])

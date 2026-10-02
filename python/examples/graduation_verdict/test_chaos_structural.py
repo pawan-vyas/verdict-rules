@@ -27,61 +27,94 @@ NUM_PURITY_CASES = 10
 
 def _check_and_rule(rule: AndRule[Any], result: RuleResult) -> None:
     """AndRule stops at exactly the first failure, never before or after."""
-    assert isinstance(result.data, list), f"{rule.name}: AndRule result.data must be a list"
     if result.passed:
-        assert all(r.passed for r in result.data), (
+        assert all(r.passed for r in result.sub_results), (
             f"{rule.name}: AndRule passed but not every evaluated sub-rule passed"
         )
     else:
-        assert all(r.passed for r in result.data[:-1]), (
+        assert all(r.passed for r in result.sub_results[:-1]), (
             f"{rule.name}: AndRule failed but short-circuited before its real failure"
         )
-        assert result.data[-1].passed is False, (
+        assert result.sub_results[-1].passed is False, (
             f"{rule.name}: AndRule failed but its own last evaluated sub-rule passed"
         )
-    # Not `strict=True`: a short-circuited AndRule's `result.data` is shorter
-    # than `rule._rules` by design — only the sub-rules that actually ran
-    # have a result to recurse into.
-    for sub_rule, sub_result in zip(rule._rules, result.data):
+    # Not `strict=True`: a short-circuited AndRule's `result.sub_results` is
+    # shorter than `rule._rules` by design — only the sub-rules that
+    # actually ran have a result to recurse into.
+    for sub_rule, sub_result in zip(rule._rules, result.sub_results):
         _check_rule_result_tree(sub_rule, sub_result)
 
 
 def _check_or_rule(rule: OrRule[Any], result: RuleResult) -> None:
     """OrRule stops at exactly the first pass; an all-fail result ran every child."""
-    assert isinstance(result.data, list), f"{rule.name}: OrRule result.data must be a list"
     if result.passed:
-        assert all(not r.passed for r in result.data[:-1]), (
+        assert all(not r.passed for r in result.sub_results[:-1]), (
             f"{rule.name}: OrRule passed but short-circuited after its real pass"
         )
-        assert result.data[-1].passed is True, (
+        assert result.sub_results[-1].passed is True, (
             f"{rule.name}: OrRule passed but its own last evaluated sub-rule failed"
         )
     else:
-        assert all(not r.passed for r in result.data), (
+        assert all(not r.passed for r in result.sub_results), (
             f"{rule.name}: OrRule failed but one of its sub-results actually passed"
         )
     # Not `strict=True` — see the matching comment in `_check_and_rule`; an
     # OrRule that passes early also leaves `rule._rules` longer than
-    # `result.data`.
-    for sub_rule, sub_result in zip(rule._rules, result.data):
+    # `result.sub_results`.
+    for sub_rule, sub_result in zip(rule._rules, result.sub_results):
         _check_rule_result_tree(sub_rule, sub_result)
 
 
 def _check_at_least_n_rule(rule: AtLeastNRule, result: RuleResult) -> None:
-    """AtLeastNRule never short-circuits — every sub-rule always runs."""
-    assert isinstance(result.data, list), f"{rule.name}: AtLeastNRule result.data must be a list"
-    assert len(result.data) == len(rule._rules), (
-        f"{rule.name}: AtLeastNRule ran {len(result.data)} of its {len(rule._rules)} "
-        f"sub-rules — it must never short-circuit"
+    """AtLeastNRule stops exactly when its minimum is mathematically
+    decided -- as soon as enough sub-rules have passed to guarantee it,
+    or too many have failed for it to still be reachable -- never one
+    sub-rule earlier (the call wouldn't have been decidable yet) and
+    never one later (an already-decided rule kept evaluating).
+
+    `result.sub_results`' length *is* the number of sub-rules actually
+    called -- the same signal a `calls` list would give a dedicated
+    call-counter test (see `TestAtLeastNRuleShortCircuits` in
+    test_graduation_verdict.py), just read back from the result tree
+    `build_graduation_check` already produced for this chaos case
+    instead of re-instrumenting each predicate.
+    """
+    total = len(rule._rules)
+    minimum = rule._minimum
+    sub_results = result.sub_results
+
+    passed_so_far = 0
+    for index, sub_result in enumerate(sub_results):
+        passed_so_far += 1 if sub_result.passed else 0
+        remaining_after = total - (index + 1)
+        decided_true = passed_so_far >= minimum
+        decided_false = passed_so_far + remaining_after < minimum
+        is_last_evaluated = index == len(sub_results) - 1
+
+        if is_last_evaluated:
+            assert decided_true or decided_false, (
+                f"{rule.name}: AtLeastNRule stopped after {len(sub_results)} of "
+                f"{total} sub-rule(s) before its minimum ({minimum}) was "
+                f"mathematically decided either way"
+            )
+        else:
+            assert not (decided_true or decided_false), (
+                f"{rule.name}: AtLeastNRule kept evaluating past sub-rule {index} "
+                f"even though its minimum ({minimum}) was already decided there"
+            )
+
+    assert result.passed == (passed_so_far >= minimum), (
+        f"{rule.name}: AtLeastNRule's own passed verdict disagrees with the pass "
+        f"count over the sub-rules it actually evaluated"
     )
-    for sub_rule, sub_result in zip(rule._rules, result.data, strict=True):
+    for sub_rule, sub_result in zip(rule._rules, sub_results):
         _check_rule_result_tree(sub_rule, sub_result)
 
 
 def _check_function_rule(rule: FunctionRule[Any], result: RuleResult) -> None:
-    """FunctionRule is a leaf — its own result.data is never a sub-result list."""
-    assert not isinstance(result.data, list), (
-        f"{rule.name}: FunctionRule (a leaf) unexpectedly produced list-shaped data"
+    """FunctionRule is a leaf — its own result carries no sub-results."""
+    assert result.sub_results == (), (
+        f"{rule.name}: FunctionRule (a leaf) unexpectedly produced sub_results"
     )
 
 

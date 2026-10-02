@@ -12,9 +12,10 @@ import json
 from pathlib import Path
 
 import pytest
-from verdict import AndRule, FunctionRule, OrRule
+from verdict import AndRule, FunctionRule, OrRule, PredicateOutcome
 
 from graduation_verdict import (
+    AtLeastNRule,
     SubjectPolicy,
     build_graduation_check,
     load_curriculum,
@@ -96,6 +97,73 @@ class TestLanguageOrRule:
         assert result.passed is False
 
 
+def _tracked(name: str, *, passed: bool, calls: list[str]) -> FunctionRule[dict]:
+    """A `FunctionRule` that records its own name to `calls` when run --
+    the same call-counter shape test_rule.py/test_composition.py already
+    use to prove a composite's short-circuit behaviour: an entry missing
+    from `calls` means that sub-rule's predicate never ran."""
+
+    async def predicate(context: dict) -> PredicateOutcome:
+        calls.append(name)
+        return PredicateOutcome(passed=passed)
+
+    return FunctionRule(name, predicate)
+
+
+class TestAtLeastNRuleShortCircuits:
+    """AtLeastNRule stops calling sub-rules as soon as `minimum` is
+    mathematically decided either way -- it does not wait for every
+    sub-rule to run once the answer can no longer change."""
+
+    async def test_stops_once_the_minimum_is_already_met(self) -> None:
+        calls: list[str] = []
+        rule = AtLeastNRule(
+            "elective_requirement",
+            [
+                _tracked("a", passed=True, calls=calls),
+                _tracked("b", passed=True, calls=calls),
+                _tracked("c", passed=True, calls=calls),  # never reached
+            ],
+            minimum=2,
+        )
+        result = await rule.evaluate({})
+        assert result.passed is True
+        assert calls == ["a", "b"], "'c' must never run -- 2 passes already met minimum=2"
+
+    async def test_stops_once_the_minimum_can_no_longer_be_reached(self) -> None:
+        calls: list[str] = []
+        rule = AtLeastNRule(
+            "elective_requirement",
+            [
+                _tracked("a", passed=False, calls=calls),
+                _tracked("b", passed=False, calls=calls),
+                _tracked("c", passed=True, calls=calls),  # never reached
+            ],
+            minimum=2,
+        )
+        result = await rule.evaluate({})
+        assert result.passed is False
+        assert calls == ["a", "b"], (
+            "'c' must never run -- two failures already make minimum=2 unreachable "
+            "with only one sub-rule left"
+        )
+
+    async def test_runs_every_sub_rule_when_the_minimum_is_decided_only_at_the_end(self) -> None:
+        calls: list[str] = []
+        rule = AtLeastNRule(
+            "elective_requirement",
+            [
+                _tracked("a", passed=True, calls=calls),
+                _tracked("b", passed=False, calls=calls),
+                _tracked("c", passed=True, calls=calls),
+            ],
+            minimum=2,
+        )
+        result = await rule.evaluate({})
+        assert result.passed is True
+        assert calls == ["a", "b", "c"], "exactly 2 of 3 passing is only decidable at the last sub-rule"
+
+
 class TestEngineRunModes:
     """run_named/run_group/run_all each serve the specific job the sample spec claims.
 
@@ -134,13 +202,13 @@ class TestEngineRunModes:
 def _failing_chain(result) -> list[str]:
     """Walk the first failing branch down, collecting rule names.
 
-    A nested failure is reachable by following `data` downward;
-    `RuleResult.data` is never flattened.
+    A nested failure is reachable by following `sub_results` downward;
+    `RuleResult.data` plays no role here — composites never write to it.
     """
     chain: list[str] = []
     node = result
-    while isinstance(node.data, list) and node.data:
-        nxt = next((sub for sub in node.data if not sub.passed), None)
+    while node.sub_results:
+        nxt = next((sub for sub in node.sub_results if not sub.passed), None)
         if nxt is None:
             break
         chain.append(nxt.rule_name)
@@ -174,9 +242,9 @@ class TestSharedFixtureContract:
         context = _STUDENTS[student_id]
         expected = context["expected"]
         result = await graduates.evaluate(context)
-        assert len(result.data) == expected["rules_evaluated"], (
+        assert len(result.sub_results) == expected["rules_evaluated"], (
             f"{student_id}: expected {expected['rules_evaluated']} sub-rules to run, "
-            f"got {len(result.data)} — short-circuiting is broken or over-eager"
+            f"got {len(result.sub_results)} — short-circuiting is broken or over-eager"
         )
 
     @pytest.mark.parametrize("student_id", list(_STUDENTS.keys()))
@@ -235,7 +303,7 @@ class TestVacuousTruthEdgeCases:
         result = await graduates.evaluate(student)
 
         assert result.passed == expected["passed"], f"{case_name}: {case['note']}"
-        assert len(result.data) == expected["rules_evaluated"], case_name
+        assert len(result.sub_results) == expected["rules_evaluated"], case_name
         chain = _failing_chain(result)
         assert chain == expected["failing_chain"], case_name
 

@@ -10,13 +10,12 @@ it belongs beside that suite, not inside it.
 from __future__ import annotations
 
 from verdict.engine import RulesEngine
-from verdict.result import RuleResult
-from verdict.rule import FunctionRule
+from verdict.rule import FunctionRule, PredicateOutcome
 
 
 def _fail(name: str, group: str | None = None) -> FunctionRule:
-    async def predicate(context: dict) -> RuleResult:
-        return RuleResult(rule_name=name, passed=False)
+    async def predicate(context: dict) -> PredicateOutcome:
+        return PredicateOutcome(passed=False)
     return FunctionRule(name, predicate, group=group)
 
 
