@@ -6,7 +6,7 @@ labels: bug
 ---
 
 **Language**
-<!-- Only Python ships today, but name it explicitly -- this stays useful once a second language exists. -->
+<!-- Python, JS/TS, C#, or Dart. -->
 
 **Verdict version**
 <!-- e.g. verdict-rules==0.1.0 -->

@@ -38,15 +38,15 @@
 - [x] .agents/plans/composite-rule-and-leaves-redesign/README.md
 - [x] .agents/plans/README.md
 - [x] .agents/README.md
-- [ ] .github/ISSUE_TEMPLATE/bug_report.md
-- [ ] .github/ISSUE_TEMPLATE/feature_request.md
-- [ ] .github/PULL_REQUEST_TEMPLATE.md
-- [ ] .github/PULL_REQUEST_TEMPLATE/clerical.md
-- [ ] .github/PULL_REQUEST_TEMPLATE/README.md
-- [ ] .github/PULL_REQUEST_TEMPLATE/release.md
-- [ ] AGENTS.md
-- [ ] CLAUDE.md
-- [ ] CONTRIBUTING.md
+- [x] .github/ISSUE_TEMPLATE/bug_report.md
+- [x] .github/ISSUE_TEMPLATE/feature_request.md
+- [x] .github/PULL_REQUEST_TEMPLATE.md
+- [x] .github/PULL_REQUEST_TEMPLATE/clerical.md
+- [x] .github/PULL_REQUEST_TEMPLATE/README.md
+- [x] .github/PULL_REQUEST_TEMPLATE/release.md
+- [x] AGENTS.md
+- [x] CLAUDE.md
+- [x] CONTRIBUTING.md
 - [ ] csharp/AGENTS.md
 - [ ] csharp/examples/GraduationVerdict/docs/testing.md
 - [ ] csharp/examples/GraduationVerdict/README.md
