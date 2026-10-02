@@ -36,11 +36,19 @@ public sealed class NotRule<TContext>(string name, IRule<TContext> rule, string?
     public string? Group { get; } = group;
 
     /// <inheritdoc />
+    /// <remarks>
+    /// <see cref="RuleResult.DecidedBy"/> is set to <c>[inner]</c>
+    /// unconditionally, in both directions -- "inner passed" is genuinely
+    /// why a failing <see cref="NotRule{TContext}"/> failed, not an
+    /// inconsistency with <see cref="RuleResult.FailingLeaves"/>'s own
+    /// self-as-leaf rule (they answer different questions; see
+    /// <see cref="RuleResult.DecidedBy"/>).
+    /// </remarks>
     public async Task<RuleResult> EvaluateAsync(TContext context, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         var inner = await Rule.EvaluateAsync(context, cancellationToken).ConfigureAwait(false);
-        return new RuleResult(Name, !inner.Passed, subResults: [inner]);
+        return new RuleResult(Name, !inner.Passed, subResults: [inner], decidedBy: [inner]);
     }
 
     /// <inheritdoc />
@@ -49,17 +57,6 @@ public sealed class NotRule<TContext>(string name, IRule<TContext> rule, string?
 
     /// <summary>What a debugger shows without expanding the object.</summary>
     private string DebuggerDisplay => ToString();
-
-    /// <summary>
-    /// The negated rule's own result -- the precise accessor for "why" a
-    /// <see cref="NotRule{TContext}"/> failed, since a failed <see cref="NotRule{TContext}"/>
-    /// is caused by its single child <i>passing</i>, which generic
-    /// <see cref="RuleResult.FailingLeaves"/> alone cannot distinguish from a
-    /// plain failure. Non-nullable -- fixed arity means the inner result is
-    /// never absent.
-    /// </summary>
-    /// <param name="result">A result produced by evaluating a <see cref="NotRule{TContext}"/>.</param>
-    public static RuleResult Negated(RuleResult result) => result.SubResults[0];
 }
 
 /// <summary>Makes a debugger expand a <see cref="NotRule{TContext}"/> straight to its negated rule.</summary>

@@ -6,12 +6,6 @@ override VerdictRules.NotRule<TContext>.ToString() -> string!
 override VerdictRules.PredicateOutcome.ToString() -> string!
 override VerdictRules.SequentialEvaluator<TContext>.ToString() -> string!
 override VerdictRules.ShortCircuitEvaluator<TContext>.ToString() -> string!
-static VerdictRules.AndRule.Failed(VerdictRules.RuleResult! result) -> VerdictRules.RuleResult?
-static VerdictRules.AndRule.Passing(VerdictRules.RuleResult! result) -> System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>!
-static VerdictRules.NotRule.Negated(VerdictRules.RuleResult! result) -> VerdictRules.RuleResult!
-static VerdictRules.NotRule<TContext>.Negated(VerdictRules.RuleResult! result) -> VerdictRules.RuleResult!
-static VerdictRules.OrRule.Failing(VerdictRules.RuleResult! result) -> System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>!
-static VerdictRules.OrRule.Passed(VerdictRules.RuleResult! result) -> VerdictRules.RuleResult?
 VerdictRules.NotRule
 VerdictRules.NotRule.EvaluateAsync(System.Collections.Generic.IReadOnlyDictionary<string!, object?>! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<VerdictRules.RuleResult!>!
 VerdictRules.NotRule.Group.get -> string?
@@ -27,9 +21,10 @@ VerdictRules.PredicateOutcome.Data.get -> object?
 VerdictRules.PredicateOutcome.Detail.get -> string!
 VerdictRules.PredicateOutcome.Passed.get -> bool
 VerdictRules.PredicateOutcome.PredicateOutcome(bool passed, string! detail = "", object? data = null) -> void
+VerdictRules.RuleResult.DecidedBy.get -> System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>!
 VerdictRules.RuleResult.FailingLeaves.get -> System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>!
 VerdictRules.RuleResult.Leaves.get -> System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>!
-VerdictRules.RuleResult.RuleResult(string! ruleName, bool passed, string! detail = "", object? data = null, System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>? subResults = null) -> void
+VerdictRules.RuleResult.RuleResult(string! ruleName, bool passed, string! detail = "", object? data = null, System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>? subResults = null, System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>? decidedBy = null) -> void
 VerdictRules.RuleResult.SubResults.get -> System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>!
 VerdictRules.RunResult.FailingLeaves.get -> System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>!
 VerdictRules.RunResult.Leaves.get -> System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>!

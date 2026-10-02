@@ -263,6 +263,23 @@ public class SharedFixtureContractTests
 
     [Theory]
     [MemberData(nameof(StudentIds))]
+    public async Task DecidedByMatches(string studentId)
+    {
+        // gita is the one that matters: she fails on attendance_met, the
+        // *last* of the four top-level members -- decided_by must be just
+        // ["attendance_met"], not all four, proving the ShortCircuitEvaluator
+        // override (not the generic SequentialEvaluator count-based rule)
+        // is what's actually wired up in the real fixture tree too.
+        var (_, graduates) = GraduationCheck.BuildGraduationCheck(SharedFixture.Curriculum.Policies, SharedFixture.Curriculum.ElectiveMinimum);
+        var record = SharedFixture.Students[studentId];
+        var expectedDecidedBy = record.Expected.GetProperty("decided_by").EnumerateArray().Select(e => e.GetString()!).ToList();
+        var result = await graduates.EvaluateAsync(record.Context);
+        var decidedBy = result.DecidedBy.Select(r => r.RuleName).ToList();
+        Assert.Equal(expectedDecidedBy, decidedBy);
+    }
+
+    [Theory]
+    [MemberData(nameof(StudentIds))]
     public async Task RunAllNeverShortCircuits(string studentId)
     {
         var (engine, _) = GraduationCheck.BuildGraduationCheck(SharedFixture.Curriculum.Policies, SharedFixture.Curriculum.ElectiveMinimum);

@@ -11,53 +11,52 @@
 ## 0 · Status
 
 **Implemented in all four languages** (C#, Python, JS/TS, Dart — each
-green on its own full test suite), committed as four separate commits
-on this PR branch and pushed.
+green on its own full test suite), committed on this PR branch and
+pushed. Shared fixture (`fixtures/graduation_verdict/students.json`)
+pins `leaves`/`failing_leaves` per student, regenerated from the
+Python reference implementation — this surfaced a real cross-language
+gap in C#'s `AtLeastNRule` example (fixed). The nested-negation case,
+a genuinely mixed multi-level composite tree, and three adversarial
+stress combinations (heterogeneous failing-leaf shapes, a vacuous
+composite nested in a failing tree, double-pruning at different
+depths) are in every language's own test suite — none leaked a bug.
 
-**Shared fixture (`fixtures/graduation_verdict/students.json`) now pins
-`leaves`/`failing_leaves`** per student, regenerated from the Python
-reference implementation and wired into each language's own
-fixture-contract test. Running it against C# surfaced a real,
-previously-missed cross-language gap: its `AtLeastNRule` example had
-only had the positional-argument bug fixed, never the actual
-`SequentialEvaluator` short-circuit rewrite Python/JS/Dart already had
-— fixed, and its stale "never short-circuits" structural invariant
-rewritten to assert the real short-circuit timing, matching the other
-three languages.
+**§3d superseded, implemented**: `AndRule.Failed`/`Passing`,
+`OrRule.Passed`/`Failing`, `NotRule.Negated` removed entirely in all
+four languages, replaced by `RuleResult.DecidedBy` (§3d, rewritten) —
+a second real-world review on #100 found concrete cross-family misuse
+cases the original static design couldn't prevent. A real correctness
+subtlety was found and fixed *during* this implementation, not after:
+a first, fully-generic `SequentialEvaluator`-level rule for `DecidedBy`
+is provably wrong for `ShortCircuitEvaluator` specifically (an
+`AndRule` failing on its *last* item is indistinguishable from a full
+pass using count alone) — `ShortCircuitEvaluator` now overrides
+`DecidedBy` using its own `stopOn`, verified against six hand-traced
+cases before any implementation, then confirmed against the real
+fixture (`gita` fails on `attendance_met`, the last of four top-level
+members, and correctly gets just that one). The shared fixture now
+pins `decided_by` per student. Also surfaced and fixed: C#'s and
+Dart's example `AtLeastNRule` silently dropped `DecidedBy` when
+rebuilding its own `RuleResult` by hand (Python's `replace()` and
+JS's `{...result}` spread both forward unnamed fields automatically;
+C#'s/Dart's explicit-constructor-argument idiom doesn't, and is
+exactly the pattern that silently drops a newly-added field); and a
+genuine immutability regression in JS — `ShortCircuitEvaluator`'s
+override produced a non-frozen object via spread, breaking the
+freeze-every-constructed-`RuleResult` invariant `buildRuleResult`
+exists to enforce, for every `AndRule`/`OrRule` result. All fixed,
+all four languages fully green.
 
-**Queued, not yet done**: a nested-negation test case
-(`all(a, not(b))` with both `a` and `b` passing →
-`FailingLeaves == [not(b)]`) in each language's own composition/result
-test suite — proposed via an issue #100 comment, verified correct by
-hand-tracing the recursion, and genuinely closes a gap neither the
-top-level-only negation test nor the sibling-aggregation tests cover
-individually. No natural home in the shared JSON fixture (the
-`graduation_verdict` curriculum has no negation in it), so this is
-per-language unit tests only.
-
-**Sequencing for what's left, recorded, not yet started**:
-
-1. **Mutation-testing re-run**, against the new composable pieces this
-   redesign actually introduced (`SequentialEvaluator`/
-   `ShortCircuitEvaluator` especially — one shared implementation four
-   call sites now depend on, never mutation-tested). The pinned scores
-   in `docs/maintenance/mutation-survivors-*.md` (C# 93.64%, Python
-   100%, JS/TS 99.17%, Dart 100%) are a pre-redesign baseline against
-   the old hand-rolled `AndRule`/`OrRule`, not a validation of what's
-   on this branch now.
-2. **Doc-verbosity audit** — held, deliberately, until (1) is done.
-   Scope confirmed: every `*.md` in the repo except `.agents/plans/`
-   and `skills/`/`.claude/skills/` (roughly 200 files — root docs,
-   almost all of `docs/`, each language's own `AGENTS.md`/`README.md`/
-   `CHANGELOG.md`/quickstart/example docs, `fixtures/*/README.md`,
-   `.agents/memory/`+`.agents/incidents/`, `.github/` templates).
-   Currently uneven going in — C#'s implementation pass already swept
-   its own `docs/*/csharp.md` tree; Python and Dart deferred the whole
-   tree; JS/TS fixed only what would otherwise throw.
-3. **Cross-language API concept map**
-   (`docs/maintenance/api-concepts.yaml`), last — redoing it twice if
-   the docs pass changes any public-surface shape would be wasted
-   work.
+**Mutation testing**: re-run against the composable pieces done for
+C# (155/165, 93.9%, up from a 67.9% baseline) and Python (190/191,
+99.5%) — **both predate `DecidedBy` and need a second pass**, since it
+added new code (untested) and removed code those runs just finished
+testing (now gone). JS/TS and Dart haven't had a first pass yet.
+Sequencing stays: mutation-test the now-settled shape once (not
+twice), then the doc-verbosity audit (~200 files, scope confirmed,
+currently uneven — see git history), then the cross-language API
+concept map
+last.
 
 ## 1 · Origin
 
@@ -469,62 +468,121 @@ signature, not reused as-is. A genuine future need still arrives as a
 new sibling type, consistent with everything else in this section —
 just not a zero-cost one.
 
-## 3d · `AndRule.Failed`/`Passing`, `OrRule.Passed`/`Failing`
+## 3d · `RuleResult.DecidedBy` — superseded design, see below
 
-`Leaves`/`FailingLeaves` (§2) is the general mechanism — correct for any
-composite, any depth, any mix of types. `ShortCircuitEvaluator`'s own
-invariant gives `AndRule`/`OrRule` specifically something more precise:
-because evaluation stops the moment the outcome is decided,
-`SubResults[^1]` is always *the one sub-result that decided it* — the
-sole failure for a failed `AndRule` (everything before it passed), or
-the sole pass for a passed `OrRule` (everything before it failed). Each
-family's own, non-generalized view — no attempt at one shared shape
-across both, since And and Or are genuine opposites here and forcing a
-common shape is exactly what the singular-helper question above already
-ruled out:
+**This section originally shipped `AndRule.Failed`/`Passing`,
+`OrRule.Passed`/`Failing` as static methods over a bare `RuleResult`.
+That design is retired — removed, not deprecated — replaced by
+`RuleResult.DecidedBy` (§3d, rewritten below). Kept only as the
+record of why.**
+
+A second real-world review comment on #100 (2026-10-02) ran the static
+methods against the actual branch and found four concrete cases where
+they produce a plausible, silently wrong answer — not a crash, not an
+obviously-bad result, exactly the danger class this whole redesign
+exists to close:
+
+| Call | Returns |
+| :-- | :-- |
+| `AndRule.Failed(a *passing* `NotRule` result)` | the inner (failed) result — even though nothing failed overall |
+| `OrRule.Failing(a *failed* `AndRule` result)` | includes a child that passed |
+| `AndRule.Failed(a failed leaf)` | `null` — silently wrong, something did fail |
+| `NotRule.Negated(a leaf)` | throws — unguarded index |
+
+The root cause the original design-time reasoning ("the mistake is
+visible at the call site, unlike the original `Data`-duck-typing bug")
+got wrong: that defense only holds when the caller locally knows the
+concrete family. The library's own central use case — holding a rule
+as `IRule<TContext>`, built elsewhere, type not known at the call
+site — is exactly the shape where it doesn't. A caller holding a
+`Rule<C>` generically has no way to avoid this, which makes it the
+same class of mistake as the original bug, not a different, safer one.
+Confirmed against the real branch before accepting the finding, not
+assumed from the report alone.
+
+## 3d (rewritten) · `RuleResult.DecidedBy`
+
+Same job the statics were for — "which sub-result(s) explain this
+one's own verdict" — moved onto the result itself, populated once, by
+whatever built it, the same principle §2a already established for
+`PredicateOutcome`: the producer records the fact because only the
+producer knows it unambiguously. There is no second method to
+mistakenly reach for; the question "which accessor do I call" doesn't
+exist.
 
 ```csharp
-public static class AndRule
+public sealed class RuleResult(
+    string ruleName, bool passed, string detail = "", object? data = null,
+    IReadOnlyList<RuleResult>? subResults = null, IReadOnlyList<RuleResult>? decidedBy = null)
 {
-    public static RuleResult? Failed(RuleResult result) =>
-        result.SubResults.Count > 0 && !result.SubResults[^1].Passed ? result.SubResults[^1] : null;
-    public static IReadOnlyList<RuleResult> Passing(RuleResult result) =>
-        Failed(result) is null ? result.SubResults : result.SubResults.Take(result.SubResults.Count - 1).ToList();
-}
-
-public static class OrRule
-{
-    public static RuleResult? Passed(RuleResult result) =>
-        result.SubResults.Count > 0 && result.SubResults[^1].Passed ? result.SubResults[^1] : null;
-    public static IReadOnlyList<RuleResult> Failing(RuleResult result) =>
-        Passed(result) is null ? result.SubResults : result.SubResults.Take(result.SubResults.Count - 1).ToList();
+    // ...RuleName, Passed, Detail, Data, SubResults as before...
+    public IReadOnlyList<RuleResult> DecidedBy { get; } = decidedBy ?? [];
 }
 ```
 
-**Found during implementation: `result.SubResults[..^1]` as originally
-written here does not compile.** `SubResults` is typed
-`IReadOnlyList<RuleResult>`, which has no `Slice`/range-indexer
-pattern — C#'s range syntax needs an actual indexer accepting `Range`
-or a `Length`+`Slice(int,int)` pair, neither of which
-`IReadOnlyList<T>` provides, regardless of what the concrete runtime
-type happens to support. Fixed above to `.Take(n).ToList()`. Worth
-flagging plainly: this was a real bug in this plan's own reference
-code, not hypothetical — caught only because an agent actually tried
-to compile it.
+`SequentialEvaluator` computes a generic default — the right one for
+an arbitrary custom decider with no simpler shortcut available (an
+`AtLeastN`-shaped cumulative decider, say):
 
-Plain static methods over `RuleResult` alone — deliberately not
-`IRule<TContext>`-aware, not an instance method on the rule, not gated
-behind any interface. Neither derivation reads anything but
-`SubResults`, so nesting is already handled: if the decisive sub-result
-is itself a composite, `AndRule.Failed(result)?.FailingLeaves` composes
-for free. No provenance guard against passing the wrong family's result
-in — intentionally: that mistake is visible at the call site
-(`AndRule.Failed(orResult)` reads wrong immediately), unlike the
-original `Data`-duck-typing bug (§1), which broke on completely
-innocent code with no misuse involved. That distinction is why this
-doesn't need the weight `SequentialEvaluator`/`ShortCircuitEvaluator`
-carry in §3 — those close a gap in code with no misuse; this one only
-guards against an actively wrong call.
+- **Decided with items still unevaluated** (`soFar.Count < total` at
+  the moment `decider` returns non-null): `DecidedBy = [latest]` — the
+  one sub-result whose evaluation flipped the verdict.
+- **Decided only once everything was evaluated**
+  (`soFar.Count == total` at that same moment, including the
+  post-loop fallback): `DecidedBy = soFar`, every evaluated child.
+
+**This generic rule is provably wrong for `ShortCircuitEvaluator`
+specifically, found by stress-testing a case the first verification
+pass missed** — not a hypothetical: an `AndRule` that fails on its
+*last* item (`[pass, pass, fail]`) has `soFar.Count == total` at the
+exact same moment a genuine full pass does, so the generic rule
+reports `DecidedBy = [all three]`, indistinguishable from the full-pass
+case, when the correct answer is `[the one that failed]` — position in
+the list is irrelevant to blame; a failure is a failure whether it's
+first or last. The two cases are only distinguishable with information
+the generic evaluator doesn't have: `ShortCircuitEvaluator`'s own
+`stopOn`. So `ShortCircuitEvaluator` **overrides** `DecidedBy` after
+delegating to `SequentialEvaluator`, using the one comparison only it
+can make:
+
+```csharp
+var result = await _inner.EvaluateAsync(name, rules, context, cancellationToken);
+var last = result.SubResults.Count > 0 ? result.SubResults[^1] : null;
+var decidedBy = last is not null && last.Passed == stopOn
+    ? new[] { last }           // the trigger was found -- regardless of position
+    : result.SubResults;       // exhausted without ever finding it (or vacuous) -- every evaluated child explains it
+return new RuleResult(result.RuleName, result.Passed, result.Detail, result.Data, result.SubResults, decidedBy);
+```
+
+Verified against six cases by direct prototype before implementing
+for real, including the one the first pass missed: `AndRule` failing
+on its last item (`[c]`, not all three), `AndRule` fully passing (all
+three), `AndRule` failing early, `OrRule` passing early, `OrRule`
+failing exhaustively (all fail, "last item" and "every item" coincide
+here too — correctly all of them, since every single one failed to
+match the trigger), and the vacuous case. `SequentialEvaluator`'s own
+generic rule stays correct and is the right default for composites
+built directly on it without a `stopOn`-shaped shortcut available.
+
+`NotRule` sets it directly (bypasses `SequentialEvaluator` entirely,
+same as it already does for `SubResults`): `DecidedBy = [inner]`,
+unconditionally, in both directions. This is correct, not an
+inconsistency with `FailingLeaves`'s own self-as-leaf rule (§2,
+§3e) — `DecidedBy` answers a different, narrower, one-level question
+("what explains *this* node's own verdict") than `FailingLeaves`
+answers ("recursively, what are the terminal failures"). They were
+never meant to be chained into each other: naively walking
+`result.DecidedBy[0].DecidedBy[0]...` from a failed `NotRule` would
+step into its *passing* inner child and keep going, which is correct
+for "why did this pass" but wrong for "what failed" — the doc comment
+on `DecidedBy` states this scope boundary explicitly so nobody builds
+that broken chain-walk on top of it. A leaf or a vacuous composite:
+`DecidedBy = []` — nothing else decided it.
+
+Net effect on surface area: `RuleResult` gains one field; `AndRule`/
+`OrRule`/`NotRule` lose three accessor pairs' worth of methods and
+their own tests. Fewer independent places to drift (§7's own
+standing goal), not more.
 
 ## 3e · `NotRule` — shipped, not example-only
 
@@ -549,8 +607,6 @@ public sealed class NotRule<TContext>(string name, IRule<TContext> rule, string?
 
     public override string ToString() =>
         $"NotRule \"{Name}\"" + (string.IsNullOrEmpty(Group) ? "" : $" ({Group})");
-
-    public static RuleResult Negated(RuleResult result) => result.SubResults[0];
 }
 ```
 
@@ -563,11 +619,11 @@ never also "this is a composite that hid its own structure" — that's
 the entire basis §2 gives for `Leaves`/`FailingLeaves` being safe on
 the shared `RuleResult` type at all. Breaking that reliability to avoid
 one misleading read just relocates the original `Data`-ambiguity
-problem (§1) from one property to another. The actual fix is the same
-one §3d already established: a dedicated accessor, not generic
-`FailingLeaves`, answers "why." `Negated` is non-nullable, unlike
-`AndRule.Failed`/`OrRule.Passed` (§3d) — fixed arity means the inner
-result is never absent.
+problem (§1) from one property to another. The `EvaluateAsync` body
+above also sets `decidedBy: [inner]` unconditionally (shown separately
+in §3d's rewrite for clarity; omitted from this snippet's constructor
+call for brevity — both arguments are passed together in the real
+implementation).
 
 **C#-specific completion, found during implementation**: `AndRule`/
 `OrRule`/`FunctionRule` all ship as a generic/non-generic pair — the
@@ -576,13 +632,12 @@ generic `TContext` type, plus a non-generic wrapper (`IRule`, not
 `NotRule<IReadOnlyDictionary<string, object?>>` doesn't structurally
 satisfy the non-generic `IRule` the dict-context world depends on.
 `NotRule` needs the same pair for parity with every other composite
-in this codebase — a non-generic `NotRule : IRule` wrapper with its
-own `Negated`, shaped exactly like the generic one above. Not called
-out explicitly before because `AtLeastNRule`/`NoneOfRule` (the other
-two composites discussed at this level of detail) never shipped, so
-this gap in the spec never surfaced until `NotRule` actually did. Only
-a C# concern — Python/JS/Dart have no generic/non-generic split to
-begin with (§5).
+in this codebase — a non-generic `NotRule : IRule` wrapper, shaped
+exactly like the generic one above. Not called out explicitly before
+because `AtLeastNRule`/`NoneOfRule` (the other two composites
+discussed at this level of detail) never shipped, so this gap in the
+spec never surfaced until `NotRule` actually did. Only a C# concern —
+Python/JS/Dart have no generic/non-generic split to begin with (§5).
 
 ## 3f · `NoneOfRule` — considered, not shipping
 
@@ -819,8 +874,8 @@ the same "caller already knows the concrete variant" shape as
 everywhere else in this library. Would be designing for a hypothetical
 future requirement with nothing in current scope that needs it —
 same restraint already applied to promoting `AtLeastNRule` in §7.
-Orthogonal to §3d's `Failed`/`Passing` regardless of whether it's ever
-built: that mechanism derives purely from `RuleResult`, never touches
+Orthogonal to §3d's `DecidedBy` regardless of whether it's ever
+built: that field lives purely on `RuleResult`, never touches
 `IRule<TContext>`.
 
 **`RuleEvaluation` — a forward-looking `(IRule<TContext> Rule, RuleResult Result)` pairing.**

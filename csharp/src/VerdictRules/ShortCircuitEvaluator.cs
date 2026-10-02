@@ -47,9 +47,27 @@ public sealed class ShortCircuitEvaluator<TContext>
     }
 
     /// <inheritdoc cref="SequentialEvaluator{TContext}.EvaluateAsync" />
-    public Task<RuleResult> EvaluateAsync(
-        string name, IReadOnlyList<IRule<TContext>> rules, TContext context, CancellationToken cancellationToken = default) =>
-        _inner.EvaluateAsync(name, rules, context, cancellationToken);
+    /// <remarks>
+    /// Same result <see cref="SequentialEvaluator{TContext}.EvaluateAsync"/>
+    /// would produce, except <see cref="RuleResult.DecidedBy"/> is recomputed
+    /// here rather than trusting that type's own generic rule. That generic
+    /// rule can't distinguish "found the trigger, which happened to be the
+    /// last item evaluated" from "genuinely exhausted every item without ever
+    /// finding it" using count alone -- a composite failing on its own *last*
+    /// sub-rule has <c>SubResults.Count == rules.Count</c> exactly like a
+    /// genuine full pass does. This type's own <c>stopOn</c> is the one extra
+    /// fact that tells them apart.
+    /// </remarks>
+    public async Task<RuleResult> EvaluateAsync(
+        string name, IReadOnlyList<IRule<TContext>> rules, TContext context, CancellationToken cancellationToken = default)
+    {
+        var result = await _inner.EvaluateAsync(name, rules, context, cancellationToken).ConfigureAwait(false);
+        var last = result.SubResults.Count > 0 ? result.SubResults[^1] : null;
+        IReadOnlyList<RuleResult> decidedBy = last is not null && last.Passed == _stopOn
+            ? [last]                  // the trigger was found -- regardless of position
+            : result.SubResults;      // exhausted without ever finding it (or vacuous) -- every evaluated child explains it
+        return new RuleResult(result.RuleName, result.Passed, result.Detail, result.Data, result.SubResults, decidedBy);
+    }
 
     /// <inheritdoc />
     public override string ToString() => $"ShortCircuitEvaluator<{typeof(TContext).Name}> (stopOn: {_stopOn})";

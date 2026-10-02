@@ -392,4 +392,27 @@ public class GenericCancellationTests
 
         Assert.Equal(new[] { "a" }, log);
     }
+
+    /// <summary>
+    /// Proves <see cref="NotRule{TContext}"/>'s own check on entry, not a side
+    /// effect of the wrapped rule happening to check for itself -- see
+    /// <see cref="NonCheckingRule{TContext}"/>. Unlike the composites above,
+    /// there is only one child to reach, so an already-cancelled token must
+    /// stop before that single <see cref="IRule{TContext}.EvaluateAsync"/>
+    /// call ever runs.
+    /// </summary>
+    [Fact]
+    public async Task NotRuleOfTChecksCancellationBeforeEvaluatingEvenWhenTheWrappedRuleDoesNotCheckItself()
+    {
+        using var cts = new CancellationTokenSource();
+        var log = new List<string>();
+        cts.Cancel();
+
+        var rule = new NotRule<OrderContext>("not1", new NonCheckingRule<OrderContext>("inner", true, log));
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => rule.EvaluateAsync(new OrderContext(0, false), cts.Token));
+
+        Assert.Empty(log); // the wrapped rule never ran -- NotRule's own check stopped it first
+    }
 }

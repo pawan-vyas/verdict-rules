@@ -142,6 +142,44 @@ public class ToStringTests
         var engine = new RulesEngine<int>(Array.Empty<IRule<int>>());
         Assert.Equal("RulesEngine — 0 rule(s), 0 group(s)", engine.ToString());
     }
+
+    [Fact]
+    public void SequentialEvaluatorShowsItsContextType()
+    {
+        var evaluator = new SequentialEvaluator<int>(decider: (_, _, _) => null, vacuousResult: true);
+        Assert.Equal("SequentialEvaluator<Int32>", evaluator.ToString());
+    }
+
+    [Fact]
+    public void ShortCircuitEvaluatorShowsItsContextTypeAndStopOn()
+    {
+        var evaluator = new ShortCircuitEvaluator<int>(stopOn: true);
+        Assert.Equal("ShortCircuitEvaluator<Int32> (stopOn: True)", evaluator.ToString());
+    }
+
+    [Fact]
+    public void PredicateOutcomeShowsThePassOutcomeWithNoDetail()
+    {
+        Assert.Equal("PASS", new PredicateOutcome(true).ToString());
+    }
+
+    [Fact]
+    public void PredicateOutcomeShowsTheFailOutcomeWithNoDetail()
+    {
+        Assert.Equal("FAIL", new PredicateOutcome(false).ToString());
+    }
+
+    [Fact]
+    public void PredicateOutcomeShowsThePassOutcomeWithDetail()
+    {
+        Assert.Equal("PASS (bonus eligible)", new PredicateOutcome(true, "bonus eligible").ToString());
+    }
+
+    [Fact]
+    public void PredicateOutcomeShowsTheFailOutcomeWithDetail()
+    {
+        Assert.Equal("FAIL (too young)", new PredicateOutcome(false, "too young").ToString());
+    }
 }
 
 /// <summary>
@@ -226,5 +264,29 @@ public class RuleResultAndRunResultDebuggerDisplayTests
     {
         var run = new RunResult(true, new List<RuleResult> { new("a", true), new("b", true) });
         Assert.Equal("PASS — 2 rule(s), 0 failing", DebuggerDisplayReflection.Of(run));
+    }
+}
+
+/// <summary>
+/// Direct coverage of <see cref="PredicateOutcome"/>'s own private
+/// <c>DebuggerDisplay</c> property, read via <see cref="DebuggerDisplayReflection"/> --
+/// same shape as <see cref="RuleResult"/>'s own (an optional detail suffix),
+/// but never carries a sub-result count since a predicate's own outcome is
+/// never a composite.
+/// </summary>
+public class PredicateOutcomeDebuggerDisplayTests
+{
+    [Fact]
+    public void PredicateOutcomeDebuggerDisplayOmitsDetailWhenEmpty()
+    {
+        var outcome = new PredicateOutcome(true);
+        Assert.Equal("PASS", DebuggerDisplayReflection.Of(outcome));
+    }
+
+    [Fact]
+    public void PredicateOutcomeDebuggerDisplayShowsDetailWhenPresent()
+    {
+        var outcome = new PredicateOutcome(false, "too young");
+        Assert.Equal("FAIL — too young", DebuggerDisplayReflection.Of(outcome));
     }
 }

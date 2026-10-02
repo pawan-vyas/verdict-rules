@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Linq;
 
 namespace VerdictRules;
 
@@ -29,34 +28,6 @@ public sealed class OrRule(string name, IReadOnlyList<IRule> rules, string? grou
 
     /// <summary>What a debugger shows without expanding the object.</summary>
     private string DebuggerDisplay => ToString();
-
-    /// <summary>
-    /// The sole sub-result that decided a passed <see cref="OrRule"/>'s own
-    /// outcome, or <see langword="null"/> when <paramref name="result"/> failed
-    /// (or has no sub-results at all, which only a vacuous fail ever does).
-    /// </summary>
-    /// <remarks>
-    /// Because evaluation stops the moment the outcome is decided,
-    /// <c>result.SubResults[^1]</c> is always the one sub-result that decided
-    /// it -- the sole pass for a passed <see cref="OrRule"/>, since everything
-    /// before it failed. Reads only <see cref="RuleResult.SubResults"/>, so
-    /// nesting composes for free. Not gated behind any check that
-    /// <paramref name="result"/> actually came from an <see cref="OrRule"/> --
-    /// passing the wrong family's result in is wrong at the call site,
-    /// visibly, not a silent misread.
-    /// </remarks>
-    /// <param name="result">A result produced by evaluating an <see cref="OrRule"/>.</param>
-    public static RuleResult? Passed(RuleResult result) =>
-        result.SubResults.Count > 0 && result.SubResults[^1].Passed ? result.SubResults[^1] : null;
-
-    /// <summary>
-    /// Every sub-result that failed on the way to <paramref name="result"/>'s
-    /// own outcome -- every sub-result when it failed, or every one except
-    /// the decisive pass (see <see cref="Passed"/>) when it passed.
-    /// </summary>
-    /// <param name="result">A result produced by evaluating an <see cref="OrRule"/>.</param>
-    public static IReadOnlyList<RuleResult> Failing(RuleResult result) =>
-        Passed(result) is null ? result.SubResults : result.SubResults.Take(result.SubResults.Count - 1).ToList();
 }
 
 /// <summary>Makes a debugger expand an <see cref="OrRule"/> straight to its sub-rules.</summary>

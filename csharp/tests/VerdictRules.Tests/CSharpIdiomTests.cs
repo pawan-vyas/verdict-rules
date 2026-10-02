@@ -131,6 +131,46 @@ public class RunModeIdiomTests
 }
 
 /// <summary>
+/// Direct coverage of <see cref="SequentialEvaluator{TContext}"/>, composed
+/// on its own rather than through <see cref="ShortCircuitEvaluator{TContext}"/>
+/// -- the shape a custom composite (like <c>AtLeastNRule</c> in
+/// <c>docs/extending/new-rule-shape/</c>) actually uses.
+/// </summary>
+public class SequentialEvaluatorIdiomTests
+{
+    /// <summary>
+    /// <see cref="ShortCircuitEvaluator{TContext}"/>'s own decider always
+    /// resolves by the last sub-rule, so it never reaches
+    /// <see cref="SequentialEvaluator{TContext}"/>'s post-loop fallback
+    /// (<c>decider(...) ?? vacuousResult</c>) -- only a decider that can
+    /// genuinely decline to commit, even when handed the last result, does.
+    /// A decider that counts its own calls proves the fallback actually
+    /// re-invokes <i>decider</i> rather than jumping straight to
+    /// <paramref name="vacuousResult"/>-shaped sentinel: it declines on the
+    /// first (in-loop) call for the only rule, then commits to <c>false</c>
+    /// on the second (fallback) call with the same arguments -- a
+    /// <c>vacuousResult</c> of <see langword="true"/> would be the wrong
+    /// answer if the fallback didn't actually consult <i>decider</i> again.
+    /// </summary>
+    [Fact]
+    public async Task PostLoopFallbackConsultsTheDeciderRatherThanJumpingStraightToVacuousResult()
+    {
+        var callCount = 0;
+        var evaluator = new SequentialEvaluator<IReadOnlyDictionary<string, object?>>(
+            decider: (_, _, _) => ++callCount > 1 ? false : null,
+            vacuousResult: true);
+
+        var result = await evaluator.EvaluateAsync(
+            "never-commits-first-time",
+            new IRule<IReadOnlyDictionary<string, object?>>[] { Rules.Pass("a") },
+            Rules.Empty);
+
+        Assert.False(result.Passed); // decider's own second-call answer, not vacuousResult
+        Assert.Equal(new[] { "a" }, result.SubResults.Select(r => r.RuleName));
+    }
+}
+
+/// <summary>
 /// A rule shape owning its own Name and Group must declare <c>: IRule</c>,
 /// because C# has no structural typing for multi-member interfaces.
 /// Delegates are a different story — see <see cref="FunctionRuleIdiomTests"/>,

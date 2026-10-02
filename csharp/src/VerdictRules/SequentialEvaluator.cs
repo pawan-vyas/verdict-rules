@@ -45,7 +45,10 @@ public sealed class SequentialEvaluator<TContext>(StepDecider decider, bool vacu
     /// <see cref="RuleResult.SubResults"/> is exactly the sub-results actually
     /// produced -- every one of them when <paramref name="rules"/> is
     /// exhausted without an early stop, or every one up to and including the
-    /// sub-result that triggered an early stop.
+    /// sub-result that triggered an early stop. <see cref="RuleResult.DecidedBy"/>
+    /// is the generic default: just the sub-result that flipped the verdict
+    /// when the decision landed before exhaustion, or every evaluated
+    /// sub-result when it only landed once everything was seen.
     /// </returns>
     public async Task<RuleResult> EvaluateAsync(
         string name, IReadOnlyList<IRule<TContext>> rules, TContext context, CancellationToken cancellationToken = default)
@@ -68,11 +71,20 @@ public sealed class SequentialEvaluator<TContext>(StepDecider decider, bool vacu
             soFar.Add(latest);
             if (decider(latest, soFar, rules.Count) is { } early)
             {
-                return new RuleResult(name, early, subResults: soFar);
+                // Generic default, correct for a custom decider with no simpler
+                // shortcut available: decided with items still unevaluated ->
+                // the one sub-result that flipped the verdict; decided only once
+                // everything was seen -> every evaluated child. Provably wrong
+                // for ShortCircuitEvaluator specifically, which overrides this
+                // below using the one extra fact (its own stopOn) a fully
+                // generic decider has no access to -- see that type.
+                IReadOnlyList<RuleResult> decidedBy = soFar.Count == rules.Count ? soFar : [latest];
+                return new RuleResult(name, early, subResults: soFar, decidedBy: decidedBy);
             }
         }
 
-        return new RuleResult(name, decider(soFar[^1], soFar, rules.Count) ?? vacuousResult, subResults: soFar);
+        return new RuleResult(
+            name, decider(soFar[^1], soFar, rules.Count) ?? vacuousResult, subResults: soFar, decidedBy: soFar);
     }
 
     /// <inheritdoc />

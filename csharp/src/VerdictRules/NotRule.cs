@@ -28,9 +28,6 @@ public sealed class NotRule(string name, IRule rule, string? group = null) : IRu
 
     /// <summary>What a debugger shows without expanding the object.</summary>
     private string DebuggerDisplay => ToString();
-
-    /// <inheritdoc cref="NotRule{TContext}.Negated" />
-    public static RuleResult Negated(RuleResult result) => result.SubResults[0];
 }
 
 /// <summary>Makes a debugger expand a <see cref="NotRule"/> straight to its negated rule.</summary>

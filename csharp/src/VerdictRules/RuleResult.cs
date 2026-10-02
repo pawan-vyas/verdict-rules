@@ -11,9 +11,11 @@ namespace VerdictRules;
 /// <param name="detail"><inheritdoc cref="Detail" path="/summary/node()" /></param>
 /// <param name="data"><inheritdoc cref="Data" path="/summary/node()" /></param>
 /// <param name="subResults"><inheritdoc cref="SubResults" path="/summary/node()" /></param>
+/// <param name="decidedBy"><inheritdoc cref="DecidedBy" path="/summary/node()" /></param>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
 public sealed class RuleResult(
-    string ruleName, bool passed, string detail = "", object? data = null, IReadOnlyList<RuleResult>? subResults = null)
+    string ruleName, bool passed, string detail = "", object? data = null,
+    IReadOnlyList<RuleResult>? subResults = null, IReadOnlyList<RuleResult>? decidedBy = null)
 {
     /// <summary>
     /// Name of the rule this result came from, matching that rule's own
@@ -48,6 +50,26 @@ public sealed class RuleResult(
     /// evaluated -- never padded, never flattened.
     /// </summary>
     public IReadOnlyList<RuleResult> SubResults { get; } = subResults ?? [];
+
+    /// <summary>
+    /// Which of <see cref="SubResults"/> explain <i>this</i> result's own
+    /// verdict -- a one-level, non-recursive fact, populated once by
+    /// whatever built this result. Empty for a leaf or a vacuous composite.
+    /// </summary>
+    /// <remarks>
+    /// This is <b>not</b> the same question <see cref="FailingLeaves"/>
+    /// answers (recursively, the terminal failures): a failed
+    /// <see cref="NotRule{TContext}"/>'s <see cref="DecidedBy"/> is its own
+    /// single child, which actually <i>passed</i> -- correct for "why did
+    /// this fail," but not a chain to walk expecting
+    /// <see cref="FailingLeaves"/>-equivalence. Never recurse through this
+    /// property expecting to land on the same set <see cref="FailingLeaves"/>
+    /// would -- <c>result.DecidedBy[0].DecidedBy[0]...</c> steps into a
+    /// passing child at a <see cref="NotRule{TContext}"/> boundary and keeps
+    /// going from there, which answers a different question than the one
+    /// such a chain-walk would be trying to ask.
+    /// </remarks>
+    public IReadOnlyList<RuleResult> DecidedBy { get; } = decidedBy ?? [];
 
     /// <summary>
     /// Every leaf result reachable from this one, in evaluation order --
