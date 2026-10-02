@@ -30,11 +30,11 @@ independent job in the same run.
 
 ## Impact
 
-`dart-v0.0.2` is genuinely live on pub.dev, but has no GitHub Release page
-(no release notes, no attached skill-distribution assets) as of this
-writing. No incorrect data shipped; a downstream artifact of the release
-simply didn't get created. Recovery approach: [decided with the user —
-see below / fill in once resolved].
+`dart-v0.0.2` was genuinely live on pub.dev, but had no GitHub Release page
+(no release notes, no attached skill-distribution assets) until the fix
+below landed. No incorrect data shipped; a downstream artifact of the
+release simply didn't get created until `release-github.yml` was
+re-run against the existing tag.
 
 ## Root cause
 

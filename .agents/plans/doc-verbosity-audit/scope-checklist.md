@@ -6,39 +6,38 @@
 > either fixed or confirmed to need no change. Order is traversal order —
 > work top to bottom, don't skip around.
 
-- [ ] .agents/incidents/001-release-notes-mangled-by-shell.md
-- [ ] .agents/incidents/002-build-output-committed-across-branches.md
-- [ ] .agents/incidents/003-pushed-mid-rebase.md
-- [ ] .agents/incidents/004-research-published-to-public-surfaces.md
-- [ ] .agents/incidents/005-valid-yaml-invalid-shell.md
-- [ ] .agents/incidents/006-deleting-a-base-branch-closes-a-stacked-pr.md
-- [ ] .agents/incidents/007-edited-on-the-wrong-branch.md
-- [ ] .agents/incidents/008-dart-tag-push-never-triggered-phase-2.md
-- [ ] .agents/incidents/009-annotated-tag-sha-never-equals-commit-sha.md
-- [ ] .agents/incidents/README.md
-- [ ] .agents/memory/a-behaviour-change-is-a-documentation-change.md
-- [ ] .agents/memory/adding-a-variant-is-a-new-file.md
-- [ ] .agents/memory/ascii-only-in-data-and-config-values.md
-- [ ] .agents/memory/avoid-harness-meaningful-filenames.md
-- [ ] .agents/memory/ci-automation-follows-each-languages-manual-release.md
-- [ ] .agents/memory/docs-consolidate-code-stays-in-its-own-tree.md
-- [ ] .agents/memory/features-land-in-every-language.md
-- [ ] .agents/memory/no-organizations-individual-forever.md
-- [ ] .agents/memory/public-surfaces-stay-professional.md
-- [ ] .agents/memory/publish-over-oidc-not-tokens.md
-- [ ] .agents/memory/README.md
-- [ ] .agents/memory/releases-are-language-scoped.md
-- [ ] .agents/memory/research-the-ecosystem-before-deciding-its-idiom.md
-- [ ] .agents/memory/shared-docs-never-name-one-languages-file.md
-- [ ] .agents/memory/skill-evals-are-additive-per-target.md
-- [ ] .agents/memory/skill-version-is-independent-of-sdk-versions.md
-- [ ] .agents/memory/terse-tabulated-summaries-over-prose.md
-- [ ] .agents/memory/verdict-is-a-protocol-spec.md
-- [ ] .agents/memory/verify-doc-links-with-a-real-checker-not-grep.md
-- [ ] .agents/plans/composite-rule-and-leaves-redesign/README.md
-- [ ] .agents/plans/post-generics-docs-and-skill-rebalance/README.md
-- [ ] .agents/plans/README.md
-- [ ] .agents/README.md
+- [x] .agents/incidents/001-release-notes-mangled-by-shell.md
+- [x] .agents/incidents/002-build-output-committed-across-branches.md
+- [x] .agents/incidents/003-pushed-mid-rebase.md
+- [x] .agents/incidents/004-research-published-to-public-surfaces.md
+- [x] .agents/incidents/005-valid-yaml-invalid-shell.md
+- [x] .agents/incidents/006-deleting-a-base-branch-closes-a-stacked-pr.md
+- [x] .agents/incidents/007-edited-on-the-wrong-branch.md
+- [x] .agents/incidents/008-dart-tag-push-never-triggered-phase-2.md
+- [x] .agents/incidents/009-annotated-tag-sha-never-equals-commit-sha.md
+- [x] .agents/incidents/README.md
+- [x] .agents/memory/a-behaviour-change-is-a-documentation-change.md
+- [x] .agents/memory/adding-a-variant-is-a-new-file.md
+- [x] .agents/memory/ascii-only-in-data-and-config-values.md
+- [x] .agents/memory/avoid-harness-meaningful-filenames.md
+- [x] .agents/memory/ci-automation-follows-each-languages-manual-release.md
+- [x] .agents/memory/docs-consolidate-code-stays-in-its-own-tree.md
+- [x] .agents/memory/features-land-in-every-language.md
+- [x] .agents/memory/no-organizations-individual-forever.md
+- [x] .agents/memory/public-surfaces-stay-professional.md
+- [x] .agents/memory/publish-over-oidc-not-tokens.md
+- [x] .agents/memory/README.md
+- [x] .agents/memory/releases-are-language-scoped.md
+- [x] .agents/memory/research-the-ecosystem-before-deciding-its-idiom.md
+- [x] .agents/memory/shared-docs-never-name-one-languages-file.md
+- [x] .agents/memory/skill-evals-are-additive-per-target.md
+- [x] .agents/memory/skill-version-is-independent-of-sdk-versions.md
+- [x] .agents/memory/terse-tabulated-summaries-over-prose.md
+- [x] .agents/memory/verdict-is-a-protocol-spec.md
+- [x] .agents/memory/verify-doc-links-with-a-real-checker-not-grep.md
+- [x] .agents/plans/composite-rule-and-leaves-redesign/README.md
+- [x] .agents/plans/README.md
+- [x] .agents/README.md
 - [ ] .github/ISSUE_TEMPLATE/bug_report.md
 - [ ] .github/ISSUE_TEMPLATE/feature_request.md
 - [ ] .github/PULL_REQUEST_TEMPLATE.md
