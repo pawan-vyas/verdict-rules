@@ -47,7 +47,7 @@ const NUM_CASES = 500;
  *
  * Alongside the tree, returns `childrenOf`: a `Rule -> Rule[]` map recording
  * each composite's own sub-rules, so the recursive checker below can pair a
- * composite's result.data entries against the Rule objects that produced
+ * composite's result.subResults entries against the Rule objects that produced
  * them -- including the nested AndRule/OrRule rule_for_subject builds for
  * vocational/language subjects, not just graduates' own immediate children.
  *
@@ -91,21 +91,20 @@ function buildShadowTree(policies, electiveMinimum) {
  * stops early and never keeps going past it.
  */
 function checkAndRuleInvariant(rule, result) {
-  assert.ok(Array.isArray(result.data), `AndRule "${rule.name}": result.data must be an array`);
   if (result.passed) {
     assert.ok(
-      result.data.every((r) => r.passed),
+      result.subResults.every((r) => r.passed),
       `AndRule "${rule.name}" passed but a sub-result reports failed`,
     );
     return;
   }
-  assert.ok(result.data.length > 0, `AndRule "${rule.name}" failed with an empty result.data`);
+  assert.ok(result.subResults.length > 0, `AndRule "${rule.name}" failed with empty subResults`);
   assert.ok(
-    result.data.slice(0, -1).every((r) => r.passed),
+    result.subResults.slice(0, -1).every((r) => r.passed),
     `AndRule "${rule.name}": a failure before the last entry means it didn't stop at the first one`,
   );
   assert.equal(
-    result.data.at(-1).passed,
+    result.subResults.at(-1).passed,
     false,
     `AndRule "${rule.name}" failed overall but its last recorded entry passed`,
   );
@@ -116,44 +115,77 @@ function checkAndRuleInvariant(rule, result) {
  * the first pass; an all-fail result proves nothing stopped early.
  */
 function checkOrRuleInvariant(rule, result) {
-  assert.ok(Array.isArray(result.data), `OrRule "${rule.name}": result.data must be an array`);
   if (!result.passed) {
     assert.ok(
-      result.data.every((r) => !r.passed),
+      result.subResults.every((r) => !r.passed),
       `OrRule "${rule.name}" failed but a sub-result reports passed`,
     );
     return;
   }
-  assert.ok(result.data.length > 0, `OrRule "${rule.name}" passed with an empty result.data`);
+  assert.ok(result.subResults.length > 0, `OrRule "${rule.name}" passed with empty subResults`);
   assert.ok(
-    result.data.slice(0, -1).every((r) => !r.passed),
+    result.subResults.slice(0, -1).every((r) => !r.passed),
     `OrRule "${rule.name}": a pass before the last entry means it didn't stop at the first one`,
   );
   assert.equal(
-    result.data.at(-1).passed,
+    result.subResults.at(-1).passed,
     true,
     `OrRule "${rule.name}" passed overall but its last recorded entry failed`,
   );
 }
 
 /**
- * AtLeastNRule's own invariant, the deliberate contrast case: it never
- * short-circuits, so every sub-rule runs regardless of the verdict.
+ * AtLeastNRule's own invariant: it stops exactly when its minimum is
+ * mathematically decided -- as soon as enough sub-rules have passed to
+ * guarantee it, or too many have failed for it to still be reachable --
+ * never one sub-rule earlier (the call wouldn't have been decidable yet)
+ * and never one later (an already-decided rule kept evaluating). A prior
+ * version of this invariant pinned "never short-circuits, every sub-rule
+ * always runs" -- a pre-`SequentialEvaluator` artifact, not the settled
+ * design; see `AtLeastNRule`'s own class doc comment.
  */
 function checkAtLeastNRuleInvariant(rule, result, children) {
-  assert.ok(Array.isArray(result.data), `AtLeastNRule "${rule.name}": result.data must be an array`);
+  const total = children.length;
+  const minimum = rule.minimum;
+  const subResults = result.subResults;
+
+  let passedSoFar = 0;
+  for (let index = 0; index < subResults.length; index++) {
+    passedSoFar += subResults[index].passed ? 1 : 0;
+    const remainingAfter = total - (index + 1);
+    const decidedTrue = passedSoFar >= minimum;
+    const decidedFalse = passedSoFar + remainingAfter < minimum;
+    const isLastEvaluated = index === subResults.length - 1;
+
+    if (isLastEvaluated) {
+      assert.ok(
+        decidedTrue || decidedFalse,
+        `AtLeastNRule "${rule.name}" stopped after ${subResults.length} of ${total} sub-rule(s) ` +
+          `before its minimum (${minimum}) was mathematically decided either way`,
+      );
+    } else {
+      assert.ok(
+        !(decidedTrue || decidedFalse),
+        `AtLeastNRule "${rule.name}" kept evaluating past sub-rule ${index} even though its ` +
+          `minimum (${minimum}) was already decided there`,
+      );
+    }
+  }
+
   assert.equal(
-    result.data.length,
-    children.length,
-    `AtLeastNRule "${rule.name}" skipped a sub-rule -- it must evaluate every one unconditionally`,
+    result.passed,
+    passedSoFar >= minimum,
+    `AtLeastNRule "${rule.name}"'s own passed verdict disagrees with the pass count over the ` +
+      `sub-rules it actually evaluated`,
   );
 }
 
 /** A FunctionRule leaf: nothing to recurse into. */
 function checkFunctionRuleInvariant(rule, result) {
-  assert.ok(
-    !Array.isArray(result.data),
-    `FunctionRule "${rule.name}" (a leaf) unexpectedly carries an array result.data`,
+  assert.equal(
+    result.subResults.length,
+    0,
+    `FunctionRule "${rule.name}" (a leaf) unexpectedly carries subResults`,
   );
 }
 
@@ -181,10 +213,10 @@ function checkInvariants(rule, result, childrenOf) {
   checker(rule, result, children);
 
   if (children === undefined) return;
-  // A short-circuited AndRule/OrRule may have fewer result.data entries
+  // A short-circuited AndRule/OrRule may have fewer subResults entries
   // than the rule has children -- pair only what actually ran.
-  for (let i = 0; i < result.data.length; i++) {
-    checkInvariants(children[i], result.data[i], childrenOf);
+  for (let i = 0; i < result.subResults.length; i++) {
+    checkInvariants(children[i], result.subResults[i], childrenOf);
   }
 }
 

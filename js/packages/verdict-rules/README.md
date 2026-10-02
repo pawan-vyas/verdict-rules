@@ -21,7 +21,7 @@ import { AndRule, FunctionRule, RulesEngine, type Context } from "verdict-rules"
 const atLeast = (name: string, field: string, floor: number) =>
   new FunctionRule(name, async (ctx: Context) => {
     const value = ctx[field] as number;
-    return { ruleName: name, passed: value >= floor, detail: `${value} vs ${floor}` };
+    return { passed: value >= floor, detail: `${value} vs ${floor}` };
   });
 
 const eligible = new AndRule("eligible", [
@@ -32,7 +32,10 @@ const eligible = new AndRule("eligible", [
 const engine = new RulesEngine([eligible]);
 const verdict = await engine.runNamed("eligible", { age: 21, score: 55 });
 console.log(verdict.passed); // false
-console.log(verdict.detail); // 'score_ok' failed: 55 vs 60
+// AndRule's own `detail` is always empty -- `failingLeaves` is where the
+// reason actually lives: the sub-rule(s) that caused the failure, flattened.
+console.log(verdict.failingLeaves.map((leaf) => `${leaf.ruleName}: ${leaf.detail}`));
+// [ 'score_ok: 55 vs 60' ]
 ```
 
 ## If it has the shape, it is a rule
@@ -45,7 +48,8 @@ class, no registration:
 const isBusinessHours = {
   name: "is_business_hours",
   async evaluate(ctx: Context) {
-    return { ruleName: "is_business_hours", passed: (ctx.hour as number) >= 9 && (ctx.hour as number) < 17 };
+    const passed = (ctx.hour as number) >= 9 && (ctx.hour as number) < 17;
+    return { ruleName: "is_business_hours", passed, subResults: [], leaves: [], failingLeaves: [] };
   },
 };
 
@@ -94,7 +98,6 @@ being able to break it.
   crossorigin="anonymous"></script>
 <script>
   const rule = new VerdictRules.FunctionRule("ok", async () => ({
-    ruleName: "ok",
     passed: true,
   }));
   new VerdictRules.AndRule("all", [rule]).evaluate({}).then((v) => console.log(v.passed));
@@ -158,8 +161,11 @@ one everybody thinks of first.
   declared it, so a lookup matching nothing can only be a mistake — and a
   misspelled group silently approving is the worst failure an eligibility check
   can have. Use `ruleNames` / `groupNames` to check rather than catch.
-- **`RuleResult.data` is opaque** — only what actually ran, never padded, never
-  flattened.
+- **`RuleResult.data` is opaque** — never read or written by this package.
+  `AndRule`/`OrRule`/`NotRule` carry their own children in
+  `RuleResult.subResults` instead, in evaluation order, never padded; `leaves`/
+  `failingLeaves` flatten the whole tree for you when you just want the
+  reason, not the shape.
 - **Zero runtime dependencies.**
 
 ## Where to go next

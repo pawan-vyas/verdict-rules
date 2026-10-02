@@ -190,17 +190,19 @@ purity check (below) independently confirms.
 A recursive checker then walks a `(rule, result)` pair together, keyed by
 the rule's own concrete type -- a lookup table, not an if/else-if ladder:
 
-- **`AndRule`**: failed means every entry in `result.data` passed except
-  the last, which failed (short-circuited at exactly the first failure);
-  passed means every entry passed (nothing skipped).
+- **`AndRule`**: failed means every entry in `result.subResults` passed
+  except the last, which failed (short-circuited at exactly the first
+  failure); passed means every entry passed (nothing skipped).
 - **`OrRule`**: the mirror image -- passed means every entry failed except
   the last, which passed; failed means every entry failed (an all-fail
   result proves nothing stopped early, since `OrRule` only stops on a
   pass).
-- **`AtLeastNRule`**: the deliberate contrast case -- `result.data` always
-  has exactly as many entries as the rule has sub-rules, regardless of
-  the verdict, because it evaluates every sub-rule unconditionally.
-- **`FunctionRule`**: a leaf -- `result.data` is never an array, and
+- **`AtLeastNRule`**: composes `SequentialEvaluator` directly and
+  short-circuits once its own minimum is mathematically decided either
+  way -- `result.subResults` holds exactly the sub-rules actually
+  evaluated before that point, not necessarily every sub-rule the rule
+  was given.
+- **`FunctionRule`**: a leaf -- `result.subResults` is always empty, and
   nothing recurses further.
 
 The recursion reaches every nesting level this tree actually has: from

@@ -18,6 +18,10 @@
   same property Python's `Protocol` gives.
 - **`FunctionRule`** — wraps a plain async predicate as a `Rule`. The
   common case: most rules are "run this function against the context."
+  The predicate reports a **`PredicateOutcome`** (`{ passed, detail?,
+  data? }`) — never a `RuleResult` directly, and never a `ruleName`:
+  `FunctionRule` already owns the name it was constructed with, so the
+  predicate has no legitimate reason to restate it.
 - **`AndRule`** / **`OrRule`** — composite rules that combine other
   rules, short-circuiting the same way a boolean `&&`/`||` expression
   would (`AndRule` stops at the first failure, `OrRule` stops at the
@@ -31,9 +35,12 @@
   absence — see
   [`../../../../docs/extending/absence-vs-failure/`](../../../../docs/extending/absence-vs-failure/README.md).
 - **`RuleResult`** / **`RunResult`** — plain, readonly interfaces, not
-  classes — construct them as object literals. `RuleResult.data` is a
-  fully opaque slot for a caller's own domain object to ride through
-  evaluation — Verdict never reads or depends on its shape.
+  classes. `RuleResult.data` is a fully opaque slot for a caller's own
+  domain object to ride through evaluation — Verdict never reads or
+  depends on its shape. A composite's own children live in
+  `RuleResult.subResults` instead, in evaluation order; `leaves`/
+  `failingLeaves` flatten the whole tree down to the leaf checks that
+  actually decided the outcome.
 
 ## One complete example
 
@@ -44,22 +51,22 @@ also get registered on a `RulesEngine` under one shared group label, so
 decision above ever looked at each one:
 
 ```ts
-import { AndRule, OrRule, FunctionRule, RulesEngine, type Context, type RuleResult } from "verdict-rules";
+import { AndRule, OrRule, FunctionRule, RulesEngine, type Context, type PredicateOutcome } from "verdict-rules";
 
-async function inputsValid(context: Context): Promise<RuleResult> {
-  return { ruleName: "inputs_valid", passed: context.has_required_fields as boolean };
+async function inputsValid(context: Context): Promise<PredicateOutcome> {
+  return { passed: context.has_required_fields as boolean };
 }
 
-async function autoApproved(context: Context): Promise<RuleResult> {
-  return { ruleName: "auto_approved", passed: context.auto_approved as boolean };
+async function autoApproved(context: Context): Promise<PredicateOutcome> {
+  return { passed: context.auto_approved as boolean };
 }
 
-async function reviewerAssigned(context: Context): Promise<RuleResult> {
-  return { ruleName: "reviewer_assigned", passed: context.reviewer_assigned as boolean };
+async function reviewerAssigned(context: Context): Promise<PredicateOutcome> {
+  return { passed: context.reviewer_assigned as boolean };
 }
 
-async function reviewCompleted(context: Context): Promise<RuleResult> {
-  return { ruleName: "review_completed", passed: context.review_completed as boolean };
+async function reviewCompleted(context: Context): Promise<PredicateOutcome> {
+  return { passed: context.review_completed as boolean };
 }
 
 const taskApproved = new AndRule("task_approved", [

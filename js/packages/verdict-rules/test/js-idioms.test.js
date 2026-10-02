@@ -21,7 +21,7 @@ describe("structural typing", () => {
     const duck = {
       name: "duck",
       async evaluate() {
-        return { ruleName: "duck", passed: true };
+        return { ruleName: "duck", passed: true, subResults: [], leaves: [], failingLeaves: [] };
       },
     };
     const result = await new AndRule("composed", [duck]).evaluate({});
@@ -68,13 +68,13 @@ describe("console.log / util.inspect representation", () => {
   // this -- see rule.test.js/engine.test.js for their ordinary behavior.
 
   it("FunctionRule shows its name", () => {
-    const rule = new FunctionRule("over_18", async () => ({ ruleName: "over_18", passed: true }));
+    const rule = new FunctionRule("over_18", async () => ({ passed: true }));
     assert.equal(rule.toString(), 'FunctionRule "over_18"');
     assert.equal(inspect(rule), 'FunctionRule "over_18"');
   });
 
   it("FunctionRule shows its group when present", () => {
-    const rule = new FunctionRule("over_18", async () => ({ ruleName: "over_18", passed: true }), "age");
+    const rule = new FunctionRule("over_18", async () => ({ passed: true }), "age");
     assert.equal(inspect(rule), 'FunctionRule "over_18" (age)');
   });
 

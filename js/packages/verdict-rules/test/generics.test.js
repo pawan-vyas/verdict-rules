@@ -24,12 +24,12 @@ import { AndRule, FunctionRule, OrRule, RulesEngine } from "../dist/index.js";
 
 /** @param {OrderContext} context */
 async function orderTotalMet(context) {
-  return { ruleName: "order_total_met", passed: context.total >= 50 };
+  return { passed: context.total >= 50 };
 }
 
 /** @param {OrderContext} context */
 async function isMember(context) {
-  return { ruleName: "is_member", passed: context.isMember };
+  return { passed: context.isMember };
 }
 
 describe("a typed, non-dict context runs through every primitive", () => {
@@ -52,7 +52,7 @@ describe("a typed, non-dict context runs through every primitive", () => {
     const log = [];
     const tracked = new FunctionRule("tracked", async () => {
       log.push("tracked");
-      return { ruleName: "tracked", passed: true };
+      return { passed: true };
     });
     const rule = new AndRule("eligible", [new FunctionRule("order_total_met", orderTotalMet), tracked]);
     await rule.evaluate({ total: 10, isMember: false }); // fails order_total_met first

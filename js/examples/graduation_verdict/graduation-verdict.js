@@ -9,7 +9,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { AndRule, FunctionRule, OrRule, RulesEngine } from "verdict-rules";
+import { AndRule, FunctionRule, OrRule, RulesEngine, SequentialEvaluator } from "verdict-rules";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // Fixture data lives at the repo root, shared by every language's own port of
@@ -57,30 +57,44 @@ export function subjectPolicy({
  * Passes if at least `minimum` of the given sub-rules pass.
  *
  * Not part of verdict-rules itself; see docs/extending/new-rule-shape/.
- * Evaluates every sub-rule unconditionally.
+ * Composes `SequentialEvaluator` directly (not `ShortCircuitEvaluator`,
+ * whose own decider hardcodes "the trigger value is the result" and
+ * doesn't fit this rule's own policy): the decider short-circuits as soon
+ * as the minimum is mathematically decided either way -- once enough
+ * sub-rules have passed to guarantee the minimum is met, or once too many
+ * have failed for the minimum to be reachable even if every remaining
+ * sub-rule passed -- so a sub-rule after that point never runs.
  */
 export class AtLeastNRule {
+  // `minimum` is a plain public field, not `#minimum` -- this example's own
+  // test/invariants.test.js reads it back to verify short-circuit timing
+  // against the same threshold `evaluate()` itself decides on, the same
+  // way Python's own worked example exposes `_minimum` for the same
+  // reason. `rules` stays private; nothing outside this class needs it.
+  minimum;
   #rules;
-  #minimum;
+  #evaluator;
 
   constructor(name, rules, minimum, group) {
     this.name = name;
     this.group = group;
+    this.minimum = minimum;
     this.#rules = rules;
-    this.#minimum = minimum;
+    this.#evaluator = new SequentialEvaluator((latest, soFar, total) => {
+      const passed = soFar.filter((r) => r.passed).length;
+      if (passed >= minimum) return true;
+      const remaining = total - soFar.length;
+      if (passed + remaining < minimum) return false;
+      return soFar.length === total ? false : undefined;
+    }, minimum <= 0);
   }
 
   async evaluate(context) {
-    const subResults = [];
-    for (const rule of this.#rules) {
-      subResults.push(await rule.evaluate(context));
-    }
-    const passedCount = subResults.filter((r) => r.passed).length;
+    const result = await this.#evaluator.evaluate(this.name, this.#rules, context);
+    const passedCount = result.subResults.filter((r) => r.passed).length;
     return {
-      ruleName: this.name,
-      passed: passedCount >= this.#minimum,
-      detail: `${passedCount} of ${this.#rules.length} passed, needed ${this.#minimum}`,
-      data: subResults,
+      ...result,
+      detail: `${passedCount} of ${this.#rules.length} passed, needed ${this.minimum}`,
     };
   }
 }
@@ -89,7 +103,6 @@ function writtenPredicate(policy) {
   return async (context) => {
     const pct = context.scores[policy.subjectId].writtenPct;
     return {
-      ruleName: policy.subjectId,
       passed: pct >= policy.writtenMinPct,
       detail: `${pct} vs ${policy.writtenMinPct}`,
     };
@@ -100,7 +113,6 @@ function practicalRule(policy, name) {
   return new FunctionRule(name, async (context) => {
     const pct = context.scores[policy.subjectId].practicalPct;
     return {
-      ruleName: name,
       passed: pct >= policy.practicalMinPct,
       detail: `${pct} vs ${policy.practicalMinPct}`,
     };
@@ -110,7 +122,7 @@ function practicalRule(policy, name) {
 function exemptionRule(policy, name) {
   return new FunctionRule(name, async (context) => {
     const exempt = context.scores[policy.subjectId].hasExemption ?? false;
-    return { ruleName: name, passed: exempt };
+    return { passed: exempt };
   });
 }
 
@@ -190,14 +202,11 @@ export function ruleForSubject(policy) {
 }
 
 export async function cgpaMet(context) {
-  return { ruleName: "cgpa_met", passed: context.cgpa >= context.cgpaFloor };
+  return { passed: context.cgpa >= context.cgpaFloor };
 }
 
 export async function attendanceMet(context) {
-  return {
-    ruleName: "attendance_met",
-    passed: context.attendancePct >= context.attendanceFloor,
-  };
+  return { passed: context.attendancePct >= context.attendanceFloor };
 }
 
 /**
@@ -392,7 +401,15 @@ async function demo() {
   for (const [studentId, context] of Object.entries(students)) {
     const verdict = await graduates.evaluate(context);
     const status = verdict.passed ? "GRADUATES" : "DOES NOT GRADUATE";
-    const reason = verdict.passed ? "" : `  (${verdict.detail})`;
+    // `graduates` is a composite -- its own `detail` is always empty (see
+    // AGENTS.md/the redesign notes: a composed ShortCircuitEvaluator has no
+    // per-composite channel to build a descriptive string from). The actual
+    // reason lives in `failingLeaves` instead, flattened from wherever in
+    // the tree the short-circuit actually stopped.
+    const reasons = verdict.failingLeaves
+      .map((leaf) => (leaf.detail ? `${leaf.ruleName}: ${leaf.detail}` : leaf.ruleName))
+      .join("; ");
+    const reason = verdict.passed ? "" : `  (${reasons})`;
     console.log(`${studentId.padEnd(10)}: ${status}${reason}`);
   }
 }

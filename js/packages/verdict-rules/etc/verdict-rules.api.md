@@ -9,12 +9,15 @@ export class AndRule<TContext> implements Rule<TContext> {
     constructor(name: string, rules: readonly Rule<TContext>[], group?: string);
     // (undocumented)
     evaluate(context: TContext): Promise<RuleResult>;
+    static failed(result: RuleResult): RuleResult | undefined;
     // (undocumented)
     readonly group: string | undefined;
     // (undocumented)
     readonly name: string;
+    static passing(result: RuleResult): readonly RuleResult[];
     // (undocumented)
     toString(): string;
+    static readonly VACUOUS_RESULT = true;
 }
 
 // @public
@@ -33,16 +36,39 @@ export class FunctionRule<TContext> implements Rule<TContext> {
 }
 
 // @public
-export class OrRule<TContext> implements Rule<TContext> {
-    constructor(name: string, rules: readonly Rule<TContext>[], group?: string);
-    // (undocumented)
+export class NotRule<TContext> implements Rule<TContext> {
+    constructor(name: string, rule: Rule<TContext>, group?: string);
     evaluate(context: TContext): Promise<RuleResult>;
     // (undocumented)
     readonly group: string | undefined;
     // (undocumented)
     readonly name: string;
+    static negated(result: RuleResult): RuleResult;
     // (undocumented)
     toString(): string;
+}
+
+// @public
+export class OrRule<TContext> implements Rule<TContext> {
+    constructor(name: string, rules: readonly Rule<TContext>[], group?: string);
+    // (undocumented)
+    evaluate(context: TContext): Promise<RuleResult>;
+    static failing(result: RuleResult): readonly RuleResult[];
+    // (undocumented)
+    readonly group: string | undefined;
+    // (undocumented)
+    readonly name: string;
+    static passed(result: RuleResult): RuleResult | undefined;
+    // (undocumented)
+    toString(): string;
+    static readonly VACUOUS_RESULT = false;
+}
+
+// @public
+export interface PredicateOutcome {
+    readonly data?: unknown;
+    readonly detail?: string;
+    readonly passed: boolean;
 }
 
 // @public
@@ -53,14 +79,17 @@ export interface Rule<TContext> {
 }
 
 // @public
-export type RulePredicate<TContext> = (context: TContext) => Promise<RuleResult>;
+export type RulePredicate<TContext> = (context: TContext) => Promise<PredicateOutcome>;
 
 // @public
 export interface RuleResult {
     readonly data?: unknown;
     readonly detail?: string;
+    readonly failingLeaves: readonly RuleResult[];
+    readonly leaves: readonly RuleResult[];
     readonly passed: boolean;
     readonly ruleName: string;
+    readonly subResults: readonly RuleResult[];
 }
 
 // @public
@@ -79,9 +108,26 @@ export class RulesEngine<TContext> {
 
 // @public
 export interface RunResult {
+    readonly failingLeaves: readonly RuleResult[];
+    readonly leaves: readonly RuleResult[];
     readonly passed: boolean;
     readonly results: readonly RuleResult[];
 }
+
+// @public
+export class SequentialEvaluator {
+    constructor(decider: StepDecider, vacuousResult: boolean);
+    evaluate<TContext>(name: string, rules: readonly Rule<TContext>[], context: TContext): Promise<RuleResult>;
+}
+
+// @public
+export class ShortCircuitEvaluator {
+    constructor(stopOn: boolean);
+    evaluate<TContext>(name: string, rules: readonly Rule<TContext>[], context: TContext): Promise<RuleResult>;
+}
+
+// @public
+export type StepDecider = (latest: RuleResult, soFar: readonly RuleResult[], total: number) => boolean | undefined;
 
 // @public
 export class UnknownLookupError extends Error {

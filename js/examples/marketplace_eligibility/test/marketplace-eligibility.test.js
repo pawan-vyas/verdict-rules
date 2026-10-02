@@ -135,12 +135,10 @@ describe("compliance catalog is dict-context and heterogeneous", () => {
     // alongside the existing three, reading the same event shape with no
     // adapter needed.
     const weekendFlag = new FunctionRule("weekend_flag", async (ctx) => ({
-      ruleName: "weekend_flag",
       passed: ctx.is_weekend ?? false,
     }));
     const extended = new RulesEngine([
       new FunctionRule("high_value_flag", async (ctx) => ({
-        ruleName: "high_value_flag",
         passed: ctx.amount_cents > 50_000,
       })),
       weekendFlag,
