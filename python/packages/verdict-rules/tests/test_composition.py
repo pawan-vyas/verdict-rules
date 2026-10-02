@@ -1,8 +1,8 @@
 """Unit tests for the composition primitives behind AndRule/OrRule, and the
-new shipped NotRule: SequentialEvaluator, ShortCircuitEvaluator, and the
-AndRule.failed/passing / OrRule.passed/failing / NotRule.negated accessors.
+new shipped NotRule: SequentialEvaluator, ShortCircuitEvaluator, and
+RuleResult.decided_by.
 
-See .agents/plans/composite-rule-and-leaves-redesign/README.md §3-§3e for
+See .agents/plans/composite-rule-and-leaves-redesign/README.md §3-§3d for
 the design this pins down.
 """
 
@@ -78,6 +78,66 @@ class TestSequentialEvaluator:
         result = await evaluator.evaluate("e", rules, {})
         assert [r.rule_name for r in result.sub_results] == ["a", "b", "c"]
 
+    async def test_in_loop_decider_call_receives_the_real_total(self) -> None:
+        """Each per-step call passes the real ``len(rules)`` as ``total`` --
+        a decider that only stops relative to that count (one short of the
+        end, here) proves the actual value arrived, not just *some* int."""
+        calls: list[str] = []
+        rules = [_tracked_pass("a", calls), _tracked_pass("b", calls), _tracked_pass("c", calls)]
+
+        def decider(latest: RuleResult, so_far: list[RuleResult], total: int) -> bool | None:
+            return True if len(so_far) == total - 1 else None
+
+        evaluator = SequentialEvaluator(decider=decider, vacuous_result=False)
+        result = await evaluator.evaluate("e", rules, {})
+
+        assert calls == ["a", "b"], "must stop one short of the end -- decider needs the real total"
+        assert result.passed is True
+
+    async def test_final_decider_call_after_exhaustion_sees_the_real_arguments(self) -> None:
+        """After the loop exhausts without deciding, SequentialEvaluator
+        calls the decider one more time -- this pins every argument that
+        call receives (the latest/last sub-result, the full so_far list, the
+        total) and the resulting RuleResult's own rule_name, none of which
+        any pre-existing test (whose deciders ignore their arguments)
+        distinguishes from a mutated/omitted call."""
+        rules = [_pass("a"), _pass("b"), _pass("c")]
+        calls: list[tuple[RuleResult | None, tuple[RuleResult, ...] | None, int | None]] = []
+
+        def decider(latest: RuleResult, so_far: list[RuleResult] | None, total: int | None) -> bool | None:
+            calls.append((latest, tuple(so_far) if so_far is not None else None, total))
+            return None
+
+        evaluator = SequentialEvaluator(decider=decider, vacuous_result=False)
+        result = await evaluator.evaluate("e", rules, {})
+
+        # Once per rule during the loop (3), plus one more after exhaustion.
+        assert len(calls) == 4
+        latest, so_far_snapshot, total = calls[-1]
+        assert so_far_snapshot is not None
+        assert latest is so_far_snapshot[-1]
+        assert [r.rule_name for r in so_far_snapshot] == ["a", "b", "c"]
+        assert total == 3
+        assert result.rule_name == "e"
+        assert result.passed is False  # the vacuous_result -- decider always returned None
+
+    async def test_final_decider_call_can_still_resolve_the_outcome(self) -> None:
+        """The final, post-exhaustion decider call is a real decision point,
+        not dead code that always falls through to vacuous_result -- a
+        decider that only ever resolves on that final call must still have
+        its verdict honored."""
+        rules = [_pass("a"), _pass("b")]
+        seen = 0
+
+        def decider(latest: RuleResult, so_far: list[RuleResult], total: int) -> bool | None:
+            nonlocal seen
+            seen += 1
+            return None if seen <= len(rules) else True
+
+        evaluator = SequentialEvaluator(decider=decider, vacuous_result=False)
+        result = await evaluator.evaluate("e", rules, {})
+        assert result.passed is True  # from the final decider call, not vacuous_result
+
 
 class TestShortCircuitEvaluator:
     """The exact shape AndRule (stop_on=False)/OrRule (stop_on=True) compose."""
@@ -123,62 +183,58 @@ class TestShortCircuitEvaluator:
         assert [r.rule_name for r in result.sub_results] == ["a", "b"]
 
 
-class TestAndRuleAccessors:
-    async def test_failed_returns_the_sole_decisive_failure(self) -> None:
-        rule = AndRule("and1", [_pass("a"), _fail("b")])
-        result = await rule.evaluate({})
-        failed = AndRule.failed(result)
-        assert failed is not None
-        assert failed.rule_name == "b"
+class TestDecidedBy:
+    """RuleResult.decided_by -- the one-level, non-recursive explanation
+    for a composite's own verdict. Supersedes AndRule.failed/passing and
+    OrRule.passed/failing (removed): those were static methods a caller
+    could apply to the wrong family's result and get a plausible, silently
+    wrong answer -- confirmed with concrete cases from a real adopter
+    review, not hypothetical. decided_by closes that structurally: there
+    is no second method to reach for, every result carries its own
+    correctly-populated field."""
 
-    async def test_failed_returns_none_when_the_and_rule_passed(self) -> None:
-        rule = AndRule("and1", [_pass("a"), _pass("b")])
+    async def test_and_rule_failing_early_names_just_the_decisive_failure(self) -> None:
+        rule = AndRule("and1", [_pass("a"), _fail("b"), _pass("c"), _pass("d")])
         result = await rule.evaluate({})
-        assert AndRule.failed(result) is None
+        assert [r.rule_name for r in result.decided_by] == ["b"]
 
-    async def test_failed_returns_none_for_an_empty_and_rule(self) -> None:
-        rule = AndRule("and1", [])
-        result = await rule.evaluate({})
-        assert AndRule.failed(result) is None
-
-    async def test_passing_returns_every_sub_result_when_the_and_rule_passed(self) -> None:
-        rule = AndRule("and1", [_pass("a"), _pass("b")])
-        result = await rule.evaluate({})
-        assert [r.rule_name for r in AndRule.passing(result)] == ["a", "b"]
-
-    async def test_passing_excludes_the_decisive_failure(self) -> None:
+    async def test_and_rule_failing_on_its_last_item_still_names_just_that_one(self) -> None:
+        """The case a first attempt at this got wrong: soFar.Count==total
+        holds here exactly like it does for a genuine full pass, so a
+        rule based on count alone can't tell them apart -- position in
+        the list is irrelevant to blame; ShortCircuitEvaluator's own
+        stop_on is what actually distinguishes them."""
         rule = AndRule("and1", [_pass("a"), _pass("b"), _fail("c")])
         result = await rule.evaluate({})
-        assert [r.rule_name for r in AndRule.passing(result)] == ["a", "b"]
+        assert [r.rule_name for r in result.decided_by] == ["c"]
 
-
-class TestOrRuleAccessors:
-    async def test_passed_returns_the_sole_decisive_pass(self) -> None:
-        rule = OrRule("or1", [_fail("a"), _pass("b")])
+    async def test_and_rule_fully_passing_names_every_sub_result(self) -> None:
+        rule = AndRule("and1", [_pass("a"), _pass("b"), _pass("c")])
         result = await rule.evaluate({})
-        passed = OrRule.passed(result)
-        assert passed is not None
-        assert passed.rule_name == "b"
+        assert [r.rule_name for r in result.decided_by] == ["a", "b", "c"]
 
-    async def test_passed_returns_none_when_the_or_rule_failed(self) -> None:
-        rule = OrRule("or1", [_fail("a"), _fail("b")])
+    async def test_and_rule_vacuous_pass_names_nothing(self) -> None:
+        rule = AndRule("and1", [])
         result = await rule.evaluate({})
-        assert OrRule.passed(result) is None
+        assert result.decided_by == ()
 
-    async def test_passed_returns_none_for_an_empty_or_rule(self) -> None:
+    async def test_or_rule_passing_early_names_just_the_decisive_pass(self) -> None:
+        rule = OrRule("or1", [_fail("a"), _pass("b"), _fail("c")])
+        result = await rule.evaluate({})
+        assert [r.rule_name for r in result.decided_by] == ["b"]
+
+    async def test_or_rule_all_fail_names_every_sub_result(self) -> None:
+        """Mirrors the AndRule last-item case with the opposite polarity --
+        OrRule's all-fail verdict is only known once every item is seen,
+        genuinely collective, not attributable to the last one alone."""
+        rule = OrRule("or1", [_fail("a"), _fail("b"), _fail("c")])
+        result = await rule.evaluate({})
+        assert [r.rule_name for r in result.decided_by] == ["a", "b", "c"]
+
+    async def test_or_rule_vacuous_fail_names_nothing(self) -> None:
         rule = OrRule("or1", [])
         result = await rule.evaluate({})
-        assert OrRule.passed(result) is None
-
-    async def test_failing_returns_every_sub_result_when_the_or_rule_failed(self) -> None:
-        rule = OrRule("or1", [_fail("a"), _fail("b")])
-        result = await rule.evaluate({})
-        assert [r.rule_name for r in OrRule.failing(result)] == ["a", "b"]
-
-    async def test_failing_excludes_the_decisive_pass(self) -> None:
-        rule = OrRule("or1", [_fail("a"), _fail("b"), _pass("c")])
-        result = await rule.evaluate({})
-        assert [r.rule_name for r in OrRule.failing(result)] == ["a", "b"]
+        assert result.decided_by == ()
 
 
 class TestNotRule:
@@ -199,12 +255,29 @@ class TestNotRule:
         assert len(result.sub_results) == 1
         assert result.sub_results[0].rule_name == "inner"
 
-    async def test_negated_returns_the_inner_result(self) -> None:
-        rule = NotRule("not1", _fail("inner"))
-        result = await rule.evaluate({})
-        inner = NotRule.negated(result)
-        assert inner.rule_name == "inner"
-        assert inner.passed is False
+    async def test_passes_the_context_through_to_the_inner_rule(self) -> None:
+        """NotRule.evaluate must forward its own ``context`` argument
+        unchanged to the wrapped rule -- nothing above exercises a
+        context-dependent predicate."""
+        seen: dict = {}
+
+        async def predicate(context: dict) -> PredicateOutcome:
+            seen.update(context)
+            return PredicateOutcome(passed=True)
+
+        rule = NotRule("not1", FunctionRule("inner", predicate))
+        await rule.evaluate({"user_id": 7})
+        assert seen == {"user_id": 7}
+
+    async def test_decided_by_is_the_inner_result_in_both_directions(self) -> None:
+        """Unconditional, unlike failing_leaves' own self-as-leaf rule --
+        'inner passed' is genuinely why a failing NotRule failed, not an
+        inconsistency to paper over."""
+        failing = await NotRule("not1", _fail("inner")).evaluate({})
+        assert [r.rule_name for r in failing.decided_by] == ["inner"]
+
+        passing = await NotRule("not2", _pass("inner")).evaluate({})
+        assert [r.rule_name for r in passing.decided_by] == ["inner"]
 
     async def test_a_failed_not_rule_has_itself_as_its_own_failing_leaf(self) -> None:
         """The negation case failing_leaves exists to handle correctly --

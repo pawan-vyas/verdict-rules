@@ -81,6 +81,26 @@ class TestFunctionRule:
         with pytest.raises(TypeError, match="r1"):
             await rule.evaluate({})
 
+    async def test_type_error_names_the_actual_wrong_type_returned(self) -> None:
+        """The message must name whatever type was actually returned, not a
+        fixed placeholder -- using a type other than ``NoneType`` catches a
+        mutant that hardcodes the name instead of reading ``type(outcome)``."""
+
+        async def predicate(context: dict) -> PredicateOutcome:
+            return 42  # type: ignore[return-value]
+
+        rule = FunctionRule("r1", predicate)
+        with pytest.raises(TypeError, match="int"):
+            await rule.evaluate({})
+
+    async def test_result_carries_the_predicate_s_data(self) -> None:
+        """FunctionRule.evaluate must forward PredicateOutcome.data onto the
+        RuleResult it builds -- nothing in the passing/failing-path tests
+        above exercises a non-None payload."""
+        rule = _pass("r1", data={"score": 42})
+        result = await rule.evaluate({})
+        assert result.data == {"score": 42}
+
     async def test_predicate_returning_a_rule_result_directly_raises_type_error(self) -> None:
         """The specific regression this check closes: a predicate built
         against the old, pre-PredicateOutcome calling convention returns a
@@ -115,10 +135,10 @@ class TestAndRule:
         # to build a descriptive string from a sub-rule's own name/detail
         # (see StepDecider's signature: bool | None, nothing else). The
         # failing sub-rule and its own detail are still fully recoverable
-        # from `sub_results`/`AndRule.failed` instead.
+        # from `sub_results`/`decided_by` instead.
         assert result.detail == ""
-        failing = AndRule.failed(result)
-        assert failing is not None
+        assert len(result.decided_by) == 1
+        failing = result.decided_by[0]
         assert failing.rule_name == "b"
         assert failing.detail == "bad"
 

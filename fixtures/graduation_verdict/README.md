@@ -40,6 +40,7 @@ Every student carries an `expected` block:
 | `failing_chain` | `RuleResult.data` is **never flattened** — the path is preserved through nesting |
 | `leaves` | Every actual leaf-level rule the composite evaluated, in evaluation order, regardless of pass/fail — `RuleResult.SubResults` recursion stops at the real terminal checks, not at wherever a composite's own name sits |
 | `failing_leaves` | A passing result has none, ever — even one that short-circuited past an earlier failure on the way to passing (`elena`). A failing result is never empty either, falling back to itself when no leaf underneath actually failed (negation's own case, not exercised by this curriculum but proven separately in each language's own unit tests) |
+| `decided_by` | The one-level, non-recursive explanation for the top-level composite's own verdict — every top-level member when it fully passed (`alice`, `elena`, `harish`), exactly the one that decided it otherwise, **regardless of position** — `gita` fails on `attendance_met`, the *last* of the four top-level members, and `decided_by` is still just `["attendance_met"]`, not all four, proving the distinction holds even when a single-cause failure happens to land on the last item evaluated |
 | `run_all` | `run_all` never short-circuits: it reports every registered rule regardless of failure |
 | `groups` | Group registration and dispatch work, including that a group's verdict is an "all passed" over its members |
 

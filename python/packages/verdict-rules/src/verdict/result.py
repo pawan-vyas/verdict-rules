@@ -26,6 +26,15 @@ class RuleResult:
             :class:`~verdict.rule.SequentialEvaluator`) populates this
             with its own sub-results; an empty tuple *is* the leaf
             signal, structurally, not just by convention.
+        decided_by: Which of :attr:`sub_results` explain *this* result's
+            own verdict — a one-level, non-recursive fact, populated once
+            by whatever built this result. Not the same question
+            :attr:`failing_leaves` answers (recursively, the terminal
+            failures): a failed ``NotRule``'s ``decided_by`` is its
+            *passing* inner child, which is correct for "why did this
+            fail" but is not something to keep walking into expecting
+            ``failing_leaves``-equivalence. Empty for a leaf or a vacuous
+            composite.
     """
 
     rule_name: str
@@ -33,6 +42,7 @@ class RuleResult:
     detail: str = ""
     data: object | None = None
     sub_results: Sequence[RuleResult] = field(default_factory=tuple)
+    decided_by: Sequence[RuleResult] = field(default_factory=tuple)
 
     @property
     def leaves(self) -> list[RuleResult]:

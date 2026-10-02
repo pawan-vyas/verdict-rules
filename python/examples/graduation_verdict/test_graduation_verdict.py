@@ -285,6 +285,20 @@ class TestSharedFixtureContract:
         )
 
     @pytest.mark.parametrize("student_id", list(_STUDENTS.keys()))
+    async def test_decided_by_matches(self, student_id: str) -> None:
+        """One-level explanation for the top-level composite's own verdict --
+        exactly the decisive member regardless of position (gita fails on
+        the *last* of four), or every member on a full pass."""
+        _, graduates = build_graduation_check(_POLICIES, _ELECTIVE_MINIMUM)
+        context = _STUDENTS[student_id]
+        expected = context["expected"]
+        result = await graduates.evaluate(context)
+        decided_by = [r.rule_name for r in result.decided_by]
+        assert decided_by == expected["decided_by"], (
+            f"{student_id}: expected decided_by {expected['decided_by']}, got {decided_by}"
+        )
+
+    @pytest.mark.parametrize("student_id", list(_STUDENTS.keys()))
     async def test_run_all_never_short_circuits(self, student_id: str) -> None:
         """run_all reports every registered rule for every student, always."""
         engine, _ = build_graduation_check(_POLICIES, _ELECTIVE_MINIMUM)

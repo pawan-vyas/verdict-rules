@@ -17,7 +17,7 @@ runtime. ``Rule[dict[str, Any]]`` is the dict-context spelling; the bare
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Awaitable, Callable, Generic, Protocol, Sequence, TypeAlias, TypeVar, runtime_checkable
 
 from verdict.result import RuleResult
@@ -235,10 +235,18 @@ class SequentialEvaluator(Generic[TContext]):
             so_far.append(latest)
             early = self._decider(latest, so_far, len(rules))
             if early is not None:
-                return RuleResult(rule_name=name, passed=early, sub_results=tuple(so_far))
+                # Generic default, correct for a custom decider with no
+                # simpler shortcut: decided with items still unevaluated
+                # -> just the one that flipped it; decided only once
+                # everything was seen -> all of them. Provably wrong for
+                # ShortCircuitEvaluator specifically, which overrides this
+                # below using the one extra fact (stop_on) that a fully
+                # generic decider doesn't have access to.
+                decided_by = tuple(so_far) if len(so_far) == len(rules) else (latest,)
+                return RuleResult(rule_name=name, passed=early, sub_results=tuple(so_far), decided_by=decided_by)
         final = self._decider(so_far[-1], so_far, len(rules))
         passed = final if final is not None else self._vacuous_result
-        return RuleResult(rule_name=name, passed=passed, sub_results=tuple(so_far))
+        return RuleResult(rule_name=name, passed=passed, sub_results=tuple(so_far), decided_by=tuple(so_far))
 
 
 class ShortCircuitEvaluator(Generic[TContext]):
@@ -276,6 +284,7 @@ class ShortCircuitEvaluator(Generic[TContext]):
                 return not stop_on
             return None
 
+        self._stop_on = stop_on
         self._inner: SequentialEvaluator[TContext] = SequentialEvaluator(
             decider=decider, vacuous_result=not stop_on
         )
@@ -283,8 +292,21 @@ class ShortCircuitEvaluator(Generic[TContext]):
     async def evaluate(
         self, name: str, rules: Sequence[Rule[TContext]], context: TContext
     ) -> RuleResult:
-        """See :meth:`SequentialEvaluator.evaluate` — forwards unchanged."""
-        return await self._inner.evaluate(name, rules, context)
+        """See :meth:`SequentialEvaluator.evaluate` — same result, except
+        ``decided_by`` is recomputed here rather than trusting
+        :class:`SequentialEvaluator`'s own generic rule.
+
+        That generic rule can't distinguish "found the trigger, which
+        happened to be the last item evaluated" from "genuinely exhausted
+        every item without ever finding it" using count alone — an
+        ``AndRule`` failing on its *last* sub-rule has
+        ``len(sub_results) == total`` exactly like a genuine full pass
+        does. ``stop_on`` is the one extra fact that tells them apart.
+        """
+        result = await self._inner.evaluate(name, rules, context)
+        last = result.sub_results[-1] if result.sub_results else None
+        decided_by = (last,) if last is not None and last.passed == self._stop_on else result.sub_results
+        return replace(result, decided_by=tuple(decided_by))
 
 
 class AndRule(Generic[TContext]):
@@ -341,34 +363,6 @@ class AndRule(Generic[TContext]):
         suffix = f" ({self.group})" if self.group else ""
         return f'AndRule "{self.name}"{suffix} — {len(self._rules)} sub-rule(s)'
 
-    @staticmethod
-    def failed(result: RuleResult) -> RuleResult | None:
-        """The sole sub-result that decided a failed ``AndRule``, or
-        ``None`` if ``result`` passed (or didn't come from an ``AndRule``
-        at all).
-
-        Because :class:`ShortCircuitEvaluator` stops the instant the
-        outcome is decided, the last entry in ``sub_results`` is always
-        the one that decided it — for a failed ``AndRule``, the sole
-        failure (everything before it passed). Reads only
-        ``result.sub_results``, so nesting composes for free:
-        ``AndRule.failed(result).failing_leaves`` drills further when the
-        decisive sub-result is itself a composite. No guard against
-        passing an ``OrRule``'s result in — that mistake is visible at the
-        call site, unlike the duck-typed ``data`` bug this design replaces.
-        """
-        if result.sub_results and not result.sub_results[-1].passed:
-            return result.sub_results[-1]
-        return None
-
-    @staticmethod
-    def passing(result: RuleResult) -> Sequence[RuleResult]:
-        """Every sub-result that passed on the way to ``result``'s own
-        outcome — all of ``sub_results`` if the ``AndRule`` passed, all but
-        the last (the failure returned by :meth:`failed`) if it didn't."""
-        failed = AndRule.failed(result)
-        return result.sub_results if failed is None else result.sub_results[:-1]
-
 
 class OrRule(Generic[TContext]):
     """Composite rule that passes if any sub-rule passes.
@@ -419,27 +413,6 @@ class OrRule(Generic[TContext]):
         suffix = f" ({self.group})" if self.group else ""
         return f'OrRule "{self.name}"{suffix} — {len(self._rules)} sub-rule(s)'
 
-    @staticmethod
-    def passed(result: RuleResult) -> RuleResult | None:
-        """The sole sub-result that decided a passed ``OrRule``, or
-        ``None`` if ``result`` failed (or didn't come from an ``OrRule`` at
-        all).
-
-        Mirrors :meth:`AndRule.failed` with the opposite polarity — the
-        last entry in ``sub_results`` is always the one that decided it,
-        here the sole pass (everything before it failed)."""
-        if result.sub_results and result.sub_results[-1].passed:
-            return result.sub_results[-1]
-        return None
-
-    @staticmethod
-    def failing(result: RuleResult) -> Sequence[RuleResult]:
-        """Every sub-result that failed before ``result``'s own outcome was
-        decided — all of ``sub_results`` if the ``OrRule`` failed, all but
-        the last (the pass returned by :meth:`passed`) if it didn't."""
-        passed = OrRule.passed(result)
-        return result.sub_results if passed is None else result.sub_results[:-1]
-
 
 class NotRule(Generic[TContext]):
     """Composite rule that passes exactly when its one wrapped rule fails.
@@ -482,24 +455,14 @@ class NotRule(Generic[TContext]):
             call on any ``RuleResult`` at all, so ``NotRule`` doesn't get
             to special-case it away just because a failed ``NotRule``'s own
             ``failing_leaves`` can otherwise read as misleadingly empty
-            (the cause is a pass, not a failure) — :meth:`negated` is the
-            dedicated accessor that answers "why," the same role
-            :meth:`AndRule.failed`/:meth:`OrRule.passed` play for their own
-            families.
+            (the cause is a pass, not a failure). ``decided_by`` is
+            ``(inner,)`` unconditionally, in both directions — correct
+            either way, since "inner passed" is genuinely why a failing
+            ``NotRule`` failed, not an inconsistency.
         """
         inner = await self._rule.evaluate(context)
-        return RuleResult(rule_name=self.name, passed=not inner.passed, sub_results=(inner,))
+        return RuleResult(rule_name=self.name, passed=not inner.passed, sub_results=(inner,), decided_by=(inner,))
 
     def __repr__(self) -> str:
         suffix = f" ({self.group})" if self.group else ""
         return f'NotRule "{self.name}"{suffix}'
-
-    @staticmethod
-    def negated(result: RuleResult) -> RuleResult:
-        """The one inner result this ``NotRule`` negated to produce
-        ``result``.
-
-        Non-nullable, unlike :meth:`AndRule.failed`/:meth:`OrRule.passed` —
-        fixed arity means the inner result is never absent.
-        """
-        return result.sub_results[0]
