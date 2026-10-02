@@ -1,8 +1,8 @@
 <!-- Title: Graduation Verdict — Testing -->
 # Graduation Verdict — Testing
 
-> How this project is tested, and why its two test files serve two
-> different purposes rather than being one bigger suite of the same
+> How this project is tested, and why its four test files each serve a
+> different purpose rather than being one bigger suite of the same
 > kind. See
 > [`../../../../docs/samples/graduation-requirement-verdict/`](../../../../docs/samples/graduation-requirement-verdict/README.md)
 > for why it's built the way it is, and

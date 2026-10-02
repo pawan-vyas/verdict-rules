@@ -54,10 +54,10 @@
 - [x] csharp/src/VerdictRules/CHANGELOG.md
 - [x] csharp/src/VerdictRules/docs/quickstart.md
 - [x] csharp/src/VerdictRules/README.md
-- [ ] dart/AGENTS.md
-- [ ] dart/examples/graduation_verdict/docs/testing.md
-- [ ] dart/examples/graduation_verdict/README.md
-- [ ] dart/examples/marketplace_eligibility/README.md
+- [x] dart/AGENTS.md
+- [x] dart/examples/graduation_verdict/docs/testing.md
+- [x] dart/examples/graduation_verdict/README.md
+- [x] dart/examples/marketplace_eligibility/README.md
 - [ ] dart/packages/verdict_rules/CHANGELOG.md
 - [ ] dart/packages/verdict_rules/doc/quickstart.md
 - [ ] dart/packages/verdict_rules/README.md
@@ -198,16 +198,16 @@
 - [ ] fixtures/README.md
 - [ ] HANDOFF.md
 - [ ] js/AGENTS.md
-- [ ] js/examples/graduation_verdict/docs/testing.md
-- [ ] js/examples/graduation_verdict/README.md
+- [x] js/examples/graduation_verdict/docs/testing.md
+- [x] js/examples/graduation_verdict/README.md
 - [ ] js/examples/marketplace_eligibility/README.md
 - [ ] js/packages/verdict-rules/CHANGELOG.md
 - [ ] js/packages/verdict-rules/docs/quickstart.md
 - [ ] js/packages/verdict-rules/etc/verdict-rules.api.md
 - [ ] js/packages/verdict-rules/README.md
 - [ ] python/AGENTS.md
-- [ ] python/examples/graduation_verdict/docs/testing.md
-- [ ] python/examples/graduation_verdict/README.md
+- [x] python/examples/graduation_verdict/docs/testing.md
+- [x] python/examples/graduation_verdict/README.md
 - [ ] python/examples/graduation_verdict/testdata/shrunk_failures/README.md
 - [ ] python/examples/marketplace_eligibility/README.md
 - [ ] python/examples/README.md

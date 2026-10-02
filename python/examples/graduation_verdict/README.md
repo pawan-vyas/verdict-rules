@@ -44,7 +44,7 @@ invocation is required day to day.
 - [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md) —
   how to add a subject, a student scenario, or a new subject type, and
   the shared cross-language fixture contract.
-- [`docs/testing.md`](docs/testing.md) — the two test suites and what
+- [`docs/testing.md`](docs/testing.md) — the four test suites and what
   each proves, including why this project's own tests also serve as an
   integration/e2e regression net for `verdict` itself.
 
@@ -60,3 +60,6 @@ invocation is required day to day.
 | `oracle.py` | A second, `verdict`-free implementation, used as ground truth by the chaos suite. |
 | `chaos_data.py` | A deterministic generator for randomized, schema-valid curricula and students. |
 | `test_chaos.py` | 500 generated cases, checked against `oracle.py` — see [`docs/testing.md`](docs/testing.md#the-chaos-suite-differential-testing-against-an-independent-oracle). |
+| `test_chaos_structural.py` | The *shape* of every generated case's result tree, not just its final boolean — see [`docs/testing.md`](docs/testing.md#the-structural-suite-walking-the-result-tree-not-just-its-boolean). |
+| `test_fuzz_curriculum.py` | Fuzzes `load_curriculum` with malformed `policies.json` shapes — see [`docs/testing.md`](docs/testing.md#fuzzing-load_curriculum). |
+| `shrinking.py` | The failing-run-to-fixture shrinking mechanism. |
