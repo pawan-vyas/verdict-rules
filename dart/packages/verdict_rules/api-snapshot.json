@@ -3,7 +3,7 @@
     "packageApi": {
         "packageName": "verdict_rules",
         "packageVersion": "0.4.0",
-        "packagePath": "/var/folders/dt/_1vx47rj39b_yb9t0cgpk7880000gn/T/YWBOg8",
+        "packagePath": "/var/folders/dt/_1vx47rj39b_yb9t0cgpk7880000gn/T/T7UiO9",
         "interfaceDeclarations": [
             {
                 "name": "RulesEngine",
@@ -281,6 +281,28 @@
                         "relativePath": "lib/src/result.dart",
                         "isReadable": true,
                         "isWriteable": false
+                    },
+                    {
+                        "typeName": "List<RuleResult>",
+                        "name": "leaves",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/result.dart",
+                        "isReadable": true,
+                        "isWriteable": false
+                    },
+                    {
+                        "typeName": "List<RuleResult>",
+                        "name": "failingLeaves",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/result.dart",
+                        "isReadable": true,
+                        "isWriteable": false
                     }
                 ],
                 "entryPoints": [
@@ -340,6 +362,24 @@
                                 "isExperimental": false,
                                 "typeName": "Object?",
                                 "relativePath": "lib/src/result.dart"
+                            },
+                            {
+                                "isRequired": false,
+                                "isNamed": true,
+                                "name": "subResults",
+                                "isDeprecated": false,
+                                "isExperimental": false,
+                                "typeName": "List<RuleResult>",
+                                "relativePath": "lib/src/result.dart"
+                            },
+                            {
+                                "isRequired": false,
+                                "isNamed": true,
+                                "name": "decidedBy",
+                                "isDeprecated": false,
+                                "isExperimental": false,
+                                "typeName": "List<RuleResult>",
+                                "relativePath": "lib/src/result.dart"
                             }
                         ],
                         "typeParameterNames": [],
@@ -393,6 +433,50 @@
                         "relativePath": "lib/src/result.dart",
                         "isReadable": true,
                         "isWriteable": false
+                    },
+                    {
+                        "typeName": "List<RuleResult>",
+                        "name": "subResults",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/result.dart",
+                        "isReadable": true,
+                        "isWriteable": false
+                    },
+                    {
+                        "typeName": "List<RuleResult>",
+                        "name": "decidedBy",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/result.dart",
+                        "isReadable": true,
+                        "isWriteable": false
+                    },
+                    {
+                        "typeName": "List<RuleResult>",
+                        "name": "leaves",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/result.dart",
+                        "isReadable": true,
+                        "isWriteable": false
+                    },
+                    {
+                        "typeName": "List<RuleResult>",
+                        "name": "failingLeaves",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/result.dart",
+                        "isReadable": true,
+                        "isWriteable": false
                     }
                 ],
                 "entryPoints": [
@@ -405,7 +489,7 @@
                 "isDeprecated": false,
                 "isExperimental": false,
                 "isSealed": false,
-                "isRequired": false,
+                "isRequired": true,
                 "typeParameterNames": [
                     "TContext"
                 ],
@@ -478,6 +562,98 @@
                 "relativePath": "lib/src/rule.dart"
             },
             {
+                "name": "PredicateOutcome",
+                "isDeprecated": false,
+                "isExperimental": false,
+                "isSealed": false,
+                "isRequired": false,
+                "typeParameterNames": [],
+                "superTypeNames": [
+                    "Object"
+                ],
+                "executableDeclarations": [
+                    {
+                        "returnTypeName": "PredicateOutcome",
+                        "name": "new",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "parameters": [
+                            {
+                                "isRequired": true,
+                                "isNamed": false,
+                                "name": "passed",
+                                "isDeprecated": false,
+                                "isExperimental": false,
+                                "typeName": "bool",
+                                "relativePath": "lib/src/rule.dart"
+                            },
+                            {
+                                "isRequired": false,
+                                "isNamed": true,
+                                "name": "detail",
+                                "isDeprecated": false,
+                                "isExperimental": false,
+                                "typeName": "String",
+                                "relativePath": "lib/src/rule.dart"
+                            },
+                            {
+                                "isRequired": false,
+                                "isNamed": true,
+                                "name": "data",
+                                "isDeprecated": false,
+                                "isExperimental": false,
+                                "typeName": "Object?",
+                                "relativePath": "lib/src/rule.dart"
+                            }
+                        ],
+                        "typeParameterNames": [],
+                        "type": "constructor",
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/rule.dart"
+                    }
+                ],
+                "fieldDeclarations": [
+                    {
+                        "typeName": "bool",
+                        "name": "passed",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/rule.dart",
+                        "isReadable": true,
+                        "isWriteable": false
+                    },
+                    {
+                        "typeName": "String",
+                        "name": "detail",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/rule.dart",
+                        "isReadable": true,
+                        "isWriteable": false
+                    },
+                    {
+                        "typeName": "Object?",
+                        "name": "data",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/rule.dart",
+                        "isReadable": true,
+                        "isWriteable": false
+                    }
+                ],
+                "entryPoints": [
+                    "verdict_rules.dart"
+                ],
+                "relativePath": "lib/src/rule.dart"
+            },
+            {
                 "name": "FunctionRule",
                 "isDeprecated": false,
                 "isExperimental": false,
@@ -512,7 +688,7 @@
                                 "name": "predicate",
                                 "isDeprecated": false,
                                 "isExperimental": false,
-                                "typeName": "Future<RuleResult> Function(TContext)",
+                                "typeName": "Future<PredicateOutcome> Function(TContext)",
                                 "relativePath": "lib/src/rule.dart"
                             },
                             {
@@ -578,6 +754,179 @@
                         "isWriteable": false
                     }
                 ],
+                "entryPoints": [
+                    "verdict_rules.dart"
+                ],
+                "relativePath": "lib/src/rule.dart"
+            },
+            {
+                "name": "SequentialEvaluator",
+                "isDeprecated": false,
+                "isExperimental": false,
+                "isSealed": false,
+                "isRequired": false,
+                "typeParameterNames": [
+                    "TContext"
+                ],
+                "superTypeNames": [
+                    "Object"
+                ],
+                "executableDeclarations": [
+                    {
+                        "returnTypeName": "Future<RuleResult>",
+                        "name": "evaluate",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "parameters": [
+                            {
+                                "isRequired": true,
+                                "isNamed": false,
+                                "name": "name",
+                                "isDeprecated": false,
+                                "isExperimental": false,
+                                "typeName": "String",
+                                "relativePath": "lib/src/rule.dart"
+                            },
+                            {
+                                "isRequired": true,
+                                "isNamed": false,
+                                "name": "rules",
+                                "isDeprecated": false,
+                                "isExperimental": false,
+                                "typeName": "List<Rule<TContext>>",
+                                "relativePath": "lib/src/rule.dart"
+                            },
+                            {
+                                "isRequired": true,
+                                "isNamed": false,
+                                "name": "context",
+                                "isDeprecated": false,
+                                "isExperimental": false,
+                                "typeName": "TContext",
+                                "relativePath": "lib/src/rule.dart"
+                            }
+                        ],
+                        "typeParameterNames": [],
+                        "type": "method",
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/rule.dart"
+                    },
+                    {
+                        "returnTypeName": "SequentialEvaluator<TContext>",
+                        "name": "new",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "parameters": [
+                            {
+                                "isRequired": true,
+                                "isNamed": true,
+                                "name": "decider",
+                                "isDeprecated": false,
+                                "isExperimental": false,
+                                "typeName": "bool? Function(RuleResult, List<RuleResult>, int)",
+                                "relativePath": "lib/src/rule.dart"
+                            },
+                            {
+                                "isRequired": true,
+                                "isNamed": true,
+                                "name": "vacuousResult",
+                                "isDeprecated": false,
+                                "isExperimental": false,
+                                "typeName": "bool",
+                                "relativePath": "lib/src/rule.dart"
+                            }
+                        ],
+                        "typeParameterNames": [],
+                        "type": "constructor",
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/rule.dart"
+                    }
+                ],
+                "fieldDeclarations": [],
+                "entryPoints": [
+                    "verdict_rules.dart"
+                ],
+                "relativePath": "lib/src/rule.dart"
+            },
+            {
+                "name": "ShortCircuitEvaluator",
+                "isDeprecated": false,
+                "isExperimental": false,
+                "isSealed": false,
+                "isRequired": false,
+                "typeParameterNames": [
+                    "TContext"
+                ],
+                "superTypeNames": [
+                    "Object"
+                ],
+                "executableDeclarations": [
+                    {
+                        "returnTypeName": "Future<RuleResult>",
+                        "name": "evaluate",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "parameters": [
+                            {
+                                "isRequired": true,
+                                "isNamed": false,
+                                "name": "name",
+                                "isDeprecated": false,
+                                "isExperimental": false,
+                                "typeName": "String",
+                                "relativePath": "lib/src/rule.dart"
+                            },
+                            {
+                                "isRequired": true,
+                                "isNamed": false,
+                                "name": "rules",
+                                "isDeprecated": false,
+                                "isExperimental": false,
+                                "typeName": "List<Rule<TContext>>",
+                                "relativePath": "lib/src/rule.dart"
+                            },
+                            {
+                                "isRequired": true,
+                                "isNamed": false,
+                                "name": "context",
+                                "isDeprecated": false,
+                                "isExperimental": false,
+                                "typeName": "TContext",
+                                "relativePath": "lib/src/rule.dart"
+                            }
+                        ],
+                        "typeParameterNames": [],
+                        "type": "method",
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/rule.dart"
+                    },
+                    {
+                        "returnTypeName": "ShortCircuitEvaluator<TContext>",
+                        "name": "new",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "parameters": [
+                            {
+                                "isRequired": true,
+                                "isNamed": true,
+                                "name": "stopOn",
+                                "isDeprecated": false,
+                                "isExperimental": false,
+                                "typeName": "bool",
+                                "relativePath": "lib/src/rule.dart"
+                            }
+                        ],
+                        "typeParameterNames": [],
+                        "type": "constructor",
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/rule.dart"
+                    }
+                ],
+                "fieldDeclarations": [],
                 "entryPoints": [
                     "verdict_rules.dart"
                 ],
@@ -661,6 +1010,17 @@
                     }
                 ],
                 "fieldDeclarations": [
+                    {
+                        "typeName": "bool",
+                        "name": "vacuousResult",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "isStatic": true,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/rule.dart",
+                        "isReadable": true,
+                        "isWriteable": false
+                    },
                     {
                         "typeName": "String",
                         "name": "name",
@@ -768,6 +1128,123 @@
                 ],
                 "fieldDeclarations": [
                     {
+                        "typeName": "bool",
+                        "name": "vacuousResult",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "isStatic": true,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/rule.dart",
+                        "isReadable": true,
+                        "isWriteable": false
+                    },
+                    {
+                        "typeName": "String",
+                        "name": "name",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/rule.dart",
+                        "isReadable": true,
+                        "isWriteable": false
+                    },
+                    {
+                        "typeName": "String?",
+                        "name": "group",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/rule.dart",
+                        "isReadable": true,
+                        "isWriteable": false
+                    }
+                ],
+                "entryPoints": [
+                    "verdict_rules.dart"
+                ],
+                "relativePath": "lib/src/rule.dart"
+            },
+            {
+                "name": "NotRule",
+                "isDeprecated": false,
+                "isExperimental": false,
+                "isSealed": false,
+                "isRequired": false,
+                "typeParameterNames": [
+                    "TContext"
+                ],
+                "superTypeNames": [
+                    "Object",
+                    "Rule<TContext>"
+                ],
+                "executableDeclarations": [
+                    {
+                        "returnTypeName": "NotRule<TContext>",
+                        "name": "new",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "parameters": [
+                            {
+                                "isRequired": true,
+                                "isNamed": false,
+                                "name": "name",
+                                "isDeprecated": false,
+                                "isExperimental": false,
+                                "typeName": "String",
+                                "relativePath": "lib/src/rule.dart"
+                            },
+                            {
+                                "isRequired": true,
+                                "isNamed": false,
+                                "name": "rule",
+                                "isDeprecated": false,
+                                "isExperimental": false,
+                                "typeName": "Rule<TContext>",
+                                "relativePath": "lib/src/rule.dart"
+                            },
+                            {
+                                "isRequired": false,
+                                "isNamed": true,
+                                "name": "group",
+                                "isDeprecated": false,
+                                "isExperimental": false,
+                                "typeName": "String?",
+                                "relativePath": "lib/src/rule.dart"
+                            }
+                        ],
+                        "typeParameterNames": [],
+                        "type": "constructor",
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/rule.dart"
+                    },
+                    {
+                        "returnTypeName": "Future<RuleResult>",
+                        "name": "evaluate",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "parameters": [
+                            {
+                                "isRequired": true,
+                                "isNamed": false,
+                                "name": "context",
+                                "isDeprecated": false,
+                                "isExperimental": false,
+                                "typeName": "TContext",
+                                "relativePath": "lib/src/rule.dart"
+                            }
+                        ],
+                        "typeParameterNames": [],
+                        "type": "method",
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/rule.dart"
+                    }
+                ],
+                "fieldDeclarations": [
+                    {
                         "typeName": "String",
                         "name": "name",
                         "isDeprecated": false,
@@ -811,7 +1288,17 @@
             },
             {
                 "name": "RulePredicate",
-                "aliasedTypeName": "Future<RuleResult> Function(TContext)",
+                "aliasedTypeName": "Future<PredicateOutcome> Function(TContext)",
+                "isDeprecated": false,
+                "isExperimental": false,
+                "entryPoints": [
+                    "verdict_rules.dart"
+                ],
+                "relativePath": "lib/src/rule.dart"
+            },
+            {
+                "name": "StepDecider",
+                "aliasedTypeName": "bool? Function(RuleResult, List<RuleResult>, int)",
                 "isDeprecated": false,
                 "isExperimental": false,
                 "entryPoints": [

@@ -155,7 +155,7 @@ void main() {
     });
 
     test('an empty RunResult has no leaves', () {
-      const run = RunResult(passed: true, results: []);
+      final run = RunResult(passed: true, results: []);
       expect(run.leaves, isEmpty);
       expect(run.failingLeaves, isEmpty);
     });

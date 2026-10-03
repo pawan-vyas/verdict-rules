@@ -284,7 +284,11 @@ class AndRule<TContext> implements Rule<TContext> {
   final ShortCircuitEvaluator<TContext> _evaluator =
       ShortCircuitEvaluator<TContext>(stopOn: false);
 
-  AndRule(this.name, List<Rule<TContext>> rules, {this.group}) : _rules = rules;
+  AndRule(this.name, List<Rule<TContext>> rules,
+      {this.group}) // Copied, not aliased: a caller retaining the list it passed could
+      // otherwise change this composite's sub-rules, and its verdict,
+      // after construction. Matches RulesEngine's own idiom.
+      : _rules = List.unmodifiable(rules);
 
   @override
   Future<RuleResult> evaluate(TContext context) =>
@@ -321,7 +325,11 @@ class OrRule<TContext> implements Rule<TContext> {
   final ShortCircuitEvaluator<TContext> _evaluator =
       ShortCircuitEvaluator<TContext>(stopOn: true);
 
-  OrRule(this.name, List<Rule<TContext>> rules, {this.group}) : _rules = rules;
+  OrRule(this.name, List<Rule<TContext>> rules,
+      {this.group}) // Copied, not aliased: a caller retaining the list it passed could
+      // otherwise change this composite's sub-rules, and its verdict,
+      // after construction. Matches RulesEngine's own idiom.
+      : _rules = List.unmodifiable(rules);
 
   @override
   Future<RuleResult> evaluate(TContext context) =>

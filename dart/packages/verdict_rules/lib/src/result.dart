@@ -42,14 +42,18 @@ class RuleResult {
   /// for "what explains this verdict," wrong for "what failed."
   final List<RuleResult> decidedBy;
 
-  const RuleResult({
+  /// Not a `const` constructor: copying the collections requires a call,
+  /// which a const initializer cannot make. Const construction is given up
+  /// deliberately -- a const result would have to alias the caller's list.
+  RuleResult({
     required this.ruleName,
     required this.passed,
     this.detail = '',
     this.data,
-    this.subResults = const [],
-    this.decidedBy = const [],
-  });
+    List<RuleResult> subResults = const [],
+    List<RuleResult> decidedBy = const [],
+  })  : subResults = List.unmodifiable(subResults),
+        decidedBy = List.unmodifiable(decidedBy);
 
   /// Every leaf result reachable from this one, in evaluation order --
   /// this result itself when it has no sub-results.
@@ -91,7 +95,8 @@ class RunResult {
   /// for the flattened view across every rule this run evaluated.
   final List<RuleResult> results;
 
-  const RunResult({required this.passed, this.results = const []});
+  RunResult({required this.passed, List<RuleResult> results = const []})
+      : results = List.unmodifiable(results);
 
   /// Every leaf across every rule this run evaluated, flattened, in
   /// evaluation order. One-line forwarder over each result's own
