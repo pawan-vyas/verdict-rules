@@ -243,9 +243,15 @@
   type: { csharp: RuleResult, python: RuleResult, js: RuleResult, dart: RuleResult }
   member: { csharp: SubResults, python: sub_results, js: subResults, dart: subResults }
 
+# C# spells this as a method for the same reason it spells leaves/failingLeaves
+# as methods (see the note below those rows): a get-only collection property
+# returning the child results would be serialized, which reintroduces exactly
+# the duplication storing positions exists to prevent. The other three keep an
+# accessor, because their ecosystems' serializers do not walk computed
+# accessors.
 - concept: RuleResult.decidedBy (which sub-results explain this result's own verdict)
   type: { csharp: RuleResult, python: RuleResult, js: RuleResult, dart: RuleResult }
-  member: { csharp: DecidedBy, python: decided_by, js: decidedBy, dart: decidedBy }
+  member: { csharp: GetDecidedBy, python: decided_by, js: decidedBy, dart: decidedBy }
 
 # The positions those deciding children sit at within subResults, which is what
 # is actually stored; decidedBy above is derived from it. Storing the child

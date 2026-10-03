@@ -83,7 +83,19 @@
     no runtime shape; the evaluators are composition helpers that only C#
     gives an override to. No shared shape to assert as a concept row.
 
-- symbol: { js: "RuleResultInit,RuleResultInit.detail,RuleResultInit.data,RuleResultInit.subResults,RuleResultInit.decidedBy" }
+- symbol: { dart: "RuleResult.toJson,RunResult.toJson" }
+  reason: >
+    Dart alone needs an explicit method for this. dart:convert's jsonEncode
+    cannot encode an arbitrary object and looks for a toJson() method by
+    convention, so without one a Dart result could not be serialized at
+    all. The other three reach a result's stored fields through their own
+    standard mechanism with nothing to declare -- Python's
+    dataclasses.asdict walks a @dataclass, JSON.stringify reads a JS
+    object's own enumerable properties, and System.Text.Json reflects over
+    C#'s public getters. Both methods emit the stored fields only; the
+    derived views are recomputable and one of them cannot be stored at all.
+
+- symbol: { js: "RuleResultInit,RuleResultInit.detail,RuleResultInit.data,RuleResultInit.subResults,RuleResultInit.decidedByIndices" }
   reason: >
     The options-object a RuleResult constructor call passes its optional
     fields in. JS/TS has no named-parameter or keyword-argument syntax, so
