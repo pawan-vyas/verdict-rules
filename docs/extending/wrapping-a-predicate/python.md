@@ -6,13 +6,12 @@
 > Python code.
 
 ```python
-from verdict import FunctionRule, RuleResult
+from verdict import FunctionRule, PredicateOutcome
 
-async def cart_meets_minimum(context: dict) -> RuleResult:
+async def cart_meets_minimum(context: dict) -> PredicateOutcome:
     total = context["cart_total"]
     minimum = context["minimum_for_offer"]
-    return RuleResult(
-        rule_name="cart_meets_minimum",
+    return PredicateOutcome(
         passed=total >= minimum,
         detail=f"{total} vs minimum {minimum}",
     )
@@ -34,9 +33,8 @@ class CartContext:
     minimum_for_offer: float
 
 
-async def cart_meets_minimum_typed(context: CartContext) -> RuleResult:
-    return RuleResult(
-        rule_name="cart_meets_minimum",
+async def cart_meets_minimum_typed(context: CartContext) -> PredicateOutcome:
+    return PredicateOutcome(
         passed=context.cart_total >= context.minimum_for_offer,
         detail=f"{context.cart_total} vs minimum {context.minimum_for_offer}",
     )
