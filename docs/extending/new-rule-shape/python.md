@@ -8,7 +8,7 @@
 ```python
 from typing import Generic, TypeVar
 
-from verdict import FunctionRule, Rule, RuleResult
+from verdict import FunctionRule, PredicateOutcome, Rule, RuleResult
 
 TContext = TypeVar("TContext")
 
@@ -35,6 +35,9 @@ class ThresholdRule(Generic[TContext]):
             passed=passed_count >= self._minimum,
             detail=f"{passed_count} of {len(self._rules)} passed, needed {self._minimum}",
             sub_results=sub_results,
+            # Which children explain this verdict: the ones that passed. Given
+            # as positions within sub_results, not as the results themselves.
+            decided_by_indices=[i for i, r in enumerate(sub_results) if r.passed],
         )
 ```
 
@@ -49,9 +52,9 @@ The same case the spec's own diagram shows — 2 of 3 needed, the third
 sub-rule fails:
 
 ```python
-async def rule_1(context): return RuleResult(rule_name="rule_1", passed=True)
-async def rule_2(context): return RuleResult(rule_name="rule_2", passed=True)
-async def rule_3(context): return RuleResult(rule_name="rule_3", passed=False)
+async def rule_1(context): return PredicateOutcome(passed=True)
+async def rule_2(context): return PredicateOutcome(passed=True)
+async def rule_3(context): return PredicateOutcome(passed=False)
 
 at_least_two: ThresholdRule[dict] = ThresholdRule("at_least_two", [
     FunctionRule("rule_1", rule_1),

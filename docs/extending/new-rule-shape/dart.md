@@ -42,6 +42,12 @@ class ThresholdRule<TContext> implements Rule<TContext> {
       passed: passedCount >= _minimum,
       detail: '$passedCount of ${_rules.length} passed, needed $_minimum',
       subResults: subResults,
+      // Which children explain this verdict: the ones that passed. Given as
+      // positions within subResults, not as the results themselves.
+      decidedByIndices: [
+        for (var i = 0; i < subResults.length; i++)
+          if (subResults[i].passed) i
+      ],
     );
   }
 }
@@ -57,18 +63,16 @@ The same case the spec's own diagram shows — 2 of 3 needed, the third
 sub-rule fails:
 
 ```dart
-Future<RuleResult> alwaysPass(String name) async =>
-    RuleResult(ruleName: name, passed: true);
-Future<RuleResult> alwaysFail(String name) async =>
-    RuleResult(ruleName: name, passed: false);
+Future<PredicateOutcome> alwaysPass() async => PredicateOutcome(true);
+Future<PredicateOutcome> alwaysFail() async => PredicateOutcome(false);
 
 Future<void> main() async {
   final atLeastTwo = ThresholdRule<Map<String, Object?>>(
     'at_least_two',
     [
-      FunctionRule('rule_1', (ctx) => alwaysPass('rule_1')),
-      FunctionRule('rule_2', (ctx) => alwaysPass('rule_2')),
-      FunctionRule('rule_3', (ctx) => alwaysFail('rule_3')),
+      FunctionRule('rule_1', (ctx) => alwaysPass()),
+      FunctionRule('rule_2', (ctx) => alwaysPass()),
+      FunctionRule('rule_3', (ctx) => alwaysFail()),
     ],
     2,
   );
@@ -108,8 +112,7 @@ final qualifies = ThresholdRule<OrderContext>(
 - [`README.md`](README.md) — the language-agnostic scenario this page
   implements.
 - [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md) —
-  `AtLeastNRule`, the design this exact pattern would back, once this
-  SDK has its own tested instance.
+  `AtLeastNRule`, a real, tested instance of this exact pattern.
 - [`../reusing-a-rule-across-contexts/dart.md`](../reusing-a-rule-across-contexts/dart.md) —
   `ProjectingRule` itself, used above to mix a sub-rule reading a
   narrower context into a `ThresholdRule<TContext>` bound to a wider

@@ -44,7 +44,14 @@ sealed class ThresholdRule<TContext> : IRule<TContext>
             Name,
             passedCount >= _minimum,
             $"{passedCount} of {_rules.Count} passed, needed {_minimum}",
-            subResults: subResults);
+            subResults: subResults,
+            // Which children explain this verdict: the ones that passed. Given
+            // as positions within SubResults, not as the results themselves.
+            decidedByIndices: subResults
+                .Select((r, i) => (r, i))
+                .Where(x => x.r.Passed)
+                .Select(x => x.i)
+                .ToArray());
     }
 }
 ```
@@ -106,6 +113,8 @@ var qualifies = new ThresholdRule<OrderContext>("qualifies", new IRule<OrderCont
 
 - [`README.md`](README.md) — the language-agnostic scenario this page
   implements.
+- [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md) —
+  `AtLeastNRule`, a real, tested instance of this exact pattern.
 - [`../reusing-a-rule-across-contexts/csharp.md`](../reusing-a-rule-across-contexts/csharp.md) —
   `ProjectingRule` itself, used above to mix a sub-rule reading a
   narrower context into a `ThresholdRule<TContext>` bound to a wider
