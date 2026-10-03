@@ -5,7 +5,7 @@ Release history for the `verdict-rules` JS/TS package. Format follows
 [semantic versioning](https://semver.org/), scoped to this package — it
 releases independently of the other language SDKs and of the AI-agent skill.
 
-## [0.4.0] - 2026-10-01
+## [0.4.0] - 2026-10-03
 
 - `FunctionRule`, `AndRule`, `OrRule`, and `RulesEngine` now define
   `toString()` and `[Symbol.for('nodejs.util.inspect.custom')]`. A rule
@@ -14,6 +14,44 @@ releases independently of the other language SDKs and of the AI-agent skill.
   (or `"name" (group)`), `AndRule "name" (group) — N sub-rule(s)`,
   `OrRule "name" (group) — N sub-rule(s)`, or `RulesEngine — N rule(s),
   M group(s)`.
+- **`RuleResult.subResults`** — a composite's own children, in
+  evaluation order, holding exactly what it evaluated: never padded to
+  the full sub-rule list, never flattened into the parent. An empty
+  `subResults` *is* the leaf signal, structurally.
+- **`RuleResult.leaves`/`failingLeaves`**, and the same pair on
+  `RunResult`, flattened across every rule a run evaluated. A consumer
+  keying an audit trail on the refusing rule can read
+  `result.failingLeaves[0].ruleName` without knowing the tree's shape.
+  `failingLeaves` is an independent recursion, not a filter over
+  `leaves`: a passed result contributes none even past an earlier
+  short-circuited branch that failed, and a failed result with no
+  failing children is itself the leaf.
+- **`RuleResult.decidedBy`** — which of `subResults` explain *this*
+  result's own verdict. One level, non-recursive; not the same question
+  `failingLeaves` answers.
+- **`NotRule`** — passes exactly when its one wrapped rule fails.
+- **`SequentialEvaluator`/`ShortCircuitEvaluator`** — the sequencing
+  `AndRule`/`OrRule` compose, now public so a custom composite composes
+  the same primitive rather than hand-rolling a loop.
+- **A predicate returns a `PredicateOutcome`, not a `RuleResult`.**
+  Migration: `return { ruleName: n, passed: x }` becomes
+  `return { passed: x }`. The `FunctionRule` wrapping it owns the name,
+  so a predicate can no longer set a `ruleName` that silently disagrees
+  with the rule it belongs to — one returning a `RuleResult`-shaped
+  object throws `TypeError` rather than appearing to work.
+- **A composite's children live in `subResults`, not `data`.**
+  Migration: the `result.data as RuleResult[]` walk every caller wrote
+  becomes `result.subResults`, or `result.failingLeaves` if the goal was
+  the refusing leaf. `data` stays opaque.
+- **`AndRule`/`OrRule` leave their own `detail` empty.** The failing
+  sub-rule and its own detail are in
+  `subResults`/`decidedBy`/`failingLeaves`.
+- **A composite's sub-rules and a result's children are copied on
+  construction, not aliased.** A caller that kept the array it passed
+  could change a composite's sub-rules — and its verdict — after
+  construction, and pushing a result onto the very array it was built
+  from produced a result containing itself. `Object.freeze` does not
+  help: it seals the instance, not an array the instance points at.
 - **`RuleResult` and `RunResult` are classes with public constructors**,
   replacing the plain interfaces and the unexported `buildRuleResult`/
   `buildRunResult` factories. `new RuleResult(ruleName, passed, { detail,

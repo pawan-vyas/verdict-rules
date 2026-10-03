@@ -13,13 +13,56 @@ Tagged `dart-vX.Y.Z`.
 
 ## 0.4.0
 
-- **Added**: `FunctionRule`, `AndRule`, `OrRule`, and `RulesEngine` now
-  override `toString()`, matching `RuleResult`/`RunResult`'s existing
-  treatment. A rule or engine printed in a log line or the debugger
-  previously showed only `Instance of 'AndRule<...>'`; it now shows
+- **Added `RuleResult.subResults`** — a composite's own children, in
+  evaluation order, holding exactly what it evaluated: never padded to
+  the full sub-rule list, never flattened into the parent.
+- **Added `RuleResult.leaves`/`failingLeaves`**, and the same pair on
+  `RunResult`, flattened across every rule a run evaluated. A consumer
+  keying an audit trail on the refusing rule can read
+  `result.failingLeaves.first.ruleName` without knowing the tree's
+  shape. `failingLeaves` is an independent recursion, not a filter over
+  `leaves`: a passed result contributes none even past an earlier
+  short-circuited branch that failed, and a failed result with no
+  failing children is itself the leaf.
+- **Added `RuleResult.decidedBy`** — which of `subResults` explain
+  *this* result's own verdict. One level, non-recursive; not the same
+  question `failingLeaves` answers.
+- **Added `NotRule`** — passes exactly when its one wrapped rule fails.
+- **Added `SequentialEvaluator`/`ShortCircuitEvaluator`** — the
+  sequencing `AndRule`/`OrRule` compose, now public so a custom
+  composite composes the same primitive rather than hand-rolling a loop.
+- **Added**: `FunctionRule`, `AndRule`, `OrRule`, and `RulesEngine`
+  override `toString()`, matching `RuleResult`/`RunResult`:
   `FunctionRule "name"` (or `"name" (group)`), `AndRule "name" (group) —
-  N sub-rule(s)`, `OrRule "name" (group) — N sub-rule(s)`, or
-  `RulesEngine — N rule(s), M group(s)`.
+  N sub-rule(s)`, `RulesEngine — N rule(s), M group(s)`.
+- **Changed**: a predicate returns a `PredicateOutcome`, not a
+  `RuleResult`. `RulePredicate` is a
+  `Future<PredicateOutcome> Function(TContext)` now. Migration:
+  `RuleResult(ruleName: n, passed: x, detail: d)` becomes
+  `PredicateOutcome(x, detail: d)` — note `passed` is positional. The
+  `FunctionRule` wrapping it owns the name, so a predicate can no longer
+  set a `ruleName` that silently disagrees with the rule it belongs to.
+- **Changed**: a composite's children live in `subResults`, not `data`.
+  Migration: the `result.data as List<RuleResult>` cast every caller
+  wrote becomes `result.subResults`, or `result.failingLeaves` if the
+  goal was the refusing leaf. `data` stays opaque and now carries only
+  what a predicate attached.
+- **Changed**: `AndRule`/`OrRule` leave their own `detail` empty. The
+  failing sub-rule and its own detail are in
+  `subResults`/`decidedBy`/`failingLeaves`.
+- **Changed**: `RuleResult`/`RunResult` no longer have `const`
+  constructors. Copying the collections they are handed requires a call,
+  which a const initializer cannot make, and a const result would have
+  to alias the caller's list. Migration: `const RuleResult(...)` becomes
+  `RuleResult(...)`; a `const` *variable* holding one becomes `final`.
+- **Fixed**: a composite's sub-rules and a result's children are copied
+  on construction, not aliased. A caller that kept the list it passed
+  could change a composite's sub-rules — and its verdict — after
+  construction, and adding a result to the very list it was built from
+  produced a result containing itself, which every traversal recursed
+  through. The lists a result hands back use `List.unmodifiable`, so
+  `subResults.add(...)` throws rather than silently changing a result a
+  caller already holds.
 
 ## 0.3.1
 

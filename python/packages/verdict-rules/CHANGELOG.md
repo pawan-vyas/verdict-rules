@@ -8,18 +8,70 @@ which keeps its own changelog beside its own manifest.
 
 Tagged `python-vX.Y.Z`.
 
-## [0.4.0] - 2026-10-01
+## [0.4.0] - 2026-10-03
 
 ### Added
 
-- `FunctionRule`, `AndRule`, `OrRule`, and `RulesEngine` now define
-  `__repr__`, matching `RuleResult`/`RunResult`'s existing
-  dataclass-generated reprs. A rule or engine printed in a debugger, a
-  log line, or a REPL previously showed only
-  `<verdict.rule.AndRule object at 0x...>`; it now shows `FunctionRule
-  "name"` (or `"name" (group)`), `AndRule "name" (group) — N
-  sub-rule(s)`, `OrRule "name" (group) — N sub-rule(s)`, or
-  `RulesEngine — N rule(s), M group(s)`.
+- **`RuleResult.sub_results`** — a composite's own children, in
+  evaluation order, holding exactly what it evaluated: never padded to
+  the full sub-rule list, never flattened into the parent. An empty
+  `sub_results` *is* the leaf signal, structurally.
+- **`RuleResult.leaves` / `RuleResult.failing_leaves`**, and the same
+  pair on `RunResult`, flattened across every rule a run evaluated. A
+  consumer keying an audit trail on the refusing rule can read
+  `result.failing_leaves[0].rule_name` without knowing the tree's shape.
+  `failing_leaves` is an independent recursion, not a filter over
+  `leaves`: a passed result contributes none even when an earlier
+  short-circuited branch failed on the way to that pass, and a failed
+  result with no failing children is itself the leaf.
+- **`RuleResult.decided_by`** — which of `sub_results` explain *this*
+  result's own verdict. One level, non-recursive; not the same question
+  `failing_leaves` answers.
+- **`NotRule`** — passes exactly when its one wrapped rule fails. No
+  vacuous case, since it wraps exactly one rule.
+- **`SequentialEvaluator` / `ShortCircuitEvaluator`** — the sequencing
+  `AndRule`/`OrRule` compose, now public so a custom composite composes
+  the same primitive rather than hand-rolling a loop.
+  `SequentialEvaluator` takes a `StepDecider` returning `True`/`False`
+  to stop or `None` to continue; `ShortCircuitEvaluator` is the narrower
+  case where one sub-result value ends evaluation.
+- `FunctionRule`, `AndRule`, `OrRule`, and `RulesEngine` define
+  `__repr__`, matching `RuleResult`/`RunResult`'s dataclass-generated
+  ones: `FunctionRule "name"` (or `"name" (group)`), `AndRule "name"
+  (group) — N sub-rule(s)`, `RulesEngine — N rule(s), M group(s)`.
+
+### Changed
+
+- **A predicate returns a `PredicateOutcome`, not a `RuleResult`.**
+  Migration: `return RuleResult(rule_name=..., passed=x, detail=d)`
+  becomes `return PredicateOutcome(passed=x, detail=d)`. The
+  `FunctionRule` wrapping it owns the name and builds the result, so a
+  predicate can no longer set a `rule_name` that silently disagrees with
+  the rule it belongs to. A predicate still returning a `RuleResult`
+  raises `TypeError` rather than appearing to work.
+- **A composite's children live in `sub_results`, not `data`.**
+  Migration: the `cast(list[RuleResult], result.data)` walk every caller
+  wrote becomes `result.sub_results`, or `result.failing_leaves` if the
+  goal was the refusing leaf. `data` stays opaque and now carries only
+  what a predicate attached.
+- **`AndRule`/`OrRule` leave their own `detail` empty.** Composing a
+  shared evaluator leaves no channel richer than a boolean to build a
+  string from. The failing sub-rule and its own detail are in
+  `sub_results`/`decided_by`/`failing_leaves`.
+
+### Fixed
+
+- **A composite's sub-rules, a result's children, and an engine's rules
+  are copied on construction, not aliased.** A caller that kept the list
+  it passed could change a composite's sub-rules — and its verdict —
+  after construction, and appending a result to the very list it was
+  built from produced a result containing itself, which every traversal
+  recursed through. `frozen=True` does not help: it stops reassignment
+  of the field, not mutation of the list the field points at.
+- **`RulesEngine`'s own views could disagree.** Its name and group
+  indexes are snapshots taken in the constructor while its iteration
+  list was aliased, so `rule_names` reported what was registered and
+  `run_all` iterated whatever the caller's list held by then.
 
 ## [0.3.1] - 2026-09-18
 

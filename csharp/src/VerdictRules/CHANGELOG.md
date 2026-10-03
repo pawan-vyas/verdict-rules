@@ -10,22 +10,77 @@ from this file, so the csproj points here instead of carrying a copy.
 
 Tagged `csharp-vX.Y.Z`.
 
-## [0.4.0] - 2026-10-01
+## [0.4.0] - 2026-10-03
 
 ### Added
 
-- **`FunctionRule`/`FunctionRule<TContext>`, `AndRule`/`AndRule<TContext>`,
-  `OrRule`/`OrRule<TContext>`, and `RulesEngine`/`RulesEngine<TContext>` now
-  carry `[DebuggerDisplay]` and `ToString()`**, matching the treatment
-  `RuleResult`/`RunResult` already had. A rule or engine printed in a
-  debugger, a log line, or a REPL previously showed only its type name;
-  it now shows `FunctionRule "name"` (or `"name" (group)`), `AndRule "name"
-  (group) — N sub-rule(s)`, `OrRule "name" (group) — N sub-rule(s)`, or
-  `RulesEngine — N rule(s), M group(s)`.
-- **`AndRule`/`AndRule<TContext>`, `OrRule`/`OrRule<TContext>`, and
-  `RulesEngine`/`RulesEngine<TContext>` also carry `[DebuggerTypeProxy]`**,
-  so a debugger expands a composite or an engine straight to its sub-rules
-  rather than through an extra, unlabeled field.
+- **`RuleResult.SubResults`** — a composite's own children, in
+  evaluation order, holding exactly what it evaluated: never padded to
+  the full sub-rule list, never flattened into the parent.
+- **`RuleResult.GetLeaves()` / `GetFailingLeaves()`**, and the same pair
+  on `RunResult`, flattened across every rule a run evaluated. A
+  consumer keying an audit trail on the refusing rule can read
+  `result.GetFailingLeaves()[0].RuleName` without knowing the tree's
+  shape. `GetFailingLeaves()` is an independent recursion, not a filter
+  over `GetLeaves()`: a passed result contributes none even past an
+  earlier short-circuited branch that failed, and a failed result with
+  no failing children is itself the leaf.
+
+  **Methods, not properties**, and this SDK alone spells them that way.
+  Each walks the subtree and allocates per call, which the Framework
+  Design Guidelines put on the method side of the line; and a get-only
+  collection property is traversed by any reflection-based property
+  walker — `System.Text.Json`, a structured-logging destructurer, an
+  object mapper — where a leaf's own leaves list being itself makes the
+  walker recurse until it gives up. `[JsonIgnore]` cannot suppress it:
+  read-only collection properties are serialized even with
+  `IgnoreReadOnlyProperties` set, and the per-member attribute is not
+  in-box for `netstandard2.1`, which this package also targets.
+- **`RuleResult.DecidedBy`** — which of `SubResults` explain *this*
+  result's own verdict. One level, non-recursive; not the same question
+  `GetFailingLeaves()` answers.
+- **`NotRule` / `NotRule<TContext>`** — passes exactly when the one
+  wrapped rule fails.
+- **`SequentialEvaluator<TContext>` / `ShortCircuitEvaluator<TContext>`**
+  — the sequencing `AndRule`/`OrRule` compose, now public so a custom
+  composite composes the same primitive rather than hand-rolling a loop.
+- `FunctionRule`, `AndRule`, `OrRule`, and `RulesEngine` (both arities)
+  carry `[DebuggerDisplay]` and `ToString()`, matching
+  `RuleResult`/`RunResult`; the composites and the engine also carry
+  `[DebuggerTypeProxy]`, so a debugger expands straight to sub-rules.
+
+### Changed
+
+- **A predicate returns a `PredicateOutcome`, not a `RuleResult`.**
+  `RulePredicate`/`RulePredicate<TContext>` are
+  `Task<PredicateOutcome>` delegates now. Migration:
+  `new RuleResult(name, passed, detail)` becomes
+  `new PredicateOutcome(passed, detail)`. The `FunctionRule` wrapping it
+  owns the name, so a predicate can no longer set a `RuleName` that
+  silently disagrees with the rule it belongs to.
+- **A composite's children live in `SubResults`, not `Data`.**
+  Migration: the `(IReadOnlyList<RuleResult>)result.Data` cast every
+  caller wrote becomes `result.SubResults`, or
+  `result.GetFailingLeaves()` if the goal was the refusing leaf. `Data`
+  stays opaque and now carries only what a predicate attached.
+- **`AndRule`/`OrRule` leave their own `Detail` empty.** The failing
+  sub-rule and its own detail are in
+  `SubResults`/`DecidedBy`/`GetFailingLeaves()`.
+
+### Fixed
+
+- **A composite's sub-rules, a result's children, and an engine's rules
+  are copied on construction, not aliased.** `IReadOnlyList<T>` is a
+  read-only *view*, not an immutable collection, so a caller passing a
+  `List<T>` kept a mutable handle to the object the composite was
+  storing and could change its sub-rules — and its verdict — after
+  construction. Appending a result to the very list it was built from
+  produced a result containing itself, which every traversal recursed
+  through.
+- **`RulesEngine`'s own views could disagree.** Its name and group
+  indexes are snapshots taken in the constructor while its iteration
+  list was aliased, so `RuleNames` reported what was registered and
+  `RunAllAsync` iterated whatever the caller's list held by then.
 
 ## [0.3.2] - 2026-09-19
 
