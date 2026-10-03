@@ -49,13 +49,13 @@
     defines one.
 
 # RuleResult/RunResult's own string representation predates the concept
-# map (shipped at csharp-v0.0.1, before issue #98 standardized this as a
-# tracked concept for the other four rule/engine types) and is already
+# map (shipped at csharp-v0.0.1, before a readable representation became a
+# tracked concept for the other rule/engine types) and is already
 # structurally asymmetric across languages -- Dart has toString(), Python
 # gets one for free from @dataclass, C# has ToString() on a public type
-# with a private DebuggerDisplay alongside it, and JS's RuleResult/
-# RunResult are plain interfaces with no runtime shape to attach a method
-# to at all. There is no shared shape to assert as a concept row, only a
+# with a private DebuggerDisplay alongside it, and JS's classes define
+# none, leaning on the runtime's own default plus a Node inspect hook on
+# the rule types. There is no shared shape to assert as a concept row, only a
 # per-language fact -- entries below are whatever each language's real
 # tool actually reports; see api-snapshots.md if a future tool version
 # starts (or stops) reporting one of these and this file needs updating.

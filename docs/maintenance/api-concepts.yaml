@@ -154,14 +154,13 @@
   type: { csharp: RunResult, python: RunResult, js: RunResult, dart: RunResult }
   member: { csharp: Results, python: results, js: results, dart: results }
 
-# Issue #98's diagnostics pass. Corrected after actually wiring each
-# language's real snapshot tool (not guessed up front): each tool's own
-# visibility into this concept differs, so the member field only lists
-# what that tool can and does verify, not everything the language itself
-# actually ships. Full story in each language's own row below; none of
-# this changes that every language genuinely has the behavior -- #98's own
-# cross-language tests already prove that -- only what this particular
-# mechanism can mechanically re-confirm on every future change.
+# The diagnostics concepts. Each tool's own visibility into this differs,
+# so the member field lists only what that tool can and does verify, not
+# everything the language actually ships. Full story in each language's
+# own row below. None of this changes that every language genuinely has
+# the behaviour -- each one's diagnostics tests cover it -- only what this
+# particular mechanism can mechanically re-confirm on every future
+# change.
 #
 # - C#: PublicApiAnalyzers only ever sees ToString -- DebuggerDisplay is a
 #   private property and DebuggerTypeProxy names an internal nested type,
