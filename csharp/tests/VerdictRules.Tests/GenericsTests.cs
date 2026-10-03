@@ -195,7 +195,7 @@ public class TypedContextEndToEndTests
     /// <summary>
     /// An <see cref="AndRule{TContext}"/>'s own <see cref="RuleResult.Detail"/>
     /// is never synthesized from the failing sub-rule's name -- "why" lives in
-    /// <see cref="RuleResult.SubResults"/>/<see cref="RuleResult.FailingLeaves"/>
+    /// <see cref="RuleResult.SubResults"/>/<see cref="RuleResult.GetFailingLeaves"/>
     /// instead, reachable at any depth, not just one hand-formatted sentence
     /// at the top.
     /// </summary>
@@ -210,7 +210,7 @@ public class TypedContextEndToEndTests
 
         Assert.False(result.Passed);
         Assert.Equal(string.Empty, result.Detail);
-        Assert.Equal(new[] { "order_total_met" }, result.FailingLeaves.Select(r => r.RuleName));
+        Assert.Equal(new[] { "order_total_met" }, result.GetFailingLeaves().Select(r => r.RuleName));
     }
 
     [Fact]

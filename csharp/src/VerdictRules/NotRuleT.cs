@@ -40,7 +40,7 @@ public sealed class NotRule<TContext>(string name, IRule<TContext> rule, string?
     /// <see cref="RuleResult.DecidedBy"/> is set to <c>[inner]</c>
     /// unconditionally, in both directions -- "inner passed" is genuinely
     /// why a failing <see cref="NotRule{TContext}"/> failed, not an
-    /// inconsistency with <see cref="RuleResult.FailingLeaves"/>'s own
+    /// inconsistency with <see cref="RuleResult.GetFailingLeaves"/>'s own
     /// self-as-leaf rule (they answer different questions; see
     /// <see cref="RuleResult.DecidedBy"/>).
     /// </remarks>

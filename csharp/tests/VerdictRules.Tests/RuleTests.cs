@@ -85,7 +85,7 @@ public class AndRuleTests
     /// Mirrors <c>test_one_failure_yields_fail</c> -- an <see cref="AndRule"/>
     /// no longer formats "why" into its own <see cref="RuleResult.Detail"/>;
     /// the failing sub-rule's name and detail are reachable through
-    /// <see cref="RuleResult.FailingLeaves"/>/<see cref="RuleResult.DecidedBy"/>
+    /// <see cref="RuleResult.GetFailingLeaves"/>/<see cref="RuleResult.DecidedBy"/>
     /// instead.
     /// </summary>
     [Fact]
@@ -94,7 +94,7 @@ public class AndRuleTests
         var rule = new AndRule("and1", new IRule[] { Rules.Pass("a"), Rules.Fail("b", detail: "bad") });
         var result = await rule.EvaluateAsync(Rules.Empty);
         Assert.False(result.Passed);
-        var failingLeaf = Assert.Single(result.FailingLeaves);
+        var failingLeaf = Assert.Single(result.GetFailingLeaves());
         Assert.Equal("b", failingLeaf.RuleName);
         Assert.Equal("bad", failingLeaf.Detail);
         var decisive = Assert.Single(result.DecidedBy);
@@ -158,7 +158,7 @@ public class OrRuleTests
     /// Mirrors <c>test_all_fail_yields_fail</c> -- an <see cref="OrRule"/> no
     /// longer formats "why" into its own <see cref="RuleResult.Detail"/>;
     /// every sub-rule's own failure is reachable through
-    /// <see cref="RuleResult.FailingLeaves"/> instead.
+    /// <see cref="RuleResult.GetFailingLeaves"/> instead.
     /// </summary>
     [Fact]
     public async Task AllFailYieldsFail()
@@ -167,7 +167,7 @@ public class OrRuleTests
         var result = await rule.EvaluateAsync(Rules.Empty);
         Assert.False(result.Passed);
         Assert.Equal(string.Empty, result.Detail);
-        Assert.Equal(new[] { "a", "b" }, result.FailingLeaves.Select(r => r.RuleName));
+        Assert.Equal(new[] { "a", "b" }, result.GetFailingLeaves().Select(r => r.RuleName));
     }
 
     /// <summary>Mirrors <c>test_short_circuits_after_first_pass</c>.</summary>
@@ -251,7 +251,7 @@ public class NotRuleTests
 
     /// <summary>
     /// Mirrors <c>test_decided_by_is_the_inner_result_in_both_directions</c> --
-    /// unconditional, unlike <see cref="RuleResult.FailingLeaves"/>'s own
+    /// unconditional, unlike <see cref="RuleResult.GetFailingLeaves"/>'s own
     /// self-as-leaf rule: "inner passed" is genuinely why a failing
     /// <see cref="NotRule"/> failed, not an inconsistency to paper over.
     /// </summary>
@@ -273,7 +273,7 @@ public class NotRuleTests
     {
         var rule = new NotRule("not1", Rules.Pass("inner"));
         var result = await rule.EvaluateAsync(Rules.Empty);
-        Assert.Equal(new[] { result }, result.FailingLeaves);
+        Assert.Equal(new[] { result }, result.GetFailingLeaves());
     }
 
     /// <summary>
@@ -281,7 +281,7 @@ public class NotRuleTests
     /// -- a nested negation pins the recursion more precisely than a
     /// top-level one: <c>all(a, not(b))</c> with both <c>a</c> and
     /// <c>b</c> passing, <c>not(b)</c> fails, and the outer
-    /// <see cref="AndRule"/>'s <see cref="RuleResult.FailingLeaves"/> has
+    /// <see cref="AndRule"/>'s <see cref="RuleResult.GetFailingLeaves"/> has
     /// to be exactly <c>[not(b)]</c>.
     /// </summary>
     [Fact]
@@ -291,7 +291,7 @@ public class NotRuleTests
         var rule = new AndRule("and1", new IRule[] { Rules.Pass("a"), notB });
         var result = await rule.EvaluateAsync(Rules.Empty);
         var notBResult = result.SubResults[1];
-        Assert.Equal(new[] { notBResult }, result.FailingLeaves);
+        Assert.Equal(new[] { notBResult }, result.GetFailingLeaves());
     }
 
     /// <summary>Mirrors <c>test_repr_shows_the_name</c>.</summary>
@@ -466,8 +466,8 @@ public class RuleExceptionPropagationTests
 /// <summary>
 /// A genuinely wide, deep tree mixing every rule kind — <see cref="AndRule"/>,
 /// <see cref="OrRule"/>, <see cref="NotRule"/>, and a bare <see cref="FunctionRule"/>
-/// — at multiple levels on multiple branches, to prove <c>Leaves</c>/
-/// <c>FailingLeaves</c> report correctly at a scale none of the other
+/// — at multiple levels on multiple branches, to prove <c>GetLeaves()</c>/
+/// <c>GetFailingLeaves()</c> report correctly at a scale none of the other
 /// tests here exercise.
 /// <code>
 /// root = AndRule("root", [a, b, c])
@@ -505,11 +505,11 @@ public class MixedCompositeTreeTests
         // present-and-passing.
         Assert.Equal(
             new[] { "a1", "a2x", "a2y", "a3-inner", "b", "c1x", "c2-inner" },
-            result.Leaves.Select(l => l.RuleName));
+            result.GetLeaves().Select(l => l.RuleName));
         // A passing root has no failing leaves, full stop -- even though
         // c1 failed internally three branches deep, on the way to c's
         // own pass via c2.
-        Assert.Empty(result.FailingLeaves);
+        Assert.Empty(result.GetFailingLeaves());
 
         // DecidedBy traced at every composite node in this tree: a full pass
         // is genuinely collective (every top-level member), while each
@@ -555,7 +555,7 @@ public class MixedCompositeTreeTests
         // The one true failure, three levels deep (root -> a -> a3), with
         // a1/a2 (passing siblings of a3) contributing nothing and b/c
         // (never evaluated) not appearing at all.
-        Assert.Equal(new[] { a3Result }, result.FailingLeaves);
+        Assert.Equal(new[] { a3Result }, result.GetFailingLeaves());
 
         // root stopped the instant 'a' failed -- the sole item evaluated,
         // named directly, not "all evaluated" (there's only one, but the
@@ -595,8 +595,8 @@ public class MixedCompositeTreeTests
         var result = await root.EvaluateAsync(Rules.Empty);
 
         Assert.False(result.Passed);
-        Assert.Equal(new[] { "w", "x", "p" }, result.Leaves.Select(l => l.RuleName));
-        Assert.Equal(new[] { "not1" }, result.FailingLeaves.Select(l => l.RuleName));
+        Assert.Equal(new[] { "w", "x", "p" }, result.GetLeaves().Select(l => l.RuleName));
+        Assert.Equal(new[] { "not1" }, result.GetFailingLeaves().Select(l => l.RuleName));
 
         // root stopped on 'not1' -- the second of three sub-rules, decided
         // before exhaustion ('z' never ran), so just the one, not all.
@@ -623,7 +623,7 @@ public class MixedCompositeTreeTests
         var result = await rule.EvaluateAsync(Rules.Empty);
 
         Assert.False(result.Passed);
-        var failing = result.FailingLeaves;
+        var failing = result.GetFailingLeaves();
         Assert.Equal(new[] { "a", "notB", "c", "notD" }, failing.Select(l => l.RuleName));
         Assert.Same(failing[0], result.SubResults[0]);
         Assert.Same(failing[1], result.SubResults[1]);
@@ -647,8 +647,8 @@ public class MixedCompositeTreeTests
         var result = await root.EvaluateAsync(Rules.Empty);
 
         Assert.False(result.Passed);
-        Assert.Equal(new[] { "a3", "b3", "empty_or" }, result.Leaves.Select(l => l.RuleName));
-        Assert.Equal(new[] { "empty_or" }, result.FailingLeaves.Select(l => l.RuleName));
+        Assert.Equal(new[] { "a3", "b3", "empty_or" }, result.GetLeaves().Select(l => l.RuleName));
+        Assert.Equal(new[] { "empty_or" }, result.GetFailingLeaves().Select(l => l.RuleName));
 
         // root stopped on the vacuous empty_or ('z' never ran).
         Assert.Equal(new[] { "empty_or" }, result.DecidedBy.Select(r => r.RuleName));

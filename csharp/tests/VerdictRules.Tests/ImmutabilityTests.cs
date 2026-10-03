@@ -96,6 +96,48 @@ public class ImmutabilityTests
     }
 
     [Fact]
+    public void RuleResultCopiesItsSubResultsAndDecidedBy()
+    {
+        var child = new RuleResult("child", true);
+        var heldSubs = new List<RuleResult> { child };
+        var heldDecided = new List<RuleResult> { child };
+
+        var result = new RuleResult("parent", true, subResults: heldSubs, decidedBy: heldDecided);
+
+        heldSubs.Add(new RuleResult("injected", false));
+        heldDecided.Clear();
+
+        Assert.Equal(["child"], result.SubResults.Select(r => r.RuleName));
+        Assert.Equal(["child"], result.DecidedBy.Select(r => r.RuleName));
+    }
+
+    [Fact]
+    public void RunResultCopiesItsResults()
+    {
+        var held = new List<RuleResult> { new("a", true) };
+        var run = new RunResult(true, held);
+
+        held.Add(new RuleResult("injected", false));
+
+        Assert.Equal(["a"], run.Results.Select(r => r.RuleName));
+    }
+
+    [Fact]
+    public void AResultCannotBeMadeToContainItself()
+    {
+        // Early-define/late-init: add the result to the very list it was
+        // constructed from. Copying severs it, so the traversals terminate
+        // rather than recursing until the stack gives out.
+        var kids = new List<RuleResult>();
+        var result = new RuleResult("p", false, subResults: kids);
+        kids.Add(result);
+
+        Assert.Empty(result.SubResults);
+        Assert.Equal(["p"], result.GetLeaves().Select(l => l.RuleName));
+        Assert.Equal(["p"], result.GetFailingLeaves().Select(l => l.RuleName));
+    }
+
+    [Fact]
     public async Task NotRuleHoldsOneRuleSoThereIsNoCollectionToCopy()
     {
         var result = await new NotRule("not_a", Rule("a")).EvaluateAsync(new Dictionary<string, object?>());

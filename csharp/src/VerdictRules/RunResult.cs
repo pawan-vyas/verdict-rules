@@ -21,21 +21,30 @@ public sealed class RunResult(bool passed, IReadOnlyList<RuleResult> results)
     /// <remarks>
     /// A short-circuited composite still contributes exactly one entry here for
     /// itself; its own sub-results are nested inside its
-    /// <see cref="RuleResult.Data"/> rather than flattened into this list.
+    /// <see cref="RuleResult.SubResults"/> rather than flattened into this
+    /// list. See <see cref="GetLeaves"/> for the flattened view across every
+    /// rule this run evaluated.
     /// </remarks>
-    public IReadOnlyList<RuleResult> Results { get; } = results;
+    // Copied for the same reason RuleResult copies its own children.
+    public IReadOnlyList<RuleResult> Results { get; } = [.. results];
 
     /// <summary>
     /// Every leaf result reachable from <see cref="Results"/>, in evaluation
-    /// order -- one-line forwarder over each result's own
-    /// <see cref="RuleResult.Leaves"/>.
+    /// order -- a one-line forwarder over each result's own
+    /// <see cref="RuleResult.GetLeaves"/>.
     /// </summary>
-    public IReadOnlyList<RuleResult> Leaves => [.. Results.SelectMany(r => r.Leaves)];
+    /// <remarks>
+    /// A method rather than a property for the same reasons as
+    /// <see cref="RuleResult.GetLeaves"/> -- see its own remarks.
+    /// </remarks>
+    /// <returns>The leaves, in evaluation order.</returns>
+    public IReadOnlyList<RuleResult> GetLeaves() => [.. Results.SelectMany(r => r.GetLeaves())];
 
     /// <summary>
-    /// Every leaf in <see cref="Leaves"/> that failed.
+    /// Every leaf from <see cref="GetLeaves"/> that failed.
     /// </summary>
-    public IReadOnlyList<RuleResult> FailingLeaves => [.. Leaves.Where(l => !l.Passed)];
+    /// <returns>The failing leaves, in evaluation order.</returns>
+    public IReadOnlyList<RuleResult> GetFailingLeaves() => [.. GetLeaves().Where(l => !l.Passed)];
 
     /// <inheritdoc />
     public override string ToString() =>

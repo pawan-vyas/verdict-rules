@@ -49,7 +49,12 @@ public sealed class RuleResult(
     /// way) populates this with exactly the sub-results it actually
     /// evaluated -- never padded, never flattened.
     /// </summary>
-    public IReadOnlyList<RuleResult> SubResults { get; } = subResults ?? [];
+    // Copied, not aliased: IReadOnlyList is a read-only view, not an
+    // immutable collection -- a caller passing a List<T> keeps a mutable
+    // handle to the same object, and could otherwise append this very result
+    // to it, making the result contain itself. Every traversal below
+    // recurses through that.
+    public IReadOnlyList<RuleResult> SubResults { get; } = subResults is null ? [] : [.. subResults];
 
     /// <summary>
     /// Which of <see cref="SubResults"/> explain <i>this</i> result's own
@@ -57,26 +62,40 @@ public sealed class RuleResult(
     /// whatever built this result. Empty for a leaf or a vacuous composite.
     /// </summary>
     /// <remarks>
-    /// This is <b>not</b> the same question <see cref="FailingLeaves"/>
+    /// This is <b>not</b> the same question <see cref="GetFailingLeaves"/>
     /// answers (recursively, the terminal failures): a failed
     /// <see cref="NotRule{TContext}"/>'s <see cref="DecidedBy"/> is its own
     /// single child, which actually <i>passed</i> -- correct for "why did
     /// this fail," but not a chain to walk expecting
-    /// <see cref="FailingLeaves"/>-equivalence. Never recurse through this
-    /// property expecting to land on the same set <see cref="FailingLeaves"/>
+    /// <see cref="GetFailingLeaves"/>-equivalence. Never recurse through this
+    /// property expecting to land on the same set <see cref="GetFailingLeaves"/>
     /// would -- <c>result.DecidedBy[0].DecidedBy[0]...</c> steps into a
     /// passing child at a <see cref="NotRule{TContext}"/> boundary and keeps
     /// going from there, which answers a different question than the one
     /// such a chain-walk would be trying to ask.
     /// </remarks>
-    public IReadOnlyList<RuleResult> DecidedBy { get; } = decidedBy ?? [];
+    public IReadOnlyList<RuleResult> DecidedBy { get; } = decidedBy is null ? [] : [.. decidedBy];
 
     /// <summary>
     /// Every leaf result reachable from this one, in evaluation order --
     /// this result itself when it has no sub-results.
     /// </summary>
-    public IReadOnlyList<RuleResult> Leaves =>
-        SubResults.Count == 0 ? [this] : SubResults.SelectMany(s => s.Leaves).ToList();
+    /// <remarks>
+    /// A method rather than a property, for two reasons that point the same
+    /// way. It walks the whole subtree and allocates a fresh list on every
+    /// call, which the Framework Design Guidelines put on the method side of
+    /// the line ("the operation is orders of magnitude slower than a field
+    /// set", and "the member returns an array"). And a get-only collection
+    /// property is walked by reflection-based serializers and structured
+    /// loggers: a leaf's own leaves list is itself, so such a walker
+    /// recurses until it gives up. <c>[JsonIgnore]</c> cannot fix that here
+    /// -- read-only collection properties are serialized even when
+    /// <c>IgnoreReadOnlyProperties</c> is set, and the per-member attribute
+    /// is not in-box for <c>netstandard2.1</c>, which this package targets.
+    /// </remarks>
+    /// <returns>The leaves, in evaluation order.</returns>
+    public IReadOnlyList<RuleResult> GetLeaves() =>
+        SubResults.Count == 0 ? [this] : SubResults.SelectMany(s => s.GetLeaves()).ToList();
 
     /// <summary>
     /// Every failing leaf that contributed to this result's own failure.
@@ -88,20 +107,18 @@ public sealed class RuleResult(
     /// what lets a failed <see cref="NotRule{TContext}"/> -- whose single
     /// child actually passed -- report correctly here, rather than
     /// misleadingly reporting no failing leaves at all on a failed result).
-    /// This is an independent recursion, not a filter over <see cref="Leaves"/>.
+    /// This is an independent recursion, not a filter over <see cref="GetLeaves"/>.
     /// </remarks>
-    public IReadOnlyList<RuleResult> FailingLeaves
+    /// <returns>The failing leaves, in evaluation order.</returns>
+    public IReadOnlyList<RuleResult> GetFailingLeaves()
     {
-        get
+        if (Passed)
         {
-            if (Passed)
-            {
-                return [];
-            }
-
-            var childFailures = SubResults.SelectMany(s => s.FailingLeaves).ToList();
-            return childFailures.Count == 0 ? [this] : childFailures;
+            return [];
         }
+
+        var childFailures = SubResults.SelectMany(s => s.GetFailingLeaves()).ToList();
+        return childFailures.Count == 0 ? [this] : childFailures;
     }
 
     /// <inheritdoc />

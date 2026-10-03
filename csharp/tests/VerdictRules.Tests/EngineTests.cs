@@ -50,8 +50,8 @@ public class RunAllTests
     }
 
     /// <summary>
-    /// <see cref="RunResult.FailingLeaves"/> is only the failing subset of
-    /// <see cref="RunResult.Leaves"/> -- proven with a genuine mix of passing
+    /// <see cref="RunResult.GetFailingLeaves"/> is only the failing subset of
+    /// <see cref="RunResult.GetLeaves"/> -- proven with a genuine mix of passing
     /// and failing rules, since an all-pass or all-fail run can't tell
     /// "every leaf" and "only the failing ones" apart.
     /// </summary>
@@ -60,8 +60,8 @@ public class RunAllTests
     {
         var engine = new RulesEngine(new IRule[] { Rules.Pass("a"), Rules.Fail("b"), Rules.Pass("c") });
         var result = await engine.RunAllAsync(Rules.Empty);
-        Assert.Equal(new[] { "a", "b", "c" }, result.Leaves.Select(l => l.RuleName));
-        Assert.Equal(new[] { "b" }, result.FailingLeaves.Select(l => l.RuleName));
+        Assert.Equal(new[] { "a", "b", "c" }, result.GetLeaves().Select(l => l.RuleName));
+        Assert.Equal(new[] { "b" }, result.GetFailingLeaves().Select(l => l.RuleName));
     }
 }
 

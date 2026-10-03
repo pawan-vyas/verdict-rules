@@ -245,7 +245,7 @@ public class SharedFixtureContractTests
         var record = SharedFixture.Students[studentId];
         var expectedLeaves = record.Expected.GetProperty("leaves").EnumerateArray().Select(e => e.GetString()!).ToList();
         var result = await graduates.EvaluateAsync(record.Context);
-        var leaves = result.Leaves.Select(l => l.RuleName).ToList();
+        var leaves = result.GetLeaves().Select(l => l.RuleName).ToList();
         Assert.Equal(expectedLeaves, leaves);
     }
 
@@ -257,7 +257,7 @@ public class SharedFixtureContractTests
         var record = SharedFixture.Students[studentId];
         var expectedFailingLeaves = record.Expected.GetProperty("failing_leaves").EnumerateArray().Select(e => e.GetString()!).ToList();
         var result = await graduates.EvaluateAsync(record.Context);
-        var failingLeaves = result.FailingLeaves.Select(l => l.RuleName).ToList();
+        var failingLeaves = result.GetFailingLeaves().Select(l => l.RuleName).ToList();
         Assert.Equal(expectedFailingLeaves, failingLeaves);
     }
 

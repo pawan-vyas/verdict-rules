@@ -1,11 +1,4 @@
 #nullable enable
-const VerdictRules.AndRule<TContext>.VacuousResult = true -> bool
-const VerdictRules.OrRule<TContext>.VacuousResult = false -> bool
-override VerdictRules.NotRule.ToString() -> string!
-override VerdictRules.NotRule<TContext>.ToString() -> string!
-override VerdictRules.PredicateOutcome.ToString() -> string!
-override VerdictRules.SequentialEvaluator<TContext>.ToString() -> string!
-override VerdictRules.ShortCircuitEvaluator<TContext>.ToString() -> string!
 VerdictRules.NotRule
 VerdictRules.NotRule.EvaluateAsync(System.Collections.Generic.IReadOnlyDictionary<string!, object?>! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<VerdictRules.RuleResult!>!
 VerdictRules.NotRule.Group.get -> string?
@@ -22,12 +15,12 @@ VerdictRules.PredicateOutcome.Detail.get -> string!
 VerdictRules.PredicateOutcome.Passed.get -> bool
 VerdictRules.PredicateOutcome.PredicateOutcome(bool passed, string! detail = "", object? data = null) -> void
 VerdictRules.RuleResult.DecidedBy.get -> System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>!
-VerdictRules.RuleResult.FailingLeaves.get -> System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>!
-VerdictRules.RuleResult.Leaves.get -> System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>!
+VerdictRules.RuleResult.GetFailingLeaves() -> System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>!
+VerdictRules.RuleResult.GetLeaves() -> System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>!
 VerdictRules.RuleResult.RuleResult(string! ruleName, bool passed, string! detail = "", object? data = null, System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>? subResults = null, System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>? decidedBy = null) -> void
 VerdictRules.RuleResult.SubResults.get -> System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>!
-VerdictRules.RunResult.FailingLeaves.get -> System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>!
-VerdictRules.RunResult.Leaves.get -> System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>!
+VerdictRules.RunResult.GetFailingLeaves() -> System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>!
+VerdictRules.RunResult.GetLeaves() -> System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>!
 VerdictRules.SequentialEvaluator<TContext>
 VerdictRules.SequentialEvaluator<TContext>.EvaluateAsync(string! name, System.Collections.Generic.IReadOnlyList<VerdictRules.IRule<TContext>!>! rules, TContext context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<VerdictRules.RuleResult!>!
 VerdictRules.SequentialEvaluator<TContext>.SequentialEvaluator(VerdictRules.StepDecider! decider, bool vacuousResult) -> void
@@ -35,6 +28,13 @@ VerdictRules.ShortCircuitEvaluator<TContext>
 VerdictRules.ShortCircuitEvaluator<TContext>.EvaluateAsync(string! name, System.Collections.Generic.IReadOnlyList<VerdictRules.IRule<TContext>!>! rules, TContext context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<VerdictRules.RuleResult!>!
 VerdictRules.ShortCircuitEvaluator<TContext>.ShortCircuitEvaluator(bool stopOn) -> void
 VerdictRules.StepDecider
+const VerdictRules.AndRule<TContext>.VacuousResult = true -> bool
+const VerdictRules.OrRule<TContext>.VacuousResult = false -> bool
+override VerdictRules.NotRule.ToString() -> string!
+override VerdictRules.NotRule<TContext>.ToString() -> string!
+override VerdictRules.PredicateOutcome.ToString() -> string!
+override VerdictRules.SequentialEvaluator<TContext>.ToString() -> string!
+override VerdictRules.ShortCircuitEvaluator<TContext>.ToString() -> string!
 virtual VerdictRules.RulePredicate.Invoke(System.Collections.Generic.IReadOnlyDictionary<string!, object?>! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<VerdictRules.PredicateOutcome!>!
 virtual VerdictRules.RulePredicate<TContext>.Invoke(TContext context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<VerdictRules.PredicateOutcome!>!
 virtual VerdictRules.StepDecider.Invoke(VerdictRules.RuleResult! latest, System.Collections.Generic.IReadOnlyList<VerdictRules.RuleResult!>! soFar, int total) -> bool?
