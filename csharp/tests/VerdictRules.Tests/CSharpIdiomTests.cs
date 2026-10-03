@@ -171,7 +171,7 @@ public class SequentialEvaluatorIdiomTests
 
     /// <summary>
     /// <see cref="SequentialEvaluator{TContext}.EvaluateAsync"/>'s own generic
-    /// <see cref="RuleResult.DecidedBy"/> rule, exercised directly rather than
+    /// <see cref="RuleResult.GetDecidedBy"/> rule, exercised directly rather than
     /// through <see cref="AndRule{TContext}"/>/<see cref="OrRule{TContext}"/>
     /// (which override it via <see cref="ShortCircuitEvaluator{TContext}"/>
     /// instead) -- a custom decider that commits as soon as it has seen two
@@ -198,7 +198,7 @@ public class SequentialEvaluatorIdiomTests
 
         Assert.True(result.Passed);
         Assert.Equal(new[] { "a", "b" }, result.SubResults.Select(r => r.RuleName)); // c, d never evaluated
-        Assert.Equal(new[] { "b" }, result.DecidedBy.Select(r => r.RuleName)); // only the trigger, not [a, b]
+        Assert.Equal(new[] { "b" }, result.GetDecidedBy().Select(r => r.RuleName)); // only the trigger, not [a, b]
     }
 
     /// <summary>
@@ -206,7 +206,7 @@ public class SequentialEvaluatorIdiomTests
     /// == total</c>) cannot distinguish from a post-loop fallback: a decider that
     /// commits non-null during the loop's own <i>final</i> iteration, rather than
     /// only once the loop finishes and falls through to the separate fallback
-    /// branch. <see cref="RuleResult.DecidedBy"/> still names every evaluated
+    /// branch. <see cref="RuleResult.GetDecidedBy"/> still names every evaluated
     /// sub-result here, exactly as the exhaustion case does -- proving the
     /// in-loop "decided, and it happened to be everything" branch is handled
     /// the same as true exhaustion, not conflated with the "still unevaluated"
@@ -226,7 +226,7 @@ public class SequentialEvaluatorIdiomTests
 
         Assert.True(result.Passed);
         Assert.Equal(new[] { "a", "b", "c" }, result.SubResults.Select(r => r.RuleName)); // every rule evaluated
-        Assert.Equal(new[] { "a", "b", "c" }, result.DecidedBy.Select(r => r.RuleName)); // all of it, not just "c"
+        Assert.Equal(new[] { "a", "b", "c" }, result.GetDecidedBy().Select(r => r.RuleName)); // all of it, not just "c"
     }
 }
 

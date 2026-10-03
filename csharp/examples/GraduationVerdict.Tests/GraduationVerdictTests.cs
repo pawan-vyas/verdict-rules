@@ -274,7 +274,7 @@ public class SharedFixtureContractTests
         var record = SharedFixture.Students[studentId];
         var expectedDecidedBy = record.Expected.GetProperty("decided_by").EnumerateArray().Select(e => e.GetString()!).ToList();
         var result = await graduates.EvaluateAsync(record.Context);
-        var decidedBy = result.DecidedBy.Select(r => r.RuleName).ToList();
+        var decidedBy = result.GetDecidedBy().Select(r => r.RuleName).ToList();
         Assert.Equal(expectedDecidedBy, decidedBy);
     }
 

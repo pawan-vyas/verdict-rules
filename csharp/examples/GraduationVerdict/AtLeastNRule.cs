@@ -48,6 +48,9 @@ public sealed class AtLeastNRule(string name, IReadOnlyList<IRule> rules, int mi
             $"{passedCount} of {rules.Count} passed, needed {Minimum}",
             result.Data,
             result.SubResults,
-            result.DecidedBy);
+            // Forwarded as positions, which is also what the evaluator stored:
+            // the sub-results are carried over unchanged, so the positions
+            // still name the same children.
+            result.DecidedByIndices);
     }
 }

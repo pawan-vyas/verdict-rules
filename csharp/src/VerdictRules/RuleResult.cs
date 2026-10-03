@@ -11,11 +11,11 @@ namespace VerdictRules;
 /// <param name="detail"><inheritdoc cref="Detail" path="/summary/node()" /></param>
 /// <param name="data"><inheritdoc cref="Data" path="/summary/node()" /></param>
 /// <param name="subResults"><inheritdoc cref="SubResults" path="/summary/node()" /></param>
-/// <param name="decidedBy"><inheritdoc cref="DecidedBy" path="/summary/node()" /></param>
+/// <param name="decidedByIndices"><inheritdoc cref="DecidedByIndices" path="/summary/node()" /></param>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
 public sealed class RuleResult(
     string ruleName, bool passed, string detail = "", object? data = null,
-    IReadOnlyList<RuleResult>? subResults = null, IReadOnlyList<RuleResult>? decidedBy = null)
+    IReadOnlyList<RuleResult>? subResults = null, IReadOnlyList<int>? decidedByIndices = null)
 {
     /// <summary>
     /// Name of the rule this result came from, matching that rule's own
@@ -57,24 +57,72 @@ public sealed class RuleResult(
     public IReadOnlyList<RuleResult> SubResults { get; } = subResults is null ? [] : [.. subResults];
 
     /// <summary>
+    /// Positions within <see cref="SubResults"/> of the children that explain
+    /// <i>this</i> result's own verdict. Call <see cref="GetDecidedBy"/>
+    /// instead unless building a result by hand.
+    /// </summary>
+    /// <remarks>
+    /// Positions rather than the child results themselves, so that the stored
+    /// object graph is a genuine tree. Holding the same children under two
+    /// properties makes it a DAG, and every tree-shaped walk -- a serializer,
+    /// a structured logger -- expands a shared node once per path, so
+    /// serialized size doubles per nesting level. This is also why
+    /// <see cref="GetDecidedBy"/> is a method: a get-only collection property
+    /// returning the children would be serialized, which is the same
+    /// duplication by another route.
+    /// </remarks>
+    public IReadOnlyList<int> DecidedByIndices { get; } =
+        CheckedIndices(decidedByIndices, subResults?.Count ?? 0, ruleName);
+
+    /// <summary>
+    /// Copies the indices and rejects any that name a child this result does
+    /// not have -- the one way this shape can be wrong, so it fails at
+    /// construction rather than from whichever caller reads
+    /// <see cref="GetDecidedBy"/> first. The objects form admitted no
+    /// equivalent check: nothing stopped it naming a result that was never a
+    /// child of the result carrying it.
+    /// </summary>
+    private static IReadOnlyList<int> CheckedIndices(
+        IReadOnlyList<int>? indices, int subResultCount, string ruleName)
+    {
+        if (indices is null)
+        {
+            return [];
+        }
+
+        var copied = indices.ToList();
+        var outOfRange = copied.Where(i => i < 0 || i >= subResultCount).ToList();
+        if (outOfRange.Count > 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(decidedByIndices),
+                $"[{string.Join(", ", outOfRange)}] out of range for {subResultCount} "
+                + $"sub-result(s) on rule '{ruleName}'.");
+        }
+
+        return copied;
+    }
+
+    /// <summary>
     /// Which of <see cref="SubResults"/> explain <i>this</i> result's own
-    /// verdict -- a one-level, non-recursive fact, populated once by
-    /// whatever built this result. Empty for a leaf or a vacuous composite.
+    /// verdict -- a one-level, non-recursive fact, fixed by whatever built
+    /// this result. Empty for a leaf or a vacuous composite.
     /// </summary>
     /// <remarks>
     /// This is <b>not</b> the same question <see cref="GetFailingLeaves"/>
     /// answers (recursively, the terminal failures): a failed
-    /// <see cref="NotRule{TContext}"/>'s <see cref="DecidedBy"/> is its own
-    /// single child, which actually <i>passed</i> -- correct for "why did
-    /// this fail," but not a chain to walk expecting
-    /// <see cref="GetFailingLeaves"/>-equivalence. Never recurse through this
-    /// property expecting to land on the same set <see cref="GetFailingLeaves"/>
-    /// would -- <c>result.DecidedBy[0].DecidedBy[0]...</c> steps into a
-    /// passing child at a <see cref="NotRule{TContext}"/> boundary and keeps
-    /// going from there, which answers a different question than the one
-    /// such a chain-walk would be trying to ask.
+    /// <see cref="NotRule{TContext}"/>'s deciding child actually
+    /// <i>passed</i> -- correct for "why did this fail," but not a chain to
+    /// walk expecting <see cref="GetFailingLeaves"/>-equivalence. Never
+    /// recurse through this expecting to land on the same set
+    /// <see cref="GetFailingLeaves"/> would: it steps into a passing child at
+    /// a <see cref="NotRule{TContext}"/> boundary and keeps going from there,
+    /// which answers a different question than such a chain-walk would be
+    /// trying to ask.
     /// </remarks>
-    public IReadOnlyList<RuleResult> DecidedBy { get; } = decidedBy is null ? [] : [.. decidedBy];
+    /// <returns>The deciding children, in evaluation order.</returns>
+    public IReadOnlyList<RuleResult> GetDecidedBy() =>
+        DecidedByIndices.Select(i => SubResults[i]).ToList();
 
     /// <summary>
     /// Every leaf result reachable from this one, in evaluation order --

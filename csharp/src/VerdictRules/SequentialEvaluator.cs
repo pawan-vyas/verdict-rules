@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Linq;
 
 namespace VerdictRules;
 
@@ -45,7 +46,7 @@ public sealed class SequentialEvaluator<TContext>(StepDecider decider, bool vacu
     /// <see cref="RuleResult.SubResults"/> is exactly the sub-results actually
     /// produced -- every one of them when <paramref name="rules"/> is
     /// exhausted without an early stop, or every one up to and including the
-    /// sub-result that triggered an early stop. <see cref="RuleResult.DecidedBy"/>
+    /// sub-result that triggered an early stop. <see cref="RuleResult.GetDecidedBy"/>
     /// is the generic default: just the sub-result that flipped the verdict
     /// when the decision landed before exhaustion, or every evaluated
     /// sub-result when it only landed once everything was seen.
@@ -78,13 +79,18 @@ public sealed class SequentialEvaluator<TContext>(StepDecider decider, bool vacu
                 // for ShortCircuitEvaluator specifically, which overrides this
                 // below using the one extra fact (its own stopOn) a fully
                 // generic decider has no access to -- see that type.
-                IReadOnlyList<RuleResult> decidedBy = soFar.Count == rules.Count ? soFar : [latest];
-                return new RuleResult(name, early, subResults: soFar, decidedBy: decidedBy);
+                IReadOnlyList<int> decidedByIndices = soFar.Count == rules.Count
+                    ? [.. Enumerable.Range(0, soFar.Count)]
+                    : [soFar.Count - 1];
+                return new RuleResult(name, early, subResults: soFar, decidedByIndices: decidedByIndices);
             }
         }
 
         return new RuleResult(
-            name, decider(soFar[^1], soFar, rules.Count) ?? vacuousResult, subResults: soFar, decidedBy: soFar);
+            name,
+            decider(soFar[^1], soFar, rules.Count) ?? vacuousResult,
+            subResults: soFar,
+            decidedByIndices: [.. Enumerable.Range(0, soFar.Count)]);
     }
 
     /// <inheritdoc />

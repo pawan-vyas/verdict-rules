@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Linq;
 
 namespace VerdictRules;
 
@@ -49,7 +50,7 @@ public sealed class ShortCircuitEvaluator<TContext>
     /// <inheritdoc cref="SequentialEvaluator{TContext}.EvaluateAsync" />
     /// <remarks>
     /// Same result <see cref="SequentialEvaluator{TContext}.EvaluateAsync"/>
-    /// would produce, except <see cref="RuleResult.DecidedBy"/> is recomputed
+    /// would produce, except <see cref="RuleResult.GetDecidedBy"/> is recomputed
     /// here rather than trusting that type's own generic rule. That generic
     /// rule can't distinguish "found the trigger, which happened to be the
     /// last item evaluated" from "genuinely exhausted every item without ever
@@ -62,11 +63,13 @@ public sealed class ShortCircuitEvaluator<TContext>
         string name, IReadOnlyList<IRule<TContext>> rules, TContext context, CancellationToken cancellationToken = default)
     {
         var result = await _inner.EvaluateAsync(name, rules, context, cancellationToken).ConfigureAwait(false);
-        var last = result.SubResults.Count > 0 ? result.SubResults[^1] : null;
-        IReadOnlyList<RuleResult> decidedBy = last is not null && last.Passed == _stopOn
-            ? [last]                  // the trigger was found -- regardless of position
-            : result.SubResults;      // exhausted without ever finding it (or vacuous) -- every evaluated child explains it
-        return new RuleResult(result.RuleName, result.Passed, result.Detail, result.Data, result.SubResults, decidedBy);
+        var total = result.SubResults.Count;
+        var last = total > 0 ? result.SubResults[^1] : null;
+        IReadOnlyList<int> decidedByIndices = last is not null && last.Passed == _stopOn
+            ? [total - 1]                           // the trigger was found -- regardless of position
+            : [.. Enumerable.Range(0, total)];      // exhausted without ever finding it (or vacuous) -- every evaluated child explains it
+        return new RuleResult(
+            result.RuleName, result.Passed, result.Detail, result.Data, result.SubResults, decidedByIndices);
     }
 
     /// <inheritdoc />

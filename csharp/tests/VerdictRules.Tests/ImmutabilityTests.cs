@@ -96,19 +96,44 @@ public class ImmutabilityTests
     }
 
     [Fact]
-    public void RuleResultCopiesItsSubResultsAndDecidedBy()
+    public void RuleResultCopiesItsSubResultsAndDecidedByIndices()
     {
         var child = new RuleResult("child", true);
         var heldSubs = new List<RuleResult> { child };
-        var heldDecided = new List<RuleResult> { child };
+        var heldDecided = new List<int> { 0 };
 
-        var result = new RuleResult("parent", true, subResults: heldSubs, decidedBy: heldDecided);
+        var result = new RuleResult("parent", true, subResults: heldSubs, decidedByIndices: heldDecided);
 
         heldSubs.Add(new RuleResult("injected", false));
         heldDecided.Clear();
 
         Assert.Equal(["child"], result.SubResults.Select(r => r.RuleName));
-        Assert.Equal(["child"], result.DecidedBy.Select(r => r.RuleName));
+        Assert.Equal(["child"], result.GetDecidedBy().Select(r => r.RuleName));
+    }
+
+    [Fact]
+    public void AnIndexNamingAChildThatDoesNotExistIsRejected()
+    {
+        // The one way the indices form can be wrong, caught at construction
+        // rather than when something later calls GetDecidedBy. The objects
+        // form admitted no equivalent check -- nothing stopped it naming a
+        // result that was never a child of this one.
+        var child = new RuleResult("child", false);
+
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => new RuleResult("parent", false, subResults: [child], decidedByIndices: [1]));
+    }
+
+    [Fact]
+    public void DecidedByCannotDisagreeWithSubResults()
+    {
+        // GetDecidedBy is derived, so there is no second stored collection
+        // that could drift out of step with the children it names.
+        var a = new RuleResult("a", true);
+        var b = new RuleResult("b", false);
+        var result = new RuleResult("parent", false, subResults: [a, b], decidedByIndices: [1]);
+
+        Assert.Same(result.SubResults[1], result.GetDecidedBy()[0]);
     }
 
     [Fact]

@@ -37,18 +37,18 @@ public sealed class NotRule<TContext>(string name, IRule<TContext> rule, string?
 
     /// <inheritdoc />
     /// <remarks>
-    /// <see cref="RuleResult.DecidedBy"/> is set to <c>[inner]</c>
+    /// <see cref="RuleResult.GetDecidedBy"/> is the one inner result
     /// unconditionally, in both directions -- "inner passed" is genuinely
     /// why a failing <see cref="NotRule{TContext}"/> failed, not an
     /// inconsistency with <see cref="RuleResult.GetFailingLeaves"/>'s own
     /// self-as-leaf rule (they answer different questions; see
-    /// <see cref="RuleResult.DecidedBy"/>).
+    /// <see cref="RuleResult.GetDecidedBy"/>).
     /// </remarks>
     public async Task<RuleResult> EvaluateAsync(TContext context, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         var inner = await Rule.EvaluateAsync(context, cancellationToken).ConfigureAwait(false);
-        return new RuleResult(Name, !inner.Passed, subResults: [inner], decidedBy: [inner]);
+        return new RuleResult(Name, !inner.Passed, subResults: [inner], decidedByIndices: [0]);
     }
 
     /// <inheritdoc />

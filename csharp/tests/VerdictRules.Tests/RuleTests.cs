@@ -85,7 +85,7 @@ public class AndRuleTests
     /// Mirrors <c>test_one_failure_yields_fail</c> -- an <see cref="AndRule"/>
     /// no longer formats "why" into its own <see cref="RuleResult.Detail"/>;
     /// the failing sub-rule's name and detail are reachable through
-    /// <see cref="RuleResult.GetFailingLeaves"/>/<see cref="RuleResult.DecidedBy"/>
+    /// <see cref="RuleResult.GetFailingLeaves"/>/<see cref="RuleResult.GetDecidedBy"/>
     /// instead.
     /// </summary>
     [Fact]
@@ -97,7 +97,7 @@ public class AndRuleTests
         var failingLeaf = Assert.Single(result.GetFailingLeaves());
         Assert.Equal("b", failingLeaf.RuleName);
         Assert.Equal("bad", failingLeaf.Detail);
-        var decisive = Assert.Single(result.DecidedBy);
+        var decisive = Assert.Single(result.GetDecidedBy());
         Assert.Equal("b", decisive.RuleName);
         Assert.Equal("bad", decisive.Detail);
     }
@@ -259,11 +259,11 @@ public class NotRuleTests
     public async Task DecidedByIsTheInnerResultInBothDirections()
     {
         var failing = await new NotRule("not1", Rules.Fail("inner")).EvaluateAsync(Rules.Empty);
-        var failingDecisive = Assert.Single(failing.DecidedBy);
+        var failingDecisive = Assert.Single(failing.GetDecidedBy());
         Assert.Equal("inner", failingDecisive.RuleName);
 
         var passing = await new NotRule("not2", Rules.Pass("inner")).EvaluateAsync(Rules.Empty);
-        var passingDecisive = Assert.Single(passing.DecidedBy);
+        var passingDecisive = Assert.Single(passing.GetDecidedBy());
         Assert.Equal("inner", passingDecisive.RuleName);
     }
 
@@ -321,13 +321,13 @@ public class NotRuleTests
 
 /// <summary>
 /// Mirrors Python's <c>TestDecidedBy</c> in <c>test_composition.py</c> --
-/// <see cref="RuleResult.DecidedBy"/>, the one-level, non-recursive
+/// <see cref="RuleResult.GetDecidedBy"/>, the one-level, non-recursive
 /// explanation for a composite's own verdict. Supersedes the removed
 /// <c>AndRule.Failed</c>/<c>Passing</c> and <c>OrRule.Passed</c>/<c>Failing</c>
 /// static methods: those were static methods a caller could apply to the
 /// wrong family's result and get a plausible, silently wrong answer --
 /// confirmed with concrete cases from a real adopter review, not
-/// hypothetical. <see cref="RuleResult.DecidedBy"/> closes that
+/// hypothetical. <see cref="RuleResult.GetDecidedBy"/> closes that
 /// structurally: there is no second method to reach for, every result
 /// carries its own correctly-populated field.
 /// </summary>
@@ -339,7 +339,7 @@ public class DecidedByTests
     {
         var rule = new AndRule("and1", new IRule[] { Rules.Pass("a"), Rules.Fail("b"), Rules.Pass("c"), Rules.Pass("d") });
         var result = await rule.EvaluateAsync(Rules.Empty);
-        Assert.Equal(new[] { "b" }, result.DecidedBy.Select(r => r.RuleName));
+        Assert.Equal(new[] { "b" }, result.GetDecidedBy().Select(r => r.RuleName));
     }
 
     /// <summary>
@@ -355,7 +355,7 @@ public class DecidedByTests
     {
         var rule = new AndRule("and1", new IRule[] { Rules.Pass("a"), Rules.Pass("b"), Rules.Fail("c") });
         var result = await rule.EvaluateAsync(Rules.Empty);
-        Assert.Equal(new[] { "c" }, result.DecidedBy.Select(r => r.RuleName));
+        Assert.Equal(new[] { "c" }, result.GetDecidedBy().Select(r => r.RuleName));
     }
 
     /// <summary>Mirrors <c>test_and_rule_fully_passing_names_every_sub_result</c>.</summary>
@@ -364,7 +364,7 @@ public class DecidedByTests
     {
         var rule = new AndRule("and1", new IRule[] { Rules.Pass("a"), Rules.Pass("b"), Rules.Pass("c") });
         var result = await rule.EvaluateAsync(Rules.Empty);
-        Assert.Equal(new[] { "a", "b", "c" }, result.DecidedBy.Select(r => r.RuleName));
+        Assert.Equal(new[] { "a", "b", "c" }, result.GetDecidedBy().Select(r => r.RuleName));
     }
 
     /// <summary>Mirrors <c>test_and_rule_vacuous_pass_names_nothing</c>.</summary>
@@ -373,7 +373,7 @@ public class DecidedByTests
     {
         var rule = new AndRule("and1", Array.Empty<IRule>());
         var result = await rule.EvaluateAsync(Rules.Empty);
-        Assert.Empty(result.DecidedBy);
+        Assert.Empty(result.GetDecidedBy());
     }
 
     /// <summary>Mirrors <c>test_or_rule_passing_early_names_just_the_decisive_pass</c>.</summary>
@@ -382,7 +382,7 @@ public class DecidedByTests
     {
         var rule = new OrRule("or1", new IRule[] { Rules.Fail("a"), Rules.Pass("b"), Rules.Fail("c") });
         var result = await rule.EvaluateAsync(Rules.Empty);
-        Assert.Equal(new[] { "b" }, result.DecidedBy.Select(r => r.RuleName));
+        Assert.Equal(new[] { "b" }, result.GetDecidedBy().Select(r => r.RuleName));
     }
 
     /// <summary>
@@ -396,7 +396,7 @@ public class DecidedByTests
     {
         var rule = new OrRule("or1", new IRule[] { Rules.Fail("a"), Rules.Fail("b"), Rules.Fail("c") });
         var result = await rule.EvaluateAsync(Rules.Empty);
-        Assert.Equal(new[] { "a", "b", "c" }, result.DecidedBy.Select(r => r.RuleName));
+        Assert.Equal(new[] { "a", "b", "c" }, result.GetDecidedBy().Select(r => r.RuleName));
     }
 
     /// <summary>Mirrors <c>test_or_rule_vacuous_fail_names_nothing</c>.</summary>
@@ -405,16 +405,16 @@ public class DecidedByTests
     {
         var rule = new OrRule("or1", Array.Empty<IRule>());
         var result = await rule.EvaluateAsync(Rules.Empty);
-        Assert.Empty(result.DecidedBy);
+        Assert.Empty(result.GetDecidedBy());
     }
 
     /// <summary>
-    /// No shipped composite ever reads a leaf's own <see cref="RuleResult.DecidedBy"/>
+    /// No shipped composite ever reads a leaf's own <see cref="RuleResult.GetDecidedBy"/>
     /// (every assertion above reads a composite's), so this is the only place
     /// that proves <c>FunctionRule</c>'s own leaf result -- built via
     /// <c>new RuleResult(Name, outcome.Passed, outcome.Detail, outcome.Data)</c>,
     /// never passing a <c>decidedBy</c> argument at all -- actually falls
-    /// through to <see cref="RuleResult.DecidedBy"/>'s <c>decidedBy ?? []</c>
+    /// through to <see cref="RuleResult.GetDecidedBy"/>'s <c>decidedBy ?? []</c>
     /// default rather than surfacing the constructor's raw <see langword="null"/>
     /// default untouched.
     /// </summary>
@@ -422,8 +422,8 @@ public class DecidedByTests
     public async Task ALeafResultDefaultsDecidedByToEmptyRatherThanNull()
     {
         var result = await Rules.Pass("leaf").EvaluateAsync(Rules.Empty);
-        Assert.NotNull(result.DecidedBy);
-        Assert.Empty(result.DecidedBy);
+        Assert.NotNull(result.GetDecidedBy());
+        Assert.Empty(result.GetDecidedBy());
     }
 }
 
@@ -514,19 +514,19 @@ public class MixedCompositeTreeTests
         // DecidedBy traced at every composite node in this tree: a full pass
         // is genuinely collective (every top-level member), while each
         // individual OrRule/NotRule names only its own one-level trigger.
-        Assert.Equal(new[] { "a", "b", "c" }, result.DecidedBy.Select(r => r.RuleName));
+        Assert.Equal(new[] { "a", "b", "c" }, result.GetDecidedBy().Select(r => r.RuleName));
         var aResult = result.SubResults[0];
-        Assert.Equal(new[] { "a1", "a2", "a3" }, aResult.DecidedBy.Select(r => r.RuleName));
+        Assert.Equal(new[] { "a1", "a2", "a3" }, aResult.GetDecidedBy().Select(r => r.RuleName));
         var a2Result = aResult.SubResults[1];
-        Assert.Equal(new[] { "a2y" }, a2Result.DecidedBy.Select(r => r.RuleName));
+        Assert.Equal(new[] { "a2y" }, a2Result.GetDecidedBy().Select(r => r.RuleName));
         var a3Result = aResult.SubResults[2];
-        Assert.Equal(new[] { "a3-inner" }, a3Result.DecidedBy.Select(r => r.RuleName));
+        Assert.Equal(new[] { "a3-inner" }, a3Result.GetDecidedBy().Select(r => r.RuleName));
         var cResult = result.SubResults[2];
-        Assert.Equal(new[] { "c2" }, cResult.DecidedBy.Select(r => r.RuleName)); // c short-circuited, passing on c2
+        Assert.Equal(new[] { "c2" }, cResult.GetDecidedBy().Select(r => r.RuleName)); // c short-circuited, passing on c2
         var c1Result = cResult.SubResults[0];
-        Assert.Equal(new[] { "c1x" }, c1Result.DecidedBy.Select(r => r.RuleName)); // c1 failed early on c1x
+        Assert.Equal(new[] { "c1x" }, c1Result.GetDecidedBy().Select(r => r.RuleName)); // c1 failed early on c1x
         var c2Result = cResult.SubResults[1];
-        Assert.Equal(new[] { "c2-inner" }, c2Result.DecidedBy.Select(r => r.RuleName));
+        Assert.Equal(new[] { "c2-inner" }, c2Result.GetDecidedBy().Select(r => r.RuleName));
     }
 
     [Fact]
@@ -560,15 +560,15 @@ public class MixedCompositeTreeTests
         // root stopped the instant 'a' failed -- the sole item evaluated,
         // named directly, not "all evaluated" (there's only one, but the
         // reasoning is "decided before exhaustion", not "exhausted").
-        Assert.Equal(new[] { "a" }, result.DecidedBy.Select(r => r.RuleName));
+        Assert.Equal(new[] { "a" }, result.GetDecidedBy().Select(r => r.RuleName));
         var aResult = result.SubResults[0];
         // 'a' itself failed on its own *last* evaluated sub-rule (a3) --
         // the exact case a first pass at this design got wrong: a1/a2
         // passed before it, but position is irrelevant to blame.
-        Assert.Equal(new[] { "a3" }, aResult.DecidedBy.Select(r => r.RuleName));
+        Assert.Equal(new[] { "a3" }, aResult.GetDecidedBy().Select(r => r.RuleName));
         // a3 is a NotRule: unconditional, regardless of direction -- its
         // own inner child (a3-inner, which passed) is what explains it.
-        Assert.Equal(new[] { "a3-inner" }, a3Result.DecidedBy.Select(r => r.RuleName));
+        Assert.Equal(new[] { "a3-inner" }, a3Result.GetDecidedBy().Select(r => r.RuleName));
     }
 
     /// <summary>
@@ -600,14 +600,14 @@ public class MixedCompositeTreeTests
 
         // root stopped on 'not1' -- the second of three sub-rules, decided
         // before exhaustion ('z' never ran), so just the one, not all.
-        Assert.Equal(new[] { "not1" }, result.DecidedBy.Select(r => r.RuleName));
+        Assert.Equal(new[] { "not1" }, result.GetDecidedBy().Select(r => r.RuleName));
         var innerOrResult = result.SubResults[0];
-        Assert.Equal(new[] { "x" }, innerOrResult.DecidedBy.Select(r => r.RuleName)); // OrRule passed early
+        Assert.Equal(new[] { "x" }, innerOrResult.GetDecidedBy().Select(r => r.RuleName)); // OrRule passed early
         var notResultResult = result.SubResults[1];
         // NotRule unconditional: names its own inner child
         // (inner_or_for_not, which itself short-circuited on 'p' and
         // passed) -- one level only, not drilled through to 'p' itself.
-        Assert.Equal(new[] { "inner_or_for_not" }, notResultResult.DecidedBy.Select(r => r.RuleName));
+        Assert.Equal(new[] { "inner_or_for_not" }, notResultResult.GetDecidedBy().Select(r => r.RuleName));
     }
 
     [Fact]
@@ -631,9 +631,9 @@ public class MixedCompositeTreeTests
         // All-fail is genuinely collective -- every sub-rule ran and none
         // triggered the stop condition, mirroring the plain OrRule all-fail
         // case even though two of the four children here are NotRules.
-        Assert.Equal(new[] { "a", "notB", "c", "notD" }, result.DecidedBy.Select(r => r.RuleName));
-        Assert.Equal(new[] { "b" }, result.SubResults[1].DecidedBy.Select(r => r.RuleName)); // notB: inner 'b' passed
-        Assert.Equal(new[] { "d" }, result.SubResults[3].DecidedBy.Select(r => r.RuleName)); // notD likewise
+        Assert.Equal(new[] { "a", "notB", "c", "notD" }, result.GetDecidedBy().Select(r => r.RuleName));
+        Assert.Equal(new[] { "b" }, result.SubResults[1].GetDecidedBy().Select(r => r.RuleName)); // notB: inner 'b' passed
+        Assert.Equal(new[] { "d" }, result.SubResults[3].GetDecidedBy().Select(r => r.RuleName)); // notD likewise
     }
 
     [Fact]
@@ -651,10 +651,10 @@ public class MixedCompositeTreeTests
         Assert.Equal(new[] { "empty_or" }, result.GetFailingLeaves().Select(l => l.RuleName));
 
         // root stopped on the vacuous empty_or ('z' never ran).
-        Assert.Equal(new[] { "empty_or" }, result.DecidedBy.Select(r => r.RuleName));
+        Assert.Equal(new[] { "empty_or" }, result.GetDecidedBy().Select(r => r.RuleName));
         var innerOrResult = result.SubResults[0];
-        Assert.Equal(new[] { "b3" }, innerOrResult.DecidedBy.Select(r => r.RuleName)); // OrRule passed early
+        Assert.Equal(new[] { "b3" }, innerOrResult.GetDecidedBy().Select(r => r.RuleName)); // OrRule passed early
         var emptyOrResult = result.SubResults[1];
-        Assert.Empty(emptyOrResult.DecidedBy); // vacuous -- nothing decided it
+        Assert.Empty(emptyOrResult.GetDecidedBy()); // vacuous -- nothing decided it
     }
 }
