@@ -87,6 +87,67 @@ describe("results own their children", () => {
     });
   });
 
+  it("a negative index is rejected, not read from the end", () => {
+    // JS would happily return undefined for subResults[-1], so "past the
+    // end" and "before the start" are two separate ways to be wrong and the
+    // check has to cover both. Testing only the past-the-end direction
+    // leaves the lower bound unverified.
+    const child = new RuleResult("child", false);
+
+    assert.throws(() => new RuleResult("parent", false, { subResults: [child], decidedByIndices: [-1] }), {
+      name: "RangeError",
+    });
+  });
+
+  it("a non-integer index is rejected", () => {
+    const child = new RuleResult("child", false);
+
+    for (const bad of [0.5, Number.NaN]) {
+      assert.throws(
+        () => new RuleResult("parent", false, { subResults: [child], decidedByIndices: [bad] }),
+        { name: "RangeError" },
+        `${bad} should be rejected`,
+      );
+    }
+  });
+
+  it("the error names every offending index, the count, and the rule", () => {
+    // The type is what a caller catches on, but the message is the whole
+    // value of the check: without all three facts whoever hits it has to go
+    // find them. More than one bad index also exercises the separator, which
+    // a single-index case cannot see at all.
+    const child = new RuleResult("child", false);
+
+    assert.throws(
+      () => new RuleResult("parent", false, { subResults: [child], decidedByIndices: [-1, 0, 4] }),
+      (error) => {
+        assert.match(error.message, /\[-1, 4\]/);
+        assert.match(error.message, /1 subResults/);
+        assert.match(error.message, /"parent"/);
+        return true;
+      },
+    );
+  });
+
+  it("a result instance is frozen, not merely typed readonly", () => {
+    // `readonly` is erased at runtime, so without Object.freeze a plain
+    // assignment would silently change a result a caller already holds --
+    // and in a module that is not strict-mode would not even throw.
+    const result = new RuleResult("a", true);
+    const run = new RunResult([result]);
+
+    assert.ok(Object.isFrozen(result));
+    assert.ok(Object.isFrozen(run));
+    assert.throws(() => {
+      result.passed = false;
+    }, TypeError);
+    assert.throws(() => {
+      run.passed = false;
+    }, TypeError);
+    assert.equal(result.passed, true);
+    assert.equal(run.passed, true);
+  });
+
   it("decidedBy cannot disagree with subResults", () => {
     // decidedBy is derived, so there is no second stored array that could
     // drift out of step with the children it names.

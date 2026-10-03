@@ -86,7 +86,8 @@ classDiagram
         +Detail: string
         +Data: object?
         +SubResults: IReadOnlyList~RuleResult~
-        +DecidedBy: IReadOnlyList~RuleResult~
+        +DecidedByIndices: IReadOnlyList~int~
+        +GetDecidedBy() IReadOnlyList~RuleResult~
         +GetLeaves() IReadOnlyList~RuleResult~
         +GetFailingLeaves() IReadOnlyList~RuleResult~
     }
@@ -122,9 +123,9 @@ non-generic type here (`IRule`, `FunctionRule`, `AndRule`, `OrRule`,
 relationship rather than one inheriting the other in the opposite
 direction.
 
-`Leaves`/`FailingLeaves` are spelled as **methods** here —
-`GetLeaves()`/`GetFailingLeaves()` — and this SDK is the only one that
-does. Each walks the subtree and allocates a fresh list per call, which
+`Leaves`/`FailingLeaves`/`DecidedBy` are all spelled as **methods** here
+— `GetLeaves()`/`GetFailingLeaves()`/`GetDecidedBy()` — and this SDK is
+the only one that does. Each walks the subtree and allocates a fresh list per call, which
 the Framework Design Guidelines put on the method side of the line
 ("orders of magnitude slower than a field set", and "the member returns
 an array"). A get-only collection property is also traversed by any
@@ -134,8 +135,18 @@ leaves list is itself, so such a walker recurses until it gives up.
 `[JsonIgnore]` cannot suppress that: read-only collection properties
 are serialized even with `IgnoreReadOnlyProperties` set, and the
 per-member attribute is not in-box for `netstandard2.1`, which this
-package also targets. `README.md`'s "Inspecting a composite's own
-decision" section covers what each of the three answers.
+package also targets.
+
+`GetDecidedBy()` is a method for the second of those reasons rather than
+the first — it is cheap, a lookup per position, not a subtree walk. But
+the stored half is `SubResults` plus `DecidedByIndices`, a list of
+positions precisely so that the serialized graph is a tree, and exposing
+the children as a get-only collection property would hand the serializer
+the duplication back. The constructor throws
+`ArgumentOutOfRangeException` on a position naming a child the result does
+not have. `README.md`'s "Inspecting a composite's own decision" section
+covers what each of the three answers, and why only `SubResults` can be
+the stored one.
 
 `AndRule<TContext>`/`OrRule<TContext>` each hold a
 `private static readonly ShortCircuitEvaluator<TContext>` — one per

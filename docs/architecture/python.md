@@ -72,7 +72,8 @@ classDiagram
         +detail: str
         +data: object|None
         +sub_results: Sequence~RuleResult~
-        +decided_by: Sequence~RuleResult~
+        +decided_by_indices: Sequence~int~
+        +decided_by: list~RuleResult~
         +leaves: list~RuleResult~
         +failing_leaves: list~RuleResult~
     }
@@ -105,11 +106,15 @@ here unchanged; this diagram is just Python's own type syntax for it.
 context, concretely" below for why `data` stays opaque rather than
 following `TContext`.
 
-`leaves`/`failing_leaves` are `@property` methods computed from
-`sub_results` on access, not stored fields — which is why
-`dataclasses.asdict()` returns the stored fields only and a result's own
-object graph stays a finite tree. `README.md`'s "Inspecting a
-composite's own decision" section covers what each of the three answers.
+`leaves`/`failing_leaves`/`decided_by` are all `@property` methods
+computed on access, not stored fields — which is why
+`dataclasses.asdict()` returns the stored fields only, and why a result's
+own object graph stays a finite tree. The stored half is `sub_results`
+plus `decided_by_indices`, a tuple of positions; `__post_init__` rejects
+a position naming a child the result does not have, which the
+objects-valued form admitted no check for at all. `README.md`'s
+"Inspecting a composite's own decision" section covers what each of the
+three answers, and why only `sub_results` can be the stored one.
 
 `AndRule`/`OrRule` hold a class-level `ShortCircuitEvaluator` rather
 than a loop of their own, and `NotRule` holds none — one child has no

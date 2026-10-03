@@ -77,6 +77,7 @@ classDiagram
         +detail: string
         +data: unknown
         +subResults: readonly RuleResult[]
+        +decidedByIndices: readonly number[]
         +decidedBy: readonly RuleResult[]
         +leaves: readonly RuleResult[]
         +failingLeaves: readonly RuleResult[]
@@ -129,12 +130,19 @@ custom composite therefore constructs its result — `{ ...result }`
 yields a plain object without the accessors, which is not a
 `RuleResult`.
 
-`leaves`/`failingLeaves` are prototype getters computed from
-`subResults` on access. Being accessors they are non-enumerable, so
-`JSON.stringify` emits the stored fields only — and because nothing is
-stored, a result's own object graph stays a finite tree.
-`README.md`'s "Inspecting a composite's own decision" section covers
-what each of the three answers.
+`leaves`/`failingLeaves`/`decidedBy` are prototype getters computed on
+access. Being accessors they are non-enumerable, so `JSON.stringify`
+emits the stored fields only — `subResults` plus `decidedByIndices`, an
+array of positions — and that stored half is a finite tree. The
+constructor throws `RangeError` on a position naming a child the result
+does not have. `README.md`'s "Inspecting a composite's own decision"
+section covers what each of the three answers, and why only `subResults`
+can be the stored one.
+
+One JS-specific encoding quirk worth knowing before reading a payload:
+`JSON.stringify` omits an `undefined`-valued property entirely rather
+than emitting `null`, so an unset `data` produces no `data` key at all —
+where Python's `asdict` emits `"data": null`.
 
 `AndRule`/`OrRule` share two module-level `ShortCircuitEvaluator`
 instances rather than holding one each: `TContext` is erased at runtime

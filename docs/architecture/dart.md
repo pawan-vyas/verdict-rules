@@ -79,15 +79,18 @@ classDiagram
         +detail: String
         +data: Object?
         +subResults: List~RuleResult~
+        +decidedByIndices: List~int~
         +decidedBy: List~RuleResult~
         +leaves: List~RuleResult~
         +failingLeaves: List~RuleResult~
+        +toJson() Map~String, dynamic~
     }
     class RunResult {
         +passed: bool
         +results: List~RuleResult~
         +leaves: List~RuleResult~
         +failingLeaves: List~RuleResult~
+        +toJson() Map~String, dynamic~
     }
 
     `Rule~TContext~` <|.. `FunctionRule~TContext~`
@@ -116,13 +119,26 @@ check that means something is `.isEmpty`. `Context` (a `typedef` for
 `Map<String, Object?>`) is the dict-context spelling of `TContext` —
 see "Generic context, concretely" below.
 
-`leaves`/`failingLeaves` are getters computed from `subResults` on
-access, not stored fields, which keeps a result's own object graph a
-finite tree. The lists a result hands back are built with
-`List.unmodifiable`, so `subResults.add(...)` throws rather than
-silently changing a result a caller already holds. `README.md`'s
-"Inspecting a composite's own decision" section covers what each of the
-three answers.
+`leaves`/`failingLeaves`/`decidedBy` are getters computed on access, not
+stored fields, which keeps a result's own object graph a finite tree. The
+stored half is `subResults` plus `decidedByIndices`, a list of positions;
+the constructor throws `ArgumentError` on a position naming a child the
+result does not have. `README.md`'s "Inspecting a composite's own
+decision" section covers what each of the three answers, and why only
+`subResults` can be the stored one.
+
+The *stored* lists are built with `List.unmodifiable`, so
+`subResults.add(...)` and `decidedByIndices.add(...)` both throw rather
+than silently changing a result a caller already holds. The three derived
+getters build a fresh growable list per call, so writing to one of those
+is writing to a copy and changes nothing.
+
+**`toJson()` on both result types is Dart-specific.** `jsonEncode` cannot
+encode an arbitrary object and looks for a `toJson()` by convention, so
+without one a result could not be serialized at all — where Python's
+`dataclasses.asdict`, `JSON.stringify` and `System.Text.Json` each reach
+an object's own fields with nothing to declare. Both emit the stored
+fields only, for the same reason the getters exist.
 
 `RuleResult`/`RunResult` have no `const` constructor: copying the
 collections they are handed requires a call, which a const initializer
