@@ -50,8 +50,8 @@ class TestFunctionRule:
         composite built on top of one."""
         passing = await _pass("r1").evaluate({})
         failing = await _fail("r1").evaluate({})
-        assert passing.decided_by == ()
-        assert failing.decided_by == ()
+        assert passing.decided_by == []
+        assert failing.decided_by == []
 
     async def test_predicate_receives_the_context(self) -> None:
         seen = {}

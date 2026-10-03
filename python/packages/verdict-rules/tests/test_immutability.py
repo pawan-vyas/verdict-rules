@@ -68,12 +68,30 @@ class TestResultsOwnTheirChildren:
         held.append(RuleResult(rule_name="injected", passed=False))
         assert [r.rule_name for r in result.sub_results] == ["child"]
 
-    def test_decided_by_is_copied(self) -> None:
+    def test_decided_by_indices_is_copied(self) -> None:
         child = RuleResult(rule_name="child", passed=False)
-        held = [child]
-        result = RuleResult(rule_name="parent", passed=False, sub_results=(child,), decided_by=held)
+        held = [0]
+        result = RuleResult(rule_name="parent", passed=False, sub_results=(child,), decided_by_indices=held)
         held.clear()
         assert [r.rule_name for r in result.decided_by] == ["child"]
+
+    def test_an_index_naming_a_child_that_does_not_exist_is_rejected(self) -> None:
+        """The one way the indices form can be wrong, caught at construction
+        rather than when something later reads `decided_by`. The objects form
+        had no equivalent check available -- nothing stopped it naming a
+        result that was never a child of this one."""
+        child = RuleResult(rule_name="child", passed=False)
+
+        with pytest.raises(IndexError, match="parent"):
+            RuleResult(rule_name="parent", passed=False, sub_results=(child,), decided_by_indices=(1,))
+
+    def test_decided_by_cannot_disagree_with_sub_results(self) -> None:
+        """`decided_by` is derived, so there is no second stored collection
+        that could drift out of step with the children it names."""
+        a, b = RuleResult(rule_name="a", passed=True), RuleResult(rule_name="b", passed=False)
+        result = RuleResult(rule_name="parent", passed=False, sub_results=(a, b), decided_by_indices=(1,))
+
+        assert result.decided_by[0] is result.sub_results[1]
 
     def test_run_result_results_is_copied_and_stays_a_list(self) -> None:
         held = [RuleResult(rule_name="a", passed=True)]

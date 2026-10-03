@@ -55,7 +55,7 @@ def _from_decoded(payload: dict) -> RuleResult:
         detail=payload["detail"],
         data=payload["data"],
         sub_results=[_from_decoded(sub) for sub in payload["sub_results"]],
-        decided_by=[_from_decoded(sub) for sub in payload["decided_by"]],
+        decided_by_indices=payload["decided_by_indices"],
     )
 
 
@@ -325,9 +325,11 @@ class TestSerialization:
         result = await AndRule("root", [_pass("a"), _fail("b")]).evaluate({})
         payload = json.loads(_to_json(result))
 
-        assert sorted(payload) == ["data", "decided_by", "detail", "passed", "rule_name", "sub_results"]
-        assert "leaves" not in payload
-        assert "failing_leaves" not in payload
+        assert sorted(payload) == [
+            "data", "decided_by_indices", "detail", "passed", "rule_name", "sub_results",
+        ]
+        for derived in ("leaves", "failing_leaves", "decided_by"):
+            assert derived not in payload
 
     async def test_a_run_result_round_trips(self) -> None:
         engine = RulesEngine([_pass("a"), _fail("b")])
@@ -351,6 +353,24 @@ class TestSerialization:
         kids.append(result)
 
         assert json.loads(_to_json(result))["sub_results"] == []
+
+    async def test_serialized_size_grows_with_depth_not_exponentially_in_it(self) -> None:
+        """`decided_by_indices` stores positions, not the child results
+        themselves. Storing the objects made the graph a DAG -- the same
+        children reachable under two fields -- and a tree-shaped encoder
+        expands a shared node once per path, so each nesting level doubled
+        the output. Forty levels were unencodable; sixteen were 13 MB.
+        """
+        rule: AndRule | FunctionRule = _fail("leaf")
+        for level in range(40):
+            rule = AndRule(f"level{level}", [rule])
+
+        encoded = _to_json(await rule.evaluate({}))
+
+        # Exponential growth would put this past any plausible bound long
+        # before depth 40; linear growth keeps it in single-digit kilobytes.
+        assert len(encoded) < 10_000
+        assert '"leaf"' in encoded
 
     def test_an_unencodable_payload_in_data_fails_at_the_encoder(self) -> None:
         """`data` is opaque: verdict never reads it, and never promises it is

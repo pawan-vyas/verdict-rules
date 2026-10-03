@@ -275,7 +275,7 @@ class TestDecidedBy:
     async def test_and_rule_vacuous_pass_names_nothing(self) -> None:
         rule = AndRule("and1", [])
         result = await rule.evaluate({})
-        assert result.decided_by == ()
+        assert result.decided_by == []
 
     async def test_or_rule_passing_early_names_just_the_decisive_pass(self) -> None:
         rule = OrRule("or1", [_fail("a"), _pass("b"), _fail("c")])
@@ -293,7 +293,7 @@ class TestDecidedBy:
     async def test_or_rule_vacuous_fail_names_nothing(self) -> None:
         rule = OrRule("or1", [])
         result = await rule.evaluate({})
-        assert result.decided_by == ()
+        assert result.decided_by == []
 
 
 class TestNotRule:

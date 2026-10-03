@@ -247,6 +247,18 @@
   type: { csharp: RuleResult, python: RuleResult, js: RuleResult, dart: RuleResult }
   member: { csharp: DecidedBy, python: decided_by, js: decidedBy, dart: decidedBy }
 
+# The positions those deciding children sit at within subResults, which is what
+# is actually stored; decidedBy above is derived from it. Storing the child
+# results themselves made the stored graph a DAG -- the same objects reachable
+# under two fields -- and every tree-shaped encoder expands a shared node once
+# per path, so serialized size doubled per nesting level. Positions keep the
+# stored graph a genuine tree, and make an index naming a non-child the one
+# detectable error, rejected at construction.
+- concept: RuleResult.decidedByIndices (the stored positions decidedBy is derived from)
+  type: { csharp: RuleResult, python: RuleResult, js: RuleResult, dart: RuleResult }
+  member:
+    { csharp: DecidedByIndices, python: decided_by_indices, js: decidedByIndices, dart: decidedByIndices }
+
 # C# alone spells leaves/failingLeaves as methods rather than properties, on
 # both result types. A get-only collection property that walks the subtree is
 # traversed by every reflection-based serializer and structured logger, and a

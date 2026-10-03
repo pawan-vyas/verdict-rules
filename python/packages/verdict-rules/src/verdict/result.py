@@ -26,15 +26,15 @@ class RuleResult:
             :class:`~verdict.rule.SequentialEvaluator`) populates this
             with its own sub-results; an empty tuple *is* the leaf
             signal, structurally, not just by convention.
-        decided_by: Which of :attr:`sub_results` explain *this* result's
-            own verdict — a one-level, non-recursive fact, populated once
-            by whatever built this result. Not the same question
-            :attr:`failing_leaves` answers (recursively, the terminal
-            failures): a failed ``NotRule``'s ``decided_by`` is its
-            *passing* inner child, which is correct for "why did this
-            fail" but is not something to keep walking into expecting
-            ``failing_leaves``-equivalence. Empty for a leaf or a vacuous
-            composite.
+        decided_by_indices: Positions within :attr:`sub_results` of the
+            children that explain *this* result's own verdict. Stored as
+            positions rather than as the child results themselves so that
+            the stored object graph is a genuine tree: holding the same
+            child objects under two fields makes the graph a DAG, and
+            every tree-shaped walk (a JSON encoder, a structured logger)
+            expands a shared node once per path, so serialized size
+            doubles per nesting level. Read :attr:`decided_by` instead
+            unless building a result by hand.
     """
 
     rule_name: str
@@ -42,7 +42,7 @@ class RuleResult:
     detail: str = ""
     data: object | None = None
     sub_results: Sequence[RuleResult] = field(default_factory=tuple)
-    decided_by: Sequence[RuleResult] = field(default_factory=tuple)
+    decided_by_indices: Sequence[int] = field(default_factory=tuple)
 
     def __post_init__(self) -> None:
         # Copied, not aliased: ``frozen=True`` stops reassignment of the
@@ -51,7 +51,35 @@ class RuleResult:
         # -- including into a cycle, which every traversal here recurses
         # through.
         object.__setattr__(self, "sub_results", tuple(self.sub_results))
-        object.__setattr__(self, "decided_by", tuple(self.decided_by))
+        indices = tuple(self.decided_by_indices)
+        object.__setattr__(self, "decided_by_indices", indices)
+
+        # An index naming a child that does not exist is the one way this
+        # shape can be wrong, so it is rejected at construction rather than
+        # left to raise from whichever caller reads ``decided_by`` first.
+        # The objects form could not be checked at all: nothing stopped it
+        # naming a result that was never a child.
+        out_of_range = [i for i in indices if not 0 <= i < len(self.sub_results)]
+        if out_of_range:
+            raise IndexError(
+                f"decided_by_indices {out_of_range} out of range for "
+                f"{len(self.sub_results)} sub_results on rule {self.rule_name!r}"
+            )
+
+    @property
+    def decided_by(self) -> list[RuleResult]:
+        """Which of :attr:`sub_results` explain *this* result's own verdict.
+
+        A one-level, non-recursive fact, fixed by whatever built this
+        result. Not the same question :attr:`failing_leaves` answers
+        (recursively, the terminal failures): a failed
+        :class:`~verdict.rule.NotRule`'s ``decided_by`` is its *passing*
+        inner child, which is correct for "why did this fail" but is not
+        something to keep walking into expecting
+        ``failing_leaves``-equivalence. Empty for a leaf or a vacuous
+        composite.
+        """
+        return [self.sub_results[i] for i in self.decided_by_indices]
 
     @property
     def leaves(self) -> list[RuleResult]:

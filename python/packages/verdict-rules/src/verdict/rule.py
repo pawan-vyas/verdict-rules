@@ -242,11 +242,21 @@ class SequentialEvaluator(Generic[TContext]):
                 # ShortCircuitEvaluator specifically, which overrides this
                 # below using the one extra fact (stop_on) that a fully
                 # generic decider doesn't have access to.
-                decided_by = tuple(so_far) if len(so_far) == len(rules) else (latest,)
-                return RuleResult(rule_name=name, passed=early, sub_results=tuple(so_far), decided_by=decided_by)
+                decided = range(len(so_far)) if len(so_far) == len(rules) else (len(so_far) - 1,)
+                return RuleResult(
+                    rule_name=name,
+                    passed=early,
+                    sub_results=tuple(so_far),
+                    decided_by_indices=tuple(decided),
+                )
         final = self._decider(so_far[-1], so_far, len(rules))
         passed = final if final is not None else self._vacuous_result
-        return RuleResult(rule_name=name, passed=passed, sub_results=tuple(so_far), decided_by=tuple(so_far))
+        return RuleResult(
+            rule_name=name,
+            passed=passed,
+            sub_results=tuple(so_far),
+            decided_by_indices=tuple(range(len(so_far))),
+        )
 
 
 class ShortCircuitEvaluator(Generic[TContext]):
@@ -304,9 +314,11 @@ class ShortCircuitEvaluator(Generic[TContext]):
         does. ``stop_on`` is the one extra fact that tells them apart.
         """
         result = await self._inner.evaluate(name, rules, context)
-        last = result.sub_results[-1] if result.sub_results else None
-        decided_by = (last,) if last is not None and last.passed == self._stop_on else result.sub_results
-        return replace(result, decided_by=tuple(decided_by))
+        total = len(result.sub_results)
+        last = result.sub_results[-1] if total else None
+        triggered = last is not None and last.passed == self._stop_on
+        decided = (total - 1,) if triggered else range(total)
+        return replace(result, decided_by_indices=tuple(decided))
 
 
 class AndRule(Generic[TContext]):
@@ -457,17 +469,22 @@ class NotRule(Generic[TContext]):
             ``(inner,)``, truthfully — never flattened away. An empty
             ``sub_results`` has to mean *only* "this is a leaf," never also
             "this is a composite hiding its own structure" — that
-            guarantee is what makes ``Leaves``/``FailingLeaves`` safe to
+            guarantee is what makes ``leaves``/``failing_leaves`` safe to
             call on any ``RuleResult`` at all, so ``NotRule`` doesn't get
             to special-case it away just because a failed ``NotRule``'s own
             ``failing_leaves`` can otherwise read as misleadingly empty
-            (the cause is a pass, not a failure). ``decided_by`` is
-            ``(inner,)`` unconditionally, in both directions — correct
+            (the cause is a pass, not a failure). ``decided_by`` is the
+            one inner result unconditionally, in both directions — correct
             either way, since "inner passed" is genuinely why a failing
             ``NotRule`` failed, not an inconsistency.
         """
         inner = await self._rule.evaluate(context)
-        return RuleResult(rule_name=self.name, passed=not inner.passed, sub_results=(inner,), decided_by=(inner,))
+        return RuleResult(
+            rule_name=self.name,
+            passed=not inner.passed,
+            sub_results=(inner,),
+            decided_by_indices=(0,),
+        )
 
     def __repr__(self) -> str:
         suffix = f" ({self.group})" if self.group else ""
