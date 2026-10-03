@@ -12,7 +12,7 @@
 using VerdictRules;
 
 /// <summary>This adapter's own domain type -- verdict never sees it directly,
-/// only hands it back as RuleResult.Data's opaque payload.</summary>
+/// only carries it through as the result's opaque payload.</summary>
 sealed record RateLimitStatus(string Window, int Used, int Quota);
 
 /// <summary>The contract every call site depends on. Nothing here mentions
@@ -38,9 +38,13 @@ sealed class VerdictRateLimiter : RateLimiter
                     data: status));
             });
 
-        var combined = new AndRule("rate_limits", windows.Select(w => RuleFor(w.Key, w.Value)).ToArray());
-        var result = await combined.EvaluateAsync(context);
-        return result.SubResults.Select(r => (RateLimitStatus)r.Data!).ToArray();
+        // RunAllAsync, not a composite: the contract promises one status per
+        // window, and a composite short-circuits -- the first window over quota
+        // would end evaluation and the rest would be missing from the returned
+        // list, silently.
+        var engine = new RulesEngine(windows.Select(w => RuleFor(w.Key, w.Value)).ToArray());
+        var run = await engine.RunAllAsync(context);
+        return run.Results.Select(r => (RateLimitStatus)r.Data!).ToArray();
     }
 }
 
@@ -58,6 +62,10 @@ sealed class SimpleRateLimiter : RateLimiter
     }
 }
 ```
+
+The domain type rides through on the predicate's own `Data`, which
+`FunctionRule` copies onto the result it builds. Verdict never reads it —
+reading it back out is this adapter's business and nobody else's.
 
 The composition root — the one place that decides which implementation
 is actually running — is a single line:
