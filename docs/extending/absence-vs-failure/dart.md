@@ -14,10 +14,8 @@ class UserContext {
   UserContext({this.betaTester = false});
 }
 
-Future<RuleResult> isBetaTester(UserContext context) async => RuleResult(
-      ruleName: 'is_beta_tester',
-      passed: context.betaTester,
-    );
+Future<PredicateOutcome> isBetaTester(UserContext context) async =>
+    PredicateOutcome(context.betaTester);
 
 final engine = RulesEngine<UserContext>([
   FunctionRule('is_beta_tester', isBetaTester, group: 'beta_checks'),
@@ -25,7 +23,8 @@ final engine = RulesEngine<UserContext>([
 
 final result =
     await engine.tryRunGroup('beta_checks', UserContext(betaTester: true));
-// RunResult(passed: true, results: [RuleResult(ruleName: is_beta_tester, passed: true)])
+// result.passed is true, result.results.first.ruleName is 'is_beta_tester'
+// -- that name is the FunctionRule's; the predicate never sets one.
 
 await engine.tryRunGroup('no_such_group', UserContext());
 // null -- the group was never registered
@@ -35,6 +34,9 @@ The four situations from the spec, as four different ways to consume
 that same `null`:
 
 ```dart
+final group = 'beta_checks';
+final context = UserContext(betaTester: true);
+
 // 1. Absence means "no constraint applies"
 final result1 = await engine.tryRunGroup(group, context);
 final allowed1 = result1 != null ? result1.passed : true;
@@ -48,14 +50,14 @@ final maybeResult = await engine.tryRunGroup(group, context);
 final checks = [if (maybeResult != null) maybeResult];
 
 // 4. Absence is genuinely unexpected -- say so immediately
-final result4 = await engine.runGroup(group, context); // throws ArgumentError
+final result4 = await engine.runGroup(group, context); // throws ArgumentError if absent
 ```
 
 `tryRunGroup` is the primitive `runGroup` is built on, not the other way
 around:
 
-```dart
-Future<RunResult> runGroup(String group, Map<String, Object?> context) async {
+```text
+Future<RunResult> runGroup(String group, TContext context) async {
   final result = await tryRunGroup(group, context);
   if (result == null) {
     throw ArgumentError.value(group, 'group', 'No rules in this group');

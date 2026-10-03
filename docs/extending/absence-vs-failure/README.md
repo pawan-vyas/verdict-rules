@@ -5,17 +5,18 @@
 > try-prefixed lookup exists for when absence is expected instead —
 > and only the caller can say what absence should mean.
 
-The strict lookup raises when nothing matches. That is the right
-default: a group exists only because some rule declared it, so a lookup
-matching nothing can only be a typo or a stale name, and returning a
-passing result there would mean a misspelled group silently approves.
-
-But *sometimes absence is expected*, and then the strict form is the
-wrong tool. The try-prefixed lookup returns nothing instead of raising.
+Raising is the right default: a group exists only because some rule
+declared it, so a lookup matching nothing can only be a typo or a stale
+name, and returning a passing result there would mean a misspelled group
+silently approves. But *sometimes absence is expected*, and then the
+strict form is the wrong tool.
 
 **Absent means absent, never failed.** A rule that exists and fails is
-still a real result with `passed=False`. Collapsing the two would make a
-typo indistinguishable from a legitimate rejection.
+still a real result with a false verdict. Collapsing the two would make a
+typo indistinguishable from a legitimate rejection — and it is what makes
+every idiom below safe to write: a default reached only on absence is
+never reached by a group that exists, so a failing group still fails
+under all four shapes.
 
 ## Why the library does not pick a fallback for you
 
@@ -34,13 +35,13 @@ wrong for three of them. So the choice is handed back:
 
 ```mermaid
 graph LR
-    Lookup[/"🔑 try_run_group(label, ctx)"/]
+    Lookup[/"🔑 try-prefixed lookup(label, ctx)"/]
     Present("📦 RunResult<br/>the group ran")
-    Absent{"❓ None — no such group"}
+    Absent{"❓ absent — no such group"}
     Pass("✅ Treat as passing")
     Fail("⛔ Treat as failing")
     Skip("⏭️ Contribute nothing")
-    Raise("💥 Use run_group() instead")
+    Raise("💥 Use the strict lookup instead")
 
     %% Link 0: Lookup -> Present
     Lookup -->|"[1]<br/>label exists"| Present
@@ -65,7 +66,7 @@ graph LR
 
     %% Link Index:
     %% 0: the label exists, so you get a RunResult like any other
-    %% 1: the label does not exist, so you get None
+    %% 1: the label does not exist, so you get the absent value
     %% 2: absence means no constraint applies
     %% 3: absence means the configuration is wrong
     %% 4: absence means skip, counting neither way
@@ -110,18 +111,12 @@ listings report exactly the lookups that will not raise — see that
 language's own file in [`../../architecture/`](../../architecture/README.md)
 for the concrete names.
 
-## The fallback only applies to absence
+## Test the present-and-failing case
 
-Worth stating plainly, because it is what makes these idioms safe to
-write: a default reached only on absence does **not** mean "sometimes
-that default". A group that exists always reports its real verdict, and
-the fallback is reached only when nothing matched. So a failing group is
-still a failure under every one of the four shapes above — the default
-cannot mask it.
-
-If you are testing code that uses one of these, assert that too: the
-case worth covering is a *present, failing* group, not the absent one
-everybody thinks of first. See [`../../testing/`](../../testing/README.md).
+The case worth covering is a *present, failing* group — not the absent
+one everybody thinks of first. That is the direction where a fallback
+wrongly firing turns a real rejection into a silent approval. See
+[`../../testing/`](../../testing/README.md).
 
 ## What this demonstrates
 
