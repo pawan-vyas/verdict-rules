@@ -23,28 +23,17 @@ class AccountContext {
   });
 }
 
-Future<RuleResult> isActiveAccount(AccountContext context) async =>
-    RuleResult(
-      ruleName: 'is_active_account',
-      passed: context.accountStatus == 'active',
-    );
+Future<PredicateOutcome> isActiveAccount(AccountContext context) async =>
+    PredicateOutcome(context.accountStatus == 'active');
 
-Future<RuleResult> isPremiumMember(AccountContext context) async =>
-    RuleResult(
-      ruleName: 'is_premium_member',
-      passed: context.isPremiumMember,
-    );
+Future<PredicateOutcome> isPremiumMember(AccountContext context) async =>
+    PredicateOutcome(context.isPremiumMember);
 
-Future<RuleResult> hasPromoCode(AccountContext context) async => RuleResult(
-      ruleName: 'has_promo_code',
-      passed: context.promoCode != null,
-    );
+Future<PredicateOutcome> hasPromoCode(AccountContext context) async =>
+    PredicateOutcome(context.promoCode != null);
 
-Future<RuleResult> meetsSpendThreshold(AccountContext context) async =>
-    RuleResult(
-      ruleName: 'meets_spend_threshold',
-      passed: context.spend >= context.spendThreshold,
-    );
+Future<PredicateOutcome> meetsSpendThreshold(AccountContext context) async =>
+    PredicateOutcome(context.spend >= context.spendThreshold);
 
 // Nesting doesn't care what built its sub-rules -- each of the four leaves
 // here is a plain FunctionRule, but any Rule (a custom shape, another
@@ -59,6 +48,9 @@ final qualifies = AndRule<AccountContext>('qualifies', [
 ]);
 ```
 
+A nested result is read the same way at every level — `subResults` holds
+one level, and never the whole tree:
+
 ```dart
 final context = AccountContext(
   accountStatus: 'active',
@@ -68,16 +60,45 @@ final context = AccountContext(
   spendThreshold: 100,
 );
 final result = await qualifies.evaluate(context);
+
 result.passed;
 // true
-result.data;
-// [ RuleResult(ruleName: is_active_account, passed: true),
-//   RuleResult(ruleName: has_a_valid_reason, passed: true, data:
-//     [ RuleResult(ruleName: is_premium_member, passed: false),
-//       RuleResult(ruleName: has_promo_code, passed: true) ]) ]
+
+result.subResults.map((r) => r.ruleName).toList();
+// [is_active_account, has_a_valid_reason]
+
+final inner = result.subResults[1];
+inner.subResults.map((r) => r.ruleName).toList();
+// [is_premium_member, has_promo_code]
 // meetsSpendThreshold never ran -- has_a_valid_reason short-circuited
 // once has_promo_code passed, exactly as a plain, unnested OrRule would
 ```
+
+Three views answer three different questions about the same tree:
+
+```dart
+result.leaves.map((r) => r.ruleName).toList();
+// [is_active_account, is_premium_member, has_promo_code]
+// fully recursive -- the terminal checks, however deep
+
+result.failingLeaves;
+// [] -- a passing result has none, even though is_premium_member failed
+// on the way to the inner OrRule's pass
+
+result.decidedBy.map((r) => r.ruleName).toList();
+// [is_active_account, has_a_valid_reason]
+// one level: an AndRule that had to evaluate everything is explained by
+// everything
+
+inner.decidedBy.map((r) => r.ruleName).toList();
+// [has_promo_code]
+// one level again, but an OrRule that stopped early is explained by just
+// the sub-rule that stopped it
+```
+
+`data` is not part of this. It is an opaque slot for a caller's own
+payload, never written to by a composite — a composite's children are in
+`subResults`.
 
 ## Related
 
