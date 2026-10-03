@@ -35,8 +35,8 @@
   object to ride through evaluation — Verdict never reads or depends on
   its shape. `RuleResult.SubResults` is the opposite: a composite's own
   children, always exactly what it evaluated, never opaque — walk it
-  yourself, or use `Leaves`/`FailingLeaves` to flatten straight to the
-  leaf checks that actually decided the outcome.
+  yourself, or call `GetLeaves()`/`GetFailingLeaves()` to flatten straight
+  to the leaf checks that actually decided the outcome.
 
 ## One complete example
 

@@ -10,7 +10,7 @@ npm install verdict-rules
 ```
 
 ```ts
-import { AndRule, FunctionRule, RulesEngine } from "verdict-rules";
+import { AndRule, FunctionRule, RuleResult, RulesEngine } from "verdict-rules";
 ```
 
 ## A first rule
@@ -45,16 +45,23 @@ any object of the right shape already *is* a `Rule`. No `implements`, no base
 class, no registration:
 
 ```ts
+import { RuleResult } from "verdict-rules";
+
 const isBusinessHours = {
   name: "is_business_hours",
   async evaluate(ctx: Context) {
     const passed = (ctx.hour as number) >= 9 && (ctx.hour as number) < 17;
-    return { ruleName: "is_business_hours", passed, subResults: [], leaves: [], failingLeaves: [] };
+    return new RuleResult("is_business_hours", passed);
   },
 };
 
 await new AndRule("open", [isBusinessHours]).evaluate({ hour: 21 });
 ```
+
+`Rule` is structural, but a result is not: `RuleResult` is a class, so a
+custom rule constructs one rather than returning an object literal. That
+is what makes `leaves`/`failingLeaves` derived from `subResults` rather
+than fields a caller could set to disagree with them.
 
 Most rules need no object literal either: `FunctionRule` wraps a plain async
 predicate.

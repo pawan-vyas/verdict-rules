@@ -47,17 +47,17 @@ decision above ever looked at each one:
 ```dart
 import 'package:verdict_rules/verdict_rules.dart';
 
-Future<RuleResult> inputsValid(Map<String, Object?> context) async =>
-    RuleResult(ruleName: 'inputs_valid', passed: context['has_required_fields']! as bool);
+Future<PredicateOutcome> inputsValid(Map<String, Object?> context) async =>
+    PredicateOutcome(context['has_required_fields']! as bool);
 
-Future<RuleResult> autoApproved(Map<String, Object?> context) async =>
-    RuleResult(ruleName: 'auto_approved', passed: context['auto_approved']! as bool);
+Future<PredicateOutcome> autoApproved(Map<String, Object?> context) async =>
+    PredicateOutcome(context['auto_approved']! as bool);
 
-Future<RuleResult> reviewerAssigned(Map<String, Object?> context) async =>
-    RuleResult(ruleName: 'reviewer_assigned', passed: context['reviewer_assigned']! as bool);
+Future<PredicateOutcome> reviewerAssigned(Map<String, Object?> context) async =>
+    PredicateOutcome(context['reviewer_assigned']! as bool);
 
-Future<RuleResult> reviewCompleted(Map<String, Object?> context) async =>
-    RuleResult(ruleName: 'review_completed', passed: context['review_completed']! as bool);
+Future<PredicateOutcome> reviewCompleted(Map<String, Object?> context) async =>
+    PredicateOutcome(context['review_completed']! as bool);
 
 Future<void> main() async {
   final taskApproved = AndRule('task_approved', [

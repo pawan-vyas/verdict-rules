@@ -24,7 +24,6 @@ docs/
     README.md            shared testing contracts and checklist
     <language>.md         each language's own concrete test names
   future_plan.md       exploratory, not-yet-decided feature candidates
-  samples/             language-agnostic specs for the worked samples
 ```
 
 ## Reading order

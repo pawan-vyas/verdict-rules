@@ -96,15 +96,15 @@ unconditionally whether or not it names a type argument:
 
 ```python
 from dataclasses import dataclass
-from verdict import AndRule, FunctionRule, Rule, RuleResult, RulesEngine
+from verdict import AndRule, FunctionRule, PredicateOutcome, Rule, RulesEngine
 
 @dataclass(frozen=True)
 class OrderContext:
     total: float
     is_member: bool
 
-async def order_total_met(context: OrderContext) -> RuleResult:
-    return RuleResult(rule_name="order_total_met", passed=context.total >= 50.0)
+async def order_total_met(context: OrderContext) -> PredicateOutcome:
+    return PredicateOutcome(passed=context.total >= 50.0)
 
 # TContext is inferred from order_total_met's own annotation -- no
 # explicit type argument needed at the call site.

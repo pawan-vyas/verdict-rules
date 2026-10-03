@@ -42,23 +42,23 @@ decision above ever looked at each one:
 
 ```python
 import asyncio
-from verdict import AndRule, OrRule, FunctionRule, RuleResult, RulesEngine
+from verdict import AndRule, FunctionRule, OrRule, PredicateOutcome, RulesEngine
 
 
-async def inputs_valid(context: dict) -> RuleResult:
-    return RuleResult(rule_name="inputs_valid", passed=context["has_required_fields"])
+async def inputs_valid(context: dict) -> PredicateOutcome:
+    return PredicateOutcome(passed=context["has_required_fields"])
 
 
-async def auto_approved(context: dict) -> RuleResult:
-    return RuleResult(rule_name="auto_approved", passed=context["auto_approved"])
+async def auto_approved(context: dict) -> PredicateOutcome:
+    return PredicateOutcome(passed=context["auto_approved"])
 
 
-async def reviewer_assigned(context: dict) -> RuleResult:
-    return RuleResult(rule_name="reviewer_assigned", passed=context["reviewer_assigned"])
+async def reviewer_assigned(context: dict) -> PredicateOutcome:
+    return PredicateOutcome(passed=context["reviewer_assigned"])
 
 
-async def review_completed(context: dict) -> RuleResult:
-    return RuleResult(rule_name="review_completed", passed=context["review_completed"])
+async def review_completed(context: dict) -> PredicateOutcome:
+    return PredicateOutcome(passed=context["review_completed"])
 
 
 async def main() -> None:

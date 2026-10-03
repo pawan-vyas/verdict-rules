@@ -40,7 +40,7 @@ var verdict = await engine.RunNamedAsync("eligible", new Dictionary<string, obje
 });
 
 Console.WriteLine(verdict.Passed); // False
-Console.WriteLine(verdict.FailingLeaves[0].Detail); // 55 vs 60
+Console.WriteLine(verdict.GetFailingLeaves()[0].Detail); // 55 vs 60
 ```
 
 ## Shape-based rules, within what C# allows
@@ -132,8 +132,10 @@ one everybody thinks of first.
   itself; whatever a predicate reports through `PredicateOutcome.Data` comes
   back unchanged.
 - **`RuleResult.SubResults` is exactly what actually ran** — a composite's own
-  children, never padded, never flattened. `Leaves`/`FailingLeaves` walk it
-  recursively for you.
+  children, never padded, never flattened. `GetLeaves()`/
+  `GetFailingLeaves()` walk it recursively for you -- methods rather than
+  properties, so a reflection-based serializer or structured logger never
+  traverses them.
 - **Zero runtime dependencies.**
 
 ## Where to go next

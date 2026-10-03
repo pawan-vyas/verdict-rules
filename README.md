@@ -31,13 +31,13 @@ pip install verdict-rules
 ```
 
 ```python
-from verdict import AndRule, FunctionRule, RuleResult, RulesEngine
+from verdict import AndRule, FunctionRule, PredicateOutcome, RulesEngine
 
 async def has_permission(ctx):
-    return RuleResult("has_permission", ctx["permission"])
+    return PredicateOutcome(passed=ctx["permission"])
 
 async def resource_is_available(ctx):
-    return RuleResult("resource_is_available", ctx["available"])
+    return PredicateOutcome(passed=ctx["available"])
 
 can_proceed = AndRule("can_proceed", [
     FunctionRule("has_permission", has_permission),
@@ -46,8 +46,8 @@ can_proceed = AndRule("can_proceed", [
 
 engine = RulesEngine([can_proceed])
 verdict = await engine.run_named("can_proceed", {"permission": True, "available": False})
-verdict.passed   # False
-verdict.detail   # "'resource_is_available' failed"
+verdict.passed                       # False
+verdict.failing_leaves[0].rule_name  # "resource_is_available"
 ```
 
 </details>
@@ -63,11 +63,11 @@ npm install verdict-rules
 import { AndRule, FunctionRule, RulesEngine } from "verdict-rules";
 
 async function hasPermission(ctx) {
-  return { ruleName: "has_permission", passed: ctx.permission };
+  return { passed: ctx.permission };
 }
 
 async function resourceIsAvailable(ctx) {
-  return { ruleName: "resource_is_available", passed: ctx.available };
+  return { passed: ctx.available };
 }
 
 const canProceed = new AndRule("can_proceed", [
@@ -77,8 +77,8 @@ const canProceed = new AndRule("can_proceed", [
 
 const engine = new RulesEngine([canProceed]);
 const verdict = await engine.runNamed("can_proceed", { permission: true, available: false });
-verdict.passed;   // false
-verdict.detail;   // "'resource_is_available' failed"
+verdict.passed;                        // false
+verdict.failingLeaves[0].ruleName;     // "resource_is_available"
 ```
 
 </details>
@@ -93,11 +93,11 @@ dart pub add verdict_rules
 ```dart
 import 'package:verdict_rules/verdict_rules.dart';
 
-Future<RuleResult> hasPermission(Map<String, Object?> ctx) async =>
-    RuleResult(ruleName: 'has_permission', passed: ctx['permission']! as bool);
+Future<PredicateOutcome> hasPermission(Map<String, Object?> ctx) async =>
+    PredicateOutcome(ctx['permission']! as bool);
 
-Future<RuleResult> resourceIsAvailable(Map<String, Object?> ctx) async =>
-    RuleResult(ruleName: 'resource_is_available', passed: ctx['available']! as bool);
+Future<PredicateOutcome> resourceIsAvailable(Map<String, Object?> ctx) async =>
+    PredicateOutcome(ctx['available']! as bool);
 
 final canProceed = AndRule('can_proceed', [
   FunctionRule('has_permission', hasPermission),
@@ -106,8 +106,8 @@ final canProceed = AndRule('can_proceed', [
 
 final engine = RulesEngine([canProceed]);
 final verdict = await engine.runNamed('can_proceed', {'permission': true, 'available': false});
-verdict.passed;   // false
-verdict.detail;   // "'resource_is_available' failed"
+verdict.passed;                        // false
+verdict.failingLeaves.first.ruleName;  // 'resource_is_available'
 ```
 
 </details>
@@ -122,11 +122,11 @@ dotnet add package VerdictRules
 ```csharp
 using VerdictRules;
 
-static Task<RuleResult> HasPermission(IReadOnlyDictionary<string, object?> ctx, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("has_permission", (bool)ctx["permission"]!));
+static Task<PredicateOutcome> HasPermission(IReadOnlyDictionary<string, object?> ctx, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome((bool)ctx["permission"]!));
 
-static Task<RuleResult> ResourceIsAvailable(IReadOnlyDictionary<string, object?> ctx, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("resource_is_available", (bool)ctx["available"]!));
+static Task<PredicateOutcome> ResourceIsAvailable(IReadOnlyDictionary<string, object?> ctx, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome((bool)ctx["available"]!));
 
 var canProceed = new AndRule("can_proceed", new IRule[]
 {
@@ -141,8 +141,8 @@ var verdict = await engine.RunNamedAsync("can_proceed", new Dictionary<string, o
     ["available"] = false,
 });
 
-Console.WriteLine(verdict.Passed); // false
-Console.WriteLine(verdict.Detail); // "'resource_is_available' failed"
+Console.WriteLine(verdict.Passed);                          // false
+Console.WriteLine(verdict.GetFailingLeaves()[0].RuleName);  // resource_is_available
 ```
 
 </details>

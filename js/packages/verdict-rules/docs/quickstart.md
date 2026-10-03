@@ -34,8 +34,9 @@
   `undefined` instead, for callers whose own domain has an answer for
   absence — see
   [`../../../../docs/extending/absence-vs-failure/`](../../../../docs/extending/absence-vs-failure/README.md).
-- **`RuleResult`** / **`RunResult`** — plain, readonly interfaces, not
-  classes. `RuleResult.data` is a fully opaque slot for a caller's own
+- **`RuleResult`** / **`RunResult`** — frozen classes with public
+  constructors, so a custom rule builds one rather than returning an
+  object literal. `RuleResult.data` is a fully opaque slot for a caller's own
   domain object to ride through evaluation — Verdict never reads or
   depends on its shape. A composite's own children live in
   `RuleResult.subResults` instead, in evaluation order; `leaves`/
