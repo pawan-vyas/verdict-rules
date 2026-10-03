@@ -31,10 +31,14 @@
   `null` instead, for callers whose own domain has an answer for
   absence — see
   [`../../../../docs/extending/absence-vs-failure/`](../../../../docs/extending/absence-vs-failure/README.md).
-- **`RuleResult`** / **`RunResult`** — plain, immutable outcome types.
+- **`RuleResult`** / **`RunResult`** — immutable outcome types.
   `RuleResult.data` is a fully opaque slot for a caller's own domain
   object to ride through evaluation — Verdict never reads or depends on
-  its shape.
+  its shape. The rest of the surface answers three different questions:
+  `subResults` (what actually ran, one level), `decidedBy` (which of
+  those explain *this* verdict, one level), and `leaves`/`failingLeaves`
+  (the terminal checks, fully recursive). Only `subResults` is stored;
+  the rest are getters. `toJson()` on both types feeds `jsonEncode`.
 
 ## One complete example
 
@@ -149,6 +153,50 @@ sequenceDiagram
 > 5. **`runGroup` tells a different story from the same rules** — it
 >    reports `auto_approved`'s real failure, something the nested
 >    decision above never had to surface once a later branch succeeded.
+
+## A typed context
+
+The example above uses `Context` (a plain `Map<String, Object?>`), which
+stays first-class permanently. But a cohesive family of rules sharing one
+shape can say so, and then a sub-rule expecting a different shape stops
+compiling rather than failing at runtime on a missing key:
+
+```dart
+import 'package:verdict_rules/verdict_rules.dart';
+
+class OrderContext {
+  const OrderContext({required this.total, required this.isMember});
+
+  final num total;
+  final bool isMember;
+}
+
+Future<PredicateOutcome> orderTotalMet(OrderContext ctx) async =>
+    PredicateOutcome(ctx.total >= 50);
+
+Future<PredicateOutcome> isMember(OrderContext ctx) async =>
+    PredicateOutcome(ctx.isMember);
+
+Future<void> main() async {
+  final freeShipping = AndRule<OrderContext>('free_shipping', [
+    FunctionRule('order_total_met', orderTotalMet),
+    FunctionRule('is_member', isMember),
+  ]);
+  final engine = RulesEngine<OrderContext>([freeShipping]);
+
+  final result = await engine.runNamed(
+      'free_shipping', const OrderContext(total: 75, isMember: false));
+  print(result.passed); // false
+  print(result.failingLeaves.first.ruleName); // is_member
+}
+```
+
+`Rule<TContext>` has no default type argument, so dict-context is written
+out as `Rule<Context>` rather than being what you get by forgetting.
+[`../../../../docs/architecture/dart.md`](../../../../docs/architecture/dart.md)
+covers the mechanics;
+[`extending/reusing-a-rule-across-contexts/`](../../../../docs/extending/reusing-a-rule-across-contexts/README.md)
+covers when dict-context is the better answer.
 
 ## Next: build rules from your own configuration, not just hard-coded ones
 

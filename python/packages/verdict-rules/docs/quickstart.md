@@ -27,10 +27,15 @@
   label raises; `try_run_named`/`try_run_group` return `None` instead,
   for callers whose own domain has an answer for absence — see
   [`extending/absence-vs-failure/`](../../../../docs/extending/absence-vs-failure/README.md).
-- **`RuleResult`** / **`RunResult`** — plain, immutable outcome types.
-  `RuleResult.data` is a fully opaque slot for a caller's own domain
-  object to ride through evaluation — Verdict never reads or depends on
-  its shape.
+- **`RuleResult`** / **`RunResult`** — immutable outcome types, each
+  answering three different questions about a composite's decision:
+  `sub_results` (what actually ran, one level), `decided_by` (which of
+  those children explain *this* verdict, one level), and
+  `leaves`/`failing_leaves` (the terminal checks, fully recursive).
+  Only `sub_results` is stored; the rest are computed on access, which
+  is what keeps a result serializable. `RuleResult.data` is a fully
+  opaque slot for a caller's own domain object to ride through
+  evaluation — Verdict never reads or depends on its shape.
 
 ## One complete example
 
@@ -162,6 +167,61 @@ sequenceDiagram
 > 5. **`run_group` tells a different story from the same rules** — it
 >    reports `auto_approved`'s real failure, something the nested
 >    decision above never had to surface once a later branch succeeded.
+
+## A typed context
+
+The example above uses a `dict`, which stays first-class permanently — a
+rule reused across genuinely different aggregate shapes is naturally
+served by it. But a cohesive family of rules sharing one shape can say
+so, and then a sub-rule expecting a different shape stops being a
+runtime `KeyError` and becomes something a type checker catches:
+
+```python
+import asyncio
+from dataclasses import dataclass
+
+from verdict import AndRule, FunctionRule, PredicateOutcome, RulesEngine
+
+
+@dataclass(frozen=True)
+class OrderContext:
+    total: float
+    is_member: bool
+
+
+async def order_total_met(ctx: OrderContext) -> PredicateOutcome:
+    return PredicateOutcome(passed=ctx.total >= 50)
+
+
+async def is_member(ctx: OrderContext) -> PredicateOutcome:
+    return PredicateOutcome(passed=ctx.is_member)
+
+
+async def main() -> None:
+    free_shipping = AndRule(
+        "free_shipping",
+        [
+            FunctionRule("order_total_met", order_total_met),
+            FunctionRule("is_member", is_member),
+        ],
+    )
+    engine: RulesEngine[OrderContext] = RulesEngine([free_shipping])
+
+    result = await engine.run_named("free_shipping", OrderContext(total=75.0, is_member=False))
+    print(result.passed)                          # False
+    print(result.failing_leaves[0].rule_name)     # is_member
+
+
+asyncio.run(main())
+```
+
+`Rule` is generic over the context it reads from, with no default type
+parameter, so dict-context is written out explicitly as
+`Rule[dict[str, Any]]` rather than being what you get by forgetting.
+[`../../../../docs/architecture/python.md`](../../../../docs/architecture/python.md)
+covers the mechanics;
+[`extending/reusing-a-rule-across-contexts/`](../../../../docs/extending/reusing-a-rule-across-contexts/README.md)
+covers when dict-context is the better answer.
 
 ## Next: build rules from your own configuration, not just hard-coded ones
 

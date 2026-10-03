@@ -355,9 +355,20 @@ def _run_csharp_example(manifest: Path, code: str, scratch: Path, name: str) -> 
     # runtime dependencies to resolve.
     project = scratch / "app"
     _run(["dotnet", "new", "console", "-o", str(project), "--no-restore", "-f", tfm])
+
+    # globalPackagesFolder is pointed into the scratch dir, not just the
+    # package *source*. Clearing packageSources alone is not enough: restore
+    # checks the extracted global cache first, so a ~/.nuget/packages entry
+    # left behind by an earlier pack of the *same version* satisfies the
+    # restore and the freshly packed .nupkg is never opened. That shadowing
+    # is silent, and its dangerous direction is a pass -- this check would
+    # confirm a README against an artifact that no longer exists.
     (project / "NuGet.Config").write_text(
         '<?xml version="1.0" encoding="utf-8"?>\n'
         "<configuration>\n"
+        "  <config>\n"
+        f'    <add key="globalPackagesFolder" value="{scratch / "nuget-cache"}" />\n'
+        "  </config>\n"
         "  <packageSources>\n"
         "    <clear />\n"
         f'    <add key="local" value="{dist}" />\n'

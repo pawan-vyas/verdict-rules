@@ -39,9 +39,12 @@
   object literal. `RuleResult.data` is a fully opaque slot for a caller's own
   domain object to ride through evaluation — Verdict never reads or
   depends on its shape. A composite's own children live in
-  `RuleResult.subResults` instead, in evaluation order; `leaves`/
+  `RuleResult.subResults` instead, in evaluation order; `decidedBy` names
+  which of those explain *this* verdict, one level; `leaves`/
   `failingLeaves` flatten the whole tree down to the leaf checks that
-  actually decided the outcome.
+  actually decided the outcome. Only `subResults` is stored -- the rest
+  are getters computed on access, which is what keeps a result
+  `JSON.stringify`-able.
 
 ## One complete example
 
@@ -158,6 +161,48 @@ sequenceDiagram
 > 5. **`runGroup` tells a different story from the same rules** — it
 >    reports `auto_approved`'s real failure, something the nested
 >    decision above never had to surface once a later branch succeeded.
+
+## A typed context
+
+The example above uses `Context` (a plain `Record<string, unknown>`),
+which stays first-class permanently. But a cohesive family of rules
+sharing one shape can say so, and then a sub-rule expecting a different
+shape stops compiling rather than failing at runtime on a missing
+property:
+
+```ts
+import { AndRule, FunctionRule, RulesEngine } from "verdict-rules";
+
+interface OrderContext {
+  total: number;
+  isMember: boolean;
+}
+
+const orderTotalMet = async (ctx: OrderContext) => ({ passed: ctx.total >= 50 });
+const isMember = async (ctx: OrderContext) => ({ passed: ctx.isMember });
+
+// TContext is inferred from each predicate's own parameter type -- no
+// explicit type argument at any constructor call site.
+const freeShipping = new AndRule("free_shipping", [
+  new FunctionRule("order_total_met", orderTotalMet),
+  new FunctionRule("is_member", isMember),
+]);
+
+const engine = new RulesEngine([freeShipping]);
+const result = await engine.runNamed("free_shipping", { total: 75, isMember: false });
+console.log(result.passed);                       // false
+console.log(result.failingLeaves[0]?.ruleName);   // is_member
+```
+
+`Rule<TContext>` has **no default type parameter**, so dict-context is
+written out as `Rule<Context>` rather than being what you get by
+forgetting. `AndRule`/`OrRule` require every sub-rule to share the exact
+same `TContext`, which `tsc` enforces at compile time — the real
+guarantee a typed composite buys.
+[`../../../../docs/architecture/js.md`](../../../../docs/architecture/js.md)
+covers the mechanics;
+[`extending/reusing-a-rule-across-contexts/`](../../../../docs/extending/reusing-a-rule-across-contexts/README.md)
+covers when dict-context is the better answer.
 
 ## Next: build rules from your own configuration, not just hard-coded ones
 

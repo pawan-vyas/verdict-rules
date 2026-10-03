@@ -35,8 +35,12 @@
   object to ride through evaluation — Verdict never reads or depends on
   its shape. `RuleResult.SubResults` is the opposite: a composite's own
   children, always exactly what it evaluated, never opaque — walk it
-  yourself, or call `GetLeaves()`/`GetFailingLeaves()` to flatten straight
-  to the leaf checks that actually decided the outcome.
+  yourself, call `GetDecidedBy()` for just the children that explain this
+  verdict, or `GetLeaves()`/`GetFailingLeaves()` to flatten straight to
+  the leaf checks that actually decided the outcome. Those three are
+  methods rather than properties on purpose: a get-only collection
+  property would be picked up by `System.Text.Json` and every reflective
+  logger, which is what a result has to stay serializable through.
 
 ## One complete example
 
@@ -154,6 +158,46 @@ sequenceDiagram
 > 5. **`RunGroupAsync` tells a different story from the same rules** —
 >    it reports `auto_approved`'s real failure, something the nested
 >    decision above never had to surface once a later branch succeeded.
+
+## A typed context
+
+The example above uses `IReadOnlyDictionary<string, object?>`, which stays
+first-class permanently. But a cohesive family of rules sharing one shape
+can say so, and then a sub-rule expecting a different shape stops
+compiling rather than failing at runtime on a missing key or a bad cast:
+
+```csharp
+using VerdictRules;
+
+record OrderContext(decimal Total, bool IsMember);
+
+static Task<PredicateOutcome> OrderTotalMet(OrderContext ctx, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome(ctx.Total >= 50));
+
+static Task<PredicateOutcome> IsMember(OrderContext ctx, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome(ctx.IsMember));
+
+var freeShipping = new AndRule<OrderContext>("free_shipping", new IRule<OrderContext>[]
+{
+    new FunctionRule<OrderContext>("order_total_met", OrderTotalMet),
+    new FunctionRule<OrderContext>("is_member", IsMember),
+});
+
+var engine = new RulesEngine<OrderContext>(new IRule<OrderContext>[] { freeShipping });
+var result = await engine.RunNamedAsync("free_shipping", new OrderContext(Total: 75m, IsMember: false));
+
+Console.WriteLine(result.Passed);                        // False
+Console.WriteLine(result.GetFailingLeaves()[0].RuleName); // is_member
+```
+
+The generic form is the implementation and the non-generic one is a closed
+specialization of it, so neither is a second-class path. Both arities
+coexist, which is what lets the dict-context example above and this one
+sit in the same codebase.
+[`../../../../docs/architecture/csharp.md`](../../../../docs/architecture/csharp.md)
+covers the mechanics;
+[`extending/reusing-a-rule-across-contexts/`](../../../../docs/extending/reusing-a-rule-across-contexts/README.md)
+covers when dict-context is the better answer.
 
 ## Next: build rules from your own configuration, not just hard-coded ones
 
