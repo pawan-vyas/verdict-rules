@@ -7,9 +7,8 @@ namespace GraduationVerdict;
 /// Graduation requirement verdict, implemented with verdict-rules.
 /// </summary>
 /// <remarks>
-/// See docs/samples/graduation-requirement-verdict/README.md for the
-/// design and fixtures/graduation_verdict/README.md for the fixture
-/// contract.
+/// See fixtures/graduation_verdict/README.md for the design and the
+/// fixture contract.
 /// </remarks>
 public static class GraduationCheck
 {

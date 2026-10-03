@@ -52,5 +52,3 @@ vacuously passes.
 
 - [`README.md`](README.md) — the language-agnostic scenario this page
   implements.
-- [`../../samples/data-driven-rule-sets/csharp.md`](../../samples/data-driven-rule-sets/csharp.md) —
-  the fuller worked version, in C#.

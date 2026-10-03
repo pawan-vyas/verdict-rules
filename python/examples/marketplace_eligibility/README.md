@@ -6,7 +6,7 @@
 > typed contexts sharing no fields, one rule reused across both via a
 > `ProjectingRule` adapter, and a dict-context catalog coexisting in
 > the same codebase. See
-> [`docs/samples/marketplace-eligibility/`](../../../docs/samples/marketplace-eligibility/README.md)
+> [`../../../fixtures/marketplace_eligibility/README.md`](../../../fixtures/marketplace_eligibility/README.md)
 > for the original framing question this project answers, the design,
 > and what a solution must demonstrate.
 
@@ -32,7 +32,7 @@ invocation is required day to day.
 
 ## Read more
 
-- [`../../../docs/samples/marketplace-eligibility/`](../../../docs/samples/marketplace-eligibility/README.md) —
+- [`../../../fixtures/marketplace_eligibility/README.md`](../../../fixtures/marketplace_eligibility/README.md) —
   the naive way this problem is usually approached, why it breaks down,
   and both diagrams behind the design actually used here.
 - [`../../../fixtures/marketplace_eligibility/README.md`](../../../fixtures/marketplace_eligibility/README.md) —

@@ -45,7 +45,7 @@ List<String> _failingChain(RuleResult result) {
 
 void main() {
   group('rule shape dispatch', () {
-    // See docs/samples/graduation-requirement-verdict/README.md.
+    // See fixtures/graduation_verdict/README.md.
 
     test('an academic subject is a plain FunctionRule', () {
       final rule = ruleForSubject(_policy('MATH101'));
@@ -143,7 +143,7 @@ void main() {
 
   group('engine run modes', () {
     // runNamed/runGroup/runAll each serve the specific job the sample spec
-    // claims. See docs/samples/graduation-requirement-verdict/README.md.
+    // claims. See fixtures/graduation_verdict/README.md.
 
     test('runNamed looks up one subject', () async {
       final (engine, _) = buildGraduationCheck(_policies, _electiveMinimum);

@@ -1,6 +1,6 @@
 /// A college graduation-eligibility check, implemented with verdict_rules.
 ///
-/// See docs/samples/graduation-requirement-verdict/README.md for the
+/// See fixtures/graduation_verdict/README.md for the
 /// design.
 library;
 

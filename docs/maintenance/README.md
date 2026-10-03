@@ -134,7 +134,7 @@ graph TB
 | [`import-name-and-second-distribution.md`](import-name-and-second-distribution.md) | The Python import-name decision, and what a second distribution or a promoted [`extending/`](../extending/README.md) scenario would look like |
 | [`before-merging-checklists.md`](before-merging-checklists.md) | The consumer-impact checklist for a shape change, and what a change needs tested |
 | [`discoverability-metadata.md`](discoverability-metadata.md) | Why every package's keywords/topics/tags stay in sync across registries, and pub.dev's one real structural exception |
-| [`doc-authoring/`](doc-authoring/README.md) | The standard every doc in this repo follows, the per-category templates built on top of it, and [how to add a new sample](doc-authoring/samples.md#adding-a-new-sample) |
+| [`doc-authoring/`](doc-authoring/README.md) | The standard every doc in this repo follows, the per-category templates built on top of it, |
 
 ## A doc category that will grow per-variant is a directory, not a flat file family
 
@@ -171,7 +171,7 @@ already owns, that doc is a directory-with-README, not a flat file.
 - [`../extending/`](../extending/README.md) — building on top of this
   package from a consumer's own code, without changing anything here.
 - [`../testing/`](../testing/README.md) — the full testing checklist.
-- [`../samples/`](../samples/README.md) —
+- [`../../fixtures/README.md`](../../fixtures/README.md) —
   worked, domain-flavored examples of where a rule engine like this
   earns its keep.
 - [`../future_plan.md`](../future_plan.md) — exploratory, not-yet-decided

@@ -44,5 +44,3 @@ vacuously passes.
 
 - [`README.md`](README.md) — the language-agnostic scenario this page
   implements.
-- [`../../samples/data-driven-rule-sets/python.md`](../../samples/data-driven-rule-sets/python.md) —
-  the fuller worked version, in Python.

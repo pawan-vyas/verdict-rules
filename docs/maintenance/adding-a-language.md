@@ -248,7 +248,7 @@ belongs in `.agents/scratch/`, not in the repo's public surfaces.
       be able to resolve
 - [ ] Documentation at the quality of the Python set: architecture
       notes where the language diverges, extension scenarios in its own
-      idiom, one `<lang>.md` per existing sample under `docs/samples/`
+      idiom, one `<lang>.md` per existing scenario under `docs/extending/`
       (skip a sample already restricted to specific languages by
       design — check its own spec before assuming every sample needs
       every language)

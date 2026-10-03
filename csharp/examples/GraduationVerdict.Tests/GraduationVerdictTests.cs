@@ -28,7 +28,7 @@ public static class SharedFixture
         Curriculum.Policies.First(p => p.SubjectId == subjectId);
 }
 
-/// <summary>Each subject_type must produce the Rule shape the sample spec claims. See docs/samples/graduation-requirement-verdict/README.md.</summary>
+/// <summary>Each subject_type must produce the Rule shape the sample spec claims. See fixtures/graduation_verdict/README.md.</summary>
 public class RuleShapeDispatchTests
 {
     [Fact]
@@ -135,7 +135,7 @@ public class LanguageOrRuleTests
     }
 }
 
-/// <summary>RunNamedAsync/RunGroupAsync/RunAllAsync each serve the specific job the sample spec claims. See docs/samples/graduation-requirement-verdict/README.md.</summary>
+/// <summary>RunNamedAsync/RunGroupAsync/RunAllAsync each serve the specific job the sample spec claims. See fixtures/graduation_verdict/README.md.</summary>
 public class EngineRunModesTests
 {
     [Fact]

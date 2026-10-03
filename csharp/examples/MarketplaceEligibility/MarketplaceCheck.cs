@@ -7,8 +7,8 @@ namespace MarketplaceEligibility;
 /// Marketplace eligibility, implemented with verdict-rules.
 /// </summary>
 /// <remarks>
-/// See docs/samples/marketplace-eligibility/README.md for the design and
-/// fixtures/marketplace_eligibility/README.md for the fixture contract.
+/// See fixtures/marketplace_eligibility/README.md for the design and the fixture
+/// contract.
 /// </remarks>
 public static class MarketplaceCheck
 {

@@ -62,7 +62,7 @@ jobs:
           # guidance that goes stale in a vendored copy, and every real release bumps
           # plugin.json anyway — which this still matches — so excluding it removes
           # noise without weakening the check. docs/extending/*/README.md and
-          # docs/samples/*/README.md feed references/REPOSITORY-MAP.md's own generated
+          # fixtures/*/README.md feed references/REPOSITORY-MAP.md's own generated
           # one-liners (see scripts/generate_repository_map.py), so a title or summary
           # change there is shipped content too, even though the rest of each document
           # never is.
@@ -72,7 +72,7 @@ jobs:
             ':(exclude)skills/verdict/CHANGELOG.md' \
             '.claude-plugin' \
             'docs/extending/*/README.md' \
-            'docs/samples/*/README.md' \
+            'fixtures/*/README.md' \
             'scripts/generate_repository_map.py')"
 
           if [ -z "$changed" ]; then

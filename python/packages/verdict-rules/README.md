@@ -92,5 +92,5 @@ async function.
 | [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.4.0/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
 | [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.4.0/docs/maintenance/README.md) | Changing this package itself |
 | [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.4.0/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
-| [`docs/samples/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.4.0/docs/samples/README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
+| [`fixtures/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.4.0/fixtures/README.md) | The two worked scenarios — each one's problem, design, and the cross-language data contract every port reproduces |
 | [`examples/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.4.0/python/examples/README.md) | Full, tested mini-projects behind the more comprehensive samples — real code, real tests, real docs |

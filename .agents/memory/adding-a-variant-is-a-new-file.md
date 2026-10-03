@@ -28,7 +28,7 @@ Each of these was a restructure done specifically to remove a shared edit:
 | One `docs/maintenance.md` monolith | [`docs/maintenance/`](../../docs/maintenance/README.md), one file per concern |
 | One `docs/architecture.md` monolith | [`docs/architecture/`](../../docs/architecture/README.md) — shared `README.md` plus one concrete file per language |
 | A release procedure written per-target inline | [`docs/maintenance/releases/`](../../docs/maintenance/releases/README.md) — shared pipeline plus one file per target |
-| A sample's spec restated inside each language's own package tree | [`docs/samples/<scenario>/`](../../docs/samples/README.md) — spec plus one implementation file per language, in one directory |
+| A sample's spec restated inside each language's own package tree | [`../../fixtures/README.md`](../../fixtures/README.md) — spec plus one implementation file per language, in one directory |
 | One `docs/extension.md` monolith, seven Python-only "Recipes" | [`docs/extending/<scenario>/`](../../docs/extending/README.md) — spec plus one implementation file per language, one directory per scenario, "recipes" renamed to "scenarios" |
 | One `docs/testing.md` monolith, Python specifics bundled straight in | [`docs/testing/`](../../docs/testing/README.md) — shared contracts and checklist plus one concrete file per language |
 

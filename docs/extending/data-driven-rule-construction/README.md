@@ -12,10 +12,6 @@ empty configuration source produces an empty composite, which vacuously
 passes: "nothing configured" and "nothing to enforce" fall out of the
 same rule, with no special-casing needed at the call site.
 
-See [`../../samples/data-driven-rule-sets/README.md`](../../samples/data-driven-rule-sets/README.md)
-for a fuller worked version of this, carried through for both
-rate-limit windows and access-control conditions.
-
 This is exactly the shape where testing has to scale with the rule set:
 as the configuration source grows more varied, a handful of hand-picked
 fixtures stops being enough coverage, the same way it stopped being
@@ -44,8 +40,6 @@ than two independent ones that happen to agree today.
 
 ## Related
 
-- [`../../samples/data-driven-rule-sets/README.md`](../../samples/data-driven-rule-sets/README.md) —
-  the full worked version of this scenario.
 - [`../../testing/`](../../testing/README.md) — the contracts verdict's
   own primitives guarantee (short-circuiting, vacuous truth) that a
   dynamically-built rule set still inherits and still needs proving;

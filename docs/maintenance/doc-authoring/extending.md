@@ -7,7 +7,7 @@
 > implementation counterparts. This builds on the general standard in
 > [`README.md`](README.md) — read that first for the rules that apply
 > to every doc in this repo, not just extension scenarios. Closely
-> mirrors [`samples.md`](samples.md); the difference is what each
+> follows the same spec-plus-per-language shape; the difference is what each
 > category demonstrates, not the file shape.
 
 ## One directory per scenario
@@ -79,9 +79,7 @@ heading naming what the code shows, not "The `verdict` way".
   each language's own idiom expresses somewhat differently.
 - **Point at a sample instead of duplicating one.** If a full worked
   sample already demonstrates this scenario end-to-end
-  (`data-driven-rule-construction` pointing at
-  [`../../samples/data-driven-rule-sets/`](../../samples/data-driven-rule-sets/README.md)
-  is the current example), the scenario's own code stays a short,
+  the scenario's own code stays a short,
   illustrative version and links to the sample for the fuller one,
   rather than repeating it.
 

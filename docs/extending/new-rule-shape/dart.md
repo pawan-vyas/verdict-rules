@@ -107,7 +107,7 @@ final qualifies = ThresholdRule<OrderContext>(
 
 - [`README.md`](README.md) — the language-agnostic scenario this page
   implements.
-- [`../../samples/graduation-requirement-verdict/`](../../samples/graduation-requirement-verdict/README.md) —
+- [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md) —
   `AtLeastNRule`, the design this exact pattern would back, once this
   SDK has its own tested instance.
 - [`../reusing-a-rule-across-contexts/dart.md`](../reusing-a-rule-across-contexts/dart.md) —

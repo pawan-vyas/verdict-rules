@@ -78,8 +78,8 @@ load-bearing, not imposed.
 Add `skills/verdict/references/<language>/agent-notes.md` — the one
 hand-written file that language needs. Everything else about what
 verdict *is* comes from `scripts/build.sh` copying this repository's
-own documents into the bundle per
-[`../../../skills/verdict/MANIFEST.toml`](../../../skills/verdict/MANIFEST.toml);
+own documents into the bundle (`scripts/build.sh` assembles it and
+generates the repository map);
 writing more than this one file here is a sign something is being
 restated that should be linked instead.
 

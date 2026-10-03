@@ -2,7 +2,7 @@
 # Extending verdict: keep your own domain out of it, in one adapter module
 
 > An architectural boundary, not a rule shape — every sample in
-> [`../../samples/`](../../samples/README.md) is already a full-scale
+> [`../../../fixtures/README.md`](../../../fixtures/README.md) is already a full-scale
 > instance of it in practice.
 
 Build **one** module that translates your domain's own vocabulary into
@@ -88,7 +88,7 @@ could be added here with no engine-side changes at all.
 
 ## Related
 
-- [`../../samples/README.md`](../../samples/README.md) — every worked
+- [`../../../fixtures/README.md`](../../../fixtures/README.md) — every worked
   sample is, underneath, an instance of this boundary.
 - [`../new-rule-shape/README.md`](../new-rule-shape/README.md) — the
   other place a domain-specific need becomes consumer code rather than

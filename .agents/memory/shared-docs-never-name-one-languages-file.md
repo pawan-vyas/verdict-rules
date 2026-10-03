@@ -4,7 +4,7 @@
 > Eighteen files — seven sample specs, seven extending scenarios, both
 > authoring templates, and `docs/architecture/README.md`'s own opening
 > blockquote — all repeated a version of "Each language's own file in
-> this directory — [`python.md`](python.md) today — is the actual
+> this directory — `python.md` today — is the actual
 > code." Every one of them looked like a stable structural fact and was
 > actually a forced edit the day a second language's file landed
 > beside it.
@@ -30,9 +30,8 @@ copy-pasted with only the scenario name changed, 18 times.
 
 Would this sentence need editing the day a second language's file
 exists beside the one it names? If naming the file is required for the
-sentence to be true (`"see [`python.md`](python.md) for the actual
-code"` when `python.md` is the *only* implementation the spec is aware
-of), the sentence is temporary narration wearing the voice of a
+sentence to be true ("see `python.md` for the actual code", when `python.md` is the
+*only* implementation the spec is aware of), the sentence is temporary narration wearing the voice of a
 structural fact. If the sentence would stay word-for-word true with
 two, three, or ten language files in the same directory, it's durable
 and the file's own directory listing can carry the naming instead — not

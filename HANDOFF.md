@@ -156,7 +156,7 @@ are in-tree copies, so no network, plugin install, or sibling checkout is needed
      writing the plan, in response to the user asking specifically whether this was a gap.
    - Full detail, including which specific samples are plausible typed-context candidates and why
      (and, just as importantly, which ones should explicitly stay dict-context) in
-     [`.agents/plans/post-generics-docs-and-skill-rebalance/README.md`](.agents/plans/post-generics-docs-and-skill-rebalance/README.md).
+     the post-generics rebalance plan (since removed).
 
 **Full commit range this session, `main`, oldest first** (from the last point `main` and the
 generics branch diverged through the merge and everything after):
@@ -193,7 +193,7 @@ b7e7fa9 chore: archive the completed pre-generics SDK plan docs
    admin-bypass path as PR #94, but only on explicit instruction — it's a low-stakes doc-only PR, not
    a reason to skip asking). Nothing blocks it; CI is green.
 2. **After #95 merges, start the plan it records** —
-   [`.agents/plans/post-generics-docs-and-skill-rebalance/README.md`](.agents/plans/post-generics-docs-and-skill-rebalance/README.md)
+   the post-generics rebalance plan (since removed)
    has the full scope: rebalancing sample/extending docs' dict-vs-typed mix (with specific candidate
    samples already triaged), and the skill's `MANIFEST.toml`/`agent-notes.md` token-economics pass.
    Read it before starting — it also records what the fix is **not** (don't invert the bias, don't cut
@@ -288,11 +288,11 @@ bash scripts/build.sh && ls dist/   # verdict-plugin.zip  verdict-tools.zip  ver
   this session's own review caught a real violation against — read it again if extending any example.
 - [`docs/architecture/README.md`](docs/architecture/README.md#generic-context) — design source of
   truth, including the "Generic context" subsection this program added.
-- [`.agents/plans/post-generics-docs-and-skill-rebalance/README.md`](.agents/plans/post-generics-docs-and-skill-rebalance/README.md) —
+- the post-generics rebalance plan (since removed) —
   the next piece of work, full scope and reasoning.
 - [`docs/testing/`](docs/testing/README.md) — the testing checklist, shared across every language.
 - [`docs/extending/`](docs/extending/README.md) — the eight extension scenarios.
-- [`docs/samples/`](docs/samples/README.md) — the ten worked samples §2's new plan doc audits.
+- [`fixtures/README.md`](fixtures/README.md) — the ten worked samples §2's new plan doc audits.
 - [`docs/maintenance/releases/`](docs/maintenance/releases/README.md) — the shared release pipeline
   plus each registry's own real mechanics, including the NuGet propagation-lag pattern from §2/§4.
 - [`docs/future_plan.md`](docs/future_plan.md) — exploratory candidates, explicitly not a roadmap.

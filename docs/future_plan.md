@@ -132,9 +132,9 @@ does today (`[await rule.evaluate(context) for rule in self._rules]`),
 but that's an implementation choice, not something either method's own
 docstring promises. For a rule set where each rule is I/O-bound (a DB
 read, an external check — exactly the shape
-[`data-driven-rule-sets`](samples/data-driven-rule-sets/README.md) and
-[`shipping-fee-waiver`](samples/shipping-fee-waiver/README.md)'s
-samples both use), running them
+a rule set built from stored
+configuration, or a fee waiver checking an external promo service),
+running them
 concurrently via `asyncio.gather` while still returning results in the
 original order is a real latency win sitting on the table.
 
@@ -168,22 +168,19 @@ neither is urgent enough to build without a specific trigger:
   `group_names`, or simple iteration) — `_by_name`/`_by_group` already
   hold exactly this data privately; nothing needs to be computed, only
   exposed. The recurring gap this would close showed up organically
-  while writing [`samples/content-moderation-routing/`](samples/content-moderation-routing/README.md)
-  and [`samples/data-driven-rule-sets/`](samples/data-driven-rule-sets/README.md)'s
-  own "naive way" sections: an admin/audit screen that wants to list
+  while writing the moderation-routing and
+  data-driven rule-set scenarios' own "naive way" sections: an
+  admin/audit screen that wants to list
   "every currently-active rule" has no way to ask an engine that today
   short of reaching into its private attributes. Real subtlety is mild
   (return an immutable view, not the live internal dict), but the
   repeated, organic demand is the stronger signal here.
 - **A shared, tested helper for walking a `RuleResult`/`RunResult` tree**
   into a plain, JSON-able structure — every sample in this doc set that
-  needs a "why did/didn't this pass" breakdown
-  ([`samples/dynamic-discounts/`](samples/dynamic-discounts/README.md),
-  [`samples/loyalty-tier-promotion/`](samples/loyalty-tier-promotion/README.md))
-  manually destructures `result.results[0].data`, and the
-  rate-limiting adapter mentioned above does the identical thing in
-  production (`[r.data for r in combined.data]`). The real subtlety:
-  telling apart "`.data` is itself a `list[RuleResult]`" (the composite convention)
+  needs a "why did/didn't this pass" breakdown walks
+  `result.results[0].sub_results` by hand, and the rate-limiting
+  adapter mentioned above does the identical thing in production. The
+  real subtlety: a composite's children are in `sub_results`
   from "`.data` is an opaque domain payload" without any type
   information verdict is allowed to have — a duck-typed check
   (`isinstance(data, list) and all(isinstance(x, RuleResult) for x in data)`)
@@ -199,7 +196,7 @@ pattern is hand-written a third time, promote it" candidates, not
 
 - **A generic timeout/retry wrapper for a rule's predicate** — a real
   need (an I/O-bound predicate, like
-  [`shipping-fee-waiver`](samples/shipping-fee-waiver/README.md)'s
+  a fee waiver checking an external promo service's
   external promo-code check, can hang), but it's exactly the shape of
   exercise [`extending/new-rule-shape/`](extending/new-rule-shape/README.md)
   already demonstrates (wrap `asyncio.wait_for` around `evaluate()`,

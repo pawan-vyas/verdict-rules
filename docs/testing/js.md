@@ -147,7 +147,7 @@ graph LR
 > an unpinned CDN URL silently upgrading a consumer, or a `<script>` tag
 > with no `integrity` hash executing whatever the CDN returns — lives in
 > what the documentation tells people to paste, not in this package's
-> own runtime code. See [`../samples/`](../samples/README.md) once a
+> own runtime code. See [`../../fixtures/README.md`](../../fixtures/README.md) once a
 > JS/TS sample references a CDN snippet directly.
 
 ## Which test proves which contract

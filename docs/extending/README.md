@@ -15,7 +15,7 @@ beyond the ones you already need, and zero subclassing**. You never ask
 this package's permission to add a new kind of rule.
 
 Each scenario here follows the same template as
-[`../samples/`](../samples/README.md): a language-agnostic spec in
+[`../../fixtures/README.md`](../../fixtures/README.md): a language-agnostic spec in
 `README.md`, plus one concrete file per language that has written it
 up. See
 [`../maintenance/doc-authoring/extending.md`](../maintenance/doc-authoring/extending.md)
@@ -70,5 +70,5 @@ something to guess at speculatively ahead of that demand.
   this package itself.
 - [`../testing/`](../testing/README.md) — testing verdict itself, if a
   scenario here turns out to need a change on that side after all.
-- [`../samples/README.md`](../samples/README.md) — full worked
+- [`../../fixtures/README.md`](../../fixtures/README.md) — full worked
   examples using these scenarios end-to-end.

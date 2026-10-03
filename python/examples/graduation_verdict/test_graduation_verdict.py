@@ -39,7 +39,7 @@ def _policy(subject_id: str):
 class TestRuleShapeDispatch:
     """Each subject_type must produce the Rule shape the sample spec claims.
 
-    See docs/samples/graduation-requirement-verdict/README.md.
+    See fixtures/graduation_verdict/README.md.
     """
 
     def test_academic_subject_is_a_plain_function_rule(self) -> None:
@@ -167,7 +167,7 @@ class TestAtLeastNRuleShortCircuits:
 class TestEngineRunModes:
     """run_named/run_group/run_all each serve the specific job the sample spec claims.
 
-    See docs/samples/graduation-requirement-verdict/README.md.
+    See fixtures/graduation_verdict/README.md.
     """
 
     async def test_run_named_looks_up_one_subject(self) -> None:

@@ -11,7 +11,6 @@
 
 | Doc | Extends this standard for |
 | --- | --- |
-| [`samples.md`](samples.md) | Sample spec/implementation docs under `docs/samples/` and each language's own samples directory |
 | [`extending.md`](extending.md) | Extension-scenario spec/implementation docs under `docs/extending/` |
 | [`architecture.md`](architecture.md) | The shared design doc plus one concrete file per language under `docs/architecture/` |
 | [`testing.md`](testing.md) | The shared testing guide plus one concrete file per language under `docs/testing/` |
@@ -107,7 +106,7 @@ which concrete `<language>.md` exists, and never hedges with "today":
 
 - **No pointer to a specific implementation file in a spec's own
   blockquote or body.** `` "Each language's own file in this
-  directory — [`python.md`](python.md) today — is the actual code" ``
+  directory — `python.md` today — is the actual code" ``
   reads as a stable structural fact but is not one: it is true only
   until a second language's file exists beside it, at which point the
   sentence is either wrong (implying `python.md` is the only one) or
@@ -120,10 +119,10 @@ which concrete `<language>.md` exists, and never hedges with "today":
   Pointing a shared doc at `python/packages/verdict-rules/docs/quickstart.md`
   or `architecture/python.md` by name has the identical problem one
   level removed — link the shared parent
-  (`architecture/README.md`, `docs/samples/README.md`) instead, or say
+  (`architecture/README.md`, `fixtures/README.md`) instead, or say
   "that language's own quickstart" with no link at all.
 - **A concrete filename is fine as an illustrative example in a
-  maintainer-facing template** (this file, `samples.md`, `extending.md`
+  maintainer-facing template** (this file, `extending.md`
   saying "`python.md`, for instance") — the reader is being taught the
   pattern, not handed a spec that must stay accurate to every language
   forever. Drop "today" there too, since the illustration doesn't

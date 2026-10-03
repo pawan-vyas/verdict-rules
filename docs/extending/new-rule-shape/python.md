@@ -85,7 +85,7 @@ qualifies: ThresholdRule[OrderContext] = ThresholdRule("qualifies", [
 
 - [`README.md`](README.md) — the language-agnostic scenario this page
   implements.
-- [`../../samples/graduation-requirement-verdict/python.md`](../../samples/graduation-requirement-verdict/python.md) —
+- [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md) —
   `AtLeastNRule`, a real, tested instance of this exact pattern.
 - [`../reusing-a-rule-across-contexts/python.md`](../reusing-a-rule-across-contexts/python.md) —
   `ProjectingRule` itself, used above to mix a sub-rule reading a

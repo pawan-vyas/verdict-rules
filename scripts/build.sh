@@ -23,7 +23,7 @@ trap 'rm -rf "$stage"' EXIT
 # and each language's own agent-notes.md. The one generated piece is
 # REPOSITORY-MAP.md, built here from the repository's own docs/ so its
 # one-line descriptions cannot drift from what those documents actually say.
-# Nothing else is vendored: docs/extending/, docs/samples/, and
+# Nothing else is vendored: docs/extending/, fixtures/, and
 # docs/architecture/ stay in the source repository, named but not copied.
 skill_src="$stage/skill-src"
 mkdir -p "$skill_src"

@@ -12,7 +12,7 @@
 **In**: architecture/design docs, dev docs, agent-facing docs — every
 durable, committed doc. Concretely in this repo: `docs/`, each
 language's `AGENTS.md`/`README.md`/`CHANGELOG.md`/`docs/quickstart.md`,
-[`.agents/memory/`](memory/), `skills/verdict/` +
+`.agents/memory/`, `skills/verdict/` +
 `skills/verdict-workspace/`, root `AGENTS.md`/`CLAUDE.md`/
 `CONTRIBUTING.md`/`README.md`, `.github/` templates, `fixtures/*/README.md`.
 
@@ -83,6 +83,44 @@ never information. See
 [`terse-tabulated-summaries-over-prose`](terse-tabulated-summaries-over-prose.md)
 for the sibling rule about PR/doc *summary* style specifically (a
 narrower case of the same density-without-loss principle).
+
+## Tabulation and narrative placement, in more detail
+
+Supplied as reference guidance from a parallel audit in another repo.
+Four rules worth applying verbatim:
+
+1. **Tabulate parallel facts; never tabulate reasoning.** A table wins
+   when a reader is asking "for item X, what's the value of column Y?"
+   It loses on connected reasoning ("because A, B follows, which is why
+   C") — splitting that into cells removes the causal link that was the
+   point. A table whose headers need their own explanatory paragraph has
+   relocated the cognitive load, not removed it; three short, genuinely
+   different sentences beat a one-row table built to satisfy a reflex.
+2. **Design rationale and process narration are the same content in
+   different tense.** Explaining *why the obvious alternative is wrong*
+   is load-bearing — keep it. Narrating *the process that produced that
+   conclusion* is not. The test: if deleting "first draft," "was found,"
+   "a self-audit revealed," or "fixed in the same pass" leaves the
+   sentence still true and still fully explaining the rejected
+   alternative, rewrite it that way. If the sentence genuinely needs the
+   discovery story, the content belongs in an incident record instead.
+3. **"Legacy" is a factual claim, not a tone word.** It asserts a thing
+   is superseded and no longer load-bearing. Test before using it: would
+   removing the word change whether anything currently depends on the
+   system? If nothing changes — it's still relied upon — the word is
+   wrong, independent of age.
+4. **Incident narration has exactly two legitimate homes**: the
+   designated incident directory ([`../incidents/`](../incidents/)), or
+   a doc whose *own opening states* that its purpose is extracting
+   generalizable discipline from real past incidents. The exemption
+   applies because the doc said so up front, not because any doc could
+   claim it retroactively. Neither home excuses a tracking reference, a
+   "legacy" mischaracterization, a broken link, or an unverified
+   concrete claim — the exemption covers the narrative *shape* only.
+
+A diagram's own explanation block is narrative by design (this repo's
+mermaid convention requires one) — exempt from the tabulation push,
+though still trimmable if bloated.
 
 ## Before calling a file done
 

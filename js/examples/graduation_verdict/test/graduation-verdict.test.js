@@ -37,7 +37,7 @@ function policy(subjectId) {
 }
 
 describe("rule shape dispatch", () => {
-  // See docs/samples/graduation-requirement-verdict/README.md.
+  // See fixtures/graduation_verdict/README.md.
 
   it("an academic subject is a plain FunctionRule", () => {
     const rule = ruleForSubject(policy("MATH101"));
@@ -180,7 +180,7 @@ describe("AtLeastNRule short-circuits", () => {
 
 describe("engine run modes", () => {
   // runNamed/runGroup/runAll each serve the specific job the sample spec
-  // claims. See docs/samples/graduation-requirement-verdict/README.md.
+  // claims. See fixtures/graduation_verdict/README.md.
 
   it("runNamed looks up one subject", async () => {
     const { engine } = buildGraduationCheck(POLICIES, ELECTIVE_MINIMUM);

@@ -1,7 +1,7 @@
 /// Marketplace eligibility, implemented with verdict_rules.
 ///
-/// See docs/samples/marketplace-eligibility/README.md for the design and
-/// fixtures/marketplace_eligibility/README.md for the fixture contract.
+/// See fixtures/marketplace_eligibility/README.md for the design and the fixture
+/// contract.
 library;
 
 import 'dart:convert';

@@ -420,7 +420,7 @@ new contribution's own tests need to add.
   nesting.
 - [`../testing/`](../testing/README.md) — how this package's own test
   suite is organized and what a change needs to prove.
-- [`../samples/`](../samples/README.md) —
+- [`../../fixtures/README.md`](../../fixtures/README.md) —
   worked, domain-flavored examples of where a rule engine like this
   earns its keep, including the data-driven pattern this package is
   designed for.

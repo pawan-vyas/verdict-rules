@@ -11,7 +11,7 @@
  * evaluating the same inputs twice is byte-for-byte reproducible.
  *
  * See ../docs/testing.md and the invariants named in
- * docs/samples/graduation-requirement-verdict/ for the tree shape this
+ * fixtures/graduation_verdict/ for the tree shape this
  * file assumes.
  */
 import assert from "node:assert/strict";

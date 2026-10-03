@@ -1,9 +1,8 @@
 /**
  * Graduation requirement verdict, implemented with verdict-rules.
  *
- * See docs/samples/graduation-requirement-verdict/README.md for the
- * design and fixtures/graduation_verdict/README.md for the fixture
- * contract.
+ * See fixtures/graduation_verdict/README.md for the design and the
+* fixture contract.
  */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";

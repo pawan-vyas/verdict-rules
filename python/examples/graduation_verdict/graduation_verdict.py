@@ -1,8 +1,7 @@
 """Graduation requirement verdict, implemented with `verdict`.
 
-See docs/samples/graduation-requirement-verdict/README.md for the
-design and fixtures/graduation_verdict/README.md for the fixture
-contract. Every function is exercised by test_graduation_verdict.py.
+See fixtures/graduation_verdict/README.md for the design and the
+fixture contract. Every function is exercised by test_graduation_verdict.py.
 """
 
 from __future__ import annotations

@@ -6,7 +6,7 @@
 > breadth of `verdict` at once: heterogeneous `Rule` shapes built from
 > external policy data, a custom `Rule` type, and all three
 > `RulesEngine` run modes serving three different real callers. See
-> [`docs/samples/graduation-requirement-verdict/`](../../../docs/samples/graduation-requirement-verdict/README.md)
+> [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md)
 > for the original framing question this project answers, the design,
 > and what a solution must demonstrate.
 
@@ -38,7 +38,7 @@ invocation is required day to day.
 
 ## Read more
 
-- [`../../../docs/samples/graduation-requirement-verdict/`](../../../docs/samples/graduation-requirement-verdict/README.md) —
+- [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md) —
   the naive way this policy is usually implemented, why it breaks down,
   and both diagrams behind the design actually used here.
 - [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md) —

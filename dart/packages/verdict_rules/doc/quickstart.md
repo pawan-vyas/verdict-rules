@@ -167,4 +167,4 @@ for the scenario.
   of this package from your own code.
 - [`../../../../docs/testing/`](../../../../docs/testing/README.md) — `dart analyze`
   and `dart test`, and what a test here actually needs to prove.
-- [`../../../../docs/samples/`](../../../../docs/samples/README.md) — more worked examples.
+- [`../../../../fixtures/README.md`](../../../../fixtures/README.md) — more worked examples.

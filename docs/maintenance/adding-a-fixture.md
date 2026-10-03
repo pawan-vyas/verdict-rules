@@ -12,19 +12,11 @@
 
 ```text
 fixtures/<name>/
-  README.md              the data contract: what each file and each
-                          expectation field proves, and why it's shared
+  README.md              the scenario's single home: the problem, the
+                          design, and the data contract — what each file
+                          and expectation field proves, and why it's shared
   <data files>            whatever data format the scenario needs —
                           JSON today
-
-docs/samples/<sample-slug>/
-  README.md               the language-agnostic design spec: the
-                           problem, the naive way, the design, what a
-                           solution must demonstrate — same template as
-                           every other sample, per
-                           [`doc-authoring/samples.md`](doc-authoring/samples.md)
-  <language>.md            one per language, pointing at that
-                           language's own implementation below
 
 <language>/examples/<name>/
   README.md                how to run it and test it, in that
@@ -52,23 +44,22 @@ would fight both — the same reason
 [`packages-and-changelogs.md`](packages-and-changelogs.md) has each
 language's own package stay inside that language's own directory rather
 than centralizing. Docs carry no such constraint, which is why they
-consolidate under `docs/samples/<sample-slug>/` while the code does not.
+consolidate under `fixtures/<name>/` while the code does not.
 
 ## Steps
 
 1. **Write the data contract first** — `fixtures/<name>/README.md` plus
    the data files themselves. This is the thing every language's port
    is proven against, so it exists before any implementation does.
-2. **Write the sample spec** — `docs/samples/<sample-slug>/README.md`,
-   following [`doc-authoring/samples.md`](doc-authoring/samples.md)
-   exactly as any other sample would, referencing the fixture's data
-   contract for the shared parity data rather than restating it.
+2. **Write the design into that same README** — the problem, the naive
+   approach and its cost, and the design a correct implementation
+   demonstrates. The fixture's README is the scenario's single home, so
+   the design sits beside the contract rather than in a separate spec.
 3. **Build the first language's implementation** in that language's own
    `examples/<name>/` (or wherever that language's own conventions put
    a full tested project), reading the fixture's data files, and add
-   `docs/samples/<sample-slug>/<language>.md` pointing at it.
 4. **A second language's port** adds its own `examples/<name>/`
-   directory and its own `docs/samples/<sample-slug>/<language>.md` —
+   directory —
    additive on every axis: a new fixture-consuming directory in that
    language's own tree, a new file in the sample-spec directory, nothing
    existing edited.
@@ -86,8 +77,6 @@ fits in a new language's own release ritual.
 
 ## Related
 
-- [`doc-authoring/samples.md`](doc-authoring/samples.md) — the template
-  a fixture's own sample spec and per-language docs follow.
 - [`adding-a-language.md`](adding-a-language.md) — the ritual a new
   language SDK follows, which includes passing every existing fixture.
 - [`../../fixtures/`](../../fixtures/README.md) — every fixture that

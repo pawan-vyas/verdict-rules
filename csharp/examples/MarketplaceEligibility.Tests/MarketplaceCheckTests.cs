@@ -11,7 +11,7 @@ namespace MarketplaceEligibility.Tests;
 /// This project exercises IRule&lt;TContext&gt; end to end: two typed
 /// contexts sharing no fields, a rule reused across both via
 /// ProjectingRule, and a dict-context catalog coexisting in the same
-/// codebase. See docs/samples/marketplace-eligibility/README.md for the
+/// codebase. See fixtures/marketplace_eligibility/README.md for the
 /// design and fixtures/marketplace_eligibility/README.md for the shared
 /// contract this suite reproduces.
 /// </remarks>

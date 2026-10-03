@@ -164,9 +164,7 @@ Because rules are just objects, they're straightforward to build up at
 runtime from whatever configuration a caller already has, rather than
 hand-writing one `FunctionRule` per case — see
 [`../../../../docs/extending/data-driven-rule-construction/`](../../../../docs/extending/data-driven-rule-construction/README.md)
-for the scenario and
-[`../../../../docs/samples/data-driven-rule-sets/js.md`](../../../../docs/samples/data-driven-rule-sets/js.md)
-for a fuller worked version of the same pattern.
+for the scenario.
 
 ## Related docs
 
@@ -177,4 +175,4 @@ for a fuller worked version of the same pattern.
   of this package from your own code.
 - [`../../../../docs/testing/`](../../../../docs/testing/README.md) — `npm run build
   && npm test`, and what a test here actually needs to prove.
-- [`../../../../docs/samples/`](../../../../docs/samples/README.md) — more worked examples.
+- [`../../../../fixtures/README.md`](../../../../fixtures/README.md) — more worked examples.

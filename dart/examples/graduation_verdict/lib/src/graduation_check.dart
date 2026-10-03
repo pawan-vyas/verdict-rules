@@ -1,8 +1,7 @@
 /// Graduation requirement verdict, implemented with verdict_rules.
 ///
-/// See docs/samples/graduation-requirement-verdict/README.md for the
-/// design and fixtures/graduation_verdict/README.md for the fixture
-/// contract.
+/// See fixtures/graduation_verdict/README.md for the design and the
+/// fixture contract.
 library;
 
 import 'dart:convert';

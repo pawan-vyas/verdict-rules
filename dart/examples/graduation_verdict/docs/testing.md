@@ -4,7 +4,7 @@
 > How this project is tested, and why its four test files each serve a
 > different purpose rather than being one bigger suite of the same
 > kind. See
-> [`../../../../docs/samples/graduation-requirement-verdict/`](../../../../docs/samples/graduation-requirement-verdict/README.md)
+> [`../../../../fixtures/graduation_verdict/README.md`](../../../../fixtures/graduation_verdict/README.md)
 > for why it's built the way it is, and
 > [`../../../../fixtures/graduation_verdict/README.md`](../../../../fixtures/graduation_verdict/README.md)
 > for how to extend the curriculum.
@@ -86,7 +86,7 @@ scenarios come out right. `test/chaos_test.dart` checks a much wider
 space, using a different technique than fixture matching: **differential
 testing** against `lib/src/oracle.dart`, a second, deliberately dumb,
 verdict_rules-free re-implementation of the same decision (the "naive
-way" from the [sample spec](../../../../docs/samples/graduation-requirement-verdict/README.md),
+way" from the [the scenario spec](../../../../fixtures/graduation_verdict/README.md),
 generalized to score *any* policy list). If the real engine and the
 oracle ever disagree on a generated case, one of them is wrong -- that
 disagreement is the signal, not a fixed expected value.
@@ -279,7 +279,7 @@ dart test
 
 ## Related
 
-- [`../../../../docs/samples/graduation-requirement-verdict/`](../../../../docs/samples/graduation-requirement-verdict/README.md) --
+- [`../../../../fixtures/graduation_verdict/README.md`](../../../../fixtures/graduation_verdict/README.md) --
   the language-agnostic spec, why it's built the way it is.
 - [`../../../../fixtures/graduation_verdict/README.md`](../../../../fixtures/graduation_verdict/README.md) --
   how to extend the curriculum, and the shared cross-language fixture
