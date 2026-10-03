@@ -76,7 +76,7 @@ rewritten from scratch against the final shape — nothing stale remains.
 
 Sequencing continues: next is the doc-verbosity audit (224 files,
 scope confirmed — see
-[`.agents/plans/doc-verbosity-audit/README.md`](../doc-verbosity-audit/README.md)),
+[`.agents/plans/doc-hygiene-audit/README.md`](../doc-hygiene-audit/README.md)),
 then the cross-language API concept map last.
 
 **Doc-verbosity audit methodology, recorded ahead of starting it**:
