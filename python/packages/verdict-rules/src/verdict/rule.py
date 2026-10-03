@@ -343,7 +343,10 @@ class AndRule(Generic[TContext]):
         """
         self.name = name
         self.group = group
-        self._rules = rules
+        # Copied, not aliased: a caller retaining the list it passed could
+        # otherwise change this composite's sub-rules, and its verdict,
+        # after construction.
+        self._rules = tuple(rules)
 
     async def evaluate(self, context: TContext) -> RuleResult:
         """Evaluate sub-rules in order, stopping at the first failure.
@@ -393,7 +396,10 @@ class OrRule(Generic[TContext]):
         """
         self.name = name
         self.group = group
-        self._rules = rules
+        # Copied, not aliased: a caller retaining the list it passed could
+        # otherwise change this composite's sub-rules, and its verdict,
+        # after construction.
+        self._rules = tuple(rules)
 
     async def evaluate(self, context: TContext) -> RuleResult:
         """Evaluate sub-rules in order, stopping at the first pass.

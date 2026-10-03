@@ -44,6 +44,15 @@ class RuleResult:
     sub_results: Sequence[RuleResult] = field(default_factory=tuple)
     decided_by: Sequence[RuleResult] = field(default_factory=tuple)
 
+    def __post_init__(self) -> None:
+        # Copied, not aliased: ``frozen=True`` stops reassignment of the
+        # field, not mutation of a list a caller passed in and kept. Without
+        # this, a caller could change a result's children after construction
+        # -- including into a cycle, which every traversal here recurses
+        # through.
+        object.__setattr__(self, "sub_results", tuple(self.sub_results))
+        object.__setattr__(self, "decided_by", tuple(self.decided_by))
+
     @property
     def leaves(self) -> list[RuleResult]:
         """This result's own leaves, flattened, in evaluation order.
@@ -99,6 +108,12 @@ class RunResult:
 
     passed: bool
     results: list[RuleResult] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        # Copied for the same reason :class:`RuleResult` copies its own
+        # children. Stays a ``list`` rather than becoming a tuple: the type
+        # is part of this field's published shape.
+        object.__setattr__(self, "results", list(self.results))
 
     @property
     def leaves(self) -> list[RuleResult]:
