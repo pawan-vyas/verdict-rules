@@ -66,11 +66,42 @@ Tagged `dart-vX.Y.Z`.
 - **Changed**: `AndRule`/`OrRule` leave their own `detail` empty. The
   failing sub-rule and its own detail are in
   `subResults`/`decidedBy`/`failingLeaves`.
-- **Changed**: `RuleResult`/`RunResult` no longer have `const`
-  constructors. Copying the collections they are handed requires a call,
-  which a const initializer cannot make, and a const result would have
-  to alias the caller's list. Migration: `const RuleResult(...)` becomes
-  `RuleResult(...)`; a `const` *variable* holding one becomes `final`.
+- **Changed**: `RuleResult`/`RunResult`'s general constructors are no
+  longer `const`. Copying the collections they are handed requires a
+  call, which a const initializer cannot make, and a const result would
+  have to alias the caller's list. Migration: `const RuleResult(...)`
+  becomes `RuleResult(...)`; a `const` *variable* holding one becomes
+  `final`. For a result with no children, `const RuleResult.leaf(...)`
+  below keeps `const` available.
+- **Added `const RuleResult.leaf({ruleName, passed, detail, data})`** —
+  a leaf result as a compile-time constant. A leaf has no children to
+  copy, so both collections are fixed empty, which also means no index
+  can be out of range and the constructor needs no body — the two things
+  that made the general constructor non-`const`. For a fixed result or a
+  test fixture, and for the places Dart requires a constant expression
+  rather than merely allowing one.
+- **Fixed**: `RunResult.failingLeaves` disagreed with
+  `RuleResult.failingLeaves` in both directions. It filtered `leaves` by
+  `!passed` instead of forwarding to each result's own getter, and a
+  result's verdict is not a function of its leaves' verdicts: a failed
+  `NotRule` wraps a child that *passed*, so filtering found a passing
+  leaf and reported no failure on a failed run, while a passed `OrRule`
+  holding a recovered-from failed branch reported that branch as a
+  failure on a passing run. Now
+  `[for (final r in results) ...r.failingLeaves]`. `RunResult.leaves` was
+  always correct and is unchanged. Reported from downstream use; the
+  same defect was present in all four SDKs.
+- **Changed**: a result hand-built with child results in `data` is read
+  as a *leaf*. `leaves`/`failingLeaves`/`decidedBy` consult `subResults`
+  only, so a 0.3-era fixture that put children in `data` still
+  constructs and still evaluates, but reports itself as one terminal
+  check rather than a tree. Nothing raises; the shape is just read
+  differently.
+- **Changed**: `leaves`/`failingLeaves`/`decidedBy` are instance getters
+  now, and an instance member always wins over an extension member in
+  Dart. An extension on `RuleResult` declaring any of those three names
+  is silently shadowed from this version on, with no analyzer warning at
+  the call site.
 - **Fixed**: a composite's sub-rules and a result's children are copied
   on construction, not aliased. A caller that kept the list it passed
   could change a composite's sub-rules — and its verdict — after

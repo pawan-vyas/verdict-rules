@@ -50,18 +50,56 @@ public class RunAllTests
     }
 
     /// <summary>
-    /// <see cref="RunResult.GetFailingLeaves"/> is only the failing subset of
-    /// <see cref="RunResult.GetLeaves"/> -- proven with a genuine mix of passing
-    /// and failing rules, since an all-pass or all-fail run can't tell
+    /// <see cref="RunResult.GetFailingLeaves"/> forwards to each result's own
+    /// <see cref="RuleResult.GetFailingLeaves"/> -- proven with a genuine mix of
+    /// passing and failing rules, since an all-pass or all-fail run can't tell
     /// "every leaf" and "only the failing ones" apart.
     /// </summary>
     [Fact]
-    public async Task FailingLeavesIsOnlyTheFailingSubsetOfLeaves()
+    public async Task FailingLeavesForwardsToEachResultRatherThanFiltering()
     {
         var engine = new RulesEngine(new IRule[] { Rules.Pass("a"), Rules.Fail("b"), Rules.Pass("c") });
         var result = await engine.RunAllAsync(Rules.Empty);
         Assert.Equal(new[] { "a", "b", "c" }, result.GetLeaves().Select(l => l.RuleName));
         Assert.Equal(new[] { "b" }, result.GetFailingLeaves().Select(l => l.RuleName));
+    }
+
+    /// <summary>
+    /// A failed <see cref="NotRule"/> wraps a child that passed, so it is its
+    /// own failing leaf. Filtering <see cref="RunResult.GetLeaves"/> by
+    /// <c>!Passed</c> finds only the passing child and reports nothing -- a
+    /// failed run with no failures.
+    /// </summary>
+    [Fact]
+    public async Task AFailedRunNeverReportsNoFailures()
+    {
+        var engine = new RulesEngine(new IRule[] { new NotRule("not_positive", Rules.Pass("positive")) });
+
+        var result = await engine.RunAllAsync(Rules.Empty);
+
+        Assert.False(result.Passed);
+        Assert.Equal(new[] { "not_positive" }, result.GetFailingLeaves().Select(l => l.RuleName));
+        Assert.Equal(result.Results[0].GetFailingLeaves(), result.GetFailingLeaves());
+    }
+
+    /// <summary>
+    /// A passed <see cref="OrRule"/> can hold a branch that failed before a
+    /// later one recovered. Filtering <see cref="RunResult.GetLeaves"/>
+    /// surfaces that branch -- a passing run reporting a failure.
+    /// </summary>
+    [Fact]
+    public async Task APassedRunNeverReportsAFailure()
+    {
+        var engine = new RulesEngine(new IRule[]
+        {
+            new OrRule("either", new IRule[] { Rules.Fail("negative"), Rules.Pass("positive") }),
+        });
+
+        var result = await engine.RunAllAsync(Rules.Empty);
+
+        Assert.True(result.Passed);
+        Assert.Empty(result.GetFailingLeaves());
+        Assert.Equal(new[] { "negative", "positive" }, result.GetLeaves().Select(l => l.RuleName));
     }
 }
 

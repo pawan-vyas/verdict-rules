@@ -83,7 +83,11 @@ result.GetFailingLeaves()    // the leaves explaining a failure
 ```
 
 `RunResult` exposes `GetLeaves()`/`GetFailingLeaves()` too, flattened
-across every rule the run evaluated.
+across every rule the run evaluated. Both forward to each result's own
+view -- in particular `GetFailingLeaves()` is **not** a filter over
+`GetLeaves()`, because a result's verdict is not a function of its
+leaves' verdicts (a failed `NotRule` is its own failing leaf; a passed
+`OrRule` may hold a failed branch it recovered from).
 
 **Only `SubResults` and `DecidedByIndices` are stored**, which is what
 keeps `JsonSerializer.Serialize(result)` a finite tree. Build a result by

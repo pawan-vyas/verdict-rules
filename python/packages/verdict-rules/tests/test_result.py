@@ -154,15 +154,37 @@ class TestRunResultForwarders:
         run = RunResult(passed=False, results=[_leaf("standalone", True), composite])
         assert run.leaves == [run.results[0], a, b]
 
-    def test_failing_leaves_is_a_plain_filter_over_leaves(self) -> None:
-        """Unlike RuleResult.failing_leaves, RunResult's own version *is* a
-        plain filter -- `run_all`/`run_group` never short-circuit, so every
-        top-level result's own verdict is already final; no earlier
-        short-circuited branch to misrepresent."""
+    def test_failing_leaves_forwards_to_each_result_rather_than_filtering(self) -> None:
+        """RunResult.failing_leaves delegates to each result's own
+        failing_leaves. It is *not* a filter over `leaves` -- see the two
+        tests below for the cases where filtering gives a different, wrong
+        answer."""
         a, b = _leaf("a", True), _leaf("b", False)
         composite = _composite("and1", False, a, b)
         run = RunResult(passed=False, results=[_leaf("standalone", True), composite])
         assert run.failing_leaves == [b]
+
+    async def test_a_failed_run_never_reports_no_failures(self) -> None:
+        """A failed NotRule wraps a child that passed, so it is its own
+        failing leaf. Filtering `leaves` by `not passed` finds only the
+        passing child and reports nothing -- a failed run with no failures."""
+        engine = RulesEngine([NotRule("not_positive", _pass("positive"))])
+        run = await engine.run_all({})
+
+        assert run.passed is False
+        assert [leaf.rule_name for leaf in run.failing_leaves] == ["not_positive"]
+        assert run.failing_leaves == run.results[0].failing_leaves
+
+    async def test_a_passed_run_never_reports_a_failure(self) -> None:
+        """A passed OrRule can hold a branch that failed before a later one
+        recovered. Filtering `leaves` surfaces that branch -- a passing run
+        reporting a failure."""
+        engine = RulesEngine([OrRule("either", [_fail("negative"), _pass("positive")])])
+        run = await engine.run_all({})
+
+        assert run.passed is True
+        assert run.failing_leaves == []
+        assert [leaf.rule_name for leaf in run.leaves] == ["negative", "positive"]
 
     def test_empty_run_result_has_no_leaves(self) -> None:
         run = RunResult(passed=True, results=[])

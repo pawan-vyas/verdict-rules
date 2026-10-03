@@ -200,12 +200,18 @@ export class RunResult {
   /**
    * Every failing leaf across every rule this run evaluated.
    *
-   * Unlike {@link RuleResult.failingLeaves}, this *is* a plain filter over
-   * {@link RunResult.leaves} — `runAll`/`runGroup` never short-circuit, so
-   * every top-level result's own verdict is already final; there is no
-   * earlier short-circuited branch here to misrepresent.
+   * A forwarder to each result's own {@link RuleResult.failingLeaves}, **not**
+   * a filter over {@link RunResult.leaves}. Filtering disagrees with the
+   * per-result answer in both directions, because a result's verdict is not a
+   * function of its leaves' verdicts:
+   *
+   * - A failed `NotRule` wraps a child that *passed*, so it is its own
+   *   failing leaf. Filtering finds a passing leaf and reports no failure on
+   *   a failed run.
+   * - A passed `OrRule` can hold a failed branch it recovered from. Filtering
+   *   reports that branch as a failure on a passing run.
    */
   get failingLeaves(): readonly RuleResult[] {
-    return this.leaves.filter((l) => !l.passed);
+    return this.results.flatMap((r) => r.failingLeaves);
   }
 }

@@ -144,16 +144,45 @@ describe("RunResult forwarders", () => {
     );
   });
 
-  it("failingLeaves is a plain filter over leaves", async () => {
-    // Unlike RuleResult.failingLeaves, RunResult's own version *is* a plain
-    // filter -- runAll/runGroup never short-circuit, so every top-level
-    // result's own verdict is already final; no earlier short-circuited
-    // branch to misrepresent.
+  it("failingLeaves forwards to each result rather than filtering", async () => {
+    // RunResult.failingLeaves delegates to each result's own failingLeaves.
+    // It is *not* a filter over leaves -- the two tests below cover the cases
+    // where filtering gives a different, wrong answer.
     const engine = new RulesEngine([leaf("standalone", true), new AndRule("and1", [leaf("a", true), leaf("b", false)])]);
     const run = await engine.runAll({});
     assert.deepEqual(
       run.failingLeaves.map((r) => r.ruleName),
       ["b"],
+    );
+  });
+
+  it("a failed run never reports no failures", async () => {
+    // A failed NotRule wraps a child that passed, so it is its own failing
+    // leaf. Filtering leaves by !passed finds only the passing child and
+    // reports nothing -- a failed run with no failures.
+    const engine = new RulesEngine([new NotRule("not_positive", leaf("positive", true))]);
+    const run = await engine.runAll({});
+
+    assert.equal(run.passed, false);
+    assert.deepEqual(
+      run.failingLeaves.map((r) => r.ruleName),
+      ["not_positive"],
+    );
+    assert.deepEqual(run.failingLeaves, run.results[0].failingLeaves);
+  });
+
+  it("a passed run never reports a failure", async () => {
+    // A passed OrRule can hold a branch that failed before a later one
+    // recovered. Filtering leaves surfaces that branch -- a passing run
+    // reporting a failure.
+    const engine = new RulesEngine([new OrRule("either", [leaf("negative", false), leaf("positive", true)])]);
+    const run = await engine.runAll({});
+
+    assert.equal(run.passed, true);
+    assert.deepEqual(run.failingLeaves, []);
+    assert.deepEqual(
+      run.leaves.map((r) => r.ruleName),
+      ["negative", "positive"],
     );
   });
 

@@ -75,6 +75,23 @@ Tagged `python-vX.Y.Z`.
 
 ### Fixed
 
+- **`RunResult.failing_leaves` disagreed with
+  `RuleResult.failing_leaves`** in both directions. It filtered the
+  flattened leaves by `not passed` instead of forwarding to each result's
+  own property, and a result's verdict is not a function of its leaves'
+  verdicts: a failed `NotRule` wraps a child that *passed*, so filtering
+  found a passing leaf and reported no failure on a failed run, while a
+  passed `OrRule` holding a recovered-from failed branch reported that
+  branch as a failure on a passing run. Now forwards per result.
+  `RunResult.leaves` was always correct and is unchanged. Reported from
+  downstream use of the Dart package; the same defect was present in all
+  four SDKs.
+- **A result hand-built with child results in `data` is read as a
+  *leaf*.** `leaves`, `failing_leaves` and `decided_by` consult
+  `sub_results` only, so a 0.3-era fixture that put children in `data`
+  still constructs and still evaluates, but reports itself as one
+  terminal check rather than a tree. Nothing raises; the shape is just
+  read differently.
 - **A composite's sub-rules, a result's children, and an engine's rules
   are copied on construction, not aliased.** A caller that kept the list
   it passed could change a composite's sub-rules — and its verdict —

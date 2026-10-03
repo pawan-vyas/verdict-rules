@@ -84,7 +84,11 @@ result.failingLeaves  // the leaves explaining a failure
 ```
 
 `RunResult` exposes `leaves`/`failingLeaves` too, flattened across every
-rule the run evaluated.
+rule the run evaluated. Both forward to each result's own view -- in
+particular `failingLeaves` is **not** a filter over `leaves`, because a
+result's verdict is not a function of its leaves' verdicts (a failed
+`NotRule` is its own failing leaf; a passed `OrRule` may hold a failed
+branch it recovered from).
 
 **Only `subResults` and `decidedByIndices` are stored.** The other three are
 prototype getters, so they are non-enumerable and `JSON.stringify(result)`

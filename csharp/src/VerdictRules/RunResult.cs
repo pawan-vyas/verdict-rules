@@ -41,10 +41,26 @@ public sealed class RunResult(bool passed, IReadOnlyList<RuleResult> results)
     public IReadOnlyList<RuleResult> GetLeaves() => [.. Results.SelectMany(r => r.GetLeaves())];
 
     /// <summary>
-    /// Every leaf from <see cref="GetLeaves"/> that failed.
+    /// Every failing leaf across every rule this run evaluated.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A forwarder to each result's own
+    /// <see cref="RuleResult.GetFailingLeaves"/>, <b>not</b> a filter over
+    /// <see cref="GetLeaves"/>. Filtering disagrees with the per-result answer
+    /// in both directions, because a result's verdict is not a function of its
+    /// leaves' verdicts.
+    /// </para>
+    /// <para>
+    /// A failed <see cref="NotRule{TContext}"/> wraps a child that
+    /// <i>passed</i>, so it is its own failing leaf -- filtering finds a
+    /// passing leaf and reports no failure on a failed run. A passed
+    /// <see cref="OrRule{TContext}"/> can hold a failed branch it recovered
+    /// from -- filtering reports that branch as a failure on a passing run.
+    /// </para>
+    /// </remarks>
     /// <returns>The failing leaves, in evaluation order.</returns>
-    public IReadOnlyList<RuleResult> GetFailingLeaves() => [.. GetLeaves().Where(l => !l.Passed)];
+    public IReadOnlyList<RuleResult> GetFailingLeaves() => [.. Results.SelectMany(r => r.GetFailingLeaves())];
 
     /// <inheritdoc />
     public override string ToString() =>

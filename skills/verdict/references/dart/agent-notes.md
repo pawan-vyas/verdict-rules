@@ -48,6 +48,7 @@ engine.ruleNames, engine.groupNames        // Iterable<String> of what exists
 
 RuleResult(ruleName: name, passed: true, detail: '', data: null,
             subResults: const [], decidedByIndices: const [])
+const RuleResult.leaf(ruleName: n, passed: p, detail: '', data: null)  // no children; const-able
 RunResult(passed: true, results: [...])
 ```
 
@@ -71,7 +72,11 @@ result.failingLeaves  // the leaves explaining a failure
 ```
 
 `RunResult` exposes `leaves`/`failingLeaves` too, flattened across every
-rule the run evaluated.
+rule the run evaluated. Both forward to each result's own view -- in
+particular `failingLeaves` is **not** a filter over `leaves`, because a
+result's verdict is not a function of its leaves' verdicts (a failed
+`NotRule` is its own failing leaf; a passed `OrRule` may hold a failed
+branch it recovered from).
 
 **Only `subResults` and `decidedByIndices` are stored**, and both are
 unmodifiable -- `subResults.add(...)` throws. The other three are getters

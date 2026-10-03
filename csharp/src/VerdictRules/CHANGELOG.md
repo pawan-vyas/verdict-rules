@@ -88,6 +88,23 @@ Tagged `csharp-vX.Y.Z`.
 
 ### Fixed
 
+- **`RunResult.GetFailingLeaves()` disagreed with
+  `RuleResult.GetFailingLeaves()`** in both directions. It filtered the
+  flattened leaves by `!Passed` instead of forwarding to each result's own
+  method, and a result's verdict is not a function of its leaves'
+  verdicts: a failed `NotRule` wraps a child that *passed*, so filtering
+  found a passing leaf and reported no failure on a failed run, while a
+  passed `OrRule` holding a recovered-from failed branch reported that
+  branch as a failure on a passing run. Now forwards per result.
+  `RunResult.GetLeaves()` was always correct and is unchanged. Reported
+  from downstream use of the Dart package; the same defect was present in
+  all four SDKs.
+- **A result hand-built with child results in `Data` is read as a
+  *leaf*.** `GetLeaves()`, `GetFailingLeaves()` and `GetDecidedBy()`
+  consult `SubResults` only, so a 0.3-era fixture that put children in
+  `Data` still constructs and still evaluates, but reports itself as one
+  terminal check rather than a tree. Nothing throws; the shape is just
+  read differently.
 - **A composite's sub-rules, a result's children, and an engine's rules
   are copied on construction, not aliased.** `IReadOnlyList<T>` is a
   read-only *view*, not an immutable collection, so a caller passing a

@@ -152,5 +152,18 @@ class RunResult:
 
     @property
     def failing_leaves(self) -> list[RuleResult]:
-        """Every failing leaf across every rule this run evaluated."""
-        return [leaf for leaf in self.leaves if not leaf.passed]
+        """Every failing leaf across every rule this run evaluated.
+
+        A forwarder to each result's own :attr:`RuleResult.failing_leaves`,
+        **not** a filter over :attr:`leaves`. Filtering disagrees with the
+        per-result answer in both directions, because a result's verdict is
+        not a function of its leaves' verdicts:
+
+        - A failed :class:`~verdict.rule.NotRule` wraps a child that
+          *passed*, so it is its own failing leaf. Filtering finds a passing
+          leaf and reports no failure on a failed run.
+        - A passed :class:`~verdict.rule.OrRule` can hold a failed branch it
+          recovered from. Filtering reports that branch as a failure on a
+          passing run.
+        """
+        return [leaf for result in self.results for leaf in result.failing_leaves]

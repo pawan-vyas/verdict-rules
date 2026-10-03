@@ -130,6 +130,40 @@ void main() {
     });
   });
 
+  group('RuleResult.leaf', () {
+    test('is a compile-time constant and canonicalized', () {
+      const a = RuleResult.leaf(ruleName: 'a', passed: false, detail: 'nope');
+      const b = RuleResult.leaf(ruleName: 'a', passed: false, detail: 'nope');
+      expect(identical(a, b), isTrue);
+    });
+
+    test('agrees with the general constructor on every field', () {
+      const viaLeaf =
+          RuleResult.leaf(ruleName: 'a', passed: false, detail: 'x');
+      final viaGeneral = RuleResult(ruleName: 'a', passed: false, detail: 'x');
+
+      expect(viaLeaf.ruleName, viaGeneral.ruleName);
+      expect(viaLeaf.passed, viaGeneral.passed);
+      expect(viaLeaf.detail, viaGeneral.detail);
+      expect(viaLeaf.data, viaGeneral.data);
+      expect(viaLeaf.subResults, viaGeneral.subResults);
+      expect(viaLeaf.decidedByIndices, viaGeneral.decidedByIndices);
+    });
+
+    test('is a leaf for every derived view', () {
+      const leaf = RuleResult.leaf(ruleName: 'a', passed: false);
+      expect(leaf.leaves, [leaf]);
+      expect(leaf.failingLeaves, [leaf]);
+      expect(leaf.decidedBy, isEmpty);
+    });
+
+    test('its fixed collections still reject mutation', () {
+      const leaf = RuleResult.leaf(ruleName: 'a', passed: true);
+      expect(() => leaf.subResults.add(leaf), throwsUnsupportedError);
+      expect(() => leaf.decidedByIndices.add(0), throwsUnsupportedError);
+    });
+  });
+
   group('RunResult forwarders', () {
     test('leaves flattens across every result', () {
       final a = _leaf('a', true);
@@ -140,17 +174,44 @@ void main() {
       expect(run.leaves, [standalone, a, b]);
     });
 
-    test('failingLeaves is a plain filter over leaves', () {
-      // Unlike RuleResult.failingLeaves, RunResult's own version *is* a
-      // plain filter -- runAll/runGroup never short-circuit, so every
-      // top-level result's own verdict is already final; no earlier
-      // short-circuited branch to misrepresent.
+    test('failingLeaves forwards to each result rather than filtering', () {
+      // RunResult.failingLeaves delegates to each result's own
+      // failingLeaves. It is *not* a filter over leaves -- the two tests
+      // below cover the cases where filtering gives a different, wrong
+      // answer.
       final a = _leaf('a', true);
       final b = _leaf('b', false);
       final composite = _composite('and1', false, [a, b]);
       final standalone = _leaf('standalone', true);
       final run = RunResult(passed: false, results: [standalone, composite]);
       expect(run.failingLeaves, [b]);
+    });
+
+    test('a failed run never reports no failures', () async {
+      // A failed NotRule wraps a child that passed, so it is its own failing
+      // leaf. Filtering leaves by !passed finds only the passing child and
+      // reports nothing -- a failed run with no failures.
+      final engine = RulesEngine<Context>(
+          [NotRule<Context>('not_positive', _pass('positive'))]);
+      final run = await engine.runAll({});
+
+      expect(run.passed, isFalse);
+      expect(run.failingLeaves.map((l) => l.ruleName), ['not_positive']);
+      expect(run.failingLeaves, run.results.single.failingLeaves);
+    });
+
+    test('a passed run never reports a failure', () async {
+      // A passed OrRule can hold a branch that failed before a later one
+      // recovered. Filtering leaves surfaces that branch -- a passing run
+      // reporting a failure.
+      final engine = RulesEngine<Context>([
+        OrRule<Context>('either', [_fail('negative'), _pass('positive')])
+      ]);
+      final run = await engine.runAll({});
+
+      expect(run.passed, isTrue);
+      expect(run.failingLeaves, isEmpty);
+      expect(run.leaves.map((l) => l.ruleName), ['negative', 'positive']);
     });
 
     test('an empty RunResult has no leaves', () {

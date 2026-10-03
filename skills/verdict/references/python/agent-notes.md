@@ -62,7 +62,11 @@ result.failing_leaves  # the leaves explaining a failure
 ```
 
 `RunResult` exposes `leaves`/`failing_leaves` too, flattened across every
-rule the run evaluated.
+rule the run evaluated. Both forward to each result's own view -- in
+particular `failing_leaves` is **not** a filter over `leaves`, because a
+result's verdict is not a function of its leaves' verdicts (a failed
+`NotRule` is its own failing leaf; a passed `OrRule` may hold a failed
+branch it recovered from).
 
 **Only `sub_results` and `decided_by_indices` are stored.** The other three
 are `@property` accessors computed on access, so a result is a finite tree

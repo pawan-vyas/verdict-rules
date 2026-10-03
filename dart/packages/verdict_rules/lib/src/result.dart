@@ -38,8 +38,9 @@ class RuleResult {
   final List<int> decidedByIndices;
 
   /// Not a `const` constructor: copying the collections requires a call,
-  /// which a const initializer cannot make. Const construction is given up
-  /// deliberately -- a const result would have to alias the caller's list.
+  /// which a const initializer cannot make, and a const result would
+  /// otherwise have to alias the caller's list. Use [RuleResult.leaf] when
+  /// there are no children to copy and a compile-time constant is wanted.
   RuleResult({
     required this.ruleName,
     required this.passed,
@@ -67,6 +68,24 @@ class RuleResult {
       );
     }
   }
+
+  /// A leaf result, as a compile-time constant.
+  ///
+  /// The general constructor cannot be `const`, because copying the caller's
+  /// collections requires a call. A leaf has no children to copy, so the two
+  /// collections are fixed empty and there is nothing left that would need
+  /// one -- which also means there is no index that could be out of range,
+  /// so this constructor needs no body and can therefore be `const` at all.
+  ///
+  /// Useful for a fixed result or a test fixture, and for the places Dart
+  /// requires a constant expression rather than merely allowing one.
+  const RuleResult.leaf({
+    required this.ruleName,
+    required this.passed,
+    this.detail = '',
+    this.data,
+  })  : subResults = const [],
+        decidedByIndices = const [];
 
   /// Which of [subResults] explain *this* result's own verdict -- a
   /// one-level, non-recursive fact, fixed by whatever built this result
@@ -149,11 +168,20 @@ class RunResult {
   /// [RuleResult.leaves].
   List<RuleResult> get leaves => [for (final r in results) ...r.leaves];
 
-  /// Every leaf in [leaves] that failed.
-  List<RuleResult> get failingLeaves => [
-        for (final l in leaves)
-          if (!l.passed) l
-      ];
+  /// Every failing leaf across every rule this run evaluated.
+  ///
+  /// A forwarder to each result's own [RuleResult.failingLeaves], **not** a
+  /// filter over [leaves]. Filtering disagrees with the per-result answer in
+  /// both directions, because a result's verdict is not a function of its
+  /// leaves' verdicts:
+  ///
+  /// - A failed `NotRule` wraps a child that *passed*, so it is its own
+  ///   failing leaf. Filtering finds a passing leaf and reports no failure on
+  ///   a failed run.
+  /// - A passed `OrRule` can hold a failed branch it recovered from.
+  ///   Filtering reports that branch as a failure on a passing run.
+  List<RuleResult> get failingLeaves =>
+      [for (final r in results) ...r.failingLeaves];
 
   /// This run as a JSON-encodable map, ready for `jsonEncode`. See
   /// [RuleResult.toJson].
