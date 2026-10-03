@@ -31,13 +31,22 @@ pip install verdict-rules
 ```
 
 ```python
+from dataclasses import dataclass
+
 from verdict import AndRule, FunctionRule, PredicateOutcome, RulesEngine
 
-async def has_permission(ctx):
-    return PredicateOutcome(passed=ctx["permission"])
 
-async def resource_is_available(ctx):
-    return PredicateOutcome(passed=ctx["available"])
+@dataclass(frozen=True)
+class AccessContext:
+    permission: bool
+    available: bool
+
+
+async def has_permission(ctx: AccessContext) -> PredicateOutcome:
+    return PredicateOutcome(passed=ctx.permission)
+
+async def resource_is_available(ctx: AccessContext) -> PredicateOutcome:
+    return PredicateOutcome(passed=ctx.available)
 
 can_proceed = AndRule("can_proceed", [
     FunctionRule("has_permission", has_permission),
@@ -45,7 +54,7 @@ can_proceed = AndRule("can_proceed", [
 ])
 
 engine = RulesEngine([can_proceed])
-verdict = await engine.run_named("can_proceed", {"permission": True, "available": False})
+verdict = await engine.run_named("can_proceed", AccessContext(permission=True, available=False))
 verdict.passed                       # False
 verdict.failing_leaves[0].rule_name  # "resource_is_available"
 ```
@@ -62,14 +71,21 @@ npm install verdict-rules
 ```ts
 import { AndRule, FunctionRule, RulesEngine } from "verdict-rules";
 
-async function hasPermission(ctx) {
+interface AccessContext {
+  permission: boolean;
+  available: boolean;
+}
+
+async function hasPermission(ctx: AccessContext) {
   return { passed: ctx.permission };
 }
 
-async function resourceIsAvailable(ctx) {
+async function resourceIsAvailable(ctx: AccessContext) {
   return { passed: ctx.available };
 }
 
+// TContext is inferred from each predicate's own parameter type -- no explicit
+// type argument at any constructor call site.
 const canProceed = new AndRule("can_proceed", [
   new FunctionRule("has_permission", hasPermission),
   new FunctionRule("resource_is_available", resourceIsAvailable),
@@ -93,19 +109,27 @@ dart pub add verdict_rules
 ```dart
 import 'package:verdict_rules/verdict_rules.dart';
 
-Future<PredicateOutcome> hasPermission(Map<String, Object?> ctx) async =>
-    PredicateOutcome(ctx['permission']! as bool);
+class AccessContext {
+  const AccessContext({required this.permission, required this.available});
 
-Future<PredicateOutcome> resourceIsAvailable(Map<String, Object?> ctx) async =>
-    PredicateOutcome(ctx['available']! as bool);
+  final bool permission;
+  final bool available;
+}
 
-final canProceed = AndRule('can_proceed', [
+Future<PredicateOutcome> hasPermission(AccessContext ctx) async =>
+    PredicateOutcome(ctx.permission);
+
+Future<PredicateOutcome> resourceIsAvailable(AccessContext ctx) async =>
+    PredicateOutcome(ctx.available);
+
+final canProceed = AndRule<AccessContext>('can_proceed', [
   FunctionRule('has_permission', hasPermission),
   FunctionRule('resource_is_available', resourceIsAvailable),
 ]);
 
-final engine = RulesEngine([canProceed]);
-final verdict = await engine.runNamed('can_proceed', {'permission': true, 'available': false});
+final engine = RulesEngine<AccessContext>([canProceed]);
+final verdict = await engine.runNamed(
+    'can_proceed', const AccessContext(permission: true, available: false));
 verdict.passed;                        // false
 verdict.failingLeaves.first.ruleName;  // 'resource_is_available'
 ```
@@ -122,24 +146,22 @@ dotnet add package VerdictRules
 ```csharp
 using VerdictRules;
 
-static Task<PredicateOutcome> HasPermission(IReadOnlyDictionary<string, object?> ctx, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new PredicateOutcome((bool)ctx["permission"]!));
+record AccessContext(bool Permission, bool Available);
 
-static Task<PredicateOutcome> ResourceIsAvailable(IReadOnlyDictionary<string, object?> ctx, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new PredicateOutcome((bool)ctx["available"]!));
+static Task<PredicateOutcome> HasPermission(AccessContext ctx, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome(ctx.Permission));
 
-var canProceed = new AndRule("can_proceed", new IRule[]
+static Task<PredicateOutcome> ResourceIsAvailable(AccessContext ctx, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome(ctx.Available));
+
+var canProceed = new AndRule<AccessContext>("can_proceed", new IRule<AccessContext>[]
 {
-    new FunctionRule("has_permission", HasPermission),
-    new FunctionRule("resource_is_available", ResourceIsAvailable),
+    new FunctionRule<AccessContext>("has_permission", HasPermission),
+    new FunctionRule<AccessContext>("resource_is_available", ResourceIsAvailable),
 });
 
-var engine = new RulesEngine(new IRule[] { canProceed });
-var verdict = await engine.RunNamedAsync("can_proceed", new Dictionary<string, object?>
-{
-    ["permission"] = true,
-    ["available"] = false,
-});
+var engine = new RulesEngine<AccessContext>(new IRule<AccessContext>[] { canProceed });
+var verdict = await engine.RunNamedAsync("can_proceed", new AccessContext(Permission: true, Available: false));
 
 Console.WriteLine(verdict.Passed);                          // false
 Console.WriteLine(verdict.GetFailingLeaves()[0].RuleName);  // resource_is_available
@@ -198,11 +220,12 @@ graph LR
 > audit row. A library that evaluated all three concurrently would return
 > the same `False` and be silently wrong.
 >
-> The rest follows from it. Facts are a plain map Verdict never
-> inspects. A `Rule` is anything with `name`, `group` and
-> `evaluate()` — no base class, no registration. `RulesEngine` is the
-> diagnostic counterpart, for when you want every rule's answer rather
-> than the fastest one.
+> The rest follows from it. Facts are whatever type you say they are —
+> the examples above use a small typed context, and a plain map works
+> identically; Verdict never inspects either. A `Rule` is anything with
+> `name`, `group` and `evaluate()` — no base class, no registration.
+> `RulesEngine` is the diagnostic counterpart, for when you want every
+> rule's answer rather than the fastest one.
 
 ## Why it's shaped this way
 
