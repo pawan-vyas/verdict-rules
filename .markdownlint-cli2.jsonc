@@ -17,6 +17,9 @@
     "js/node_modules/",
     ".agents/skills/",
     ".claude/skills/",
+    // api-extractor writes this report, header and all; its first line is a
+    // fixed `## API Report File for ...` that no setting changes.
+    "js/packages/verdict-rules/etc/verdict-rules.api.md",
 
     // A recorded snapshot of a past eval run's model output, kept for
     // reference -- historical, not living prose. See

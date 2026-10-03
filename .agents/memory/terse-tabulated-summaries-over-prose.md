@@ -1,9 +1,9 @@
----
-name: terse-tabulated-summaries-over-prose
-description: User preference for PR descriptions/comments and doc summaries — dense tables over prose essays, zero information loss, no matter how minute
-metadata:
-  type: feedback
----
+<!-- Title: Terse Tabulated Summaries Over Prose -->
+# Tabulate a summary; don't write an essay
+
+> A confirmed preference for PR descriptions, PR comments, and doc
+> summaries: dense tables over prose, with zero information loss — every
+> fact a prose version would carry, however minute, still present.
 
 For a PR description, a PR comment, or a doc summary, default to tables
 over prose paragraphs — terse, to the point, no essays. The test is not

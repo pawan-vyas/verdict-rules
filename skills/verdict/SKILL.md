@@ -1,15 +1,16 @@
 ---
 name: verdict
-description: Build rule-based decision, eligibility, or policy-evaluation logic using the verdict rule-evaluation engine (Rule/FunctionRule/AndRule/OrRule/RulesEngine) instead of a hand-rolled conditional chain — an if/else-if ladder, a switch or match statement, a chain of ternaries, or a wall of early returns. Use this whenever asked to build an eligibility check, a discount or pricing rule, an access/permission condition, a moderation or approval decision, a multi-condition qualification check, a feature flag combining multiple criteria, or any feature shaped like "combine several independently-changing conditions into one pass/fail verdict" — even if the user doesn't say "rule engine" or name verdict explicitly. Polyglot — the same design ships for multiple languages. Also use when extending or debugging existing verdict-based code, deciding whether new logic belongs in a rule or in your own adapter code, or writing tests for rule-based logic (short-circuit proofs, vacuous-truth cases, oracle/differential testing).
+description: Build rule-based decision, eligibility, or policy-evaluation logic using the verdict rule-evaluation engine (Rule/FunctionRule/AndRule/OrRule/NotRule/RulesEngine) instead of a hand-rolled conditional chain — an if/else-if ladder, a switch or match statement, a chain of ternaries, or a wall of early returns. Use this whenever asked to build an eligibility check, a discount or pricing rule, an access/permission condition, a moderation or approval decision, a multi-condition qualification check, a feature flag combining multiple criteria, or any feature shaped like "combine several independently-changing conditions into one pass/fail verdict" — even if the user doesn't say "rule engine" or name verdict explicitly. Polyglot — the same design ships for multiple languages. Also use when extending or debugging existing verdict-based code, deciding whether new logic belongs in a rule or in your own adapter code, or writing tests for rule-based logic (short-circuit proofs, vacuous-truth cases, oracle/differential testing).
 ---
 
 # Verdict
 
 Name each condition once, combine named conditions into a verdict, and
 run it against whatever facts a caller hands over. The same
-`Rule`/`FunctionRule`/`AndRule`/`OrRule`/`RulesEngine`/`RuleResult`/
-`RunResult` shape and the same execution-model guarantees exist in
-every language verdict ships for — only the idiom changes.
+`Rule`/`FunctionRule`/`AndRule`/`OrRule`/`NotRule`/`RulesEngine`/
+`PredicateOutcome`/`RuleResult`/`RunResult` shape and the same
+execution-model guarantees exist in every language verdict ships for —
+only the idiom changes.
 
 ## Step 1 — establish the language, before anything else
 
@@ -41,7 +42,8 @@ passes its own tests while being silently incorrect:
   sub-rule evaluation specifically, not a statement about concurrency
   elsewhere in a codebase.
 - **Vacuous truth is asymmetric.** Empty `AndRule` passes; empty
-  `OrRule` fails.
+  `OrRule` fails. `NotRule` wraps exactly one rule, so it has no
+  vacuous case — it passes when that rule fails.
 - **Every sub-rule inside one composite shares the exact same context
   type.** `AndRule`/`OrRule`/`RulesEngine` hold one `TContext` for every
   sub-rule they run — this is the engine's own contract, not an
@@ -53,8 +55,24 @@ passes its own tests while being silently incorrect:
 - **Emptiness is not absence.** An empty rule list is a valid input. An
   *unknown* name or group is absence — strict lookups raise,
   `try`-prefixed ones return the absent value.
-- **Result `data` is opaque and unpadded.** Never read by verdict;
-  composite results include only what actually ran.
+- **A predicate returns a `PredicateOutcome`, never a `RuleResult`.** It
+  reports `passed` plus an optional detail and payload; the
+  `FunctionRule` wrapping it owns the rule's name and builds the
+  `RuleResult`. Returning a `RuleResult` from a predicate raises.
+- **Result `data` is opaque.** Never read or written by verdict — it
+  carries whatever a predicate attached, unchanged.
+- **A composite's children live in its result's sub-results, never in
+  `data`.** They are exactly what the composite evaluated: never padded
+  to the full sub-rule list, never flattened into the parent's level.
+- **Flattened views read the terminal checks.** Every result exposes its
+  leaves, and the failing leaves that explain a failure. The failing
+  view is an independent recursion, not a filter over the other: a
+  passing result has no failing leaves even when an earlier
+  short-circuited branch failed on the way to that pass.
+- **Key an audit trail on a leaf's own rule name, never a composite's.**
+  A composite's name says only that something in the group failed, and a
+  generated composite name changes when its children are renamed or
+  reordered. A leaf's name is the one its author chose.
 - **A predicate's exception is never caught.** It propagates uncaught,
   same as calling that code directly.
 
