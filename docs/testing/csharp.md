@@ -2,72 +2,103 @@
 # Testing verdict: C# SDK
 
 > The contracts and checklist are language-agnostic and live in
-> [`README.md`](README.md) — read that first. This page is C#'s
-> concrete realization: current state, file layout, and which test
-> proves which contract.
+> [`README.md`](README.md) — read that first. This page is C#'s concrete
+> realization: the file layout, and which test proves which contract.
 
-## Current state, as of this writing
+## The suite
 
-```text
-$ cd csharp/
-$ dotnet test tests/VerdictRules.Tests/VerdictRules.Tests.csproj
-Passed!  - Failed: 0, Passed: 61, Skipped: 0, Total: 61, Duration: 9 ms
+```bash
+cd csharp
+dotnet build src/VerdictRules/VerdictRules.csproj -warnaserror
+dotnet test tests/VerdictRules.Tests/VerdictRules.Tests.csproj
 ```
 
-Four files, not one. `RuleTests.cs` and `EngineTests.cs` are a strict,
-1:1 port of Python's own `test_rule.py`/`test_engine.py` — same test
-classes, same tests, same assertions, in C# idiom — and are the two files
-to check when auditing this package against Python's own suite.
-`CSharpIdiomTests.cs` holds exactly the coverage with no Python
-counterpart on purpose (`CancellationToken` propagation, structural typing
-for delegates only, an explicit `IRule` implementation) and is deliberately
-not part of that mirror. `GenericsTests.cs` proves `IRule<TContext>`'s
-own arity-coexistence relationship with `IRule` and that a typed context
-runs through every generic primitive identically to how a dict-context
-one runs through the non-generic primitives — including
-`CancellationToken` propagation proven separately for the generic
-composites. The direction of that relationship matters when reading
-these tests: since 0.3.2 the generic form is the implementation and the
-non-generic one is a closed specialization of it by composition, so a
-test on each arity pins that the delegation is in place rather than
-checking two separate implementations agree.
+171 tests, around 30 ms. There is no solution file, so a bare
+`dotnet build`/`dotnet test` from `csharp/` fails with "Specify a project or
+solution file" — always name the project. No external context or environment
+variables are needed; this suite is as standalone as the package.
 
-This SDK also has the second testing layer — a full, tested example
-project checked against the shared graduation fixture (see
-[`../../fixtures/graduation_verdict/README.md`](../../fixtures/graduation_verdict/README.md)),
-at [`../../csharp/examples/GraduationVerdict/`](../../csharp/examples/GraduationVerdict/README.md).
-That satisfies Stage 4 ("Prove") of
-[`../maintenance/adding-a-language.md`](../maintenance/adding-a-language.md),
-including an oracle/differential suite in this language's own idiom
-(500 generated cases, checked against an independent, verdict-rules-free
-re-implementation — see that project's own
-[`docs/testing.md`](../../csharp/examples/GraduationVerdict/docs/testing.md)).
+The stronger measure than any count is the survivor list in
+[`../maintenance/mutation-survivors-csharp.md`](../maintenance/mutation-survivors-csharp.md):
+174/176 mutants killed, both survivors accounted for.
+
+| File | Tests | Proves |
+| :-- | --: | :-- |
+| `RuleTests.cs` | 39 | `FunctionRule`/`AndRule`/`OrRule`/`NotRule` — part of the portable contract suite |
+| `DiagnosticsTests.cs` | 33 | `ToString` and `DebuggerDisplay` on every public type |
+| `EngineTests.cs` | 25 | `RunAllAsync`/`RunNamedAsync`/`RunGroupAsync` and the try-prefixed forms — part of the portable contract suite |
+| `CSharpIdiomTests.cs` | 23 | `CancellationToken` propagation, structural typing for delegates, an explicit `IRule` implementation |
+| `GenericsTests.cs` | 21 | `IRule<TContext>`'s arity coexistence and typed contexts end to end |
+| `ImmutabilityTests.cs` | 13 | Copy-on-construct, and the index range check on `DecidedByIndices` |
+| `ContextCaptureTests.cs` | 8 | That no `await` resumes on the caller's synchronization context |
+| `SerializationTests.cs` | 7 | `System.Text.Json` output, and that size stays linear in depth |
+
+**`RuleTests.cs` and `EngineTests.cs` are the portable contract suite** — the
+two files to check when auditing this package against Python's own
+`test_rule.py`/`test_engine.py`. The rest are deliberately outside that
+mirror: each covers something true only of C#, or surface each language
+realizes differently.
+
+`GenericsTests.cs` reads correctly only with the direction of the
+relationship in mind: the generic form is the implementation and the
+non-generic one is a closed specialization of it by composition, so a test on
+each arity pins that the delegation is in place rather than checking two
+independent implementations agree.
+
+[`../../.github/workflows/test-csharp.yml`](../../.github/workflows/test-csharp.yml)
+runs the suite on every pull request. The gate job is the one to mark
+required in branch protection.
+
+**The second, complementary layer**:
+[`../../csharp/examples/GraduationVerdict/`](../../csharp/examples/GraduationVerdict/README.md)
+adds 1,744 tests and
+[`MarketplaceEligibility`](../../csharp/examples/MarketplaceEligibility/README.md)
+another 32 — curated scenarios plus a generated suite checked against an
+independent, `VerdictRules`-free re-implementation of the same policy. See
+that project's own
+[`docs/testing.md`](../../csharp/examples/GraduationVerdict/docs/testing.md).
+That differential suite is what actually guards the derived result views at
+scale, and this page's own
+[`../maintenance/mutation-survivors-dart.md`](../maintenance/mutation-survivors-dart.md)
+sibling explains why that matters more in some languages than others.
 
 ## Test layout
 
 ```mermaid
 graph LR
-    RuleSrc["📄 FunctionRule.cs / AndRule.cs / OrRule.cs"]
+    RuleSrc["📄 FunctionRule.cs / AndRule.cs /<br/>OrRule.cs / NotRule.cs"]
     EngineSrc["📄 RulesEngine.cs"]
     ResultSrc["📄 RuleResult.cs / RunResult.cs"]
     GenericSrc["📄 IRuleT.cs / FunctionRuleT.cs /<br/>AndRuleT.cs / OrRuleT.cs /<br/>RulesEngineT.cs"]
     RuleTest[["🧪 RuleTests.cs"]]
     EngineTest[["🧪 EngineTests.cs"]]
+    ResultTest[["🧪 SerializationTests.cs"]]
+    ImmutTest[["🧪 ImmutabilityTests.cs"]]
+    ContextTest[["🧪 ContextCaptureTests.cs"]]
+    DiagTest[["🧪 DiagnosticsTests.cs"]]
     IdiomTest[["🧪 CSharpIdiomTests.cs"]]
     GenericsTest[["🧪 GenericsTests.cs"]]
 
     %% Link 0: RuleSrc -> RuleTest
-    RuleSrc -->|"[1]<br/>FunctionRule / AndRule / OrRule"| RuleTest
+    RuleSrc -->|"[1]<br/>the four rule shapes"| RuleTest
     %% Link 1: EngineSrc -> EngineTest
     EngineSrc -->|"[2]<br/>RunAllAsync / RunNamedAsync / RunGroupAsync"| EngineTest
-    %% Link 2: ResultSrc -> RuleTest
-    ResultSrc -.->|"[3]<br/>exercised indirectly,<br/>no dedicated test class"| RuleTest
-    %% Link 3: RuleSrc -> IdiomTest
-    RuleSrc -.->|"[4]<br/>CancellationToken, structural typing,<br/>not a portable contract"| IdiomTest
-    %% Link 4: EngineSrc -> IdiomTest
-    EngineSrc -.->|"[5]<br/>CancellationToken,<br/>not a portable contract"| IdiomTest
-    %% Link 5: GenericSrc -> GenericsTest
-    GenericSrc -->|"[6]<br/>arity coexistence, typed contexts,<br/>CancellationToken propagation"| GenericsTest
+    %% Link 2: ResultSrc -> ResultTest
+    ResultSrc -->|"[3]<br/>JSON output,<br/>linear size in depth"| ResultTest
+    %% Link 3: ResultSrc -> ImmutTest
+    ResultSrc -->|"[4]<br/>copy-on-construct,<br/>index range check"| ImmutTest
+    %% Link 4: RuleSrc -> ImmutTest
+    RuleSrc -->|"[5]<br/>copy-on-construct"| ImmutTest
+    %% Link 5: RuleSrc -> ContextTest
+    RuleSrc -->|"[6]<br/>ConfigureAwait(false)<br/>at every await site"| ContextTest
+    %% Link 6: EngineSrc -> ContextTest
+    EngineSrc -->|"[7]<br/>ConfigureAwait(false)<br/>at every await site"| ContextTest
+    %% Link 7: ResultSrc -> DiagTest
+    ResultSrc -.->|"[8]<br/>ToString / DebuggerDisplay,<br/>not a portable contract"| DiagTest
+    %% Link 8: RuleSrc -> IdiomTest
+    RuleSrc -.->|"[9]<br/>CancellationToken, structural typing,<br/>not a portable contract"| IdiomTest
+    %% Link 9: GenericSrc -> GenericsTest
+    GenericSrc -->|"[10]<br/>arity coexistence, typed contexts,<br/>CancellationToken propagation"| GenericsTest
 
     style RuleSrc fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
     style EngineSrc fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
@@ -75,21 +106,32 @@ graph LR
     style GenericSrc fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
     style RuleTest fill:#FFB84D,stroke:#E69500,stroke-width:2px,color:#000
     style EngineTest fill:#FFB84D,stroke:#E69500,stroke-width:2px,color:#000
+    style ResultTest fill:#4DABF7,stroke:#1C7ED6,stroke-width:2px,color:#000
+    style ImmutTest fill:#4DABF7,stroke:#1C7ED6,stroke-width:2px,color:#000
+    style ContextTest fill:#4DABF7,stroke:#1C7ED6,stroke-width:2px,color:#000
+    style DiagTest fill:#B47EFF,stroke:#9654E8,stroke-width:2px,color:#000
     style IdiomTest fill:#B47EFF,stroke:#9654E8,stroke-width:2px,color:#000
     style GenericsTest fill:#B47EFF,stroke:#9654E8,stroke-width:2px,color:#000
 
     %% Link Index:
-    %% 0: the three rule types are covered directly, one test class each
+    %% 0: the four rule types are covered directly, one test class each
     %% 1: the engine's run modes are covered directly
-    %% 2: RuleResult/RunResult are plain immutable classes, exercised as a side effect of the above -- no behavior of their own to test in isolation
-    %% 3-4: CancellationToken propagation and structural typing for delegates only are C#-specific, not part of the Python-parity mirror
-    %% 5: the generic siblings hold the implementation; each arity is tested directly so the non-generic specialization's delegation is pinned, not assumed
+    %% 2: the result types can leave the process, and the stored graph is a tree rather than a DAG
+    %% 3-4: every constructor taking a collection, proven to copy rather than alias it
+    %% 5-6: no await resumes on the caller's context -- invisible to every assertion on a result, so it needs its own harness
+    %% 7: ToString/DebuggerDisplay are per-language presentation, not a portable contract
+    %% 8: CancellationToken propagation and structural typing for delegates only are C#-specific, outside the Python-parity mirror
+    %% 9: the generic siblings hold the implementation; each arity is tested directly so the non-generic specialization's delegation is pinned, not assumed
     linkStyle 0 stroke:#FFCB7A,stroke-width:2px
     linkStyle 1 stroke:#FFCB7A,stroke-width:2px
-    linkStyle 2 stroke:#E0E0E0,stroke-width:2px,stroke-dasharray:5 5
-    linkStyle 3 stroke:#D0AFFF,stroke-width:2px,stroke-dasharray:5 5
-    linkStyle 4 stroke:#D0AFFF,stroke-width:2px,stroke-dasharray:5 5
-    linkStyle 5 stroke:#FFCB7A,stroke-width:2px
+    linkStyle 2 stroke:#8FC9F9,stroke-width:2px
+    linkStyle 3 stroke:#8FC9F9,stroke-width:2px
+    linkStyle 4 stroke:#8FC9F9,stroke-width:2px
+    linkStyle 5 stroke:#8FC9F9,stroke-width:2px
+    linkStyle 6 stroke:#8FC9F9,stroke-width:2px
+    linkStyle 7 stroke:#D0AFFF,stroke-width:2px,stroke-dasharray:5 5
+    linkStyle 8 stroke:#D0AFFF,stroke-width:2px,stroke-dasharray:5 5
+    linkStyle 9 stroke:#FFCB7A,stroke-width:2px
 ```
 
 ## Which test proves which contract
@@ -102,38 +144,35 @@ graph LR
 | Absence returns `null` (try-prefixed lookup) | `TryLookupTests` (`EngineTests.cs`) |
 | Fallback matrix — the present-failing row specifically | `TryLookupTests.FallbackMatrix` (`[Theory]`, one case per present/absent × pass/fail combination) |
 | `RunAllAsync`/`RunGroupAsync` never short-circuit | `RunAllTests.DoesNotShortCircuitUnlikeAndRule` (`EngineTests.cs`) |
-| No flattening of a composite's own sub-results | `AndRuleTests.DataCarriesSubResultsUpToFailure` (`RuleTests.cs`) |
+| No flattening of a composite's own sub-results | `AndRuleTests.SubResultsCarriesSubResultsUpToFailure`, `NotRuleTests.SubResultsTruthfullyCarriesTheOneInnerResult` (`RuleTests.cs`) |
 | Duplicate name, last one wins | `ConstructionTests.DuplicateNamesLastOneWinsInByNameLookup` (`EngineTests.cs`) |
 | A predicate's exception is never caught | `EngineExceptionPropagationTests.RunAllDoesNotCatchAPredicatesException`, `RunGroupDoesNotCatchAPredicatesException` (`EngineTests.cs`); `RuleExceptionPropagationTests.AndRuleDoesNotCatchASubRulesException`, `OrRuleDoesNotCatchASubRulesException` (`RuleTests.cs`) |
+| `GetFailingLeaves()` is an independent recursion | `MixedCompositeTreeTests` (`RuleTests.cs`) |
+| `GetDecidedBy()` is one level, non-recursive | `ImmutabilityTests.DecidedByCannotDisagreeWithSubResults`; the nested cases in `MixedCompositeTreeTests` |
+| Copy-on-construct, every collection parameter | `ImmutabilityTests.cs` |
+| A result serializes, and size is linear in depth | `SerializationTests.cs` |
+| No `await` resumes on the caller's context | `ContextCaptureTests.cs` |
 
-Not part of this table on purpose — `CSharpIdiomTests.cs` proves
+Confirmed to actually bite, not just present: flipping a single
+`ConfigureAwait(false)` to `true` fails seven of the eight
+`ContextCaptureTests`, and inverting `ShortCircuitEvaluator`'s
+`vacuousResult` fails four tests across `RuleTests.cs` and `EngineTests.cs`.
+
+Deliberately outside the contract table: `CSharpIdiomTests.cs` proves
 `CancellationToken` propagation (checked once before any rule runs *and*
 again between sub-rules, so an already-cancelled token evaluates nothing
 while a token cancelled mid-run still stops at the next boundary —
 `CancellationContractTests` and
 `AndRuleIdiomTests.CancellationStopsBeforeTheNextSubRuleEvenMidRun`
-respectively), C#'s structural typing for delegates only, and an explicit
-`IRule` implementation composing like any other. `GenericsTests.cs`
-proves `IRule<TContext>`'s own generic mechanics (arity coexistence, a
-typed context running through every generic primitive, generic
-`CancellationToken` propagation). None of these are universal
-contracts; none get ported to another language's own suite.
-
-## Running tests
-
-```bash
-cd csharp
-dotnet build src/VerdictRules/VerdictRules.csproj -warnaserror
-dotnet test tests/VerdictRules.Tests/VerdictRules.Tests.csproj
-```
-
-There is no solution file, so a bare `dotnet build`/`dotnet test` from
-`csharp/` fails with "Specify a project or solution file" — always name
-the project explicitly. No external project context or environment
-variables are needed — this package's test suite is as standalone as
-the package itself.
+respectively), structural typing for delegates only, and an explicit `IRule`
+implementation composing like any other. None of these are universal
+contracts, and none get ported to another language's suite.
 
 ## Related
 
-- [`README.md`](README.md) — the language-agnostic contracts this page
-  proves concretely.
+- [`README.md`](README.md) — the language-agnostic contracts this page proves
+  concretely.
+- [`../maintenance/mutation-survivors-csharp.md`](../maintenance/mutation-survivors-csharp.md) —
+  what the suite provably catches, beyond what it executes.
+- [`../../csharp/examples/GraduationVerdict/docs/testing.md`](../../csharp/examples/GraduationVerdict/docs/testing.md) —
+  the second testing layer's own doc.
