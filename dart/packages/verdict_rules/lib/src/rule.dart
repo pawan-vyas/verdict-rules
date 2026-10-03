@@ -166,14 +166,14 @@ class SequentialEvaluator<TContext> {
         // -> all of them. Provably wrong for ShortCircuitEvaluator
         // specifically, which overrides this below using the one extra
         // fact (stopOn) a fully generic decider has no access to.
-        final decidedBy = soFar.length == rules.length
-            ? List<RuleResult>.unmodifiable(soFar)
-            : <RuleResult>[latest];
+        final decidedByIndices = soFar.length == rules.length
+            ? <int>[for (var i = 0; i < soFar.length; i++) i]
+            : <int>[soFar.length - 1];
         return RuleResult(
           ruleName: name,
           passed: early,
           subResults: List.unmodifiable(soFar),
-          decidedBy: decidedBy,
+          decidedByIndices: decidedByIndices,
         );
       }
     }
@@ -182,7 +182,7 @@ class SequentialEvaluator<TContext> {
       ruleName: name,
       passed: decided ?? _vacuousResult,
       subResults: List.unmodifiable(soFar),
-      decidedBy: List.unmodifiable(soFar),
+      decidedByIndices: [for (var i = 0; i < soFar.length; i++) i],
     );
   }
 
@@ -216,7 +216,8 @@ class ShortCircuitEvaluator<TContext> {
           vacuousResult: !stopOn,
         );
 
-  /// See [SequentialEvaluator.evaluate] -- same result, except [decidedBy]
+  /// See [SequentialEvaluator.evaluate] -- same result, except
+  /// [RuleResult.decidedBy]
   /// is recomputed here rather than trusting [SequentialEvaluator]'s own
   /// generic rule.
   ///
@@ -232,16 +233,18 @@ class ShortCircuitEvaluator<TContext> {
     TContext context,
   ) async {
     final result = await _inner.evaluate(name, rules, context);
-    final last = result.subResults.isNotEmpty ? result.subResults.last : null;
-    final decidedBy =
-        last != null && last.passed == _stopOn ? [last] : result.subResults;
+    final total = result.subResults.length;
+    final last = total > 0 ? result.subResults.last : null;
+    final triggered = last != null && last.passed == _stopOn;
+    final decidedByIndices =
+        triggered ? <int>[total - 1] : <int>[for (var i = 0; i < total; i++) i];
     return RuleResult(
       ruleName: result.ruleName,
       passed: result.passed,
       detail: result.detail,
       data: result.data,
       subResults: result.subResults,
-      decidedBy: decidedBy,
+      decidedByIndices: decidedByIndices,
     );
   }
 
@@ -367,8 +370,8 @@ class NotRule<TContext> implements Rule<TContext> {
   /// [RuleResult.failingLeaves] safe to call on any [RuleResult] at all, so
   /// [NotRule] doesn't get to special-case it away just because a failed
   /// [NotRule]'s own `failingLeaves` can otherwise read as misleadingly
-  /// empty (the cause is a pass, not a failure). `decidedBy` is `[inner]`
-  /// unconditionally, in both directions -- correct either way, since
+  /// empty (the cause is a pass, not a failure). `decidedBy` is the one
+  /// inner result unconditionally, in both directions -- correct either way, since
   /// "inner passed" is genuinely why a failing [NotRule] failed, not an
   /// inconsistency.
   @override
@@ -378,7 +381,7 @@ class NotRule<TContext> implements Rule<TContext> {
       ruleName: name,
       passed: !inner.passed,
       subResults: [inner],
-      decidedBy: [inner],
+      decidedByIndices: [0],
     );
   }
 

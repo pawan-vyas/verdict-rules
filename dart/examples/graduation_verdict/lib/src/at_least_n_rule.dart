@@ -44,7 +44,10 @@ class AtLeastNRule implements Rule<Context> {
       passed: result.passed,
       detail: '$passedCount of ${_rules.length} passed, needed $_minimum',
       subResults: result.subResults,
-      decidedBy: result.decidedBy,
+      // Forwarded as positions, which is also what the evaluator stored: the
+      // sub-results carry over unchanged, so the positions still name the
+      // same children.
+      decidedByIndices: result.decidedByIndices,
     );
   }
 }

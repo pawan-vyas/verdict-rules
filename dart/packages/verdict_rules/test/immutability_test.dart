@@ -60,17 +60,50 @@ void main() {
       expect(result.subResults.map((r) => r.ruleName), ['child']);
     });
 
-    test('decidedBy is copied', () {
+    test('decidedByIndices is copied', () {
       final child = RuleResult(ruleName: 'child', passed: false);
-      final held = [child];
+      final held = [0];
       final result = RuleResult(
         ruleName: 'parent',
         passed: false,
         subResults: [child],
-        decidedBy: held,
+        decidedByIndices: held,
       );
       held.clear();
       expect(result.decidedBy.map((r) => r.ruleName), ['child']);
+    });
+
+    test('an index naming a child that does not exist is rejected', () {
+      // The one way the indices form can be wrong, caught at construction
+      // rather than when something later reads decidedBy. The objects form
+      // admitted no equivalent check -- nothing stopped it naming a result
+      // that was never a child of this one.
+      final child = RuleResult(ruleName: 'child', passed: false);
+
+      expect(
+        () => RuleResult(
+          ruleName: 'parent',
+          passed: false,
+          subResults: [child],
+          decidedByIndices: [1],
+        ),
+        throwsArgumentError,
+      );
+    });
+
+    test('decidedBy cannot disagree with subResults', () {
+      // decidedBy is derived, so there is no second stored list that could
+      // drift out of step with the children it names.
+      final a = RuleResult(ruleName: 'a', passed: true);
+      final b = RuleResult(ruleName: 'b', passed: false);
+      final result = RuleResult(
+        ruleName: 'parent',
+        passed: false,
+        subResults: [a, b],
+        decidedByIndices: [1],
+      );
+
+      expect(result.decidedBy.first, same(result.subResults[1]));
     });
 
     test('RunResult.results is copied', () {
@@ -105,7 +138,7 @@ void main() {
         throwsUnsupportedError,
       );
       expect(
-        () => result.decidedBy.add(RuleResult(ruleName: 'x', passed: true)),
+        () => result.decidedByIndices.add(0),
         throwsUnsupportedError,
       );
       expect(
@@ -114,6 +147,24 @@ void main() {
             .add(RuleResult(ruleName: 'x', passed: true)),
         throwsUnsupportedError,
       );
+    });
+
+    test('mutating a derived list changes nothing on the result', () {
+      // decidedBy, leaves and failingLeaves each build a fresh list per call,
+      // so they are growable -- but writing to one is writing to a copy. The
+      // stored lists above are what must reject mutation.
+      final result = RuleResult(
+        ruleName: 'parent',
+        passed: false,
+        subResults: [RuleResult(ruleName: 'child', passed: false)],
+        decidedByIndices: [0],
+      );
+
+      result.decidedBy.add(RuleResult(ruleName: 'x', passed: true));
+      result.leaves.clear();
+
+      expect(result.decidedBy.map((r) => r.ruleName), ['child']);
+      expect(result.leaves.map((l) => l.ruleName), ['child']);
     });
   });
 

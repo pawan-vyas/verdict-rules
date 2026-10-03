@@ -2,10 +2,9 @@
 /// forwarders.
 ///
 /// `failingLeaves` is an independent recursion, not a filter over `leaves`
-/// -- see RuleResult.failingLeaves's own doc comment and
-/// .agents/plans/composite-rule-and-leaves-redesign/README.md §2 for the
-/// exact formula this file pins down case by case. A Dart-idiom sibling of
-/// Python's own test_result.py.
+/// -- see RuleResult.failingLeaves's own doc comment for the exact formula
+/// this file pins down case by case. A Dart-idiom sibling of Python's own
+/// test_result.py.
 library;
 
 import 'package:test/test.dart';

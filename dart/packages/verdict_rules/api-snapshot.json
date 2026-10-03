@@ -3,7 +3,7 @@
     "packageApi": {
         "packageName": "verdict_rules",
         "packageVersion": "0.4.0",
-        "packagePath": "/var/folders/dt/_1vx47rj39b_yb9t0cgpk7880000gn/T/T7UiO9",
+        "packagePath": "/var/folders/dt/_1vx47rj39b_yb9t0cgpk7880000gn/T/GJocMr",
         "interfaceDeclarations": [
             {
                 "name": "RulesEngine",
@@ -228,6 +228,18 @@
                 ],
                 "executableDeclarations": [
                     {
+                        "returnTypeName": "Map<String, dynamic>",
+                        "name": "toJson",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "parameters": [],
+                        "typeParameterNames": [],
+                        "type": "method",
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/result.dart"
+                    },
+                    {
                         "returnTypeName": "RunResult",
                         "name": "new",
                         "isDeprecated": false,
@@ -322,6 +334,18 @@
                 ],
                 "executableDeclarations": [
                     {
+                        "returnTypeName": "Map<String, dynamic>",
+                        "name": "toJson",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "parameters": [],
+                        "typeParameterNames": [],
+                        "type": "method",
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/result.dart"
+                    },
+                    {
                         "returnTypeName": "RuleResult",
                         "name": "new",
                         "isDeprecated": false,
@@ -375,10 +399,10 @@
                             {
                                 "isRequired": false,
                                 "isNamed": true,
-                                "name": "decidedBy",
+                                "name": "decidedByIndices",
                                 "isDeprecated": false,
                                 "isExperimental": false,
-                                "typeName": "List<RuleResult>",
+                                "typeName": "List<int>",
                                 "relativePath": "lib/src/result.dart"
                             }
                         ],
@@ -437,6 +461,17 @@
                     {
                         "typeName": "List<RuleResult>",
                         "name": "subResults",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/result.dart",
+                        "isReadable": true,
+                        "isWriteable": false
+                    },
+                    {
+                        "typeName": "List<int>",
+                        "name": "decidedByIndices",
                         "isDeprecated": false,
                         "isExperimental": false,
                         "isStatic": false,
