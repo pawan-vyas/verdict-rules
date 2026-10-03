@@ -9,15 +9,15 @@
 > the run itself is
 > [`../../scripts/run_mutation_python.sh`](../../scripts/run_mutation_python.sh).
 
-## Score: 224/225 killed (99.6%), one equivalent mutant, zero real gaps
+## Score: 241/242 killed (99.6%), one equivalent mutant, zero real gaps
 
 mutmut 3.8.0, against `python/packages/verdict-rules/src/verdict/`:
 
 | Module | Mutants | Survivors |
 | :-- | --: | --: |
-| `rule.py` | 157 | 1 (equivalent) |
+| `rule.py` | 167 | 1 (equivalent) |
 | `engine.py` | 41 | 0 |
-| `result.py` | 27 | 0 |
+| `result.py` | 34 | 0 |
 | `__init__.py` | 0 | -- |
 
 `rm -rf python/packages/verdict-rules/mutants/` before re-running after a
@@ -42,15 +42,16 @@ identical default. No input to `SequentialEvaluator.evaluate` can make the two
 disagree in any observable respect, which is the narrow provable bar for
 equivalence rather than a gap.
 
-## What mutation testing does not cover here: `leaves`/`failing_leaves`
+## What mutation testing does not cover here: the derived accessors
 
-`result.py`'s two `__post_init__` methods mutate normally (27 mutants, all
+`result.py`'s two `__post_init__` methods mutate normally (34 mutants, all
 killed, by
 [`tests/test_immutability.py`](../../python/packages/verdict-rules/tests/test_immutability.py)).
-Its four `@property` accessors — `leaves` and `failing_leaves` on both
-`RuleResult` and `RunResult` — generate **zero** mutants, despite containing
-real conditional logic (`if not self.sub_results`, `if self.passed`, two
-independent recursive comprehensions).
+Its five `@property` accessors — `decided_by`, `leaves` and `failing_leaves`
+on `RuleResult`, `leaves` and `failing_leaves` on `RunResult` — generate
+**zero** mutants, despite containing real conditional logic (`if not
+self.sub_results`, `if self.passed`, three independent comprehensions, one of
+them the index-to-child mapping `decided_by` is entirely made of).
 
 This is a mutmut 3.8.0 limitation, isolated to a minimal reproduction: a
 `@property`- or `@functools.cached_property`-decorated method inside a
@@ -65,10 +66,14 @@ run uses.
 Nothing here is listed as equivalent, because equivalence requires an actual
 mutant to be indistinguishable from the original and there is no mutant to
 begin with. The accessors are instead held by direct unit tests —
-`TestLeaves`/`TestFailingLeaves` in
-[`tests/test_result.py`](../../python/packages/verdict-rules/tests/test_result.py)
+`TestLeaves`/`TestFailingLeaves`/`TestSerialization` in
+[`tests/test_result.py`](../../python/packages/verdict-rules/tests/test_result.py),
+`TestDecidedBy` in
+[`tests/test_composition.py`](../../python/packages/verdict-rules/tests/test_composition.py)
 — whose adequacy was confirmed the way a survivor would otherwise confirm it:
 by reverting each property's logic by hand and watching those tests fail.
+Replacing `decided_by`'s body with `list(self.sub_results)`, for instance,
+fails seven tests across three files.
 
 `__init__.py` generates zero mutants for the ordinary reason — it re-exports
 and holds no logic.

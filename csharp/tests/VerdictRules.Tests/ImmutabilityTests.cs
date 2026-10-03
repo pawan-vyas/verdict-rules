@@ -120,8 +120,31 @@ public class ImmutabilityTests
         // result that was never a child of this one.
         var child = new RuleResult("child", false);
 
-        Assert.Throws<ArgumentOutOfRangeException>(
+        var error = Assert.Throws<ArgumentOutOfRangeException>(
             () => new RuleResult("parent", false, subResults: [child], decidedByIndices: [1]));
+
+        // The type is what a caller catches on, but the message is the whole
+        // value of the check: it has to name which index was wrong, how many
+        // children there actually were, and which rule's result it was, or
+        // whoever hits it has to go find all three themselves.
+        Assert.Equal("decidedByIndices", error.ParamName);
+        Assert.Contains("[1]", error.Message);
+        Assert.Contains("1 sub-result(s)", error.Message);
+        Assert.Contains("'parent'", error.Message);
+    }
+
+    [Fact]
+    public void EveryOffendingIndexIsNamed()
+    {
+        // More than one bad index, and a negative one: reporting only the
+        // first would send someone back for a second round, and a single-index
+        // test cannot see the separator between them at all.
+        var child = new RuleResult("child", false);
+
+        var error = Assert.Throws<ArgumentOutOfRangeException>(
+            () => new RuleResult("parent", false, subResults: [child], decidedByIndices: [-1, 0, 4]));
+
+        Assert.Contains("[-1, 4]", error.Message);
     }
 
     [Fact]

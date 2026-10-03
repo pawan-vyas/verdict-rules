@@ -195,6 +195,16 @@ when walking a result tree:
 | `decided_by` | Which of those children *explain this result's own verdict* | One level, a subset of `sub_results` |
 | `leaves` / `failing_leaves` | The terminal checks at the bottom of the whole tree | Fully recursive — flattens every nesting level |
 
+**Only `sub_results` is stored; the other two are derived.** A result holds
+its children and the *positions* of the deciding ones
+(`decided_by_indices`), and computes everything else on access. This is what
+makes a result serializable, and both derivations would otherwise break it:
+a leaf's own leaves list is itself, so storing it puts the result inside the
+result; and storing the deciding children as results rather than positions
+makes the object graph a DAG, which every tree-shaped encoder expands once
+per path — doubling the output at every nesting level. Storing one tree and
+deriving the rest leaves nothing for the two views to disagree with either.
+
 **`sub_results` is exactly what ran, never padded, never flattened.** A
 short-circuited `AndRule` or `OrRule`'s `sub_results` holds only the
 sub-rules actually evaluated before stopping — the diagram above shows
