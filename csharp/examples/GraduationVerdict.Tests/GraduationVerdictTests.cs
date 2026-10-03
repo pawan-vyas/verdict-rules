@@ -288,6 +288,14 @@ public class SharedFixtureContractTests
         var result = await engine.RunAllAsync(record.Context);
         Assert.Equal(expected.GetProperty("evaluated").GetInt32(), result.Results.Count);
         Assert.Equal(expected.GetProperty("passed").GetBoolean(), result.Passed);
+        // The run's own view, not the composite's. elena is why this is
+        // asserted separately: she passes every registered subject, so the run
+        // has no failing leaves -- even though FRENCH101's written paper failed
+        // before her exemption carried it. A filter over GetLeaves() would
+        // surface that paper and report a failure on a passing run.
+        var expectedRunFailing = expected.GetProperty("failing_leaves")
+            .EnumerateArray().Select(e => e.GetString() ?? string.Empty).ToList();
+        Assert.Equal(expectedRunFailing, result.GetFailingLeaves().Select(l => l.RuleName));
     }
 
     [Theory]
@@ -340,6 +348,9 @@ public class VacuousTruthEdgeCasesTests
         var runAll = await engine.RunAllAsync(student);
         Assert.Equal(expected.GetProperty("run_all").GetProperty("evaluated").GetInt32(), runAll.Results.Count);
         Assert.Equal(expected.GetProperty("run_all").GetProperty("passed").GetBoolean(), runAll.Passed);
+        var expectedEdgeFailing = expected.GetProperty("run_all").GetProperty("failing_leaves")
+            .EnumerateArray().Select(e => e.GetString() ?? string.Empty).ToList();
+        Assert.Equal(expectedEdgeFailing, runAll.GetFailingLeaves().Select(l => l.RuleName));
 
         // The strict form throws; the try-prefixed form returns null.
         var lookups = expected.GetProperty("lookups");

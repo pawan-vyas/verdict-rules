@@ -268,6 +268,13 @@ void main() {
         final result = await engine.runAll(record.context);
         expect(result.results.length, expected['evaluated']);
         expect(result.passed, expected['passed']);
+        // The run's own view, not the composite's. elena is why this is
+        // asserted separately: she passes every registered subject, so the
+        // run has no failing leaves -- even though FRENCH101's written paper
+        // failed before her exemption carried it. A filter over `leaves`
+        // would surface that paper and report a failure on a passing run.
+        expect(result.failingLeaves.map((l) => l.ruleName).toList(),
+            expected['failing_leaves']);
       });
 
       test('$studentId: group results match', () async {
@@ -319,6 +326,9 @@ void main() {
         expect(runAll.results.length, expectedRunAll['evaluated'],
             reason: caseName);
         expect(runAll.passed, expectedRunAll['passed'], reason: caseName);
+        expect(runAll.failingLeaves.map((l) => l.ruleName).toList(),
+            expectedRunAll['failing_leaves'],
+            reason: caseName);
 
         // The strict form throws; the try-prefixed form returns null.
         final lookups = expected['lookups'] as Map<String, Object?>;

@@ -229,11 +229,11 @@ Every student carries an `expected` block:
 | `passed` | The verdict itself |
 | `rules_evaluated` | **Short-circuiting is real.** Counts only the top-level sub-rules that actually ran |
 | `failing_rule` | The correct rule is blamed, not merely *a* failure |
-| `failing_chain` | `RuleResult.data` is **never flattened** — the path is preserved through nesting |
-| `leaves` | Every actual leaf-level rule the composite evaluated, in evaluation order, regardless of pass/fail — `RuleResult.SubResults` recursion stops at the real terminal checks, not at wherever a composite's own name sits |
+| `failing_chain` | A composite's children are **never flattened** — the path is preserved through nesting, in `sub_results` |
+| `leaves` | Every actual leaf-level rule the composite evaluated, in evaluation order, regardless of pass/fail — the sub-results recursion stops at the real terminal checks, not at wherever a composite's own name sits |
 | `failing_leaves` | A passing result has none, ever — even one that short-circuited past an earlier failure on the way to passing (`elena`). A failing result is never empty either, falling back to itself when no leaf underneath actually failed (negation's own case, not exercised by this curriculum but proven separately in each language's own unit tests) |
 | `decided_by` | The one-level, non-recursive explanation for the top-level composite's own verdict — every top-level member when it fully passed (`alice`, `elena`, `harish`), exactly the one that decided it otherwise, **regardless of position** — `gita` fails on `attendance_met`, the *last* of the four top-level members, and `decided_by` is still just `["attendance_met"]`, not all four, proving the distinction holds even when a single-cause failure happens to land on the last item evaluated |
-| `run_all` | `run_all` never short-circuits: it reports every registered rule regardless of failure |
+| `run_all` | `run_all` never short-circuits: it reports every registered rule regardless of failure. Its own `failing_leaves` is pinned separately from the composite's, because the two answer different questions and can disagree in both directions: `elena` passes every registered subject so the run has none, even though her French written paper failed before her exemption carried it, while `harish` graduates with `ELECTIVE_CS` failing, so the run reports a failure the composite does not. A run's failing leaves forward to each result's own view and are never a filter over its `leaves` |
 | `groups` | Group registration and dispatch work, including that a group's verdict is an "all passed" over its members |
 
 ### The contrasts worth understanding

@@ -307,6 +307,12 @@ class TestSharedFixtureContract:
         result = await engine.run_all(context)
         assert len(result.results) == expected["evaluated"]
         assert result.passed == expected["passed"]
+        # The run's own view, not the composite's. elena is why this is
+        # asserted separately: she passes every registered subject, so the
+        # run has no failing leaves -- even though FRENCH101's written paper
+        # failed before her exemption carried it. A filter over `leaves`
+        # would surface that paper and report a failure on a passing run.
+        assert [leaf.rule_name for leaf in result.failing_leaves] == expected["failing_leaves"]
 
     @pytest.mark.parametrize("student_id", list(_STUDENTS.keys()))
     async def test_group_results_match(self, student_id: str) -> None:
@@ -348,6 +354,9 @@ class TestVacuousTruthEdgeCases:
         run_all = await engine.run_all(student)
         assert len(run_all.results) == expected["run_all"]["evaluated"], case_name
         assert run_all.passed == expected["run_all"]["passed"], case_name
+        assert [leaf.rule_name for leaf in run_all.failing_leaves] == expected["run_all"][
+            "failing_leaves"
+        ], case_name
 
         # The strict form raises; the try_ form returns None.
         lookups = expected["lookups"]

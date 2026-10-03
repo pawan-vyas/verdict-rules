@@ -48,7 +48,7 @@ engine.ruleNames, engine.groupNames        // Iterable<String> of what exists
 
 RuleResult(ruleName: name, passed: true, detail: '', data: null,
             subResults: const [], decidedByIndices: const [])
-const RuleResult.leaf(ruleName: n, passed: p, detail: '', data: null)  // no children; const-able
+const RuleResult.leaf(ruleName: n, passed: p, detail: '', data: null)  // no children, so const works
 RunResult(passed: true, results: [...])
 ```
 

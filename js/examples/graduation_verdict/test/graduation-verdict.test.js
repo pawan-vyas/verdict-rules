@@ -328,6 +328,15 @@ describe("shared fixture contract", () => {
       const result = await engine.runAll(context);
       assert.equal(result.results.length, expected.evaluated);
       assert.equal(result.passed, expected.passed);
+      // The run's own view, not the composite's. elena is why this is
+      // asserted separately: she passes every registered subject, so the run
+      // has no failing leaves -- even though FRENCH101's written paper failed
+      // before her exemption carried it. A filter over `leaves` would surface
+      // that paper and report a failure on a passing run.
+      assert.deepEqual(
+        result.failingLeaves.map((l) => l.ruleName),
+        expected.failing_leaves,
+      );
     });
 
     it(`${studentId}: group results match`, async () => {
@@ -368,6 +377,11 @@ describe("vacuous-truth edge cases", () => {
       const runAll = await engine.runAll(student);
       assert.equal(runAll.results.length, expected.run_all.evaluated, caseName);
       assert.equal(runAll.passed, expected.run_all.passed, caseName);
+      assert.deepEqual(
+        runAll.failingLeaves.map((l) => l.ruleName),
+        expected.run_all.failing_leaves,
+        caseName,
+      );
 
       // The strict form throws; the try-prefixed form returns undefined.
       const lookups = expected.lookups;
