@@ -2,9 +2,9 @@
 # Doc authoring standard
 
 > The rules every doc in this repo follows, and where a doc category
-> with its own extra structure (sample docs, this `maintenance/`
-> directory itself) documents that structure on top of this file rather
-> than repeating it. [`AGENTS.md`](../../../AGENTS.md)'s "Cross-language
+> with its own extra structure (this `maintenance/` directory itself,
+> each doc family below) documents that structure on top of this file
+> rather than repeating it. [`AGENTS.md`](../../../AGENTS.md)'s "Cross-language
 > coding & doc conventions" section already covers blockquote framing,
 > mermaid diagrams, and the em-dash rule for data values — this doc adds
 > what isn't written down there yet.
@@ -73,9 +73,9 @@ problem than the bare mention:**
   file** — "every directory gets its own `README.md`," "each package's
   own `CHANGELOG.md`." There is no single file a reader would jump to,
   so there is nothing to link.
-- **A file that doesn't exist yet** — a future language's
-  `releases/csharp.md` before C# ships, a sample directory's `<slug>/`
-  before it's created. A link to a target that doesn't exist yet is a
+- **A file that doesn't exist yet** — a future language's own
+  `releases/<language>.md` before that language ships, a scenario
+  directory's `<slug>/` before it's created. A link to a target that doesn't exist yet is a
   broken link today, which is the exact failure this rule exists to
   prevent, not a case it should manufacture.
 
@@ -87,7 +87,7 @@ scroll to the bottom and back for every reference.
 ## A doc category that will grow per-variant is a directory, not a flat file family
 
 If a doc is ever going to need more than one instance of the same shape
-— one per language, one per registry, one per sample scenario — it
+— one per language, one per registry, one per extension scenario — it
 starts as `<category>/README.md` plus one file per instance, not a
 single file that grows a new section per variant. See
 [`maintenance.md`](maintenance.md) for the concrete pattern as applied
@@ -137,10 +137,9 @@ which concrete `<language>.md` exists, and never hedges with "today":
   scenario, a sample, `testing/`) — never a same-directory
   implementation file the directory listing already shows for free.
 
-This was found the hard way: seven sample specs, seven extending
-scenarios, both authoring templates, and `architecture/README.md`'s own
-opening blockquote all repeated some variant of the pointer this rule
-now forbids — see
+This was found the hard way: every extension scenario, both authoring
+templates, and `architecture/README.md`'s own opening blockquote
+repeated some variant of the pointer this rule now forbids — see
 [`../../../.agents/memory/shared-docs-never-name-one-languages-file.md`](../../../.agents/memory/shared-docs-never-name-one-languages-file.md)
 for the full account of how it spread before anyone noticed the
 pattern, not just the rule that came out of it.

@@ -28,10 +28,11 @@ small, generic `<language>.md` per language
 is the current example) — illustrative code, not a contract, kept
 deliberately generic (a rate-limiting or access-control illustration,
 never a real named consumer's domain) so a reader isn't left with only
-prose. Its spec still points at the samples that are real, full-scale
-instances of it. Only a scenario with no code worth showing at all
-skips the `<language>.md` file entirely; nothing reserves the slot for
-a language that hasn't written one.
+prose. Its spec still points at the
+[`fixtures/`](../../../fixtures/README.md) scenarios, which are real,
+full-scale instances of it. Only a scenario with no code worth showing
+at all skips the `<language>.md` file entirely; nothing reserves the
+slot for a language that hasn't written one.
 
 ## Spec file structure
 
@@ -50,7 +51,8 @@ In order:
 4. **What this demonstrates** — a checklist, one bullet per point the
    scenario proves.
 5. **Related** — links to sibling scenarios, the architecture doc, and
-   any sample that is a concrete instance of this scenario in practice.
+   any [fixture](../../../fixtures/README.md) that is a concrete,
+   full-scale instance of this scenario in practice.
 
 ## Implementation file structure
 
@@ -61,27 +63,30 @@ In order:
 2. **The code** — the real, concrete implementation in that language's
    own idiom, matching the spec's diagram and reasoning exactly enough
    that the two are recognizably the same scenario.
-3. **Related** — the spec link, and any sample whose implementation is a
-   fuller worked version of the same code shown here.
+3. **Related** — the spec link, and any fixture whose implementation is
+   a fuller worked version of the same code shown here.
 
-Unlike a sample doc, an extending-scenario implementation file has no
-naive/`verdict` contrast to draw — there is no "obvious first attempt"
-being critiqued here, only the extension mechanism itself. Use a plain
-heading naming what the code shows, not "The `verdict` way".
+An extending-scenario implementation file has no naive-versus-correct
+contrast to draw — there is no "obvious first attempt" being critiqued
+here, only the extension mechanism itself. Use a plain heading naming
+what the code shows.
 
-## Sample-specific rules, on top of the general standard
+## Rules specific to this category
 
-- **Real code in both halves, not pseudo-code in the spec.** Unlike a
-  sample spec, an extending-scenario spec's own diagram and prose are
-  the language-agnostic part; a code block that appears in the spec
-  (rare) is illustrative shorthand, not a contract every language must
-  match verbatim, since these scenarios describe an extension mechanism
-  each language's own idiom expresses somewhat differently.
-- **Point at a sample instead of duplicating one.** If a full worked
-  sample already demonstrates this scenario end-to-end
-  the scenario's own code stays a short,
-  illustrative version and links to the sample for the fuller one,
-  rather than repeating it.
+- **Real code in both halves, and it has to run.** The spec's diagram
+  and prose are the language-agnostic part; a code block in the spec
+  (rare) is illustrative shorthand rather than a contract every language
+  matches verbatim, since each idiom expresses an extension mechanism
+  somewhat differently. Every `<language>.md` block, though, is real code
+  a reader will paste — execute it against the installed package before
+  calling the file done, and compare any commented output against what
+  actually printed. Six of the eight scenarios shipped broken code for
+  three languages at once because nobody had run them.
+- **Point at a fixture instead of duplicating one.** Where a
+  [fixture](../../../fixtures/README.md) already demonstrates this
+  scenario end-to-end, the scenario's own code stays a short,
+  illustrative version and links to the fuller one rather than repeating
+  it.
 
 ## Adding a new scenario
 
