@@ -14,7 +14,7 @@ editable local path.
 
 Release procedure, once a change is ready to ship:
 
-1. Bump `python/pyproject.toml`'s `version` (semver;
+1. Bump `python/packages/verdict-rules/pyproject.toml`'s `version` (semver;
    `0.x` while the public API is still settling — a breaking change
    bumps `MINOR` pre-1.0, `MAJOR` after).
 
@@ -39,7 +39,9 @@ full test matrix, builds, publishes to PyPI via Trusted Publishing, then
 tags and cuts the GitHub release — in that order, each step gated on the
 one before it, per the shared pipeline shape.
 
-`pyproject.toml`'s `version` field is the single source of truth for
+That package's own `pyproject.toml` holds the version — the workspace
+root has no `[project]` table at all, which is also why `uv build` needs
+`--package` (below). Its `version` field is the single source of truth for
 what shipped — CI asserts it matches the tag being pushed and fails
 loudly on drift, rather than silently publishing a mismatch.
 

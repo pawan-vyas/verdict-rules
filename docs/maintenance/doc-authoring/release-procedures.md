@@ -96,5 +96,7 @@ before any code exists.
 - [`../releases/README.md`](../releases/README.md) — the shared release
   pipeline this file's own steps plug into.
 - [`../supply-chain-and-ownership.md`](../supply-chain-and-ownership.md) —
-  where a registry's provenance detail moves permanently once that
-  language actually ships, per that doc's own stated rule.
+  the cross-registry comparison this file's own Provenance section points
+  at. The per-registry detail travels the other way: it lives in that
+  shared file only until the language ships, then moves *here*, per that
+  doc's own stated rule.
