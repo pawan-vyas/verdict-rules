@@ -67,3 +67,27 @@
     with -- DebuggerDisplay is a private property and DebuggerTypeProxy
     names an internal nested type, so PublicApiAnalyzers never reports
     them regardless.
+
+- symbol: { csharp: StepDecider.Invoke }
+  reason: >
+    Every C# delegate type automatically exposes Invoke as part of the
+    delegate pattern itself, the same artifact RulePredicate.Invoke above
+    records -- not a member this package chose to add.
+
+- symbol: { csharp: "PredicateOutcome.ToString,SequentialEvaluator.ToString,ShortCircuitEvaluator.ToString" }
+  reason: >
+    C# alone reports these. PredicateOutcome is a plain carrier whose
+    Python counterpart gets __repr__ from @dataclass without griffe
+    reporting it as a declared member, Dart's is dropped by
+    dart_apitool's @override handling, and JS's is a plain interface with
+    no runtime shape; the evaluators are composition helpers that only C#
+    gives an override to. No shared shape to assert as a concept row.
+
+- symbol: { js: "RuleResultInit,RuleResultInit.detail,RuleResultInit.data,RuleResultInit.subResults,RuleResultInit.decidedBy" }
+  reason: >
+    The options-object a RuleResult constructor call passes its optional
+    fields in. JS/TS has no named-parameter or keyword-argument syntax, so
+    an options object is the ecosystem's substitute for what Python's
+    keyword arguments, Dart's named parameters and C#'s named/optional
+    arguments express on the constructor directly -- those three need no
+    such type.

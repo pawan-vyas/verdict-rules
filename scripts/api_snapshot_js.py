@@ -61,11 +61,20 @@ _TYPE_HEADER_RE = re.compile(
 # into; matches api-concepts.yaml's own `member: ""` rows exactly.
 _TYPE_ALIAS_RE = re.compile(r"^export\s+type\s+(?P<name>[A-Za-z_$][\w$]*)\b.*;$")
 
-# A member line's own name, after stripping the `readonly`/`get` modifiers
-# api-extractor prints ahead of a field or accessor: `readonly name: string;`,
-# `get groupNames(): readonly string[];`, `evaluate(context: T): ...;`.
+# A member line's own name, after stripping the `static`/`readonly`/`get`
+# modifiers api-extractor prints ahead of a field or accessor:
+# `readonly name: string;`, `get groupNames(): readonly string[];`,
+# `evaluate(context: T): ...;`, `static readonly VACUOUS_RESULT = true;`.
+#
+# The optional `<...>` after the name matches a member that is itself
+# generic -- `evaluate<TContext>(...)` on the evaluators. Without it the
+# name is followed by `<` rather than `(`, so the member is invisible to
+# this parser and the gate silently stops asserting real public surface.
+# `=` is a terminator for the same reason: a static field with an
+# initializer is written `NAME = value`, with neither `:` nor `(`.
 _MEMBER_NAME_RE = re.compile(
-    r"^(?:readonly\s+)?(?:get\s+|set\s+)?(?P<name>\[[^\]]+\]|[A-Za-z_$][\w$]*)\s*[:(?]"
+    r"^(?:static\s+)?(?:readonly\s+)?(?:get\s+|set\s+)?"
+    r"(?P<name>\[[^\]]+\]|[A-Za-z_$][\w$]*)\s*(?:<[^>]*>)?\s*[:(?=]"
 )
 
 
