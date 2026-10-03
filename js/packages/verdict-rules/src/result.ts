@@ -19,8 +19,8 @@ export interface RuleResultInit {
   /** See {@link RuleResult.subResults}. Defaults to empty, marking a leaf. */
   readonly subResults?: readonly RuleResult[] | undefined;
 
-  /** See {@link RuleResult.decidedBy}. Defaults to empty. */
-  readonly decidedBy?: readonly RuleResult[] | undefined;
+  /** See {@link RuleResult.decidedByIndices}. Defaults to empty. */
+  readonly decidedByIndices?: readonly number[] | undefined;
 }
 
 /**
@@ -71,12 +71,52 @@ export class RuleResult {
   readonly subResults: readonly RuleResult[];
 
   /**
+   * Positions within {@link RuleResult.subResults} of the children that
+   * explain this result's own verdict. Read
+   * {@link RuleResult.decidedBy} instead unless building a result by hand.
+   *
+   * Positions rather than the child results themselves, so that the stored
+   * object graph is a genuine tree. Holding the same children under two
+   * fields makes it a DAG, and every tree-shaped walk — `JSON.stringify`, a
+   * structured logger — expands a shared node once per path, so serialized
+   * size doubles per nesting level.
+   */
+  readonly decidedByIndices: readonly number[];
+
+  constructor(ruleName: string, passed: boolean, init: RuleResultInit = {}) {
+    this.ruleName = ruleName;
+    this.passed = passed;
+    this.detail = init.detail ?? "";
+    this.data = init.data;
+    // Copied, not aliased: Object.freeze below seals this instance, not
+    // an array the caller passed and kept. Without the copy, appending
+    // the result to the very array it was built from makes it contain
+    // itself, and every traversal here recurses through that.
+    this.subResults = [...(init.subResults ?? [])];
+    this.decidedByIndices = [...(init.decidedByIndices ?? [])];
+
+    // An index naming a child that does not exist is the one way this shape
+    // can be wrong, so it is rejected here rather than left to produce
+    // `undefined` entries from whichever caller reads `decidedBy` first.
+    const outOfRange = this.decidedByIndices.filter(
+      (index) => !Number.isInteger(index) || index < 0 || index >= this.subResults.length,
+    );
+    if (outOfRange.length > 0) {
+      throw new RangeError(
+        `decidedByIndices [${outOfRange.join(", ")}] out of range for ` +
+          `${this.subResults.length} subResults on rule "${ruleName}"`,
+      );
+    }
+
+    Object.freeze(this);
+  }
+
+  /**
    * Which of {@link RuleResult.subResults} explain *this* result's own
-   * verdict — populated once, by whatever built this result, the same
-   * principle a predicate's own `PredicateOutcome` already follows: the
-   * producer records the fact because only the producer knows it
-   * unambiguously. Empty for a leaf or a vacuous composite — nothing else
-   * decided it.
+   * verdict — fixed by whatever built this result, the same principle a
+   * predicate's own `PredicateOutcome` already follows: the producer records
+   * the fact because only the producer knows it unambiguously. Empty for a
+   * leaf or a vacuous composite — nothing else decided it.
    *
    * **Scope, read carefully**: this is a one-level, non-recursive
    * question — "which immediate child (or children) explain this node's
@@ -89,20 +129,8 @@ export class RuleResult {
    * did the inner rule pass," a different question with no relationship
    * to the original failure.
    */
-  readonly decidedBy: readonly RuleResult[];
-
-  constructor(ruleName: string, passed: boolean, init: RuleResultInit = {}) {
-    this.ruleName = ruleName;
-    this.passed = passed;
-    this.detail = init.detail ?? "";
-    this.data = init.data;
-    // Copied, not aliased: Object.freeze below seals this instance, not
-    // an array the caller passed and kept. Without the copy, appending
-    // the result to the very array it was built from makes it contain
-    // itself, and every traversal here recurses through that.
-    this.subResults = [...(init.subResults ?? [])];
-    this.decidedBy = [...(init.decidedBy ?? [])];
-    Object.freeze(this);
+  get decidedBy(): readonly RuleResult[] {
+    return this.decidedByIndices.map((index) => this.subResults[index]!);
   }
 
   /**

@@ -8,15 +8,13 @@ import { AndRule, FunctionRule, NotRule, OrRule, RulesEngine } from "../dist/ind
  * forwarders -- a 1:1 port of Python's `test_result.py`.
  *
  * `failingLeaves` is an independent recursion, **not** a filter over
- * `leaves` -- see `RuleResult.failingLeaves`'s own doc comment and
- * .agents/plans/composite-rule-and-leaves-redesign/README.md §2 for the
- * exact formula this file pins down case by case.
+ * `leaves` -- see `RuleResult.failingLeaves`'s own doc comment for the exact
+ * formula this file pins down case by case.
  *
  * Built through real `Rule`s (`FunctionRule`/`AndRule`/`OrRule`/`NotRule`)
- * rather than hand-constructed `RuleResult` object literals, since
- * `RuleResult` itself carries no public constructor in this language --
- * `leaves`/`failingLeaves` are computed once, internally, by whatever
- * `Rule` builds the result.
+ * rather than hand-constructed results, so the structure under test is one
+ * evaluation actually produced rather than one a test asserted into
+ * existence.
  */
 
 function leaf(name, passed) {

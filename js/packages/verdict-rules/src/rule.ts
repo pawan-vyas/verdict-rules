@@ -206,15 +206,19 @@ export class SequentialEvaluator {
         // ShortCircuitEvaluator specifically, which overrides this below
         // using the one extra fact (its own stopOn) a fully generic
         // decider doesn't have access to -- see ShortCircuitEvaluator.evaluate.
-        const decidedBy = soFar.length === rules.length ? soFar : [latest];
-        return new RuleResult(name, early, { subResults: soFar, decidedBy });
+        const decidedByIndices =
+          soFar.length === rules.length ? soFar.map((_, index) => index) : [soFar.length - 1];
+        return new RuleResult(name, early, { subResults: soFar, decidedByIndices });
       }
     }
     // Non-null: `rules.length === 0` already returned above, so the loop
     // ran at least once and `soFar` is never empty here.
     const lastEvaluated = soFar[soFar.length - 1]!;
     const final = this.#decider(lastEvaluated, soFar, rules.length);
-    return new RuleResult(name, final ?? this.#vacuousResult, { subResults: soFar, decidedBy: soFar });
+    return new RuleResult(name, final ?? this.#vacuousResult, {
+      subResults: soFar,
+      decidedByIndices: soFar.map((_, index) => index),
+    });
   }
 }
 
@@ -272,15 +276,17 @@ export class ShortCircuitEvaluator {
     context: TContext,
   ): Promise<RuleResult> {
     const result = await this.#inner.evaluate(name, rules, context);
-    const last = result.subResults.length > 0 ? result.subResults[result.subResults.length - 1] : undefined;
-    const decidedBy = last !== undefined && last.passed === this.#stopOn ? [last] : result.subResults;
+    const total = result.subResults.length;
+    const last = total > 0 ? result.subResults[total - 1] : undefined;
+    const triggered = last !== undefined && last.passed === this.#stopOn;
+    const decidedByIndices = triggered ? [total - 1] : result.subResults.map((_, index) => index);
     // Constructed, not spread: a spread of a `RuleResult` produces a plain
     // object, which is neither frozen nor a `RuleResult`.
     return new RuleResult(result.ruleName, result.passed, {
       detail: result.detail,
       data: result.data,
       subResults: result.subResults,
-      decidedBy,
+      decidedByIndices,
     });
   }
 }
@@ -419,13 +425,13 @@ export class NotRule<TContext> implements Rule<TContext> {
    * any `RuleResult` at all, so `NotRule` doesn't get to special-case it
    * away just because a failed `NotRule`'s own `failingLeaves` can
    * otherwise read as misleadingly empty (the cause is a pass, not a
-   * failure). `decidedBy` is `[inner]` unconditionally, in both
+   * failure). `decidedBy` is the one inner result unconditionally, in both
    * directions -- correct either way, since "inner passed" is genuinely
    * why a failing `NotRule` failed, not an inconsistency.
    */
   async evaluate(context: TContext): Promise<RuleResult> {
     const inner = await this.#rule.evaluate(context);
-    return new RuleResult(this.name, !inner.passed, { subResults: [inner], decidedBy: [inner] });
+    return new RuleResult(this.name, !inner.passed, { subResults: [inner], decidedByIndices: [0] });
   }
 
   /** @returns A one-line summary -- the name, and the group when set. */

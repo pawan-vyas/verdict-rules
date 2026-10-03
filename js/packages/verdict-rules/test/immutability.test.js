@@ -64,15 +64,37 @@ describe("results own their children", () => {
     );
   });
 
-  it("decidedBy is copied", () => {
+  it("decidedByIndices is copied", () => {
     const child = new RuleResult("child", false);
-    const held = [child];
-    const result = new RuleResult("parent", false, { subResults: [child], decidedBy: held });
+    const held = [0];
+    const result = new RuleResult("parent", false, { subResults: [child], decidedByIndices: held });
     held.length = 0;
     assert.deepEqual(
       result.decidedBy.map((r) => r.ruleName),
       ["child"],
     );
+  });
+
+  it("an index naming a child that does not exist is rejected", () => {
+    // The one way the indices form can be wrong, caught at construction
+    // rather than when something later reads decidedBy and finds a hole.
+    // The objects form had no equivalent check available -- nothing stopped
+    // it naming a result that was never a child of this one.
+    const child = new RuleResult("child", false);
+
+    assert.throws(() => new RuleResult("parent", false, { subResults: [child], decidedByIndices: [1] }), {
+      name: "RangeError",
+    });
+  });
+
+  it("decidedBy cannot disagree with subResults", () => {
+    // decidedBy is derived, so there is no second stored array that could
+    // drift out of step with the children it names.
+    const a = new RuleResult("a", true);
+    const b = new RuleResult("b", false);
+    const result = new RuleResult("parent", false, { subResults: [a, b], decidedByIndices: [1] });
+
+    assert.strictEqual(result.decidedBy[0], result.subResults[1]);
   });
 
   it("RunResult.results is copied", () => {

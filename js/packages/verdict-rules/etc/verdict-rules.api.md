@@ -80,7 +80,8 @@ export type RulePredicate<TContext> = (context: TContext) => Promise<PredicateOu
 export class RuleResult {
     constructor(ruleName: string, passed: boolean, init?: RuleResultInit);
     readonly data: unknown;
-    readonly decidedBy: readonly RuleResult[];
+    get decidedBy(): readonly RuleResult[];
+    readonly decidedByIndices: readonly number[];
     readonly detail: string;
     get failingLeaves(): readonly RuleResult[];
     get leaves(): readonly RuleResult[];
@@ -92,7 +93,7 @@ export class RuleResult {
 // @public
 export interface RuleResultInit {
     readonly data?: unknown;
-    readonly decidedBy?: readonly RuleResult[] | undefined;
+    readonly decidedByIndices?: readonly number[] | undefined;
     readonly detail?: string | undefined;
     readonly subResults?: readonly RuleResult[] | undefined;
 }
