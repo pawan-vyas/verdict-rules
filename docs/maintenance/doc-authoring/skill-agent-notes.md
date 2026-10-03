@@ -2,94 +2,67 @@
 # Skill agent-notes authoring template
 
 > The structure every `skills/verdict/references/<language>/agent-notes.md`
-> follows. This builds on the general standard in
-> [`README.md`](README.md) — read that first. Unlike a package README
-> or a language's own `AGENTS.md`, this file is read by an agent
-> already mid-task in a *consumer's* project, not a contributor to this
-> repo — it is the one hand-written file [`SKILL.md`](../../../skills/verdict/SKILL.md)
-> routes to per language, everything else being this repository's own
-> documents copied in verbatim. See
-> [`../../../skills/verdict/CHANGELOG.md`](../../../skills/verdict/CHANGELOG.md)'s
-> `0.3.0` entry for why that split exists — restating facts here
-> instead of linking to the real doc is what made the skill go stale
-> twice before.
+> follows, and the one rule that keeps it short. Builds on the general
+> standard in [`README.md`](README.md) — read that first. This file is
+> read by an agent already mid-task in a *consumer's* project, not by a
+> contributor to this repo; it is the only hand-written content a language
+> adds to the skill.
 
-## Why short, and why one shape
+## The rule that decides what goes in
 
-Every fact this file could restate about *what verdict is* already
-lives in `references/docs/`, copied verbatim from this repository's own
-documentation — repeating any of it here is exactly the duplication
-that goes stale the moment the real doc changes and this file doesn't.
-What's left, once that's excluded, is genuinely small and genuinely the
-same five questions for every language: how do I install and import
-this, what's the whole API, what mistakes does this language's own
-idiom make tempting, what should I test, and how do I fetch more.
-Python's and JS/TS's own files converged on the same five sections
-independently before this template existed — evidence the shape is
-load-bearing, not imposed.
+**Nothing that is true of verdict generally.** The execution-model
+guarantees, the result-inspection surface, what a predicate contract is —
+[`SKILL.md`](../../../skills/verdict/SKILL.md) states each once, for every
+language. Restating any of it here is the duplication that goes stale the
+moment the real statement changes and this file doesn't, which is what
+happened before this rule existed.
 
-## The shared skeleton, in order
+What survives that cut is small and turns out to be the same four
+questions in every language: how do I install and import this, what is the
+whole API, how do I read a result, and which run mode do I want.
 
-1. **Title** — `# <Language> — agent notes`.
-2. **Opening paragraph** — states plainly that this file is short by
-   design, that everything about what verdict *is* lives in
-   `references/docs/` (this repository's own documents, not a summary),
-   and that this file carries only what's specific to this language's
-   own SDK and to writing this language against it.
-3. **`## Install and import`** — the install command, then the actual
-   import statement a real file would start with. If the distribution
-   name and the import/require name differ, state the split and name
-   one real-world precedent if one exists (Python's `verdict-rules` →
-   `verdict`, the same split as `beautifulsoup4` → `bs4`).
-4. **`## The API, in one screen`** — every type and method signature
-   that exists, in that language's own real syntax, dense enough to fit
-   on one screen with no prose between entries — comments on the same
-   line for what a signature alone doesn't say (which run mode
-   short-circuits, what a lookup throws or returns on absence). This is
-   the fact an agent reaches for most often; it must never require
+## The skeleton, in order
+
+1. **Title** — `# <Language> — agent notes`, then one line saying this
+   file carries only what is specific to this SDK and pointing at
+   `SKILL.md` for the rest.
+2. **`## Install and import`** — the install command, then the actual
+   import a real file would start with. Where the distribution name and
+   the import name differ, say so and name a real precedent if one exists
+   (Python's `verdict-rules` → `verdict`, the same split as
+   `beautifulsoup4` → `bs4`).
+3. **`## The API, in one screen`** — every type and signature that
+   exists, in that language's real syntax, dense enough to fit on one
+   screen with no prose between entries. Comments sit on the same line
+   for what a signature alone does not say: which run mode
+   short-circuits, what a lookup throws or returns on absence, which
+   constructor parameter takes positions rather than results. This is the
+   fact an agent reaches for most often, so it must never require
    scrolling.
-5. **`## Mistakes that show up in generated <Language> specifically`**
-   — one bullet per mistake, each naming the *language's own* tempting
-   wrong tool by name (a concurrency primitive that silently destroys
-   short-circuiting, that language's own falsy-coercion footgun, a
-   predicate returning a bare boolean instead of a real result object) —
-   not a generic restatement of the shared contract, which
-   [`../../testing/`](../../testing/README.md) already covers once for
-   every language. A comparison to another language's own version of
-   the same footgun is fine here (Python's `or` vs. JS's `||`) — this
-   file's reader is an agent already working in a polyglot-aware skill,
-   not an installer with no reason to know another SDK exists.
-6. **`## Testing what matters`** — a link to
-   [`../../testing/`](../../testing/README.md) (fetch it) as the full
-   checklist, then the handful of contracts easiest to skip, stated
-   generically enough to match [`testing.md`](testing.md)'s own shared
-   section rather than repeating a specific test's name.
-7. **`## Fetching the deeper documents`** — the real, runnable fetch
-   recipe: read the installed version, build the tag, fetch at that tag
-   and never the default branch, and say plainly if `curl` fails because
-   the tag doesn't exist yet rather than silently falling back. Name
-   which documents are already bundled (no fetch needed) versus
-   fetch-tier for this language specifically, since that split can
-   differ once a language has its own quickstart or samples and another
-   doesn't yet.
+4. **`## Reading a result`** — the result surface in that language's own
+   spelling, and anything about it that is true only here: C#'s three
+   methods where the others have accessors, Dart's `toJson()`, JS's
+   frozen instances. Then the audit-trail rule — key on a leaf's own rule
+   name, never a composite's — shown as code.
+5. **`## Which run mode`** — a four-row table, need → what to reach for.
 
-## Adding a new language's `agent-notes.md`
+A language-specific footgun worth naming (a concurrency primitive that
+silently destroys short-circuiting, a falsy-coercion trap) belongs inline
+next to the thing it applies to, not in a section of its own. Comparing it
+to another language's version of the same trap is fine here — this file's
+reader is an agent already working in a polyglot-aware skill.
 
-Add `skills/verdict/references/<language>/agent-notes.md` — the one
-hand-written file that language needs. Everything else about what
-verdict *is* comes from `scripts/build.sh` copying this repository's
-own documents into the bundle per
-[`../../../skills/verdict/MANIFEST.toml`](../../../skills/verdict/MANIFEST.toml);
-writing more than this one file here is a sign something is being
-restated that should be linked instead.
+## Adding a new language's file
+
+Create `skills/verdict/references/<language>/agent-notes.md`. Nothing
+registers it: `scripts/build.sh` copies `skills/verdict/` wholesale, and
+`SKILL.md` routes to `references/<language>/` without naming any
+language. Writing more than this one file is the signal that something is
+being restated which should be linked instead.
 
 ## Related
 
-- [`README.md`](README.md) — the general standard this template builds
-  on.
-- [`language-agents.md`](language-agents.md) — the sibling template for
-  a language's own top-level `AGENTS.md`, a contributor-facing
-  equivalent to this consumer-facing file.
-- [`testing.md`](testing.md) — the shared testing contracts this file's
-  own "Testing what matters" section points a reader at rather than
-  restating.
+- [`README.md`](README.md) — the general standard this builds on.
+- [`language-agents.md`](language-agents.md) — the sibling template for a
+  language's own `AGENTS.md`, the contributor-facing counterpart to this
+  consumer-facing file.

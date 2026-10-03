@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace VerdictRules;
 
 /// <summary>
@@ -5,10 +7,19 @@ namespace VerdictRules;
 /// about them.
 /// </summary>
 /// <typeparam name="TContext">The context type every held rule shares.</typeparam>
+[DebuggerDisplay("{DebuggerDisplay,nq}")]
+[DebuggerTypeProxy(typeof(RulesEngineDebugView<>))]
 public sealed class RulesEngine<TContext>
 {
     /// <summary>Every registered rule, in registration order.</summary>
     private readonly IReadOnlyList<IRule<TContext>> _rules;
+
+    /// <summary>
+    /// Same rules as <see cref="_rules"/>, exposed for the non-generic
+    /// <see cref="RulesEngine"/> wrapper's own debugger proxy to reach through
+    /// <c>_inner</c> without widening this type's public surface.
+    /// </summary>
+    internal IReadOnlyList<IRule<TContext>> Rules => _rules;
 
     /// <summary>Registered rules, indexed by <see cref="IRule{TContext}.Name"/> for <see cref="TryRunNamedAsync"/>.</summary>
     private readonly Dictionary<string, IRule<TContext>> _byName;
@@ -20,7 +31,11 @@ public sealed class RulesEngine<TContext>
     /// <param name="rules">Rules this engine holds, indexed by name and group.</param>
     public RulesEngine(IReadOnlyList<IRule<TContext>> rules)
     {
-        _rules = rules;
+        // Copied for the same reason, and because the name and group
+        // indexes below are snapshots taken here: aliasing this one let
+        // RuleNames report what was registered while RunAllAsync iterated
+        // whatever the caller's list held by then.
+        _rules = [.. rules];
         _byName = new Dictionary<string, IRule<TContext>>(rules.Count, StringComparer.Ordinal);
         _byGroup = new Dictionary<string, List<IRule<TContext>>>(StringComparer.Ordinal);
 
@@ -147,4 +162,23 @@ public sealed class RulesEngine<TContext>
         var result = await TryRunGroupAsync(group, context, cancellationToken).ConfigureAwait(false);
         return result ?? throw new KeyNotFoundException($"No rules in group '{group}' in this engine");
     }
+
+    /// <inheritdoc />
+    public override string ToString() =>
+        $"RulesEngine — {_rules.Count} rule(s), {_byGroup.Count} group(s)";
+
+    /// <summary>What a debugger shows without expanding the object.</summary>
+    private string DebuggerDisplay => ToString();
+}
+
+/// <summary>Makes a debugger expand a <see cref="RulesEngine{TContext}"/> straight to its rules.</summary>
+/// <param name="engine">The engine this proxy presents to the debugger.</param>
+internal sealed class RulesEngineDebugView<TContext>(RulesEngine<TContext> engine)
+{
+    /// <summary>The engine this proxy presents to the debugger.</summary>
+    private readonly RulesEngine<TContext> _engine = engine;
+
+    /// <summary>Every registered rule, expanded directly rather than behind another property.</summary>
+    [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+    public IRule<TContext>[] Rules => [.. _engine.Rules];
 }

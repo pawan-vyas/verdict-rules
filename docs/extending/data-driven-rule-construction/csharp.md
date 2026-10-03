@@ -10,11 +10,13 @@ using VerdictRules;
 
 static FunctionRule MakeRule(RuleConfig config)
 {
-    Task<RuleResult> Predicate(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
+    // The predicate never restates config.Name -- FunctionRule below is the
+    // one place that owns it, so the two can never drift apart.
+    Task<PredicateOutcome> Predicate(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
     {
         context.TryGetValue(config.Field, out var actual);
         var passed = Equals(actual, config.Expected);
-        return Task.FromResult(new RuleResult(config.Name, passed));
+        return Task.FromResult(new PredicateOutcome(passed));
     }
     return new FunctionRule(config.Name, Predicate);
 }
@@ -37,10 +39,12 @@ sealed record RuleConfig(string Name, string Field, object? Expected);
 
 ```csharp
 await combinedRule.EvaluateAsync(new Dictionary<string, object?> { ["role"] = "manager", ["office"] = "HQ" });
-// RuleResult(Passed: true, ...)
+// Passed: true
 
-await combinedRule.EvaluateAsync(new Dictionary<string, object?> { ["role"] = "manager", ["office"] = "Remote" });
-// RuleResult(Passed: false, ...) -- in_headquarters fails
+var refused = await combinedRule.EvaluateAsync(
+    new Dictionary<string, object?> { ["role"] = "manager", ["office"] = "Remote" });
+refused.GetFailingLeaves()[0].RuleName;
+// in_headquarters -- the config-driven name, carried through
 ```
 
 An empty `LoadRuleConfigs()` produces an empty `AndRule`, which
@@ -50,5 +54,3 @@ vacuously passes.
 
 - [`README.md`](README.md) — the language-agnostic scenario this page
   implements.
-- [`../../samples/data-driven-rule-sets/csharp.md`](../../samples/data-driven-rule-sets/csharp.md) —
-  the fuller worked version, in C#.

@@ -3,7 +3,7 @@
 
 > The structure every package's own `README.md` follows. This builds on
 > the general standard in [`README.md`](README.md) — read that first.
-> Unlike a sample or extending scenario, these files don't consolidate
+> Unlike an extension scenario, these files don't consolidate
 > under `docs/`: each lives inside its own language's package
 > directory, because that language's own packaging tool expects to
 > find it there and renders it as that registry's own package
@@ -59,11 +59,13 @@ over.
 4. **One first-example section** — a single runnable example with real
    output shown, not a fragment, that demonstrates the whole path: build
    a rule or two, wrap them in a `RulesEngine`, and run one by name —
-   never stop at a bare composite's own `.evaluate()`. `RulesEngine` is
-   one of the five named primitives this package is built around; an
-   example that skips straight from `AndRule` to `.evaluate()` shows
-   four of the five and never introduces the one that holds a whole rule
-   set. `docs/quickstart.md`'s own "one complete example" follows the
+   never stop at a bare composite's own `.evaluate()`. An example that
+   skips straight from `AndRule` to `.evaluate()` never introduces the
+   one primitive that holds a whole rule set, which is the thing a
+   reader is here to find out about.
+   `scripts/check_package_readmes.py` runs this example against the real
+   packed artifact, so a fragment that cannot run on its own fails the
+   gate rather than shipping. `docs/quickstart.md`'s own "one complete example" follows the
    identical shape one level deeper — the same primitives, the same
    run-by-name pattern, a second worked scenario rather than a
    restatement of this one; the two should never demonstrate a different
@@ -84,8 +86,8 @@ over.
    one section a skimming reader most needs, so it never gets cut for
    space the way a "nice to have" section would.
 7. **`## Where to go next`** — a table linking the deeper docs
-   (quickstart, architecture, extending, maintenance, testing, samples,
-   examples), every link an absolute GitHub URL pinned to that
+   (quickstart, architecture, extending, maintenance, testing, the
+   worked fixtures), every link an absolute GitHub URL pinned to that
    package's own release tag — see
    [`versioned-links.md`](../versioned-links.md) and
    `scripts/check_shipped_links.py`, which enforces this mechanically.

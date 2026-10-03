@@ -36,9 +36,13 @@ Release procedure for a skill-only change:
    the skill change itself — the check above requires this anyway.
 2. Add a `## [X.Y.Z] - YYYY-MM-DD` entry to
    [`skills/verdict/CHANGELOG.md`](../../../skills/verdict/CHANGELOG.md).
-3. Commit, then tag `skill-vX.Y.Z` and push the tag.
-   `release-skill.yml` verifies the tag matches `plugin.json`, runs
-   `scripts/build.sh`, and attaches the artifacts to a GitHub Release.
+3. **Merge to `main`. That is the whole release**, the same as every
+   language package. `release-skill.yml` triggers on the push, notices
+   `plugin.json`'s version has no matching tag, runs `scripts/build.sh`,
+   then tags `skill-vX.Y.Z` and attaches the artifacts to a GitHub
+   Release — the tag is created after a successful build, never pushed by
+   hand. There is no test suite for the skill itself, so the gate is
+   `check-skill-version.yml` having already required the bump.
 
 That last step matters for one specific audience.
 [`../../../scripts/get.sh`](../../../scripts/get.sh) — the `curl … | sh` install path

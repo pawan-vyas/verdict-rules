@@ -23,7 +23,7 @@ static FunctionRule AtLeast(string name, string field, double floor) =>
     {
         var value = Convert.ToDouble(ctx[field]);
         return Task.FromResult(
-            new RuleResult(name, value >= floor, $"{value} vs {floor}"));
+            new PredicateOutcome(value >= floor, $"{value} vs {floor}"));
     });
 
 var eligible = new AndRule("eligible", new IRule[]
@@ -40,7 +40,7 @@ var verdict = await engine.RunNamedAsync("eligible", new Dictionary<string, obje
 });
 
 Console.WriteLine(verdict.Passed); // False
-Console.WriteLine(verdict.Detail); // 'score_ok' failed: 55 vs 60
+Console.WriteLine(verdict.GetFailingLeaves()[0].Detail); // 55 vs 60
 ```
 
 ## Shape-based rules, within what C# allows
@@ -50,16 +50,16 @@ the predicate signature is a rule via `FunctionRule`, with nothing declared and
 no type to name. A method group works directly:
 
 ```csharp
-static Task<RuleResult> HasQuorum(
+static Task<PredicateOutcome> HasQuorum(
   IReadOnlyDictionary<string, object?> ctx,
   CancellationToken cancellationToken = default)
-    => Task.FromResult(new RuleResult("quorum", ctx.Count >= 3));
+    => Task.FromResult(new PredicateOutcome(ctx.Count >= 3));
 
 var rule = new FunctionRule("quorum", HasQuorum);
 ```
 
 `FunctionRule`'s predicate parameter is `RulePredicate`, a named delegate for
-`Func<IReadOnlyDictionary<string, object?>, CancellationToken, Task<RuleResult>>`
+`Func<IReadOnlyDictionary<string, object?>, CancellationToken, Task<PredicateOutcome>>`
 — spelled out once so a field, a stored variable, or a helper that wraps a
 predicate never has to repeat that signature. A lambda or method group
 converts to it exactly as shown above, as long as it carries both parameters
@@ -85,9 +85,9 @@ declaring a type.
 
 `RuleResult` and `RunResult` carry `[DebuggerDisplay]`, and `RunResult` a
 debugger type proxy that expands straight to the per-rule results. A failing
-composite's `Data` is a nested list of sub-results, and stepping through one is
-the normal way anyone diagnoses it — so the shape is legible in a watch window
-without expanding every level by hand.
+composite's `SubResults` is a nested list of its own sub-results, and stepping
+through one is the normal way anyone diagnoses it — so the shape is legible in
+a watch window without expanding every level by hand.
 
 SourceLink is enabled and symbols ship as a `.snupkg`, so stepping into the
 package lands on real source rather than a decompiler.
@@ -128,17 +128,23 @@ one everybody thinks of first.
   eligibility check can have. Use `RuleNames` / `GroupNames` to check
   membership, or `TryRunNamedAsync` / `TryRunGroupAsync` where your own
   domain has an answer for absence — both return `null` instead of throwing.
-- **`RuleResult.Data` is opaque** — only what actually ran, never padded, never
-  flattened.
+- **`RuleResult.Data` is opaque** — never read or written by this package
+  itself; whatever a predicate reports through `PredicateOutcome.Data` comes
+  back unchanged.
+- **`RuleResult.SubResults` is exactly what actually ran** — a composite's own
+  children, never padded, never flattened. `GetLeaves()`/
+  `GetFailingLeaves()` walk it recursively for you -- methods rather than
+  properties, so a reflection-based serializer or structured logger never
+  traverses them.
 - **Zero runtime dependencies.**
 
 ## Where to go next
 
 | Doc | For |
 | --- | --- |
-| [`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.3.2/csharp/src/VerdictRules/docs/quickstart.md) | The quickstart — core concepts and a full worked example |
-| [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.3.2/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
-| [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.3.2/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
-| [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.3.2/docs/maintenance/README.md) | Changing this package itself |
-| [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.3.2/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
-| [`docs/samples/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.3.2/docs/samples/README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
+| [`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.4.0/csharp/src/VerdictRules/docs/quickstart.md) | The quickstart — core concepts and a full worked example |
+| [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.4.0/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
+| [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.4.0/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
+| [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.4.0/docs/maintenance/README.md) | Changing this package itself |
+| [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.4.0/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
+| [`fixtures/`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.4.0/fixtures/README.md) | The two worked scenarios — each one's problem, design, and the cross-language data contract every port reproduces |

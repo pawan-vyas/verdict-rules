@@ -9,7 +9,6 @@
  * import { AndRule, FunctionRule, type Context } from "verdict-rules";
  *
  * const overEighteen = new FunctionRule<Context>("over_18", async (ctx) => ({
- *   ruleName: "over_18",
  *   passed: (ctx.age as number) >= 18,
  * }));
  *
@@ -20,6 +19,7 @@
 
 export { RulesEngine } from "./engine.js";
 export { UnknownLookupError } from "./errors.js";
-export type { Context, RuleResult, RunResult } from "./result.js";
-export { AndRule, FunctionRule, OrRule } from "./rule.js";
-export type { Rule, RulePredicate } from "./rule.js";
+export type { Context, RuleResultInit } from "./result.js";
+export { RuleResult, RunResult } from "./result.js";
+export { AndRule, FunctionRule, NotRule, OrRule, SequentialEvaluator, ShortCircuitEvaluator } from "./rule.js";
+export type { PredicateOutcome, Rule, RulePredicate, StepDecider } from "./rule.js";

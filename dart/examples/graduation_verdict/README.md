@@ -6,7 +6,7 @@
 > breadth of verdict_rules at once: heterogeneous `Rule` shapes built
 > from external policy data, a custom `Rule` type, and all three
 > `RulesEngine` run modes serving three different real callers. See
-> [`docs/samples/graduation-requirement-verdict/`](../../../docs/samples/graduation-requirement-verdict/README.md)
+> [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md)
 > for the original framing question this project answers, the design,
 > and what a solution must demonstrate.
 
@@ -36,13 +36,13 @@ root `pubspec.yaml` yet.
 
 ## Read more
 
-- [`../../../docs/samples/graduation-requirement-verdict/`](../../../docs/samples/graduation-requirement-verdict/README.md) --
+- [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md) --
   the naive way this policy is usually implemented, why it breaks down,
   and both diagrams behind the design actually used here.
 - [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md) --
   how to add a subject, a student scenario, or a new subject type, and
   the shared cross-language fixture contract.
-- [`docs/testing.md`](docs/testing.md) -- the two test suites and what
+- [`docs/testing.md`](docs/testing.md) -- the four test suites and what
   each proves, including why this project's own tests also serve as an
   integration/e2e regression net for verdict_rules itself.
 
@@ -58,6 +58,10 @@ root `pubspec.yaml` yet.
 | `lib/src/graduation_check.dart` | The real implementation -- rule factory, JSON loading, and `buildGraduationCheck`. |
 | `lib/src/oracle.dart` | A second, verdict_rules-free implementation, used as ground truth by the chaos suite. |
 | `lib/src/chaos_data.dart` | A deterministic generator for randomized, schema-valid curricula and students, using `dart:math`'s own seedable `Random`. |
+| `lib/src/policy_fuzz_data.dart` | A deterministic generator for malformed `policies.json` shapes, used by the fuzz suite. |
+| `lib/src/shrink.dart` | The failing-run-to-fixture shrinking mechanism. |
 | `bin/graduation_verdict.dart` | The runnable demo. |
 | `test/graduation_verdict_test.dart` | The curated-scenario suite -- loads both JSON files, asserts generically. |
 | `test/chaos_test.dart` | 500 generated cases, checked against `oracle.dart` -- see [`docs/testing.md`](docs/testing.md#the-chaos-suite-differential-testing-against-an-independent-oracle). |
+| `test/structural_invariants_test.dart` | The *shape* of every generated case's result tree, not just its final boolean -- see [`docs/testing.md`](docs/testing.md#structural-invariants-on-the-result-tree). |
+| `test/policy_fuzz_test.dart` | Fuzzes `curriculumFromJson`/`loadCurriculum` with malformed `policies.json` shapes -- see [`docs/testing.md`](docs/testing.md#fuzzing-the-curriculum-reader). |

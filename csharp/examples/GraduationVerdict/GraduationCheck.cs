@@ -7,9 +7,8 @@ namespace GraduationVerdict;
 /// Graduation requirement verdict, implemented with verdict-rules.
 /// </summary>
 /// <remarks>
-/// See docs/samples/graduation-requirement-verdict/README.md for the
-/// design and fixtures/graduation_verdict/README.md for the fixture
-/// contract.
+/// See fixtures/graduation_verdict/README.md for the design and the
+/// fixture contract.
 /// </remarks>
 public static class GraduationCheck
 {
@@ -74,7 +73,7 @@ public static class GraduationCheck
             var scores = (IReadOnlyDictionary<string, object?>)context["scores"]!;
             var subject = (IReadOnlyDictionary<string, object?>)scores[policy.SubjectId]!;
             var pct = (double)subject["written_pct"]!;
-            return Task.FromResult(new RuleResult(name, pct >= policy.WrittenMinPct, $"{pct} vs {policy.WrittenMinPct}"));
+            return Task.FromResult(new PredicateOutcome(pct >= policy.WrittenMinPct, $"{pct} vs {policy.WrittenMinPct}"));
         };
 
     private static FunctionRule WrittenRule(SubjectPolicy policy, string name) =>
@@ -86,7 +85,7 @@ public static class GraduationCheck
             var scores = (IReadOnlyDictionary<string, object?>)context["scores"]!;
             var subject = (IReadOnlyDictionary<string, object?>)scores[policy.SubjectId]!;
             var pct = (double)subject["practical_pct"]!;
-            return Task.FromResult(new RuleResult(name, pct >= policy.PracticalMinPct, $"{pct} vs {policy.PracticalMinPct}"));
+            return Task.FromResult(new PredicateOutcome(pct >= policy.PracticalMinPct, $"{pct} vs {policy.PracticalMinPct}"));
         });
 
     private static FunctionRule ExemptionRule(SubjectPolicy policy, string name) =>
@@ -95,15 +94,14 @@ public static class GraduationCheck
             var scores = (IReadOnlyDictionary<string, object?>)context["scores"]!;
             var subject = (IReadOnlyDictionary<string, object?>)scores[policy.SubjectId]!;
             var exempt = subject.TryGetValue("has_exemption", out var v) && v is true;
-            return Task.FromResult(new RuleResult(name, exempt));
+            return Task.FromResult(new PredicateOutcome(exempt));
         });
 
-    public static Task<RuleResult> CgpaMet(IReadOnlyDictionary<string, object?> context, CancellationToken ct = default) =>
-        Task.FromResult(new RuleResult("cgpa_met", (double)context["cgpa"]! >= (double)context["cgpa_floor"]!));
+    public static Task<PredicateOutcome> CgpaMet(IReadOnlyDictionary<string, object?> context, CancellationToken ct = default) =>
+        Task.FromResult(new PredicateOutcome((double)context["cgpa"]! >= (double)context["cgpa_floor"]!));
 
-    public static Task<RuleResult> AttendanceMet(IReadOnlyDictionary<string, object?> context, CancellationToken ct = default) =>
-        Task.FromResult(new RuleResult(
-            "attendance_met",
+    public static Task<PredicateOutcome> AttendanceMet(IReadOnlyDictionary<string, object?> context, CancellationToken ct = default) =>
+        Task.FromResult(new PredicateOutcome(
             (double)context["attendance_pct"]! >= (double)context["attendance_floor"]!));
 
     /// <summary>

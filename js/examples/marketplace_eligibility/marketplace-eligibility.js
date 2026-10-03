@@ -1,8 +1,8 @@
 /**
  * Marketplace eligibility, implemented with verdict-rules.
  *
- * See docs/samples/marketplace-eligibility/README.md for the design and
- * fixtures/marketplace_eligibility/README.md for the fixture contract.
+ * See fixtures/marketplace_eligibility/README.md for the design and the fixture
+ * contract.
  */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -51,7 +51,7 @@ export class ProjectingRule {
 
 /** Reused on both sides via ProjectingRule. */
 async function isVerifiedIdentity(context) {
-  return { ruleName: "is_verified_identity", passed: context.verified };
+  return { passed: context.verified };
 }
 
 function sellerIdentityRule() {
@@ -66,31 +66,21 @@ function buyerIdentityRule() {
 
 async function priceFloorMet(context) {
   return {
-    ruleName: "price_floor_met",
     passed: context.listingPriceCents >= PRICE_FLOOR_CENTS,
     detail: `${context.listingPriceCents} vs ${PRICE_FLOOR_CENTS}`,
   };
 }
 
 async function categoryAllowed(context) {
-  return {
-    ruleName: "category_allowed",
-    passed: ALLOWED_CATEGORIES.includes(context.category),
-  };
+  return { passed: ALLOWED_CATEGORIES.includes(context.category) };
 }
 
 async function sufficientBalance(context) {
-  return {
-    ruleName: "sufficient_balance",
-    passed: context.buyerBalanceCents >= context.purchaseAmountCents,
-  };
+  return { passed: context.buyerBalanceCents >= context.purchaseAmountCents };
 }
 
 async function purchaseLimitNotExceeded(context) {
-  return {
-    ruleName: "purchase_limit_not_exceeded",
-    passed: context.purchaseAmountCents <= PURCHASE_LIMIT_CENTS,
-  };
+  return { passed: context.purchaseAmountCents <= PURCHASE_LIMIT_CENTS };
 }
 
 /**
@@ -125,15 +115,15 @@ export function buildBuyerCheck() {
 }
 
 async function highValueFlag(context) {
-  return { ruleName: "high_value_flag", passed: context.amount_cents > HIGH_VALUE_THRESHOLD_CENTS };
+  return { passed: context.amount_cents > HIGH_VALUE_THRESHOLD_CENTS };
 }
 
 async function blockedCountryFlag(context) {
-  return { ruleName: "blocked_country_flag", passed: BLOCKED_COUNTRIES.includes(context.country) };
+  return { passed: BLOCKED_COUNTRIES.includes(context.country) };
 }
 
 async function newSellerFlag(context) {
-  return { ruleName: "new_seller_flag", passed: context.seller_age_days < NEW_SELLER_THRESHOLD_DAYS };
+  return { passed: context.seller_age_days < NEW_SELLER_THRESHOLD_DAYS };
 }
 
 /**

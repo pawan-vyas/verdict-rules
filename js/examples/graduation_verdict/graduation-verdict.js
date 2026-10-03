@@ -1,15 +1,14 @@
 /**
  * Graduation requirement verdict, implemented with verdict-rules.
  *
- * See docs/samples/graduation-requirement-verdict/README.md for the
- * design and fixtures/graduation_verdict/README.md for the fixture
- * contract.
+ * See fixtures/graduation_verdict/README.md for the design and the
+* fixture contract.
  */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { AndRule, FunctionRule, OrRule, RulesEngine } from "verdict-rules";
+import { AndRule, FunctionRule, OrRule, RuleResult, RulesEngine, SequentialEvaluator } from "verdict-rules";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // Fixture data lives at the repo root, shared by every language's own port of
@@ -57,31 +56,49 @@ export function subjectPolicy({
  * Passes if at least `minimum` of the given sub-rules pass.
  *
  * Not part of verdict-rules itself; see docs/extending/new-rule-shape/.
- * Evaluates every sub-rule unconditionally.
+ * Composes `SequentialEvaluator` directly (not `ShortCircuitEvaluator`,
+ * whose own decider hardcodes "the trigger value is the result" and
+ * doesn't fit this rule's own policy): the decider short-circuits as soon
+ * as the minimum is mathematically decided either way -- once enough
+ * sub-rules have passed to guarantee the minimum is met, or once too many
+ * have failed for the minimum to be reachable even if every remaining
+ * sub-rule passed -- so a sub-rule after that point never runs.
  */
 export class AtLeastNRule {
+  // `minimum` is a plain public field, not `#minimum` -- this example's own
+  // test/invariants.test.js reads it back to verify short-circuit timing
+  // against the same threshold `evaluate()` itself decides on, the same
+  // way Python's own worked example exposes `_minimum` for the same
+  // reason. `rules` stays private; nothing outside this class needs it.
+  minimum;
   #rules;
-  #minimum;
+  #evaluator;
 
   constructor(name, rules, minimum, group) {
     this.name = name;
     this.group = group;
+    this.minimum = minimum;
     this.#rules = rules;
-    this.#minimum = minimum;
+    this.#evaluator = new SequentialEvaluator((latest, soFar, total) => {
+      const passed = soFar.filter((r) => r.passed).length;
+      if (passed >= minimum) return true;
+      const remaining = total - soFar.length;
+      if (passed + remaining < minimum) return false;
+      return soFar.length === total ? false : undefined;
+    }, minimum <= 0);
   }
 
   async evaluate(context) {
-    const subResults = [];
-    for (const rule of this.#rules) {
-      subResults.push(await rule.evaluate(context));
-    }
-    const passedCount = subResults.filter((r) => r.passed).length;
-    return {
-      ruleName: this.name,
-      passed: passedCount >= this.#minimum,
-      detail: `${passedCount} of ${this.#rules.length} passed, needed ${this.#minimum}`,
-      data: subResults,
-    };
+    const result = await this.#evaluator.evaluate(this.name, this.#rules, context);
+    const passedCount = result.subResults.filter((r) => r.passed).length;
+    // Constructed, not spread: a spread would drop the prototype, and with
+    // it `leaves`/`failingLeaves`, leaving a shape that is not a RuleResult.
+    return new RuleResult(result.ruleName, result.passed, {
+      detail: `${passedCount} of ${this.#rules.length} passed, needed ${this.minimum}`,
+      data: result.data,
+      subResults: result.subResults,
+      decidedBy: result.decidedBy,
+    });
   }
 }
 
@@ -89,7 +106,6 @@ function writtenPredicate(policy) {
   return async (context) => {
     const pct = context.scores[policy.subjectId].writtenPct;
     return {
-      ruleName: policy.subjectId,
       passed: pct >= policy.writtenMinPct,
       detail: `${pct} vs ${policy.writtenMinPct}`,
     };
@@ -100,7 +116,6 @@ function practicalRule(policy, name) {
   return new FunctionRule(name, async (context) => {
     const pct = context.scores[policy.subjectId].practicalPct;
     return {
-      ruleName: name,
       passed: pct >= policy.practicalMinPct,
       detail: `${pct} vs ${policy.practicalMinPct}`,
     };
@@ -110,28 +125,47 @@ function practicalRule(policy, name) {
 function exemptionRule(policy, name) {
   return new FunctionRule(name, async (context) => {
     const exempt = context.scores[policy.subjectId].hasExemption ?? false;
-    return { ruleName: name, passed: exempt };
+    return { passed: exempt };
   });
 }
 
+/**
+ * The two sub-rules a vocational subject's `AndRule` is built from --
+ * written AND practical. Exported (alongside {@link languageChildRules} so
+ * a caller can rebuild the exact same sub-rule objects `ruleForSubject`
+ * used, without reaching into an `AndRule`'s own private fields -- this is
+ * how test/invariants.test.js pairs a nested composite's real `Rule`
+ * objects with its `RuleResult` tree.
+ *
+ * @param {object} policy
+ * @param {string} sid - The subject id, used to name each sub-rule.
+ * @returns {import("verdict-rules").Rule[]} `[written, practical]`.
+ */
+export function vocationalChildRules(policy, sid) {
+  return [new FunctionRule(`${sid}:written`, writtenPredicate(policy)), practicalRule(policy, `${sid}:practical`)];
+}
+
+/**
+ * The two sub-rules a language-with-exemption subject's `OrRule` is built
+ * from -- written OR exemption. See {@link vocationalChildRules}; only
+ * called when `policy.exemptionAllowed` is true (otherwise the subject is a
+ * plain `FunctionRule` with no children to expose).
+ *
+ * @param {object} policy
+ * @param {string} sid - The subject id, used to name each sub-rule.
+ * @returns {import("verdict-rules").Rule[]} `[written, exemption]`.
+ */
+export function languageChildRules(policy, sid) {
+  return [new FunctionRule(`${sid}:written`, writtenPredicate(policy)), exemptionRule(policy, `${sid}:exemption`)];
+}
+
 function vocationalSubjectRule(policy, sid, group) {
-  return new AndRule(
-    sid,
-    [
-      new FunctionRule(`${sid}:written`, writtenPredicate(policy)),
-      practicalRule(policy, `${sid}:practical`),
-    ],
-    group,
-  );
+  return new AndRule(sid, vocationalChildRules(policy, sid), group);
 }
 
 function languageSubjectRule(policy, sid, group) {
   if (policy.exemptionAllowed) {
-    return new OrRule(
-      sid,
-      [new FunctionRule(`${sid}:written`, writtenPredicate(policy)), exemptionRule(policy, `${sid}:exemption`)],
-      group,
-    );
+    return new OrRule(sid, languageChildRules(policy, sid), group);
   }
   return new FunctionRule(sid, writtenPredicate(policy), group);
 }
@@ -171,14 +205,11 @@ export function ruleForSubject(policy) {
 }
 
 export async function cgpaMet(context) {
-  return { ruleName: "cgpa_met", passed: context.cgpa >= context.cgpaFloor };
+  return { passed: context.cgpa >= context.cgpaFloor };
 }
 
 export async function attendanceMet(context) {
-  return {
-    ruleName: "attendance_met",
-    passed: context.attendancePct >= context.attendanceFloor,
-  };
+  return { passed: context.attendancePct >= context.attendanceFloor };
 }
 
 /**
@@ -190,29 +221,85 @@ export async function attendanceMet(context) {
  * @returns {{ policies: object[], electiveMinimum: number }} One
  *   subjectPolicy per entry, missing optional fields filled with their
  *   defaults, and the minimum number of electives required to graduate.
+ * @throws {SyntaxError} `path`'s contents aren't valid JSON.
+ * @throws {TypeError} The parsed JSON doesn't match the shape documented on
+ *   {@link curriculumFromObject}.
  */
 export function loadCurriculum(path) {
   return curriculumFromObject(JSON.parse(readFileSync(path, "utf8")));
+}
+
+// Fields every row must carry -- matches exactly what this module's own
+// subjectPolicy() has no default for. practical_min_pct/exemption_allowed/
+// is_elective stay optional, same as subjectPolicy's own defaults.
+const REQUIRED_SUBJECT_FIELDS = ["subject_id", "subject_type", "written_min_pct"];
+
+/** @returns A short, human-readable description of a malformed value's shape. */
+function describeShape(value) {
+  if (value === null) return "null";
+  if (Array.isArray(value)) return "an array";
+  return typeof value;
+}
+
+/**
+ * @throws {TypeError} `value` isn't a plain (non-null, non-array) object.
+ */
+function assertPlainObject(value, label) {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    throw new TypeError(`${label} must be a JSON object, got ${describeShape(value)}`);
+  }
+}
+
+/**
+ * @throws {TypeError} `row` has no value (not even `null`) at `field`.
+ */
+function requireField(row, field, index) {
+  if (row[field] === undefined) {
+    throw new TypeError(`curriculum.subjects[${index}] is missing required field "${field}"`);
+  }
+  return row[field];
 }
 
 /**
  * Convert an already-parsed curriculum object (the shared `{ elective_minimum,
  * subjects }` shape) into `{ policies, electiveMinimum }`.
  *
+ * Validates only the shape this reader itself depends on -- that `curriculum`
+ * and each subject row are plain objects, that `subjects` is an array, and
+ * that every field this module has no default for is present. It does not
+ * check field *types* (a string where a number is expected, say) or whether
+ * `subject_type` names a known subject type -- see
+ * [`docs/testing.md`](docs/testing.md) for why this reader is
+ * deliberately not a general-purpose schema validator.
+ *
  * @param {{ elective_minimum: number, subjects: object[] }} curriculum
  * @returns {{ policies: object[], electiveMinimum: number }}
+ * @throws {TypeError} `curriculum` is malformed in a way this reader itself
+ *   depends on -- see above.
  */
 export function curriculumFromObject(curriculum) {
-  const policies = curriculum.subjects.map((row) =>
-    subjectPolicy({
-      subjectId: row.subject_id,
-      subjectType: row.subject_type,
-      writtenMinPct: row.written_min_pct,
+  assertPlainObject(curriculum, "curriculum");
+  if (!Array.isArray(curriculum.subjects)) {
+    throw new TypeError(`curriculum.subjects must be an array, got ${describeShape(curriculum.subjects)}`);
+  }
+  if (curriculum.elective_minimum === undefined) {
+    throw new TypeError('curriculum is missing required field "elective_minimum"');
+  }
+
+  const policies = curriculum.subjects.map((row, index) => {
+    assertPlainObject(row, `curriculum.subjects[${index}]`);
+    const [subjectId, subjectType, writtenMinPct] = REQUIRED_SUBJECT_FIELDS.map((field) =>
+      requireField(row, field, index),
+    );
+    return subjectPolicy({
+      subjectId,
+      subjectType,
+      writtenMinPct,
       practicalMinPct: row.practical_min_pct,
       exemptionAllowed: row.exemption_allowed ?? false,
       isElective: row.is_elective ?? false,
-    }),
-  );
+    });
+  });
   return { policies, electiveMinimum: curriculum.elective_minimum };
 }
 
@@ -317,7 +404,15 @@ async function demo() {
   for (const [studentId, context] of Object.entries(students)) {
     const verdict = await graduates.evaluate(context);
     const status = verdict.passed ? "GRADUATES" : "DOES NOT GRADUATE";
-    const reason = verdict.passed ? "" : `  (${verdict.detail})`;
+    // `graduates` is a composite -- its own `detail` is always empty (see
+    // AGENTS.md/the redesign notes: a composed ShortCircuitEvaluator has no
+    // per-composite channel to build a descriptive string from). The actual
+    // reason lives in `failingLeaves` instead, flattened from wherever in
+    // the tree the short-circuit actually stopped.
+    const reasons = verdict.failingLeaves
+      .map((leaf) => (leaf.detail ? `${leaf.ruleName}: ${leaf.detail}` : leaf.ruleName))
+      .join("; ");
+    const reason = verdict.passed ? "" : `  (${reasons})`;
     console.log(`${studentId.padEnd(10)}: ${status}${reason}`);
   }
 }

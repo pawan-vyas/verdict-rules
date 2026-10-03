@@ -3,7 +3,7 @@
 /// This project exercises Rule<TContext> end to end: two typed contexts
 /// sharing no fields, a rule reused across both via ProjectingRule, and a
 /// dict-context catalog coexisting in the same codebase. See
-/// docs/samples/marketplace-eligibility/README.md for the design and
+/// fixtures/marketplace_eligibility/README.md for the design and
 /// fixtures/marketplace_eligibility/README.md for the shared contract this
 /// suite reproduces.
 import 'dart:io';
@@ -136,17 +136,11 @@ void main() {
       final extended = RulesEngine<Context>([
         FunctionRule<Context>(
           'high_value_flag',
-          (ctx) async => RuleResult(
-            ruleName: 'high_value_flag',
-            passed: (ctx['amount_cents'] as int) > 50000,
-          ),
+          (ctx) async => PredicateOutcome((ctx['amount_cents'] as int) > 50000),
         ),
         FunctionRule<Context>(
           'weekend_flag',
-          (ctx) async => RuleResult(
-            ruleName: 'weekend_flag',
-            passed: ctx['is_weekend'] as bool,
-          ),
+          (ctx) async => PredicateOutcome(ctx['is_weekend'] as bool),
         ),
       ]);
       final result = await extended

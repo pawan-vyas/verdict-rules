@@ -9,7 +9,7 @@ The release workflow was changed to build its body from `CHANGELOG.md` rather
 than GitHub's auto-generated commit list. It published successfully. The body
 read:
 
-```
+```text
 - ** now raises  for an unknown group**, matching .
 ```
 

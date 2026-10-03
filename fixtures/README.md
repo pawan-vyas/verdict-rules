@@ -13,16 +13,15 @@
 | [`graduation_verdict/`](graduation_verdict/README.md) | Short-circuiting, vacuous-truth polarity, and emptiness-vs-absence, across a curriculum of subjects, students, and edge-case policies. |
 | [`marketplace_eligibility/`](marketplace_eligibility/README.md) | `Rule<TContext>`'s generic-context design: two typed contexts sharing no fields, one rule reused across both via a `ProjectingRule` adapter, and a dict-context catalog coexisting in the same domain. |
 
-## Why this directory exists separately from `docs/samples/` and each language's own tree
+## Why this directory exists separately from each language's own tree
 
-A fixture's **data** (here), a sample's **design spec**
-(`docs/samples/<slug>/README.md`), and a language's own **code**
-(`<language>/examples/<name>/`) are three different things that change
-for three different reasons, so each lives where the thing that reads
-it expects to find it — a language's own test runner and CI trigger
-expect code inside that language's own top-level directory, not
-centralized here. `adding-a-fixture.md` has the full reasoning; this
-directory only ever holds the first of the three.
+A scenario's **data and design** (here, in one README per scenario) and
+a language's own **code** (`<language>/examples/<name>/`) change for
+different reasons, so each lives where the thing that reads it expects
+to find it — a language's own test runner and CI trigger expect code
+inside that language's own top-level directory, not centralized here.
+[`../docs/maintenance/adding-a-fixture.md`](../docs/maintenance/adding-a-fixture.md)
+has the full reasoning.
 
 ## Adding a fixture
 
@@ -43,6 +42,5 @@ for the shape a new one follows, if the need arises.
   existing fixture here.
 - [`../docs/testing/README.md`](../docs/testing/README.md) — where a
   fixture fits among the other testing layers.
-- [`../docs/samples/README.md`](../docs/samples/README.md) — the
   language-agnostic design specs, including the ones built on top of a
   fixture here.

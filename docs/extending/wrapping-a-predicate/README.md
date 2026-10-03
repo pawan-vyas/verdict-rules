@@ -53,6 +53,12 @@ graph LR
 
 - A plain predicate function becomes a `Rule` by construction, not by
   inheritance.
+- **The predicate reports an outcome; the wrapper owns the name.** A
+  predicate returns pass/fail plus an optional detail and payload — not
+  a full result — and the `FunctionRule` wrapping it supplies the rule
+  name. That is why the name is passed to the wrapper and never set
+  inside the predicate: a predicate that could name itself could name
+  itself something other than the rule it belongs to.
 - `FunctionRule` is the on-ramp for the overwhelming majority of rules;
   reaching for a custom `Rule` implementation (see
   [`../new-rule-shape/`](../new-rule-shape/README.md)) is the exception,

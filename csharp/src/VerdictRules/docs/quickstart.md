@@ -33,7 +33,14 @@
 - **`RuleResult`** / **`RunResult`** — plain, immutable outcome types.
   `RuleResult.Data` is a fully opaque slot for a caller's own domain
   object to ride through evaluation — Verdict never reads or depends on
-  its shape.
+  its shape. `RuleResult.SubResults` is the opposite: a composite's own
+  children, always exactly what it evaluated, never opaque — walk it
+  yourself, call `GetDecidedBy()` for just the children that explain this
+  verdict, or `GetLeaves()`/`GetFailingLeaves()` to flatten straight to
+  the leaf checks that actually decided the outcome. Those three are
+  methods rather than properties on purpose: a get-only collection
+  property would be picked up by `System.Text.Json` and every reflective
+  logger, which is what a result has to stay serializable through.
 
 ## One complete example
 
@@ -46,17 +53,17 @@ decision above ever looked at each one:
 ```csharp
 using VerdictRules;
 
-static Task<RuleResult> InputsValid(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("inputs_valid", (bool)context["has_required_fields"]!));
+static Task<PredicateOutcome> InputsValid(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome((bool)context["has_required_fields"]!));
 
-static Task<RuleResult> AutoApproved(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("auto_approved", (bool)context["auto_approved"]!));
+static Task<PredicateOutcome> AutoApproved(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome((bool)context["auto_approved"]!));
 
-static Task<RuleResult> ReviewerAssigned(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("reviewer_assigned", (bool)context["reviewer_assigned"]!));
+static Task<PredicateOutcome> ReviewerAssigned(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome((bool)context["reviewer_assigned"]!));
 
-static Task<RuleResult> ReviewCompleted(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("review_completed", (bool)context["review_completed"]!));
+static Task<PredicateOutcome> ReviewCompleted(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome((bool)context["review_completed"]!));
 
 var taskApproved = new AndRule("task_approved", new IRule[]
 {
@@ -152,6 +159,46 @@ sequenceDiagram
 >    it reports `auto_approved`'s real failure, something the nested
 >    decision above never had to surface once a later branch succeeded.
 
+## A typed context
+
+The example above uses `IReadOnlyDictionary<string, object?>`, which stays
+first-class permanently. But a cohesive family of rules sharing one shape
+can say so, and then a sub-rule expecting a different shape stops
+compiling rather than failing at runtime on a missing key or a bad cast:
+
+```csharp
+using VerdictRules;
+
+record OrderContext(decimal Total, bool IsMember);
+
+static Task<PredicateOutcome> OrderTotalMet(OrderContext ctx, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome(ctx.Total >= 50));
+
+static Task<PredicateOutcome> IsMember(OrderContext ctx, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome(ctx.IsMember));
+
+var freeShipping = new AndRule<OrderContext>("free_shipping", new IRule<OrderContext>[]
+{
+    new FunctionRule<OrderContext>("order_total_met", OrderTotalMet),
+    new FunctionRule<OrderContext>("is_member", IsMember),
+});
+
+var engine = new RulesEngine<OrderContext>(new IRule<OrderContext>[] { freeShipping });
+var result = await engine.RunNamedAsync("free_shipping", new OrderContext(Total: 75m, IsMember: false));
+
+Console.WriteLine(result.Passed);                        // False
+Console.WriteLine(result.GetFailingLeaves()[0].RuleName); // is_member
+```
+
+The generic form is the implementation and the non-generic one is a closed
+specialization of it, so neither is a second-class path. Both arities
+coexist, which is what lets the dict-context example above and this one
+sit in the same codebase.
+[`../../../../docs/architecture/csharp.md`](../../../../docs/architecture/csharp.md)
+covers the mechanics;
+[`extending/reusing-a-rule-across-contexts/`](../../../../docs/extending/reusing-a-rule-across-contexts/README.md)
+covers when dict-context is the better answer.
+
 ## Next: build rules from your own configuration, not just hard-coded ones
 
 Because rules are just objects, they're straightforward to build up at
@@ -169,4 +216,4 @@ for the scenario.
   of this package from your own code.
 - [`../../../../docs/testing/`](../../../../docs/testing/README.md) — `dotnet build`
   and `dotnet test`, and what a test here actually needs to prove.
-- [`../../../../docs/samples/`](../../../../docs/samples/README.md) — more worked examples.
+- [`../../../../fixtures/README.md`](../../../../fixtures/README.md) — more worked examples.

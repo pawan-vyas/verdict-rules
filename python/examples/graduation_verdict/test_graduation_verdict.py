@@ -12,9 +12,10 @@ import json
 from pathlib import Path
 
 import pytest
-from verdict import AndRule, FunctionRule, OrRule
+from verdict import AndRule, FunctionRule, OrRule, PredicateOutcome
 
 from graduation_verdict import (
+    AtLeastNRule,
     SubjectPolicy,
     build_graduation_check,
     load_curriculum,
@@ -38,7 +39,7 @@ def _policy(subject_id: str):
 class TestRuleShapeDispatch:
     """Each subject_type must produce the Rule shape the sample spec claims.
 
-    See docs/samples/graduation-requirement-verdict/README.md.
+    See fixtures/graduation_verdict/README.md.
     """
 
     def test_academic_subject_is_a_plain_function_rule(self) -> None:
@@ -96,10 +97,77 @@ class TestLanguageOrRule:
         assert result.passed is False
 
 
+def _tracked(name: str, *, passed: bool, calls: list[str]) -> FunctionRule[dict]:
+    """A `FunctionRule` that records its own name to `calls` when run --
+    the same call-counter shape test_rule.py/test_composition.py already
+    use to prove a composite's short-circuit behaviour: an entry missing
+    from `calls` means that sub-rule's predicate never ran."""
+
+    async def predicate(context: dict) -> PredicateOutcome:
+        calls.append(name)
+        return PredicateOutcome(passed=passed)
+
+    return FunctionRule(name, predicate)
+
+
+class TestAtLeastNRuleShortCircuits:
+    """AtLeastNRule stops calling sub-rules as soon as `minimum` is
+    mathematically decided either way -- it does not wait for every
+    sub-rule to run once the answer can no longer change."""
+
+    async def test_stops_once_the_minimum_is_already_met(self) -> None:
+        calls: list[str] = []
+        rule = AtLeastNRule(
+            "elective_requirement",
+            [
+                _tracked("a", passed=True, calls=calls),
+                _tracked("b", passed=True, calls=calls),
+                _tracked("c", passed=True, calls=calls),  # never reached
+            ],
+            minimum=2,
+        )
+        result = await rule.evaluate({})
+        assert result.passed is True
+        assert calls == ["a", "b"], "'c' must never run -- 2 passes already met minimum=2"
+
+    async def test_stops_once_the_minimum_can_no_longer_be_reached(self) -> None:
+        calls: list[str] = []
+        rule = AtLeastNRule(
+            "elective_requirement",
+            [
+                _tracked("a", passed=False, calls=calls),
+                _tracked("b", passed=False, calls=calls),
+                _tracked("c", passed=True, calls=calls),  # never reached
+            ],
+            minimum=2,
+        )
+        result = await rule.evaluate({})
+        assert result.passed is False
+        assert calls == ["a", "b"], (
+            "'c' must never run -- two failures already make minimum=2 unreachable "
+            "with only one sub-rule left"
+        )
+
+    async def test_runs_every_sub_rule_when_the_minimum_is_decided_only_at_the_end(self) -> None:
+        calls: list[str] = []
+        rule = AtLeastNRule(
+            "elective_requirement",
+            [
+                _tracked("a", passed=True, calls=calls),
+                _tracked("b", passed=False, calls=calls),
+                _tracked("c", passed=True, calls=calls),
+            ],
+            minimum=2,
+        )
+        result = await rule.evaluate({})
+        assert result.passed is True
+        assert calls == ["a", "b", "c"], "exactly 2 of 3 passing is only decidable at the last sub-rule"
+
+
 class TestEngineRunModes:
     """run_named/run_group/run_all each serve the specific job the sample spec claims.
 
-    See docs/samples/graduation-requirement-verdict/README.md.
+    See fixtures/graduation_verdict/README.md.
     """
 
     async def test_run_named_looks_up_one_subject(self) -> None:
@@ -134,13 +202,13 @@ class TestEngineRunModes:
 def _failing_chain(result) -> list[str]:
     """Walk the first failing branch down, collecting rule names.
 
-    A nested failure is reachable by following `data` downward;
-    `RuleResult.data` is never flattened.
+    A nested failure is reachable by following `sub_results` downward;
+    `RuleResult.data` plays no role here — composites never write to it.
     """
     chain: list[str] = []
     node = result
-    while isinstance(node.data, list) and node.data:
-        nxt = next((sub for sub in node.data if not sub.passed), None)
+    while node.sub_results:
+        nxt = next((sub for sub in node.sub_results if not sub.passed), None)
         if nxt is None:
             break
         chain.append(nxt.rule_name)
@@ -174,9 +242,9 @@ class TestSharedFixtureContract:
         context = _STUDENTS[student_id]
         expected = context["expected"]
         result = await graduates.evaluate(context)
-        assert len(result.data) == expected["rules_evaluated"], (
+        assert len(result.sub_results) == expected["rules_evaluated"], (
             f"{student_id}: expected {expected['rules_evaluated']} sub-rules to run, "
-            f"got {len(result.data)} — short-circuiting is broken or over-eager"
+            f"got {len(result.sub_results)} — short-circuiting is broken or over-eager"
         )
 
     @pytest.mark.parametrize("student_id", list(_STUDENTS.keys()))
@@ -193,6 +261,44 @@ class TestSharedFixtureContract:
         assert (chain[0] if chain else None) == expected["failing_rule"]
 
     @pytest.mark.parametrize("student_id", list(_STUDENTS.keys()))
+    async def test_leaves_match(self, student_id: str) -> None:
+        """Every actual leaf-level rule evaluated, in evaluation order."""
+        _, graduates = build_graduation_check(_POLICIES, _ELECTIVE_MINIMUM)
+        context = _STUDENTS[student_id]
+        expected = context["expected"]
+        result = await graduates.evaluate(context)
+        leaves = [leaf.rule_name for leaf in result.leaves]
+        assert leaves == expected["leaves"], (
+            f"{student_id}: expected leaves {expected['leaves']}, got {leaves}"
+        )
+
+    @pytest.mark.parametrize("student_id", list(_STUDENTS.keys()))
+    async def test_failing_leaves_match(self, student_id: str) -> None:
+        """A passing result has none; a failing one is never empty."""
+        _, graduates = build_graduation_check(_POLICIES, _ELECTIVE_MINIMUM)
+        context = _STUDENTS[student_id]
+        expected = context["expected"]
+        result = await graduates.evaluate(context)
+        failing_leaves = [leaf.rule_name for leaf in result.failing_leaves]
+        assert failing_leaves == expected["failing_leaves"], (
+            f"{student_id}: expected failing leaves {expected['failing_leaves']}, got {failing_leaves}"
+        )
+
+    @pytest.mark.parametrize("student_id", list(_STUDENTS.keys()))
+    async def test_decided_by_matches(self, student_id: str) -> None:
+        """One-level explanation for the top-level composite's own verdict --
+        exactly the decisive member regardless of position (gita fails on
+        the *last* of four), or every member on a full pass."""
+        _, graduates = build_graduation_check(_POLICIES, _ELECTIVE_MINIMUM)
+        context = _STUDENTS[student_id]
+        expected = context["expected"]
+        result = await graduates.evaluate(context)
+        decided_by = [r.rule_name for r in result.decided_by]
+        assert decided_by == expected["decided_by"], (
+            f"{student_id}: expected decided_by {expected['decided_by']}, got {decided_by}"
+        )
+
+    @pytest.mark.parametrize("student_id", list(_STUDENTS.keys()))
     async def test_run_all_never_short_circuits(self, student_id: str) -> None:
         """run_all reports every registered rule for every student, always."""
         engine, _ = build_graduation_check(_POLICIES, _ELECTIVE_MINIMUM)
@@ -201,6 +307,12 @@ class TestSharedFixtureContract:
         result = await engine.run_all(context)
         assert len(result.results) == expected["evaluated"]
         assert result.passed == expected["passed"]
+        # The run's own view, not the composite's. elena is why this is
+        # asserted separately: she passes every registered subject, so the
+        # run has no failing leaves -- even though FRENCH101's written paper
+        # failed before her exemption carried it. A filter over `leaves`
+        # would surface that paper and report a failure on a passing run.
+        assert [leaf.rule_name for leaf in result.failing_leaves] == expected["failing_leaves"]
 
     @pytest.mark.parametrize("student_id", list(_STUDENTS.keys()))
     async def test_group_results_match(self, student_id: str) -> None:
@@ -235,13 +347,16 @@ class TestVacuousTruthEdgeCases:
         result = await graduates.evaluate(student)
 
         assert result.passed == expected["passed"], f"{case_name}: {case['note']}"
-        assert len(result.data) == expected["rules_evaluated"], case_name
+        assert len(result.sub_results) == expected["rules_evaluated"], case_name
         chain = _failing_chain(result)
         assert chain == expected["failing_chain"], case_name
 
         run_all = await engine.run_all(student)
         assert len(run_all.results) == expected["run_all"]["evaluated"], case_name
         assert run_all.passed == expected["run_all"]["passed"], case_name
+        assert [leaf.rule_name for leaf in run_all.failing_leaves] == expected["run_all"][
+            "failing_leaves"
+        ], case_name
 
         # The strict form raises; the try_ form returns None.
         lookups = expected["lookups"]

@@ -6,7 +6,7 @@
 > breadth of verdict-rules at once: heterogeneous `IRule` shapes built
 > from external policy data, a custom `IRule` type, and all three
 > `RulesEngine` run modes serving three different real callers. See
-> [`docs/samples/graduation-requirement-verdict/`](../../../docs/samples/graduation-requirement-verdict/README.md)
+> [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md)
 > for the original framing question this project answers, the design,
 > and what a solution must demonstrate.
 
@@ -34,13 +34,13 @@ name the project explicitly, the same as `VerdictRules.Tests` itself.
 
 ## Read more
 
-- [`../../../docs/samples/graduation-requirement-verdict/`](../../../docs/samples/graduation-requirement-verdict/README.md) --
+- [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md) --
   the naive way this policy is usually implemented, why it breaks down,
   and both diagrams behind the design actually used here.
 - [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md) --
   how to add a subject, a student scenario, or a new subject type, and
   the shared cross-language fixture contract.
-- [`docs/testing.md`](docs/testing.md) -- the two test suites and what
+- [`docs/testing.md`](docs/testing.md) -- the four test suites and what
   each proves, including why this project's own tests also serve as an
   integration/e2e regression net for verdict-rules itself.
 
@@ -58,4 +58,8 @@ name the project explicitly, the same as `VerdictRules.Tests` itself.
 | `ChaosData.cs` | A deterministic generator for randomized, schema-valid curricula and students, using .NET's own seedable `Random`. |
 | `Program.cs` | The runnable demo. |
 | `../GraduationVerdict.Tests/GraduationVerdictTests.cs` | The curated-scenario suite -- loads both JSON files, asserts generically. |
-| `../GraduationVerdict.Tests/ChaosTests.cs` | 500 generated cases, checked against `Oracle.cs` -- see [`docs/testing.md`](docs/testing.md#the-chaos-suite-differential-testing-against-an-independent-oracle). |
+| `../GraduationVerdict.Tests/ChaosTests.cs` | 500 generated cases, checked against `Oracle.cs`, plus structural/purity invariants on the same cases -- see [`docs/testing.md`](docs/testing.md#the-chaos-suite-differential-testing-against-an-independent-oracle). |
+| `../GraduationVerdict.Tests/StructuralInvariants.cs` | Walks a built tree's real `IRule` objects together with the `RuleResult` tree they produced -- see [`docs/testing.md`](docs/testing.md#beyond-the-boolean-structural-invariants-on-the-same-generated-cases). |
+| `../GraduationVerdict.Tests/CurriculumFuzzTests.cs` | Fuzzes `GraduationCheck.CurriculumFromJson` with malformed `policies.json` shapes -- see [`docs/testing.md`](docs/testing.md#fuzzing-the-curriculum-reader). |
+| `../GraduationVerdict.Tests/Shrinker.cs` | The failing-run-to-fixture shrinking mechanism -- see [`docs/testing.md`](docs/testing.md#failing-run-to-fixture-shrinking). |
+| `../GraduationVerdict.Tests/ShrinkerTests.cs` | Permanent unit tests of the shrinking mechanism itself, against a synthetic failure predicate. |

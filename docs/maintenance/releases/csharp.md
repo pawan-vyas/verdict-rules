@@ -54,6 +54,16 @@ the policy on nuget.org (organization/user, repository, the workflow
 filename `release-csharp.yml`, optional environment), not publishing by
 hand first.
 
+## ID prefix reservation
+
+NuGet is the one registry where a plausible-looking `VerdictRules.Extensions`
+could be published by somebody else and read as ours, so **ID prefix
+reservation for `VerdictRules.*` is worth applying for.** This project will
+never publish that package, which is precisely why nobody else should be able
+to. The reservation attaches to the package owner, not to an organization —
+see [`../supply-chain-and-ownership.md`](../supply-chain-and-ownership.md),
+which holds the cross-registry ownership posture this follows from.
+
 ## Provenance
 
 NuGet counter-signs every accepted package automatically — `.signature.p7s`
@@ -61,7 +71,10 @@ sits at the package root of the downloaded `.nupkg`, applied by nuget.org's
 own publish pipeline regardless of how the package was pushed. Unlike
 PyPI's PEP 740 attestations or npm's `dist.attestations`, this isn't
 something Trusted Publishing specifically enables; it's baseline registry
-policy. `release-csharp.yml`'s own `verify-published` job downloads the
+policy. *Author* signing is a separate mechanism needing a code-signing
+certificate, and buys little for a package already repository-signed and
+published from CI — deliberately not pursued.
+`release-csharp.yml`'s own `verify-published` job downloads the
 published `.nupkg` from NuGet's version-specific flat-container endpoint
 and asserts the signature file is present, rather than trusting that the
 push step exiting zero means the right thing is live. See

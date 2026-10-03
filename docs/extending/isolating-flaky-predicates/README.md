@@ -1,38 +1,29 @@
 <!-- Title: Extending — Isolating A Flaky Predicate -->
 # Extending verdict: stop one flaky predicate from taking out the whole run
 
-> **A note from the author**: this is a deliberate boundary, not an
-> oversight. Whether a given exception means the condition failed or the
-> code is broken is a fact about your own predicate, not something this
-> package can read off the exception itself — and it isn't this
-> package's call to make either way. That decision stays with whoever
-> wrote the predicate, opted into per rule, never assumed for all of
-> them.
+> Nothing in this package catches an exception a predicate raises. That
+> is a deliberate boundary, and this page is why, plus how to opt out of
+> it for one rule.
 
 **Nothing in this package catches an exception a predicate raises.** Not
-`AndRule`/`OrRule`, not a run-everything mode, not a named or grouped
-lookup. If a predicate's own code raises — an HTTP call to a
-promo-validation service timing out, a database lookup failing — that
-exception propagates straight out of whichever call you made, exactly
-as if you'd called the failing code yourself with nothing in between.
+a composite, not a run-everything mode, not a named or grouped lookup. If
+a predicate's own code raises — an HTTP call timing out, a database
+lookup failing — that exception propagates straight out of whichever
+call you made, exactly as if you had called the failing code yourself
+with nothing in between.
 
-This is worth a scenario of its own, and not just a line in
-[`../../architecture/README.md`](../../architecture/README.md), because
-"rules *engine*" invites the opposite assumption. A consumer reaching
-for this package is not reading its source to find out what it does with
-a predicate's exception — verdict is something you install and call, not
-something you read line-by-line before trusting — so the natural guess
-is that an *engine* is the fault-tolerant layer, the thing that keeps a
-batch of twenty independent checks going even if one of them breaks. It
-isn't, deliberately, and the cost of that assumption being wrong is
-severe: one flaky external call takes out every other rule's diagnostics
-in the same run, not just its own.
+This earns a scenario rather than a line in
+[`../../architecture/README.md`](../../architecture/README.md) because
+"rules *engine*" invites the opposite assumption: that the engine is the
+fault-tolerant layer keeping twenty independent checks going when one
+breaks. It is not, and the cost of guessing wrong is severe — one flaky
+external call takes out every other rule's diagnostics in the same run,
+not just its own.
 
-If that's not what you want, wrap the predicate so its own exception
-becomes a failing result instead of propagating out of the run that
-contains it. Now a timeout in the wrapped check reports as a normal
-failing entry, same as any other failing rule — and every other rule in
-that run still runs and still reports.
+If that is not what you want, wrap the predicate so its own exception
+becomes a failing outcome instead of propagating. The wrapped check then
+reports as a normal failing entry, and every other rule in that run
+still runs and still reports.
 
 ```mermaid
 sequenceDiagram
@@ -42,7 +33,7 @@ sequenceDiagram
     participant R2 as 🛡️ defensive(promo_code_valid)
     participant R3 as ✅ rule_3
 
-    Caller->>Engine: run_all(context)
+    Caller->>Engine: run everything
     Engine->>R1: evaluate(context)
     R1-->>Engine: RuleResult(passed=True)
     Engine->>R2: evaluate(context)
@@ -54,57 +45,48 @@ sequenceDiagram
 ```
 
 > **`rule_3` Still Runs**: without the wrapper, `R2`'s own `TimeoutError`
-> would propagate straight out of `run_all` itself — `Engine` never gets
-> to call `R3` at all, and the caller gets a stack trace instead of a
-> `RunResult`. Wrapping `R2` alone is enough to keep the other two rules'
-> diagnostics intact; nothing about `R1` or `R3` needed to change.
+> propagates straight out of the run — `Engine` never calls `R3` at all,
+> and the caller gets a stack trace instead of a `RunResult`. Wrapping
+> `R2` alone keeps the other two rules' diagnostics intact; nothing about
+> `R1` or `R3` changes.
 
 ## Why the library does not catch this for you
 
-Because whether a flaky external check failing should count as "the
-condition failed" or should stop everything and surface the exception is
-a call only the rule's author can make, and the two answers are both
-right somewhere:
+Whether a given exception means "the condition failed" or "the code is
+broken" is a fact about your own predicate, not something readable off
+the exception — and both answers are right somewhere:
 
-- **A promo-code service timing out** probably should report as
-  "not valid" and let checkout continue — the customer just doesn't get
-  that discount this time.
-- **A database connection failing inside an access-control check**
-  probably should *not* quietly report "access denied" — that's a system
-  fault, not a policy decision, and swallowing it would misreport an
-  outage as a legitimate rejection.
+| The failure | What it should probably do |
+| :-- | :-- |
+| A promo-code service times out | Report "not valid" and let checkout continue — the customer just misses the discount |
+| A database connection fails inside an access-control check | **Not** quietly report "access denied" — that is a system fault being misreported as a policy decision |
 
-A default either way is wrong for one of those. Catching every exception
-unconditionally would also mean this package deciding it doesn't need to
-care whether what it just caught was a legitimate domain outcome or a
-genuine code bug — and those are not the same thing. A discount
-calculation that divides by a quantity of `0` is not "this rule failed,"
-it's a bug in the predicate. Catch it unconditionally and it *becomes*
-"this rule failed" — a silent, wrong result sitting in the run's own
-results, looking exactly like every other legitimate rejection. Let it
-propagate and it's a stack trace pointing at the exact line that's
-wrong, in front of the developer who can fix it, the moment it happens.
-Silent-and-wrong beats loud-and-obvious for no one. That is the same
-failure mode [`../absence-vs-failure/README.md`](../absence-vs-failure/README.md)
-already rejects a built-in fallback for: a library default that is right
-for some consumers is wrong, silently, for the rest — so the choice
-stays with whoever wrote the predicate, opted into per rule, not assumed
-for all of them.
+A default either way is wrong for one of those.
+
+Catching unconditionally would also mean deciding that the difference
+between a domain outcome and a code bug does not matter. A discount
+calculation dividing by a quantity of `0` is not "this rule failed," it
+is a bug in the predicate. Caught unconditionally it *becomes* "this rule
+failed" — a silent wrong answer sitting in the run's results, looking
+exactly like a legitimate rejection. Left to propagate it is a stack
+trace pointing at the line that is wrong, in front of whoever can fix it.
+
+So the decision stays with whoever wrote the predicate, opted into per
+rule, never assumed for all of them — the same reasoning
+[`../absence-vs-failure/README.md`](../absence-vs-failure/README.md)
+applies to a missing lookup.
 
 ## What this demonstrates
 
-- A predicate's own exception propagates unchanged; nothing in this
-  package's own code intercepts it.
-- Turning a predicate's exception into a failing result is a consumer
-  decision, opted into per rule that needs it, never a blanket default.
-- Isolating one flaky check from the rest of a run is possible without
-  any change on this package's side.
+- A predicate's own exception propagates unchanged; nothing here
+  intercepts it.
+- Turning one into a failing outcome is a consumer decision, per rule.
+- Isolating one flaky check needs no change on this package's side.
 
 ## Related
 
-- [`../../architecture/README.md`](../../architecture/README.md) —
-  the execution-model guarantees this scenario's exception behavior sits
-  alongside.
+- [`../../architecture/README.md`](../../architecture/README.md) — the
+  execution-model guarantees this behavior sits alongside.
 - [`../absence-vs-failure/README.md`](../absence-vs-failure/README.md) —
   the same "the library will not guess for you" reasoning, applied to a
-  missing lookup instead of a predicate's own exception.
+  missing lookup.

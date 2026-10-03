@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace VerdictRules;
 
 /// <inheritdoc cref="RulesEngine{TContext}" />
@@ -7,6 +9,8 @@ namespace VerdictRules;
 /// constructor, so its own <c>param</c> sits on that constructor rather than on
 /// the type, and a type-level <c>inheritdoc</c> has nothing to pick up.
 /// </param>
+[DebuggerDisplay("{DebuggerDisplay,nq}")]
+[DebuggerTypeProxy(typeof(RulesEngineDebugView))]
 public sealed class RulesEngine(IReadOnlyList<IRule> rules)
 {
     /// <summary>The generic engine this type is a closed specialization of.</summary>
@@ -18,6 +22,9 @@ public sealed class RulesEngine(IReadOnlyList<IRule> rules)
 
     /// <inheritdoc cref="RulesEngine{TContext}.GroupNames" />
     public IReadOnlyCollection<string> GroupNames => _inner.GroupNames;
+
+    /// <summary>Rules, for <see cref="RulesEngineDebugView"/> to reach through <c>_inner</c>.</summary>
+    internal IReadOnlyList<IRule<IReadOnlyDictionary<string, object?>>> Rules => _inner.Rules;
 
     /// <inheritdoc cref="RulesEngine{TContext}.RunAllAsync" />
     public Task<RunResult> RunAllAsync(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
@@ -38,4 +45,22 @@ public sealed class RulesEngine(IReadOnlyList<IRule> rules)
     /// <inheritdoc cref="RulesEngine{TContext}.RunGroupAsync" />
     public Task<RunResult> RunGroupAsync(string group, IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>
         _inner.RunGroupAsync(group, context, cancellationToken);
+
+    /// <inheritdoc />
+    public override string ToString() => _inner.ToString();
+
+    /// <summary>What a debugger shows without expanding the object.</summary>
+    private string DebuggerDisplay => ToString();
+}
+
+/// <summary>Makes a debugger expand a <see cref="RulesEngine"/> straight to its rules.</summary>
+/// <param name="engine">The engine this proxy presents to the debugger.</param>
+internal sealed class RulesEngineDebugView(RulesEngine engine)
+{
+    /// <summary>The engine this proxy presents to the debugger.</summary>
+    private readonly RulesEngine _engine = engine;
+
+    /// <summary>Every registered rule, expanded directly rather than behind another property.</summary>
+    [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+    public IRule<IReadOnlyDictionary<string, object?>>[] Rules => [.. _engine.Rules];
 }

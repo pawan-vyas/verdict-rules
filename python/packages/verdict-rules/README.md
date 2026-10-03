@@ -10,7 +10,7 @@ pip install verdict-rules
 ```
 
 ```python
-from verdict import Rule, FunctionRule, AndRule, OrRule, RulesEngine
+from verdict import Rule, FunctionRule, AndRule, OrRule, NotRule, RulesEngine
 ```
 
 ## A first rule
@@ -21,12 +21,12 @@ against its own floor:
 
 ```python
 import asyncio
-from verdict import FunctionRule, AndRule, RuleResult, RulesEngine
+from verdict import AndRule, FunctionRule, PredicateOutcome, RulesEngine
 
 def at_least(name: str, field: str, floor: float) -> FunctionRule:
-    async def predicate(context: dict) -> RuleResult:
+    async def predicate(context: dict) -> PredicateOutcome:
         value = context[field]
-        return RuleResult(rule_name=name, passed=value >= floor, detail=f"{value} vs {floor}")
+        return PredicateOutcome(passed=value >= floor, detail=f"{value} vs {floor}")
     return FunctionRule(name, predicate)
 
 async def main() -> None:
@@ -36,11 +36,17 @@ async def main() -> None:
     ])
     engine = RulesEngine([eligible])
     verdict = await engine.run_named("eligible", {"age": 21, "score": 55})
-    print(verdict.passed)  # False
-    print(verdict.detail)  # "'score_ok' failed: 55 vs 60"
+    print(verdict.passed)                          # False
+    failed = verdict.failing_leaves[0]
+    print(failed.rule_name, "|", failed.detail)    # score_ok | 55 vs 60
 
 asyncio.run(main())
 ```
+
+A predicate reports a `PredicateOutcome`; the `FunctionRule` wrapping it
+owns the name and builds the `RuleResult`. A composite's own `detail` is
+empty — read `failing_leaves` for which leaf check refused, and key an
+audit trail on that leaf's `rule_name` rather than the composite's.
 
 ## If it has the shape, it is a rule
 
@@ -79,18 +85,22 @@ async function.
   `rule_names` / `group_names` to check membership, or `try_run_named` /
   `try_run_group` where your own domain has an answer for absence —
   both return `None` instead of raising.
-- **`RuleResult.data` is opaque** — only what actually ran, never
-  padded, never flattened.
+- **`RuleResult.data` is opaque** — never read or written by this
+  package; it carries whatever a predicate attached, unchanged.
+- **A composite's children live in `sub_results`**, and are exactly what
+  it evaluated: never padded to the full sub-rule list, never flattened
+  into the parent. `leaves`/`failing_leaves` walk that tree for you, and
+  `decided_by` names which sub-results explain a result's own verdict.
 - **Zero runtime dependencies.**
 
 ## Where to go next
 
 | Doc | For |
 | --- | --- |
-| [`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.3.1/python/packages/verdict-rules/docs/quickstart.md) | The quickstart — core concepts and a full worked example |
-| [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.3.1/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
-| [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.3.1/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
-| [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.3.1/docs/maintenance/README.md) | Changing this package itself |
-| [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.3.1/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
-| [`docs/samples/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.3.1/docs/samples/README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
-| [`examples/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.3.1/python/examples/README.md) | Full, tested mini-projects behind the more comprehensive samples — real code, real tests, real docs |
+| [`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.4.0/python/packages/verdict-rules/docs/quickstart.md) | The quickstart — core concepts and a full worked example |
+| [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.4.0/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
+| [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.4.0/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
+| [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.4.0/docs/maintenance/README.md) | Changing this package itself |
+| [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.4.0/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
+| [`fixtures/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.4.0/fixtures/README.md) | The two worked scenarios — each one's problem, design, and the cross-language data contract every port reproduces |
+| [`examples/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.4.0/python/examples/README.md) | Full, tested mini-projects behind the more comprehensive samples — real code, real tests, real docs |

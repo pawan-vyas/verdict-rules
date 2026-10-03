@@ -56,6 +56,24 @@ void main() {
       final engine = RulesEngine<Context>([pass('a')]);
       expect(() => engine.runNamed('missing', {}), throwsArgumentError);
     });
+
+    // No direct Python counterpart (Python's KeyError carries no
+    // equivalent name/value/message triple to assert on). Found via this
+    // package's own mutation testing run: `throwsArgumentError` alone
+    // only proves the exception type, not which argument landed in which
+    // of ArgumentError.value's three positions -- a mutant that swapped
+    // two of them still throws an ArgumentError.
+    test('unknown name error reports value, field, and reason', () async {
+      final engine = RulesEngine<Context>([pass('a')]);
+      try {
+        await engine.runNamed('missing', {});
+        fail('expected an ArgumentError');
+      } on ArgumentError catch (e) {
+        expect(e.invalidValue, 'missing');
+        expect(e.name, 'name');
+        expect(e.message, 'No rule with this name');
+      }
+    });
   });
 
   group('RunGroup', () {
@@ -78,6 +96,23 @@ void main() {
         () => engine.runGroup('no-such-group', {}),
         throwsArgumentError,
       );
+    });
+
+    // No direct Python counterpart (Python's test_unknown_group_raises
+    // checks message containment via `pytest.raises(..., match=...)`,
+    // which has no structural equivalent for a field-order swap in Dart's
+    // ArgumentError). Found via this package's own mutation testing run,
+    // same gap as runNamed's error above.
+    test('unknown group error reports value, field, and reason', () async {
+      final engine = RulesEngine<Context>([pass('a', group: 'g1')]);
+      try {
+        await engine.runGroup('no-such-group', {});
+        fail('expected an ArgumentError');
+      } on ArgumentError catch (e) {
+        expect(e.invalidValue, 'no-such-group');
+        expect(e.name, 'group');
+        expect(e.message, 'No rules in this group');
+      }
     });
 
     // Mirrors test_ungrouped_rules_are_never_matched.

@@ -72,8 +72,8 @@ Before opening a PR, regardless of language:
 
 Read [`AGENTS.md`'s "What this repo is" section](AGENTS.md#what-this-repo-is)
 first — a new language lands as its own top-level directory alongside
-`python/`, `js/`, and `dart/`, with its own `AGENTS.md` for that
-language's conventions, and its own reference set under
+`python/`, `js/`, `csharp/`, and `dart/`, with its own `AGENTS.md` for
+that language's conventions, and its own reference set under
 `skills/verdict/references/<language>/`. Open an issue before starting
 a large port — this is exactly the kind of change worth agreeing on
 scope for before code exists.

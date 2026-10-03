@@ -6,6 +6,56 @@ Release history for the verdict AI-agent skill. Format follows
 This versions **the guidance**, not any language's API, so it moves on its own
 cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skill-vX.Y.Z`.
 
+## [0.8.0] - 2026-10-03
+
+- **The predicate contract is corrected in every language's notes.** A
+  predicate returns a `PredicateOutcome` — `passed` plus an optional
+  detail and payload — and the `FunctionRule` wrapping it owns the rule's
+  name and builds the `RuleResult`. All four `agent-notes.md` previously
+  showed a predicate constructing a `RuleResult` directly, which the
+  library rejects; code written from that guidance raised immediately.
+  Each language's notes now carry a worked predicate, and `SKILL.md`
+  states the contract as a cross-language guarantee.
+- **The result-inspection surface is documented.** `subResults`,
+  `decidedBy`, and the flattened `leaves`/`failingLeaves` views, in each
+  language's own spelling, with the short-circuit caveat beside them: a
+  failed `AndRule` has exactly one failing leaf, and a passing `OrRule`
+  has none even when an earlier branch failed on the way to that pass.
+  C#'s notes spell `GetLeaves()`/`GetFailingLeaves()`/`GetDecidedBy()`
+  as methods, which is that SDK alone.
+- **Which views are stored and which are derived is now stated.** A
+  result holds its children and the *positions* of the deciding ones;
+  everything else is computed on access. Every constructor example
+  passes `decidedByIndices` (in each language's spelling) rather than
+  child results, and each language's notes name the error type a
+  position outside the children raises. Guidance that built a result by
+  handing it the deciding children produces code that no longer
+  compiles.
+- **Serializing a result is documented per language**, including that
+  the derived views are absent from the output and that the opaque
+  `data` slot is the one part that can fail to encode. Dart's notes
+  carry `toJson()`, which that SDK needs and no other does —
+  `jsonEncode` cannot encode an arbitrary object.
+- **JS's notes state that result instances are frozen**, since
+  `readonly` is a compile-time claim erased at runtime.
+- **Keying an audit trail on a leaf's own rule name** — never a
+  composite's, whose name says only that something in the group failed
+  and which changes when its children are renamed or reordered — is
+  stated in `SKILL.md` and shown per language.
+- **`NotRule` is documented**, in every type list, every constructor
+  table, and the vacuous-truth guarantee (it wraps one rule, so it has
+  no vacuous case).
+- **`SKILL.md` no longer implies a composite's children live in a
+  result's `data`.** `data` is opaque and carries only what a predicate
+  attached; children live in the result's sub-results.
+- JS/TS's notes record that `RuleResult`/`RunResult` are classes, so they
+  are value imports rather than `import type`, and that a custom
+  composite constructs its result rather than spreading one. Dart's drop
+  a `const constructors` claim the types no longer have. C#'s drop a
+  version-gated parenthetical.
+- Every code sample in all four languages was executed against the real
+  package before this entry was written.
+
 ## [0.7.0] - 2026-10-01
 
 - **New: `references/issue-reporting.md`.** Tells an agent using verdict

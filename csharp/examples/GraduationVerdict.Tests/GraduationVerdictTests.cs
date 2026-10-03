@@ -28,7 +28,7 @@ public static class SharedFixture
         Curriculum.Policies.First(p => p.SubjectId == subjectId);
 }
 
-/// <summary>Each subject_type must produce the Rule shape the sample spec claims. See docs/samples/graduation-requirement-verdict/README.md.</summary>
+/// <summary>Each subject_type must produce the Rule shape the sample spec claims. See fixtures/graduation_verdict/README.md.</summary>
 public class RuleShapeDispatchTests
 {
     [Fact]
@@ -135,7 +135,7 @@ public class LanguageOrRuleTests
     }
 }
 
-/// <summary>RunNamedAsync/RunGroupAsync/RunAllAsync each serve the specific job the sample spec claims. See docs/samples/graduation-requirement-verdict/README.md.</summary>
+/// <summary>RunNamedAsync/RunGroupAsync/RunAllAsync each serve the specific job the sample spec claims. See fixtures/graduation_verdict/README.md.</summary>
 public class EngineRunModesTests
 {
     [Fact]
@@ -217,7 +217,7 @@ public class SharedFixtureContractTests
         var record = SharedFixture.Students[studentId];
         var expectedCount = record.Expected.GetProperty("rules_evaluated").GetInt32();
         var result = await graduates.EvaluateAsync(record.Context);
-        var actualCount = ((IReadOnlyList<RuleResult>)result.Data!).Count;
+        var actualCount = result.SubResults.Count;
         Assert.True(actualCount == expectedCount,
             $"{studentId}: expected {expectedCount} sub-rules to run, got {actualCount}");
     }
@@ -239,6 +239,47 @@ public class SharedFixtureContractTests
 
     [Theory]
     [MemberData(nameof(StudentIds))]
+    public async Task LeavesMatch(string studentId)
+    {
+        var (_, graduates) = GraduationCheck.BuildGraduationCheck(SharedFixture.Curriculum.Policies, SharedFixture.Curriculum.ElectiveMinimum);
+        var record = SharedFixture.Students[studentId];
+        var expectedLeaves = record.Expected.GetProperty("leaves").EnumerateArray().Select(e => e.GetString()!).ToList();
+        var result = await graduates.EvaluateAsync(record.Context);
+        var leaves = result.GetLeaves().Select(l => l.RuleName).ToList();
+        Assert.Equal(expectedLeaves, leaves);
+    }
+
+    [Theory]
+    [MemberData(nameof(StudentIds))]
+    public async Task FailingLeavesMatch(string studentId)
+    {
+        var (_, graduates) = GraduationCheck.BuildGraduationCheck(SharedFixture.Curriculum.Policies, SharedFixture.Curriculum.ElectiveMinimum);
+        var record = SharedFixture.Students[studentId];
+        var expectedFailingLeaves = record.Expected.GetProperty("failing_leaves").EnumerateArray().Select(e => e.GetString()!).ToList();
+        var result = await graduates.EvaluateAsync(record.Context);
+        var failingLeaves = result.GetFailingLeaves().Select(l => l.RuleName).ToList();
+        Assert.Equal(expectedFailingLeaves, failingLeaves);
+    }
+
+    [Theory]
+    [MemberData(nameof(StudentIds))]
+    public async Task DecidedByMatches(string studentId)
+    {
+        // gita is the one that matters: she fails on attendance_met, the
+        // *last* of the four top-level members -- decided_by must be just
+        // ["attendance_met"], not all four, proving the ShortCircuitEvaluator
+        // override (not the generic SequentialEvaluator count-based rule)
+        // is what's actually wired up in the real fixture tree too.
+        var (_, graduates) = GraduationCheck.BuildGraduationCheck(SharedFixture.Curriculum.Policies, SharedFixture.Curriculum.ElectiveMinimum);
+        var record = SharedFixture.Students[studentId];
+        var expectedDecidedBy = record.Expected.GetProperty("decided_by").EnumerateArray().Select(e => e.GetString()!).ToList();
+        var result = await graduates.EvaluateAsync(record.Context);
+        var decidedBy = result.GetDecidedBy().Select(r => r.RuleName).ToList();
+        Assert.Equal(expectedDecidedBy, decidedBy);
+    }
+
+    [Theory]
+    [MemberData(nameof(StudentIds))]
     public async Task RunAllNeverShortCircuits(string studentId)
     {
         var (engine, _) = GraduationCheck.BuildGraduationCheck(SharedFixture.Curriculum.Policies, SharedFixture.Curriculum.ElectiveMinimum);
@@ -247,6 +288,14 @@ public class SharedFixtureContractTests
         var result = await engine.RunAllAsync(record.Context);
         Assert.Equal(expected.GetProperty("evaluated").GetInt32(), result.Results.Count);
         Assert.Equal(expected.GetProperty("passed").GetBoolean(), result.Passed);
+        // The run's own view, not the composite's. elena is why this is
+        // asserted separately: she passes every registered subject, so the run
+        // has no failing leaves -- even though FRENCH101's written paper failed
+        // before her exemption carried it. A filter over GetLeaves() would
+        // surface that paper and report a failure on a passing run.
+        var expectedRunFailing = expected.GetProperty("failing_leaves")
+            .EnumerateArray().Select(e => e.GetString() ?? string.Empty).ToList();
+        Assert.Equal(expectedRunFailing, result.GetFailingLeaves().Select(l => l.RuleName));
     }
 
     [Theory]
@@ -291,7 +340,7 @@ public class VacuousTruthEdgeCasesTests
         var result = await graduates.EvaluateAsync(student);
 
         Assert.True(result.Passed == expected.GetProperty("passed").GetBoolean(), caseName);
-        Assert.Equal(expected.GetProperty("rules_evaluated").GetInt32(), ((IReadOnlyList<RuleResult>)result.Data!).Count);
+        Assert.Equal(expected.GetProperty("rules_evaluated").GetInt32(), result.SubResults.Count);
         var chain = Fixtures.FailingChain(result);
         var expectedChain = expected.GetProperty("failing_chain").EnumerateArray().Select(e => e.GetString()!).ToList();
         Assert.Equal(expectedChain, chain);
@@ -299,6 +348,9 @@ public class VacuousTruthEdgeCasesTests
         var runAll = await engine.RunAllAsync(student);
         Assert.Equal(expected.GetProperty("run_all").GetProperty("evaluated").GetInt32(), runAll.Results.Count);
         Assert.Equal(expected.GetProperty("run_all").GetProperty("passed").GetBoolean(), runAll.Passed);
+        var expectedEdgeFailing = expected.GetProperty("run_all").GetProperty("failing_leaves")
+            .EnumerateArray().Select(e => e.GetString() ?? string.Empty).ToList();
+        Assert.Equal(expectedEdgeFailing, runAll.GetFailingLeaves().Select(l => l.RuleName));
 
         // The strict form throws; the try-prefixed form returns null.
         var lookups = expected.GetProperty("lookups");

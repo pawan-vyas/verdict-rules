@@ -87,6 +87,6 @@ graph TB
 
 - [`../../architecture/README.md`](../../architecture/README.md#type-structure) —
   why `Rule` being a structural type is what makes this free.
-- [`../../samples/graduation-requirement-verdict/README.md`](../../samples/graduation-requirement-verdict/README.md) —
+- [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md) —
   a full worked example whose elective requirement is a real instance of
   this pattern (`AtLeastNRule`).

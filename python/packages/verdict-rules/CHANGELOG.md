@@ -8,6 +8,102 @@ which keeps its own changelog beside its own manifest.
 
 Tagged `python-vX.Y.Z`.
 
+## [0.4.0] - 2026-10-03
+
+### Added
+
+- **`RuleResult.sub_results`** — a composite's own children, in
+  evaluation order, holding exactly what it evaluated: never padded to
+  the full sub-rule list, never flattened into the parent. An empty
+  `sub_results` *is* the leaf signal, structurally.
+- **`RuleResult.leaves` / `RuleResult.failing_leaves`**, and the same
+  pair on `RunResult`, flattened across every rule a run evaluated. A
+  consumer keying an audit trail on the refusing rule can read
+  `result.failing_leaves[0].rule_name` without knowing the tree's shape.
+  `failing_leaves` is an independent recursion, not a filter over
+  `leaves`: a passed result contributes none even when an earlier
+  short-circuited branch failed on the way to that pass, and a failed
+  result with no failing children is itself the leaf.
+- **`RuleResult.decided_by`** — which of `sub_results` explain *this*
+  result's own verdict. One level, non-recursive; not the same question
+  `failing_leaves` answers. A `@property`, derived from
+  `decided_by_indices`, which is the stored field a constructor call
+  passes: the positions of the deciding children within `sub_results`,
+  not the children themselves. Holding the same results under two fields
+  makes the stored graph a DAG, and `dataclasses.asdict` (and every other
+  tree-shaped walk) expands a shared node once per path — serialized size
+  doubled per nesting level, measured at 13 MB for sixteen levels. An
+  index naming a child the result does not have raises `IndexError` at
+  construction, which the objects form admitted no check for.
+- **`RuleResult` and `RunResult` are serializable.**
+  `json.dumps(dataclasses.asdict(result))` emits the stored fields only;
+  `leaves`/`failing_leaves`/`decided_by` are `@property` accessors,
+  absent from the output and recomputable from what is there. `data`
+  remains opaque, so encoding whatever a caller put in it is the caller's
+  own responsibility.
+- **`NotRule`** — passes exactly when its one wrapped rule fails. No
+  vacuous case, since it wraps exactly one rule.
+- **`SequentialEvaluator` / `ShortCircuitEvaluator`** — the sequencing
+  `AndRule`/`OrRule` compose, now public so a custom composite composes
+  the same primitive rather than hand-rolling a loop.
+  `SequentialEvaluator` takes a `StepDecider` returning `True`/`False`
+  to stop or `None` to continue; `ShortCircuitEvaluator` is the narrower
+  case where one sub-result value ends evaluation.
+- `FunctionRule`, `AndRule`, `OrRule`, and `RulesEngine` define
+  `__repr__`, matching `RuleResult`/`RunResult`'s dataclass-generated
+  ones: `FunctionRule "name"` (or `"name" (group)`), `AndRule "name"
+  (group) — N sub-rule(s)`, `RulesEngine — N rule(s), M group(s)`.
+
+### Changed
+
+- **A predicate returns a `PredicateOutcome`, not a `RuleResult`.**
+  Migration: `return RuleResult(rule_name=..., passed=x, detail=d)`
+  becomes `return PredicateOutcome(passed=x, detail=d)`. The
+  `FunctionRule` wrapping it owns the name and builds the result, so a
+  predicate can no longer set a `rule_name` that silently disagrees with
+  the rule it belongs to. A predicate still returning a `RuleResult`
+  raises `TypeError` rather than appearing to work.
+- **A composite's children live in `sub_results`, not `data`.**
+  Migration: the `cast(list[RuleResult], result.data)` walk every caller
+  wrote becomes `result.sub_results`, or `result.failing_leaves` if the
+  goal was the refusing leaf. `data` stays opaque and now carries only
+  what a predicate attached.
+- **`AndRule`/`OrRule` leave their own `detail` empty.** Composing a
+  shared evaluator leaves no channel richer than a boolean to build a
+  string from. The failing sub-rule and its own detail are in
+  `sub_results`/`decided_by`/`failing_leaves`.
+
+### Fixed
+
+- **`RunResult.failing_leaves` disagreed with
+  `RuleResult.failing_leaves`** in both directions. It filtered the
+  flattened leaves by `not passed` instead of forwarding to each result's
+  own property, and a result's verdict is not a function of its leaves'
+  verdicts: a failed `NotRule` wraps a child that *passed*, so filtering
+  found a passing leaf and reported no failure on a failed run, while a
+  passed `OrRule` holding a recovered-from failed branch reported that
+  branch as a failure on a passing run. Now forwards per result.
+  `RunResult.leaves` was always correct and is unchanged. Reported from
+  downstream use of the Dart package; the same defect was present in all
+  four SDKs.
+- **A result hand-built with child results in `data` is read as a
+  *leaf*.** `leaves`, `failing_leaves` and `decided_by` consult
+  `sub_results` only, so a 0.3-era fixture that put children in `data`
+  still constructs and still evaluates, but reports itself as one
+  terminal check rather than a tree. Nothing raises; the shape is just
+  read differently.
+- **A composite's sub-rules, a result's children, and an engine's rules
+  are copied on construction, not aliased.** A caller that kept the list
+  it passed could change a composite's sub-rules — and its verdict —
+  after construction, and appending a result to the very list it was
+  built from produced a result containing itself, which every traversal
+  recursed through. `frozen=True` does not help: it stops reassignment
+  of the field, not mutation of the list the field points at.
+- **`RulesEngine`'s own views could disagree.** Its name and group
+  indexes are snapshots taken in the constructor while its iteration
+  list was aliased, so `rule_names` reported what was registered and
+  `run_all` iterated whatever the caller's list held by then.
+
 ## [0.3.1] - 2026-09-18
 
 ### Changed

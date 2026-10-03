@@ -1,5 +1,5 @@
 import { UnknownLookupError } from "./errors.js";
-import type { RuleResult, RunResult } from "./result.js";
+import { RunResult, type RuleResult } from "./result.js";
 import type { Rule } from "./rule.js";
 
 /**
@@ -44,7 +44,7 @@ export class RulesEngine<TContext> {
     for (const rule of this.#rules) {
       results.push(await rule.evaluate(context));
     }
-    return { passed: results.every((r) => r.passed), results };
+    return new RunResult(results);
   }
 
   /**
@@ -64,7 +64,7 @@ export class RulesEngine<TContext> {
   /**
    * Evaluate exactly one rule, looked up by name.
    *
-   * @throws {UnknownLookupError} if no rule has this name.
+   * @throws {@link UnknownLookupError} if no rule has this name.
    */
   async runNamed(name: string, context: TContext): Promise<RuleResult> {
     const result = await this.tryRunNamed(name, context);
@@ -89,13 +89,13 @@ export class RulesEngine<TContext> {
     for (const rule of rules) {
       results.push(await rule.evaluate(context));
     }
-    return { passed: results.every((r) => r.passed), results };
+    return new RunResult(results);
   }
 
   /**
    * Evaluate every rule sharing a group label. Never short-circuits.
    *
-   * @throws {UnknownLookupError} if no rule carries this label.
+   * @throws {@link UnknownLookupError} if no rule carries this label.
    */
   async runGroup(group: string, context: TContext): Promise<RunResult> {
     const result = await this.tryRunGroup(group, context);
@@ -103,5 +103,15 @@ export class RulesEngine<TContext> {
       throw new UnknownLookupError("group", group);
     }
     return result;
+  }
+
+  /** @returns A one-line summary -- the rule and group counts. */
+  toString(): string {
+    return `RulesEngine — ${this.#rules.length} rule(s), ${this.#byGroup.size} group(s)`;
+  }
+
+  /** So `console.log`/the Node REPL show the same summary as {@link toString}. */
+  [Symbol.for("nodejs.util.inspect.custom")](): string {
+    return this.toString();
   }
 }

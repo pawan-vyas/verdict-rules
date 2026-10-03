@@ -8,7 +8,7 @@ namespace VerdictRules;
 /// A lambda or method group converts to <see cref="RulePredicate"/> the same
 /// way it would to the equivalent bare <c>Func&lt;...&gt;</c>. A variable
 /// already typed as
-/// <c>Func&lt;IReadOnlyDictionary&lt;string, object?&gt;, CancellationToken, Task&lt;RuleResult&gt;&gt;</c>
+/// <c>Func&lt;IReadOnlyDictionary&lt;string, object?&gt;, CancellationToken, Task&lt;PredicateOutcome&gt;&gt;</c>
 /// does not implicitly convert to <see cref="RulePredicate"/> — wrap it
 /// explicitly (<c>new RulePredicate(existingFunc)</c>).
 /// </remarks>
@@ -18,4 +18,4 @@ namespace VerdictRules;
 /// triggered this evaluation.
 /// </param>
 /// <returns>The outcome of the one condition this predicate decides.</returns>
-public delegate Task<RuleResult> RulePredicate(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default);
+public delegate Task<PredicateOutcome> RulePredicate(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default);

@@ -11,6 +11,106 @@ than that convention's bracketed, dated one.
 
 Tagged `dart-vX.Y.Z`.
 
+## 0.4.0
+
+- **Added `RuleResult.subResults`** — a composite's own children, in
+  evaluation order, holding exactly what it evaluated: never padded to
+  the full sub-rule list, never flattened into the parent.
+- **Added `RuleResult.leaves`/`failingLeaves`**, and the same pair on
+  `RunResult`, flattened across every rule a run evaluated. A consumer
+  keying an audit trail on the refusing rule can read
+  `result.failingLeaves.first.ruleName` without knowing the tree's
+  shape. `failingLeaves` is an independent recursion, not a filter over
+  `leaves`: a passed result contributes none even past an earlier
+  short-circuited branch that failed, and a failed result with no
+  failing children is itself the leaf.
+- **Added `RuleResult.decidedBy`** — which of `subResults` explain
+  *this* result's own verdict. One level, non-recursive; not the same
+  question `failingLeaves` answers. A getter, derived from
+  `decidedByIndices`, which is the stored field a constructor call
+  passes: the positions of the deciding children within `subResults`,
+  not the children themselves. Holding the same results under two fields
+  makes the stored graph a DAG, which every tree-shaped encoder expands
+  once per path — serialized size would double per nesting level,
+  measured at 13 MB for sixteen levels in the sibling SDKs. An index
+  naming a child the result does not have throws `ArgumentError` at
+  construction.
+- **Added `RuleResult.toJson()` and `RunResult.toJson()`**, so
+  `jsonEncode(result)` works. `dart:convert` cannot encode an arbitrary
+  object and looks for a `toJson()` by convention, which is why this SDK
+  needs an explicit method where the other three reach an object's
+  fields through their own standard mechanism. Both emit the stored
+  fields only; the derived getters are recomputable, and one of them
+  cannot be stored at all. `data` remains opaque, so encoding whatever a
+  caller put in it is the caller's own responsibility.
+- **Added `NotRule`** — passes exactly when its one wrapped rule fails.
+- **Added `SequentialEvaluator`/`ShortCircuitEvaluator`** — the
+  sequencing `AndRule`/`OrRule` compose, now public so a custom
+  composite composes the same primitive rather than hand-rolling a loop.
+- **Added**: `FunctionRule`, `AndRule`, `OrRule`, and `RulesEngine`
+  override `toString()`, matching `RuleResult`/`RunResult`:
+  `FunctionRule "name"` (or `"name" (group)`), `AndRule "name" (group) —
+  N sub-rule(s)`, `RulesEngine — N rule(s), M group(s)`.
+- **Changed**: a predicate returns a `PredicateOutcome`, not a
+  `RuleResult`. `RulePredicate` is a
+  `Future<PredicateOutcome> Function(TContext)` now. Migration:
+  `RuleResult(ruleName: n, passed: x, detail: d)` becomes
+  `PredicateOutcome(x, detail: d)` — note `passed` is positional. The
+  `FunctionRule` wrapping it owns the name, so a predicate can no longer
+  set a `ruleName` that silently disagrees with the rule it belongs to.
+- **Changed**: a composite's children live in `subResults`, not `data`.
+  Migration: the `result.data as List<RuleResult>` cast every caller
+  wrote becomes `result.subResults`, or `result.failingLeaves` if the
+  goal was the refusing leaf. `data` stays opaque and now carries only
+  what a predicate attached.
+- **Changed**: `AndRule`/`OrRule` leave their own `detail` empty. The
+  failing sub-rule and its own detail are in
+  `subResults`/`decidedBy`/`failingLeaves`.
+- **Changed**: `RuleResult`/`RunResult`'s general constructors are no
+  longer `const`. Copying the collections they are handed requires a
+  call, which a const initializer cannot make, and a const result would
+  have to alias the caller's list. Migration: `const RuleResult(...)`
+  becomes `RuleResult(...)`; a `const` *variable* holding one becomes
+  `final`. For a result with no children, `const RuleResult.leaf(...)`
+  below keeps `const` available.
+- **Added `const RuleResult.leaf({ruleName, passed, detail, data})`** —
+  a leaf result as a compile-time constant. A leaf has no children to
+  copy, so both collections are fixed empty, which also means no index
+  can be out of range and the constructor needs no body — the two things
+  that made the general constructor non-`const`. For a fixed result or a
+  test fixture, and for the places Dart requires a constant expression
+  rather than merely allowing one.
+- **Fixed**: `RunResult.failingLeaves` disagreed with
+  `RuleResult.failingLeaves` in both directions. It filtered `leaves` by
+  `!passed` instead of forwarding to each result's own getter, and a
+  result's verdict is not a function of its leaves' verdicts: a failed
+  `NotRule` wraps a child that *passed*, so filtering found a passing
+  leaf and reported no failure on a failed run, while a passed `OrRule`
+  holding a recovered-from failed branch reported that branch as a
+  failure on a passing run. Now
+  `[for (final r in results) ...r.failingLeaves]`. `RunResult.leaves` was
+  always correct and is unchanged. Reported from downstream use; the
+  same defect was present in all four SDKs.
+- **Changed**: a result hand-built with child results in `data` is read
+  as a *leaf*. `leaves`/`failingLeaves`/`decidedBy` consult `subResults`
+  only, so a 0.3-era fixture that put children in `data` still
+  constructs and still evaluates, but reports itself as one terminal
+  check rather than a tree. Nothing raises; the shape is just read
+  differently.
+- **Changed**: `leaves`/`failingLeaves`/`decidedBy` are instance getters
+  now, and an instance member always wins over an extension member in
+  Dart. An extension on `RuleResult` declaring any of those three names
+  is silently shadowed from this version on, with no analyzer warning at
+  the call site.
+- **Fixed**: a composite's sub-rules and a result's children are copied
+  on construction, not aliased. A caller that kept the list it passed
+  could change a composite's sub-rules — and its verdict — after
+  construction, and adding a result to the very list it was built from
+  produced a result containing itself, which every traversal recursed
+  through. The lists a result hands back use `List.unmodifiable`, so
+  `subResults.add(...)` throws rather than silently changing a result a
+  caller already holds.
+
 ## 0.3.1
 
 - **Changed**: every doc comment and inline comment in the package's

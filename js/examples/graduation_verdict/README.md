@@ -6,7 +6,7 @@
 > breadth of verdict-rules at once: heterogeneous `Rule` shapes built
 > from external policy data, a custom `Rule` type, and all three
 > `RulesEngine` run modes serving three different real callers. See
-> [`docs/samples/graduation-requirement-verdict/`](../../../docs/samples/graduation-requirement-verdict/README.md)
+> [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md)
 > for the original framing question this project answers, the design,
 > and what a solution must demonstrate.
 
@@ -36,13 +36,13 @@ day.
 
 ## Read more
 
-- [`../../../docs/samples/graduation-requirement-verdict/`](../../../docs/samples/graduation-requirement-verdict/README.md) --
+- [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md) --
   the naive way this policy is usually implemented, why it breaks down,
   and both diagrams behind the design actually used here.
 - [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md) --
   how to add a subject, a student scenario, or a new subject type, and
   the shared cross-language fixture contract.
-- [`docs/testing.md`](docs/testing.md) -- the two test suites and what
+- [`docs/testing.md`](docs/testing.md) -- the five test suites and what
   each proves, including why this project's own tests also serve as an
   integration/e2e regression net for verdict-rules itself.
 
@@ -59,3 +59,7 @@ day.
 | `chaos-data.js` | A deterministic generator for randomized, schema-valid curricula and students. |
 | `rng.js` | A small seeded pseudo-random generator, since `Math.random()` cannot be seeded. |
 | `test/chaos.test.js` | 500 generated cases, checked against `oracle.js` -- see [`docs/testing.md`](docs/testing.md#the-chaos-suite-differential-testing-against-an-independent-oracle). |
+| `test/invariants.test.js` | The *shape* of every generated case's result tree, not just its final boolean -- see [`docs/testing.md`](docs/testing.md#structural-invariants-on-the-result-tree). |
+| `test/fuzz-curriculum.test.js` | Fuzzes `curriculumFromObject`/`loadCurriculum` with malformed curriculum shapes -- see [`docs/testing.md`](docs/testing.md#fuzzing-the-curriculum-reader). |
+| `shrink.js` | The failing-run-to-fixture shrinking mechanism. |
+| `test/shrink.test.js` | Unit tests of the shrinking mechanism itself -- see [`docs/testing.md`](docs/testing.md#failing-run-to-fixture-shrinking). |

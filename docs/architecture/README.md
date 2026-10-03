@@ -15,7 +15,9 @@ Three responsibilities, kept separate on purpose:
 
 - **What a rule *is*** — a structural interface any object can satisfy
   without inheriting from anything, plus a small set of concrete shapes
-  every SDK ships: a plain-predicate wrapper, and the AND/OR composites.
+  every SDK ships: a plain-predicate wrapper, the AND/OR composites, and
+  a negation wrapper (`NotRule`) built on the same interface rather than
+  as a special case.
 - **How a set of rules gets *run*** — one engine type, holding rules by
   name and by group, with a small, closed set of run modes.
 - **What evaluation *produces*** — a plain, immutable result shape,
@@ -66,10 +68,18 @@ that matter, and why:
 > 4. **A run's results never flatten a composite's own sub-results into
 >    the outer list** — a short-circuited composite still contributes
 >    exactly one result to the outer run; its sub-rules' individual
->    outcomes live nested inside that one result's own data. Walking a
->    run's results always gives one entry per *top-level* rule the
->    engine was configured with, regardless of how deep any individual
->    rule's own internal composition goes.
+>    outcomes live nested inside that one result's own `sub_results`.
+>    Walking a run's results always gives one entry per *top-level* rule
+>    the engine was configured with, regardless of how deep any
+>    individual rule's own internal composition goes. See "Inspecting a
+>    composite's own decision" below for how to walk that nesting.
+> 5. **`AndRule`/`OrRule` are built on a shared, composable evaluator**,
+>    not a hand-rolled loop each — a composite delegates "evaluate this
+>    list sequentially, stop when a decider says so" to a reusable piece,
+>    rather than reimplementing sequencing and short-circuiting per
+>    composite type. The payoff: a custom composite can compose the same
+>    primitive directly instead of hand-rolling its own loop — see
+>    [`../extending/new-rule-shape/`](../extending/new-rule-shape/README.md).
 
 ### Generic context
 
@@ -146,7 +156,7 @@ sequenceDiagram
     Comp->>R2: evaluate(context)
     R2-->>Comp: RuleResult(passed=False)
     Note over Comp,R3: Short-circuits here — R3.evaluate()<br/>is never called at all
-    Comp-->>Caller: RuleResult(passed=False,<br/>data=[R1's result, R2's result])
+    Comp-->>Caller: RuleResult(passed=False,<br/>sub_results=[R1's result, R2's result],<br/>decided_by=[R2's result])
 ```
 
 > **Key Steps**:
@@ -158,9 +168,13 @@ sequenceDiagram
 >    as soon as it sees a failure — `R3` is never invoked, has no
 >    observable effect on this evaluation at all.
 > 3. **The composite's own result carries only what actually ran**: its
->    data holds two entries, not three, since `R3` never contributed
->    one. A caller inspecting that data sees an honest record of what
->    was actually evaluated, not a placeholder for skipped rules.
+>    `sub_results` holds two entries, not three, since `R3` never
+>    contributed one. A caller inspecting that list sees an honest record
+>    of what was actually evaluated, not a placeholder for skipped rules.
+> 4. **`decided_by` names only `R2`, not both `R1` and `R2`** — `R1`'s
+>    pass is part of what ran, but it isn't *why* the composite failed.
+>    See "Inspecting a composite's own decision" below for the
+>    distinction this draws on.
 >
 > **An OR composite is the exact mirror**: stops at the first *pass*
 > instead of the first *failure*, otherwise identical in shape.
@@ -168,6 +182,78 @@ sequenceDiagram
 The engine's own run-everything and run-by-group modes are different on
 purpose: they evaluate every rule unconditionally, with no
 short-circuiting at all — see the next section for why.
+
+## Inspecting a composite's own decision
+
+A composite's result carries three different, independent answers to
+three different questions — conflating them is the most common mistake
+when walking a result tree:
+
+| Field/operation | Answers | Shape |
+| --- | --- | --- |
+| `sub_results` | What actually ran, in evaluation order | One level — this result's immediate children only |
+| `decided_by` | Which of those children *explain this result's own verdict* | One level, a subset of `sub_results` |
+| `leaves` / `failing_leaves` | The terminal checks at the bottom of the whole tree | Fully recursive — flattens every nesting level |
+
+**Only `sub_results` is stored; the other two are derived.** A result holds
+its children and the *positions* of the deciding ones
+(`decided_by_indices`), and computes everything else on access. This is what
+makes a result serializable, and both derivations would otherwise break it:
+a leaf's own leaves list is itself, so storing it puts the result inside the
+result; and storing the deciding children as results rather than positions
+makes the object graph a DAG, which every tree-shaped encoder expands once
+per path — doubling the output at every nesting level. Storing one tree and
+deriving the rest leaves nothing for the two views to disagree with either.
+
+**`sub_results` is exactly what ran, never padded, never flattened.** A
+short-circuited `AndRule` or `OrRule`'s `sub_results` holds only the
+sub-rules actually evaluated before stopping — the diagram above shows
+two entries, not three, because `R3` never ran. An empty `sub_results`
+*is* the leaf signal, structurally: there is no separate "is this a
+leaf" flag to check or forget to set.
+
+**`decided_by` is narrower: which of those sub-results is the reason
+for the verdict, not everything that happened to run.** For a
+short-circuited composite, that's normally just the one sub-result that
+triggered the stop — `R2` in the diagram above, not `R1` and `R2`
+together, even though both are in `sub_results`. When a composite
+genuinely has to evaluate every sub-rule to reach its verdict (an
+`AndRule` where everything passes, an `OrRule` where everything fails),
+`decided_by` is all of `sub_results` — there's no single sub-result to
+point to instead. `NotRule`'s `decided_by` is always its one wrapped
+result, in both directions: a failing `NotRule` failed *because* its
+inner rule passed, which is a real, correct answer to "why," not an
+inconsistency with the short-circuit case.
+
+A short-circuited composite deciding on its own *last* sub-rule and a
+composite that genuinely had to evaluate every sub-rule to reach a
+verdict can look identical by count alone — both have `decided_by`
+covering every entry in `sub_results`. Each language's own evaluator
+resolves this using *which condition* actually stopped evaluation, not
+just how many sub-results exist — see that language's own file in this
+directory for the concrete mechanism.
+
+**`leaves`/`failing_leaves` answer a different, recursive question**:
+not "what explains this one result," but "what are the terminal checks,
+arbitrarily deep, that this whole tree bottoms out in." Two independent
+recursions, not one filtered by the other:
+
+- `leaves` is every result with no `sub_results` of its own, found by
+  walking all the way down. For a plain leaf result, that's itself.
+- `failing_leaves` is the terminal checks that explain a *failure*,
+  specifically. A passed result always contributes none, even past an
+  earlier short-circuited branch that itself failed along the way — an
+  `OrRule` whose first branch failed before its second one passed
+  reports no failing leaves at all, correctly, because the rule passed.
+  A failed result with no failing children is itself the leaf — this is
+  what keeps a failed `NotRule` correct without it having to misrepresent
+  its own structure: its one child *passed*, so recursing would find no
+  failures underneath it, and the flattened list still needs exactly one
+  entry — the `NotRule`'s own result.
+
+**Building a composite from these primitives directly** — rather than
+only using the built-in `AndRule`/`OrRule` — is covered in
+[`../extending/new-rule-shape/`](../extending/new-rule-shape/README.md).
 
 ## Three ways to run rules, and when each is the right one
 
@@ -344,7 +430,7 @@ new contribution's own tests need to add.
   nesting.
 - [`../testing/`](../testing/README.md) — how this package's own test
   suite is organized and what a change needs to prove.
-- [`../samples/`](../samples/README.md) —
+- [`../../fixtures/README.md`](../../fixtures/README.md) —
   worked, domain-flavored examples of where a rule engine like this
   earns its keep, including the data-driven pattern this package is
   designed for.

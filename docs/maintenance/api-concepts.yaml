@@ -1,0 +1,323 @@
+# The cross-language concept map scripts/check_api_snapshots.py diffs every
+# language's own public-API snapshot against. See
+# docs/maintenance/api-snapshots.md for what this file is for and how to
+# update it.
+#
+# Each entry is one concept that exists in every language this package
+# ships for, with that concept's own spelling in each language's own idiom
+# (PascalCase vs. camelCase vs. snake_case, an Async suffix where that
+# language's convention calls for one, etc.). The check asserts every
+# concept row resolves in all four snapshots, and that every symbol each
+# snapshot actually exports is accounted for by either a concept row here
+# or a language-specific entry in api-surface-allowlist.yaml. A concept
+# silently missing in one language, or a new symbol nobody classified yet,
+# both fail the gate.
+#
+# member: "" means the concept itself has no further members to track
+# (a type-level concept, like a delegate/predicate type).
+
+- concept: Rule (the structural contract every rule satisfies)
+  type: { csharp: IRule, python: Rule, js: Rule, dart: Rule }
+  member: ""
+
+- concept: Rule.name
+  type: { csharp: IRule, python: Rule, js: Rule, dart: Rule }
+  member: { csharp: Name, python: name, js: name, dart: name }
+
+- concept: Rule.group
+  type: { csharp: IRule, python: Rule, js: Rule, dart: Rule }
+  member: { csharp: Group, python: group, js: group, dart: group }
+
+- concept: Rule.evaluate
+  type: { csharp: IRule, python: Rule, js: Rule, dart: Rule }
+  member: { csharp: EvaluateAsync, python: evaluate, js: evaluate, dart: evaluate }
+
+- concept: RulePredicate (the function shape FunctionRule wraps)
+  type: { csharp: RulePredicate, python: RulePredicate, js: RulePredicate, dart: RulePredicate }
+  member: ""
+
+- concept: FunctionRule
+  type: { csharp: FunctionRule, python: FunctionRule, js: FunctionRule, dart: FunctionRule }
+  member: ""
+
+- concept: AndRule
+  type: { csharp: AndRule, python: AndRule, js: AndRule, dart: AndRule }
+  member: ""
+
+- concept: OrRule
+  type: { csharp: OrRule, python: OrRule, js: OrRule, dart: OrRule }
+  member: ""
+
+# Every concrete rule type independently re-exports name/group/evaluate --
+# each tool reports members per concrete type, not just once on the
+# abstract Rule/IRule interface those three implement. Same per-language
+# spelling as Rule.name/Rule.group/Rule.evaluate above, repeated per type
+# rather than inferred from an implements/satisfies relationship this
+# concept map doesn't otherwise track.
+- concept: FunctionRule.name
+  type: { csharp: FunctionRule, python: FunctionRule, js: FunctionRule, dart: FunctionRule }
+  member: { csharp: Name, python: name, js: name, dart: name }
+
+- concept: FunctionRule.group
+  type: { csharp: FunctionRule, python: FunctionRule, js: FunctionRule, dart: FunctionRule }
+  member: { csharp: Group, python: group, js: group, dart: group }
+
+- concept: FunctionRule.evaluate
+  type: { csharp: FunctionRule, python: FunctionRule, js: FunctionRule, dart: FunctionRule }
+  member: { csharp: EvaluateAsync, python: evaluate, js: evaluate, dart: evaluate }
+
+- concept: AndRule.name
+  type: { csharp: AndRule, python: AndRule, js: AndRule, dart: AndRule }
+  member: { csharp: Name, python: name, js: name, dart: name }
+
+- concept: AndRule.group
+  type: { csharp: AndRule, python: AndRule, js: AndRule, dart: AndRule }
+  member: { csharp: Group, python: group, js: group, dart: group }
+
+- concept: AndRule.evaluate
+  type: { csharp: AndRule, python: AndRule, js: AndRule, dart: AndRule }
+  member: { csharp: EvaluateAsync, python: evaluate, js: evaluate, dart: evaluate }
+
+- concept: OrRule.name
+  type: { csharp: OrRule, python: OrRule, js: OrRule, dart: OrRule }
+  member: { csharp: Name, python: name, js: name, dart: name }
+
+- concept: OrRule.group
+  type: { csharp: OrRule, python: OrRule, js: OrRule, dart: OrRule }
+  member: { csharp: Group, python: group, js: group, dart: group }
+
+- concept: OrRule.evaluate
+  type: { csharp: OrRule, python: OrRule, js: OrRule, dart: OrRule }
+  member: { csharp: EvaluateAsync, python: evaluate, js: evaluate, dart: evaluate }
+
+- concept: RulesEngine
+  type: { csharp: RulesEngine, python: RulesEngine, js: RulesEngine, dart: RulesEngine }
+  member: ""
+
+- concept: RulesEngine.ruleNames
+  type: { csharp: RulesEngine, python: RulesEngine, js: RulesEngine, dart: RulesEngine }
+  member: { csharp: RuleNames, python: rule_names, js: ruleNames, dart: ruleNames }
+
+- concept: RulesEngine.groupNames
+  type: { csharp: RulesEngine, python: RulesEngine, js: RulesEngine, dart: RulesEngine }
+  member: { csharp: GroupNames, python: group_names, js: groupNames, dart: groupNames }
+
+- concept: RulesEngine.runAll
+  type: { csharp: RulesEngine, python: RulesEngine, js: RulesEngine, dart: RulesEngine }
+  member: { csharp: RunAllAsync, python: run_all, js: runAll, dart: runAll }
+
+- concept: RulesEngine.runNamed
+  type: { csharp: RulesEngine, python: RulesEngine, js: RulesEngine, dart: RulesEngine }
+  member: { csharp: RunNamedAsync, python: run_named, js: runNamed, dart: runNamed }
+
+- concept: RulesEngine.tryRunNamed
+  type: { csharp: RulesEngine, python: RulesEngine, js: RulesEngine, dart: RulesEngine }
+  member: { csharp: TryRunNamedAsync, python: try_run_named, js: tryRunNamed, dart: tryRunNamed }
+
+- concept: RulesEngine.runGroup
+  type: { csharp: RulesEngine, python: RulesEngine, js: RulesEngine, dart: RulesEngine }
+  member: { csharp: RunGroupAsync, python: run_group, js: runGroup, dart: runGroup }
+
+- concept: RulesEngine.tryRunGroup
+  type: { csharp: RulesEngine, python: RulesEngine, js: RulesEngine, dart: RulesEngine }
+  member: { csharp: TryRunGroupAsync, python: try_run_group, js: tryRunGroup, dart: tryRunGroup }
+
+- concept: RuleResult
+  type: { csharp: RuleResult, python: RuleResult, js: RuleResult, dart: RuleResult }
+  member: ""
+
+- concept: RuleResult.ruleName
+  type: { csharp: RuleResult, python: RuleResult, js: RuleResult, dart: RuleResult }
+  member: { csharp: RuleName, python: rule_name, js: ruleName, dart: ruleName }
+
+- concept: RuleResult.passed
+  type: { csharp: RuleResult, python: RuleResult, js: RuleResult, dart: RuleResult }
+  member: { csharp: Passed, python: passed, js: passed, dart: passed }
+
+- concept: RuleResult.detail
+  type: { csharp: RuleResult, python: RuleResult, js: RuleResult, dart: RuleResult }
+  member: { csharp: Detail, python: detail, js: detail, dart: detail }
+
+- concept: RuleResult.data
+  type: { csharp: RuleResult, python: RuleResult, js: RuleResult, dart: RuleResult }
+  member: { csharp: Data, python: data, js: data, dart: data }
+
+- concept: RunResult
+  type: { csharp: RunResult, python: RunResult, js: RunResult, dart: RunResult }
+  member: ""
+
+- concept: RunResult.passed
+  type: { csharp: RunResult, python: RunResult, js: RunResult, dart: RunResult }
+  member: { csharp: Passed, python: passed, js: passed, dart: passed }
+
+- concept: RunResult.results
+  type: { csharp: RunResult, python: RunResult, js: RunResult, dart: RunResult }
+  member: { csharp: Results, python: results, js: results, dart: results }
+
+# The diagnostics concepts. Each tool's own visibility into this differs,
+# so the member field lists only what that tool can and does verify, not
+# everything the language actually ships. Full story in each language's
+# own row below. None of this changes that every language genuinely has
+# the behaviour -- each one's diagnostics tests cover it -- only what this
+# particular mechanism can mechanically re-confirm on every future
+# change.
+#
+# - C#: PublicApiAnalyzers only ever sees ToString -- DebuggerDisplay is a
+#   private property and DebuggerTypeProxy names an internal nested type,
+#   neither is public API surface to begin with.
+# - Python: griffe sees __repr__ directly, no gap.
+# - JS/TS: api-extractor only ever sees toString -- a computed class member
+#   keyed by Symbol.for(...) (not a `unique symbol`) cannot be expressed in
+#   emitted .d.ts output, so inspect.custom is structurally invisible to
+#   any .d.ts-based tool, not just this one.
+# - Dart: dart_apitool's own element collector drops every @override member
+#   outright (treated as "already part of the source"), so toString() is
+#   invisible in its entirety -- confirmed empirically: diffing 0.3.1
+#   against 0.4.0 reports "No changes detected!" despite toString() being
+#   this version's whole changelog entry. type: "" here means "not
+#   tracked for Dart," the same convention RulePredicate's python/js rows
+#   already use for "this language has no such type" -- except here the
+#   type and the behavior both genuinely exist, only this one tool cannot
+#   see it, which is exactly why it is left empty rather than asserted
+#   and permanently unresolvable.
+- concept: FunctionRule has a readable string/debugger representation
+  type: { csharp: FunctionRule, python: FunctionRule, js: FunctionRule, dart: "" }
+  member: { csharp: ToString, python: __repr__, js: toString, dart: "" }
+
+- concept: AndRule has a readable string/debugger representation
+  type: { csharp: AndRule, python: AndRule, js: AndRule, dart: "" }
+  member: { csharp: ToString, python: __repr__, js: toString, dart: "" }
+
+- concept: OrRule has a readable string/debugger representation
+  type: { csharp: OrRule, python: OrRule, js: OrRule, dart: "" }
+  member: { csharp: ToString, python: __repr__, js: toString, dart: "" }
+
+- concept: RulesEngine has a readable string/debugger representation
+  type: { csharp: RulesEngine, python: RulesEngine, js: RulesEngine, dart: "" }
+  member: { csharp: ToString, python: __repr__, js: toString, dart: "" }
+
+# ---------------------------------------------------------------------------
+# The composite-rule and result-inspection surface.
+# ---------------------------------------------------------------------------
+
+- concept: NotRule (composite that passes exactly when its one wrapped rule fails)
+  type: { csharp: NotRule, python: NotRule, js: NotRule, dart: NotRule }
+  member: ""
+
+- concept: NotRule.name
+  type: { csharp: NotRule, python: NotRule, js: NotRule, dart: NotRule }
+  member: { csharp: Name, python: name, js: name, dart: name }
+
+- concept: NotRule.group
+  type: { csharp: NotRule, python: NotRule, js: NotRule, dart: NotRule }
+  member: { csharp: Group, python: group, js: group, dart: group }
+
+- concept: NotRule.evaluate
+  type: { csharp: NotRule, python: NotRule, js: NotRule, dart: NotRule }
+  member: { csharp: EvaluateAsync, python: evaluate, js: evaluate, dart: evaluate }
+
+# dart: "" for the same tool reason as the four diagnostics rows above --
+# dart_apitool drops every @override member.
+- concept: NotRule has a readable string/debugger representation
+  type: { csharp: NotRule, python: NotRule, js: NotRule, dart: "" }
+  member: { csharp: ToString, python: __repr__, js: toString, dart: "" }
+
+- concept: PredicateOutcome (what a predicate reports back to the FunctionRule wrapping it)
+  type: { csharp: PredicateOutcome, python: PredicateOutcome, js: PredicateOutcome, dart: PredicateOutcome }
+  member: ""
+
+- concept: PredicateOutcome.passed
+  type: { csharp: PredicateOutcome, python: PredicateOutcome, js: PredicateOutcome, dart: PredicateOutcome }
+  member: { csharp: Passed, python: passed, js: passed, dart: passed }
+
+- concept: PredicateOutcome.detail
+  type: { csharp: PredicateOutcome, python: PredicateOutcome, js: PredicateOutcome, dart: PredicateOutcome }
+  member: { csharp: Detail, python: detail, js: detail, dart: detail }
+
+- concept: PredicateOutcome.data
+  type: { csharp: PredicateOutcome, python: PredicateOutcome, js: PredicateOutcome, dart: PredicateOutcome }
+  member: { csharp: Data, python: data, js: data, dart: data }
+
+- concept: RuleResult.subResults (a composite's own children, exactly what it evaluated)
+  type: { csharp: RuleResult, python: RuleResult, js: RuleResult, dart: RuleResult }
+  member: { csharp: SubResults, python: sub_results, js: subResults, dart: subResults }
+
+# C# spells this as a method for the same reason it spells leaves/failingLeaves
+# as methods (see the note below those rows): a get-only collection property
+# returning the child results would be serialized, which reintroduces exactly
+# the duplication storing positions exists to prevent. The other three keep an
+# accessor, because their ecosystems' serializers do not walk computed
+# accessors.
+- concept: RuleResult.decidedBy (which sub-results explain this result's own verdict)
+  type: { csharp: RuleResult, python: RuleResult, js: RuleResult, dart: RuleResult }
+  member: { csharp: GetDecidedBy, python: decided_by, js: decidedBy, dart: decidedBy }
+
+# The positions those deciding children sit at within subResults, which is what
+# is actually stored; decidedBy above is derived from it. Storing the child
+# results themselves made the stored graph a DAG -- the same objects reachable
+# under two fields -- and every tree-shaped encoder expands a shared node once
+# per path, so serialized size doubled per nesting level. Positions keep the
+# stored graph a genuine tree, and make an index naming a non-child the one
+# detectable error, rejected at construction.
+- concept: RuleResult.decidedByIndices (the stored positions decidedBy is derived from)
+  type: { csharp: RuleResult, python: RuleResult, js: RuleResult, dart: RuleResult }
+  member:
+    { csharp: DecidedByIndices, python: decided_by_indices, js: decidedByIndices, dart: decidedByIndices }
+
+# C# alone spells leaves/failingLeaves as methods rather than properties, on
+# both result types. A get-only collection property that walks the subtree is
+# traversed by every reflection-based serializer and structured logger, and a
+# leaf's own leaves list is itself, so such a walker recurses until it gives
+# up; [JsonIgnore] cannot suppress it (read-only collection properties are
+# serialized even with IgnoreReadOnlyProperties, and the per-member attribute
+# is not in-box for netstandard2.1). The Framework Design Guidelines point
+# the same way -- the member is expensive and returns an array. The other
+# three keep accessors because their ecosystems' serializers do not walk
+# computed accessors at all.
+- concept: RuleResult.leaves (every leaf reachable from this result)
+  type: { csharp: RuleResult, python: RuleResult, js: RuleResult, dart: RuleResult }
+  member: { csharp: GetLeaves, python: leaves, js: leaves, dart: leaves }
+
+- concept: RuleResult.failingLeaves (the leaves explaining this result's failure)
+  type: { csharp: RuleResult, python: RuleResult, js: RuleResult, dart: RuleResult }
+  member: { csharp: GetFailingLeaves, python: failing_leaves, js: failingLeaves, dart: failingLeaves }
+
+- concept: RunResult.leaves (every leaf across every rule the run evaluated)
+  type: { csharp: RunResult, python: RunResult, js: RunResult, dart: RunResult }
+  member: { csharp: GetLeaves, python: leaves, js: leaves, dart: leaves }
+
+- concept: RunResult.failingLeaves
+  type: { csharp: RunResult, python: RunResult, js: RunResult, dart: RunResult }
+  member: { csharp: GetFailingLeaves, python: failing_leaves, js: failingLeaves, dart: failingLeaves }
+
+- concept: SequentialEvaluator (evaluates sub-rules in order, a StepDecider choosing when to stop)
+  type: { csharp: SequentialEvaluator, python: SequentialEvaluator, js: SequentialEvaluator, dart: SequentialEvaluator }
+  member: ""
+
+- concept: SequentialEvaluator.evaluate
+  type: { csharp: SequentialEvaluator, python: SequentialEvaluator, js: SequentialEvaluator, dart: SequentialEvaluator }
+  member: { csharp: EvaluateAsync, python: evaluate, js: evaluate, dart: evaluate }
+
+- concept: ShortCircuitEvaluator (stops at the first sub-rule whose verdict equals stopOn)
+  type: { csharp: ShortCircuitEvaluator, python: ShortCircuitEvaluator, js: ShortCircuitEvaluator, dart: ShortCircuitEvaluator }
+  member: ""
+
+- concept: ShortCircuitEvaluator.evaluate
+  type: { csharp: ShortCircuitEvaluator, python: ShortCircuitEvaluator, js: ShortCircuitEvaluator, dart: ShortCircuitEvaluator }
+  member: { csharp: EvaluateAsync, python: evaluate, js: evaluate, dart: evaluate }
+
+- concept: StepDecider (the stopping decision a SequentialEvaluator delegates to)
+  type: { csharp: StepDecider, python: StepDecider, js: StepDecider, dart: StepDecider }
+  member: ""
+
+# C#'s own extracted symbol carries the constant's value (`VacuousResult =
+# true`), because PublicApiAnalyzers records a const's value as part of the
+# declared API -- changing the value is itself a breaking change there. The
+# spelling below is the real extracted symbol, not a tidied one.
+- concept: AndRule's vacuous-truth verdict, pinned as a readable constant
+  type: { csharp: AndRule, python: AndRule, js: AndRule, dart: AndRule }
+  member: { csharp: "VacuousResult = true", python: VACUOUS_RESULT, js: VACUOUS_RESULT, dart: vacuousResult }
+
+- concept: OrRule's vacuous-truth verdict, pinned as a readable constant
+  type: { csharp: OrRule, python: OrRule, js: OrRule, dart: OrRule }
+  member: { csharp: "VacuousResult = false", python: VACUOUS_RESULT, js: VACUOUS_RESULT, dart: vacuousResult }

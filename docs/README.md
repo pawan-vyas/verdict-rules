@@ -24,7 +24,6 @@ docs/
     README.md            shared testing contracts and checklist
     <language>.md         each language's own concrete test names
   future_plan.md       exploratory, not-yet-decided feature candidates
-  samples/             language-agnostic specs for the worked samples
 ```
 
 ## Reading order
@@ -42,7 +41,7 @@ docs/
      then [`testing/`](testing/README.md) to prove the change.
    - Building something on top of it, without changing anything here →
      [`extending/`](extending/README.md), whose scenarios have full worked
-     instances in [`samples/`](samples/README.md) covering generic domains.
+     instances in [`../fixtures/README.md`](../fixtures/README.md) covering generic domains.
 5. **[`future_plan.md`](future_plan.md)** — exploratory feature
    candidates rejected or deferred so far, and the test used to
    evaluate a new one.

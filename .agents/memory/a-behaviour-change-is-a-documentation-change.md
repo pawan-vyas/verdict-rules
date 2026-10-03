@@ -48,7 +48,7 @@ different altitude, so a change that reaches one usually reaches all.
 
 ## Checks worth running, since none of this is automatic
 
-```
+```bash
 grep -rn '<the old API or behaviour>' docs/ python/packages/*/docs/ skills/ README.md
 ```
 

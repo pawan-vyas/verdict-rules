@@ -46,7 +46,7 @@ def _extending_entry(readme: Path) -> str:
     return _one_liner(_paragraph_after(lines, quote_start, "> "))
 
 
-def _sample_entry(readme: Path) -> str:
+def _scenario_entry(readme: Path) -> str:
     lines = readme.read_text().splitlines()
     q_start = next(i for i, l in enumerate(lines) if l.startswith("**The question**"))
     return _one_liner(_paragraph_after(lines, q_start, "**The question**: "))
@@ -59,7 +59,10 @@ def main() -> int:
     out = Path(sys.argv[1])
 
     extending = sorted(d for d in (ROOT / "docs/extending").iterdir() if d.is_dir())
-    samples = sorted(d for d in (ROOT / "docs/samples").iterdir() if d.is_dir())
+    # The worked scenarios live with the fixtures they are pinned by -- each
+    # README carries the problem, the design, and the shared contract in one
+    # place, so there is no separate spec directory to index.
+    scenarios = sorted(d for d in (ROOT / "fixtures").iterdir() if d.is_dir())
 
     lines = [
         "# Where things live in the source repository",
@@ -80,9 +83,9 @@ def main() -> int:
     for d in extending:
         lines.append(f"- `{d.name}` — {_extending_entry(d / 'README.md')}")
 
-    lines += ["", "## Worked samples (docs/samples/)", ""]
-    for d in samples:
-        lines.append(f"- `{d.name}` — {_sample_entry(d / 'README.md')}")
+    lines += ["", "## Worked scenarios (fixtures/)", ""]
+    for d in scenarios:
+        lines.append(f"- `{d.name}` — {_scenario_entry(d / 'README.md')}")
 
     lines += [
         "",
@@ -94,7 +97,7 @@ def main() -> int:
 
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text("\n".join(lines))
-    print(f"wrote {out} ({len(extending)} extending, {len(samples)} sample entries)")
+    print(f"wrote {out} ({len(extending)} extending, {len(scenarios)} scenario entries)")
     return 0
 
 

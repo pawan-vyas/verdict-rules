@@ -1,114 +1,81 @@
 <!-- Title: Discoverability Metadata, Kept in Sync Across Registries -->
 # Discoverability metadata, kept in sync across registries
 
-> Why every package's keywords/topics/tags describe the same project in
-> the same words, what actually belongs in that list, and the one real
-> structural exception — pub.dev's hard cap — rather than a difference
-> to work around per package.
+> Why every package's keywords describe the same project in the same
+> words, what earns a place in that list, and pub.dev's one real
+> structural exception.
 
-Every registry this project ships to has its own field for
-search/browse discoverability: PyPI's `keywords` (a list, in
-`pyproject.toml`), npm's `keywords` (a list, in `package.json`), NuGet's
-`tags` (set via `<PackageTags>` in a `.csproj`), and pub.dev's `topics`
-(a list, in `pubspec.yaml`). These describe the *same project*, so
-drift between them — one registry's page naming `async` and another's
-not — undersells whichever package is missing a term a reader searched
-for, for no reason connected to that package itself.
+Each registry has its own field for search and browse: PyPI's
+`keywords` and npm's `keywords` (both lists), NuGet's `tags` (via
+`<PackageTags>`), and pub.dev's `topics` (a list). They describe the
+*same project*, so drift between them — one page naming `async` and
+another not — undersells whichever package is missing a term somebody
+searched for, for no reason connected to that package.
 
-## What actually belongs in the list: only what this package does
+## A term has to describe what this package does
 
-Before syncing terms across registries, each term has to earn its spot
-on what this package *actually does* — which is evaluate. `verdict`
-takes conditions and produces a `RuleResult`/`RunResult`: a judgment on
-whether something is true. It never acts on that judgment — there is
-no step here that enforces a consequence, applies an outcome, or does
-anything once a verdict is reached. That is a real, deliberate scope
-boundary, not an oversight, and the keyword list should say so rather
-than imply otherwise.
+Which is **evaluate**. It takes conditions and produces a result: a
+judgment on whether something is true. It never acts on that judgment —
+there is no step here that enforces a consequence. That is a deliberate
+scope boundary, and the keyword list says so.
 
-That's why **`policy` and `policy-evaluation` are dropped from the
-canonical list entirely**, not merged into `decision`/`decision-engine`
-as redundant synonyms the way an earlier pass of this reasoning had it.
-A "policy" names a rule *together with* what happens when it's
-enforced — the evaluate-and-then-act shape, not the evaluate-alone
-shape this package actually has. Advertising `policy` invites a reader
-looking for something that executes a consequence to a package that
-only ever answers a yes/no question. `decision` and `decision-engine`
-stay: a decision is verdict's own *output* — the judgment itself, not
-an act of enforcing anything — so both sit on the right side of that
-line regardless of whether they're phrased as the bare or the
-qualified form.
+So `policy` and `policy-evaluation` are **absent by decision, not
+oversight**. A policy names a rule *together with* what happens when
+it is enforced, so advertising it invites someone looking for something
+that executes a consequence. `decision` and `decision-engine` stay: a
+decision is this package's own output, not an act of enforcement.
 
-## The current union (source of truth)
+## The canonical list
 
 `rules-engine`, `rule-evaluation`, `eligibility`, `decision`,
-`decision-engine`, `async` — 6 terms, carried in full by every registry
-with no structural cap on this field (PyPI, npm, NuGet). `eligibility`
-stays despite being the one plain English term in the list rather than
-an engine-specific one: it's a genuine, recurring target use case for
-this library, appearing throughout this repo's own evals and samples,
-and it's the one term that matches how an actual person searches
-rather than how the library describes itself internally.
+`decision-engine`, `async` — six terms, carried in full by every
+registry without a structural cap.
 
-A future addition goes into every registry without a structural cap;
-check whether it changes what Dart (or any future capped registry)
-should curate down to 5, and check it against the evaluate-only scope
-above before adding it at all.
+`eligibility` is the one plain-English term rather than an
+engine-specific one, and stays deliberately: it is a recurring real use
+case, it appears throughout this repo's own evals and fixtures, and it
+matches how a person searches rather than how the library describes
+itself.
 
-## The one real structural exception: pub.dev's `topics`
+| Registry | Field | Carries |
+| :-- | :-- | :-- |
+| PyPI | `keywords` (list) | all six |
+| npm | `keywords` (list) | all six |
+| NuGet | `tags` via `<PackageTags>` | all six, semicolon-delimited — an MSBuild authoring convention; `dotnet pack` converts it to the space-separated form the `.nuspec` `tags` element uses |
+| pub.dev | `topics` (list) | a curated **five** — see below |
 
-**pub.dev's `topics` field**: capped at 5 entries, each 2-32 lowercase
-alphanumeric-or-hyphen characters, no double hyphens, and pub.dev
-maintains a canonical-topic list it merges close spellings into
-(documented at
-[`dart.dev/tools/pub/pubspec`](https://dart.dev/tools/pub/pubspec) and
-browsable at [`pub.dev/topics`](https://pub.dev/topics)) — confirmed
-that none of this project's own terms are canonical topics there
-except `async`, which has real browse traffic behind it (96 packages
-at the time this was checked). PyPI's, npm's, and NuGet's own fields
-have no comparable cap or vocabulary — confirmed by reading each
-registry's own reference, not assumed.
+## pub.dev's `topics` is the one structural exception
 
-So Dart's `topics:` carries a **curated 5**, not the full 6:
-`rules-engine`, `rule-evaluation`, `eligibility`, `decision-engine`,
-`async`. Bare `decision` is the one dropped, for the same
-bare-vs-qualified reasoning that already ruled out `policy` in favor of
-nothing: `decision-engine` is strictly more specific, mirrors
-`rules-engine`'s own naming pattern, and doesn't cost the fifth slot on
-a near-duplicate of a term already carried.
+Capped at 5 entries, each 2–32 lowercase alphanumeric-or-hyphen
+characters, no double hyphens, and pub.dev maintains a canonical-topic
+list it merges close spellings into (documented at
+[`dart.dev/tools/pub/pubspec`](https://dart.dev/tools/pub/pubspec),
+browsable at [`pub.dev/topics`](https://pub.dev/topics)). Of this
+project's terms only `async` is canonical there, and it has real browse
+traffic behind it. PyPI's, npm's and NuGet's fields have no comparable
+cap or vocabulary — confirmed by reading each registry's own reference.
 
-## NuGet, once C# actually publishes
+So Dart carries `rules-engine`, `rule-evaluation`, `eligibility`,
+`decision-engine`, `async`. Bare `decision` is the one dropped:
+`decision-engine` is strictly more specific, mirrors `rules-engine`'s
+own naming pattern, and does not cost the fifth slot on a near-duplicate
+of a term already carried.
 
-`VerdictRules.csproj`'s `<PackageTags>` is
-`rules-engine;rule-evaluation;eligibility;decision;decision-engine;async`
-— the same full 6-term union PyPI's and npm's own fields already carry,
-with no structural cap the way pub.dev's `topics` has. `policy` was
-dropped on `plan/csharp-sdk` itself before that branch's first release,
-same reasoning as every other language: it names a rule together with
-what happens when it's enforced, and this package only ever evaluates,
-never acts on the result.
+## Adding a term, or a registry
 
-The one real syntactic difference from PyPI/npm: `PackageTags` is an
-MSBuild property, so it's **semicolon-delimited**
-(`rules-engine;rule-evaluation;...`), not a list the way
-`pyproject.toml`'s and `package.json`'s `keywords` are. `dotnet pack`
-converts that to the space-separated form the underlying `.nuspec`
-`tags` element actually uses when it generates the package — the
-semicolons are an MSBuild authoring convention, not what NuGet itself
-stores.
+A new term goes into every uncapped registry at once, and you re-decide
+what the capped one curates down to. Check it against the evaluate-only
+scope above before adding it anywhere.
 
-## Before publishing a new language
-
-Research that registry's own discoverability field the same way this
-page describes pub.dev's — its exact name, whether it caps count or
-enforces a vocabulary, and whether it has a browsable canonical list
-worth preferring terms from — rather than assuming it behaves like
-whichever registry was handled most recently. See
-[`../../.agents/memory/research-the-ecosystem-before-deciding-its-idiom.md`](../../.agents/memory/research-the-ecosystem-before-deciding-its-idiom.md)
-for why this matters generally, not just for this one field.
+For a new registry, research its own field the way pub.dev's is
+researched here — its exact name, whether it caps count or enforces a
+vocabulary, whether it has a browsable canonical list worth preferring
+terms from — rather than assuming it behaves like whichever registry was
+handled most recently. See
+[`../../.agents/memory/research-the-ecosystem-before-deciding-its-idiom.md`](../../.agents/memory/research-the-ecosystem-before-deciding-its-idiom.md).
 
 ## Related
 
-- [`releases/README.md`](releases/README.md) — the shared release
-  pipeline this metadata change goes through like any other package
-  update: a version bump, a changelog entry, a fresh publish.
+- [`releases/README.md`](releases/README.md) — a metadata change ships
+  like any other package update: a version bump, a changelog entry, a
+  fresh publish.
