@@ -5,44 +5,47 @@
 > that first. This page is the concrete JS/TS code.
 
 ```ts
-import { FunctionRule, type RulePredicate, type RuleResult } from "verdict-rules";
+import { FunctionRule, type PredicateOutcome, type RulePredicate } from "verdict-rules";
 
 interface PromoContext {
   promoCode: string;
   simulateTimeout?: boolean;
 }
 
-/** Turn a predicate's own exception into a failing RuleResult,
- * instead of letting it propagate out of the run that contains it. */
+/** Turn a predicate's own exception into a failing outcome, instead of
+ * letting it propagate out of the run that contains it. */
 function defensive<TContext>(name: string, predicate: RulePredicate<TContext>): FunctionRule<TContext> {
-  const wrapped = async (context: TContext): Promise<RuleResult> => {
+  const wrapped = async (context: TContext): Promise<PredicateOutcome> => {
     try {
       return await predicate(context);
     } catch (exc) {
-      return { ruleName: name, passed: false, detail: (exc as Error).message };
+      return { passed: false, detail: (exc as Error).message };
     }
   };
   return new FunctionRule(name, wrapped);
 }
 
 /** Stands in for a real network call that can time out. */
-async function checkPromoCodeAgainstExternalService(context: PromoContext): Promise<RuleResult> {
+async function checkPromoCodeAgainstExternalService(context: PromoContext): Promise<PredicateOutcome> {
   if (context.simulateTimeout) {
     throw new Error("promo-validation service did not respond");
   }
-  return { ruleName: "promo_code_valid", passed: context.promoCode === "SAVE10" };
+  return { passed: context.promoCode === "SAVE10" };
 }
 
 const rule = defensive("promo_code_valid", checkPromoCodeAgainstExternalService);
 ```
 
+The wrapper returns an outcome, not a named result — `name` is passed to
+`FunctionRule`, which is the only thing that names the result either way:
+
 ```ts
 await rule.evaluate({ promoCode: "SAVE10" });
-// { ruleName: 'promo_code_valid', passed: true }
+// RuleResult { ruleName: 'promo_code_valid', passed: true, ... }
 
 await rule.evaluate({ promoCode: "SAVE10", simulateTimeout: true });
-// { ruleName: 'promo_code_valid', passed: false,
-//   detail: 'promo-validation service did not respond' }
+// RuleResult { ruleName: 'promo_code_valid', passed: false,
+//   detail: 'promo-validation service did not respond', ... }
 ```
 
 The same timeout against the **unwrapped** predicate propagates instead
@@ -55,10 +58,10 @@ await unwrapped.evaluate({ promoCode: "SAVE10", simulateTimeout: true });
 // throws Error: promo-validation service did not respond
 ```
 
-Now a timeout in the wrapped check reports as `passed: false, detail: "..."`
-— one entry in `RunResult.results`, same as any other failing rule — and
-every other rule in that `runAll`/`runGroup` still runs and still
-reports.
+Now a timeout in the wrapped check reports as a failing result with that
+detail — one entry in `RunResult.results`, same as any other failing
+rule — and every other rule in that `runAll`/`runGroup` still runs and
+still reports.
 
 ## Related
 

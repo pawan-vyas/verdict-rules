@@ -8,22 +8,22 @@
 from dataclasses import dataclass
 from typing import Awaitable, Callable, TypeVar
 
-from verdict import FunctionRule, RuleResult
+from verdict import FunctionRule, PredicateOutcome
 
 TContext = TypeVar("TContext")
 
 
 def defensive(
-    name: str, predicate: Callable[[TContext], Awaitable[RuleResult]]
+    name: str, predicate: Callable[[TContext], Awaitable[PredicateOutcome]]
 ) -> FunctionRule[TContext]:
-    """Turn a predicate's own exception into a failing RuleResult,
-    instead of letting it propagate out of the run that contains it."""
+    """Turn a predicate's own exception into a failing outcome, instead of
+    letting it propagate out of the run that contains it."""
 
-    async def wrapped(context: TContext) -> RuleResult:
+    async def wrapped(context: TContext) -> PredicateOutcome:
         try:
             return await predicate(context)
         except Exception as exc:
-            return RuleResult(rule_name=name, passed=False, detail=str(exc))
+            return PredicateOutcome(passed=False, detail=str(exc))
 
     return FunctionRule(name, wrapped)
 
@@ -34,15 +34,18 @@ class PromoContext:
     simulate_timeout: bool = False
 
 
-async def check_promo_code_against_external_service(context: PromoContext) -> RuleResult:
+async def check_promo_code_against_external_service(context: PromoContext) -> PredicateOutcome:
     """Stands in for a real network call that can time out."""
     if context.simulate_timeout:
         raise TimeoutError("promo-validation service did not respond")
-    return RuleResult(rule_name="promo_code_valid", passed=context.promo_code == "SAVE10")
+    return PredicateOutcome(passed=context.promo_code == "SAVE10")
 
 
 rule = defensive("promo_code_valid", check_promo_code_against_external_service)
 ```
+
+The wrapper returns an outcome, not a named result — `name` is passed to
+`FunctionRule`, which is the only thing that names the result either way:
 
 ```python
 await rule.evaluate(PromoContext(promo_code="SAVE10"))
@@ -63,10 +66,10 @@ await unwrapped.evaluate(PromoContext(promo_code="SAVE10", simulate_timeout=True
 # raises TimeoutError: promo-validation service did not respond
 ```
 
-Now a timeout in the wrapped check reports as `passed=False, detail="..."`
-— one entry in `RunResult.results`, same as any other failing rule — and
-every other rule in that `run_all`/`run_group` still runs and still
-reports.
+Now a timeout in the wrapped check reports as a failing result with that
+detail — one entry in `RunResult.results`, same as any other failing
+rule — and every other rule in that `run_all`/`run_group` still runs and
+still reports.
 
 ## Related
 
