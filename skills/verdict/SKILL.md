@@ -69,6 +69,22 @@ passes its own tests while being silently incorrect:
   view is an independent recursion, not a filter over the other: a
   passing result has no failing leaves even when an earlier
   short-circuited branch failed on the way to that pass.
+- **A one-level view names which children explain this verdict.** A
+  different question from the failing leaves: it stops after one level,
+  and a failed negation names its *passing* child. Do not chain it
+  expecting to arrive where the recursive view lands.
+- **Sub-results are stored; every other view is derived.** A result
+  holds its children and the *positions* of the deciding ones, and
+  computes the rest on access. Build a result by passing positions, not
+  children — a position naming a child the result does not have is
+  rejected at construction. This is also what makes a result
+  serializable: storing the derived views instead would put a result
+  inside itself, or make the stored graph a DAG that a tree-shaped
+  encoder expands once per path.
+- **A result can be serialized with the language's own encoder**, with
+  the derived views absent from the output since they are recomputable.
+  The `data` slot is the one part that can fail — it is whatever the
+  caller put there, so encoding it is their responsibility.
 - **Key an audit trail on a leaf's own rule name, never a composite's.**
   A composite's name says only that something in the group failed, and a
   generated composite name changes when its children are renamed or

@@ -26,7 +26,21 @@ Tagged `python-vX.Y.Z`.
   result with no failing children is itself the leaf.
 - **`RuleResult.decided_by`** — which of `sub_results` explain *this*
   result's own verdict. One level, non-recursive; not the same question
-  `failing_leaves` answers.
+  `failing_leaves` answers. A `@property`, derived from
+  `decided_by_indices`, which is the stored field a constructor call
+  passes: the positions of the deciding children within `sub_results`,
+  not the children themselves. Holding the same results under two fields
+  makes the stored graph a DAG, and `dataclasses.asdict` (and every other
+  tree-shaped walk) expands a shared node once per path — serialized size
+  doubled per nesting level, measured at 13 MB for sixteen levels. An
+  index naming a child the result does not have raises `IndexError` at
+  construction, which the objects form admitted no check for.
+- **`RuleResult` and `RunResult` are serializable.**
+  `json.dumps(dataclasses.asdict(result))` emits the stored fields only;
+  `leaves`/`failing_leaves`/`decided_by` are `@property` accessors,
+  absent from the output and recomputable from what is there. `data`
+  remains opaque, so encoding whatever a caller put in it is the caller's
+  own responsibility.
 - **`NotRule`** — passes exactly when its one wrapped rule fails. No
   vacuous case, since it wraps exactly one rule.
 - **`SequentialEvaluator` / `ShortCircuitEvaluator`** — the sequencing

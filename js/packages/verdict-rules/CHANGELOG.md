@@ -28,7 +28,18 @@ releases independently of the other language SDKs and of the AI-agent skill.
   failing children is itself the leaf.
 - **`RuleResult.decidedBy`** — which of `subResults` explain *this*
   result's own verdict. One level, non-recursive; not the same question
-  `failingLeaves` answers.
+  `failingLeaves` answers. A prototype getter, derived from
+  `decidedByIndices`, which is the stored field a constructor call passes:
+  the positions of the deciding children within `subResults`, not the
+  children themselves. Holding the same results under two fields makes the
+  stored graph a DAG, and `JSON.stringify` expands a shared node once per
+  path — serialized size doubled per nesting level, measured at 13 MB for
+  sixteen levels. An index naming a child the result does not have throws
+  `RangeError` at construction.
+- **A result serializes**, and its instances are frozen. `JSON.stringify`
+  emits the stored fields only, the derived getters being non-enumerable.
+  Note that an unset `data` produces no key at all rather than `null`,
+  since `JSON.stringify` omits `undefined`-valued properties.
 - **`NotRule`** — passes exactly when its one wrapped rule fails.
 - **`SequentialEvaluator`/`ShortCircuitEvaluator`** — the sequencing
   `AndRule`/`OrRule` compose, now public so a custom composite composes
@@ -55,7 +66,7 @@ releases independently of the other language SDKs and of the AI-agent skill.
 - **`RuleResult` and `RunResult` are classes with public constructors**,
   replacing the plain interfaces and the unexported `buildRuleResult`/
   `buildRunResult` factories. `new RuleResult(ruleName, passed, { detail,
-  data, subResults, decidedBy })` is how a custom rule or composite builds
+  data, subResults, decidedByIndices })` is how a custom rule or composite builds
   its own result — the same constructor-based shape Python, Dart, and C#
   already use. Both are exported as values, not type-only.
 - **`leaves`/`failingLeaves` are computed accessors rather than stored

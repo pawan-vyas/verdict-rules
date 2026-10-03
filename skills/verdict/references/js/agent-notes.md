@@ -60,7 +60,7 @@ await engine.tryRunNamed(name, context);  // -> RuleResult | undefined
 await engine.tryRunGroup(group, context); // -> RunResult  | undefined
 engine.ruleNames, engine.groupNames       // readonly string[] of what exists
 
-new RuleResult(ruleName, passed, { detail?, data?, subResults?, decidedBy? })
+new RuleResult(ruleName, passed, { detail?, data?, subResults?, decidedByIndices? })
 new RunResult(results)                    // `passed` is derived from the results
 ```
 
@@ -85,6 +85,18 @@ result.failingLeaves  // the leaves explaining a failure
 
 `RunResult` exposes `leaves`/`failingLeaves` too, flattened across every
 rule the run evaluated.
+
+**Only `subResults` and `decidedByIndices` are stored.** The other three are
+prototype getters, so they are non-enumerable and `JSON.stringify(result)`
+emits a finite tree. Build one by passing positions, not children:
+
+```ts
+new RuleResult("pair", false, { subResults: [a, b], decidedByIndices: [1] });
+```
+
+An index naming a child the result does not have throws `RangeError` at
+construction. Instances are `Object.freeze`d -- `readonly` alone is erased
+at runtime.
 
 Key an audit trail on a leaf's own `ruleName`, never a composite's:
 

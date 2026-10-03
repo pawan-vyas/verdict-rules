@@ -47,7 +47,7 @@ await engine.tryRunGroup(group, context);  // -> RunResult?
 engine.ruleNames, engine.groupNames        // Iterable<String> of what exists
 
 RuleResult(ruleName: name, passed: true, detail: '', data: null,
-            subResults: const [], decidedBy: const [])
+            subResults: const [], decidedByIndices: const [])
 RunResult(passed: true, results: [...])
 ```
 
@@ -71,8 +71,27 @@ result.failingLeaves  // the leaves explaining a failure
 ```
 
 `RunResult` exposes `leaves`/`failingLeaves` too, flattened across every
-rule the run evaluated. The lists a result hands back are unmodifiable --
-`subResults.add(...)` throws.
+rule the run evaluated.
+
+**Only `subResults` and `decidedByIndices` are stored**, and both are
+unmodifiable -- `subResults.add(...)` throws. The other three are getters
+that build a fresh growable list per call, so writing to one of those is
+writing to a copy. Build a result by passing positions, not children:
+
+```dart
+RuleResult(ruleName: 'pair', passed: false, subResults: [a, b],
+    decidedByIndices: [1])
+```
+
+An index naming a child the result does not have throws `ArgumentError` at
+construction.
+
+**Serializing needs `toJson()`, which both result types have** -- unlike
+the other three SDKs, `jsonEncode` cannot encode an arbitrary object:
+
+```dart
+jsonEncode(result);  // uses RuleResult.toJson()
+```
 
 Key an audit trail on a leaf's own `ruleName`, never a composite's:
 

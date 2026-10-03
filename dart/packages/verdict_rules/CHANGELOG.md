@@ -26,7 +26,23 @@ Tagged `dart-vX.Y.Z`.
   failing children is itself the leaf.
 - **Added `RuleResult.decidedBy`** — which of `subResults` explain
   *this* result's own verdict. One level, non-recursive; not the same
-  question `failingLeaves` answers.
+  question `failingLeaves` answers. A getter, derived from
+  `decidedByIndices`, which is the stored field a constructor call
+  passes: the positions of the deciding children within `subResults`,
+  not the children themselves. Holding the same results under two fields
+  makes the stored graph a DAG, which every tree-shaped encoder expands
+  once per path — serialized size would double per nesting level,
+  measured at 13 MB for sixteen levels in the sibling SDKs. An index
+  naming a child the result does not have throws `ArgumentError` at
+  construction.
+- **Added `RuleResult.toJson()` and `RunResult.toJson()`**, so
+  `jsonEncode(result)` works. `dart:convert` cannot encode an arbitrary
+  object and looks for a `toJson()` by convention, which is why this SDK
+  needs an explicit method where the other three reach an object's
+  fields through their own standard mechanism. Both emit the stored
+  fields only; the derived getters are recomputable, and one of them
+  cannot be stored at all. `data` remains opaque, so encoding whatever a
+  caller put in it is the caller's own responsibility.
 - **Added `NotRule`** — passes exactly when its one wrapped rule fails.
 - **Added `SequentialEvaluator`/`ShortCircuitEvaluator`** — the
   sequencing `AndRule`/`OrRule` compose, now public so a custom

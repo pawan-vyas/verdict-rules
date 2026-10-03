@@ -52,7 +52,7 @@ var typedEngine = new RulesEngine<OrderContext>(rules);
 await typedEngine.RunAllAsync(context, cancellationToken);  // same run methods as above, TContext in place of the dictionary
 
 new PredicateOutcome(passed, detail: "", data: null)  // what a predicate returns; no RuleName on it
-new RuleResult(ruleName, passed, detail: "", data: null, subResults: null, decidedBy: null)
+new RuleResult(ruleName, passed, detail: "", data: null, subResults: null, decidedByIndices: null)
 new RunResult(passed, results)                       // all three are immutable
 ```
 
@@ -69,20 +69,32 @@ var rule = new FunctionRule("over_18", OverEighteen);
 
 ## Reading a result
 
-**`Leaves`/`FailingLeaves` are methods here, not properties** -- this SDK
-is the only one that spells them that way. Each walks the subtree and
-allocates, and a get-only collection property would be traversed by any
-reflection-based serializer or structured logger:
+**`Leaves`/`FailingLeaves`/`DecidedBy` are methods here, not properties**
+-- this SDK is the only one that spells them that way. A get-only
+collection property would be traversed by any reflection-based serializer
+or structured logger, which is what a result has to stay serializable
+through, and `[JsonIgnore]` is not in-box for `netstandard2.1`:
 
 ```csharp
 result.SubResults            // this result's own children, exactly what it evaluated
-result.DecidedBy             // which of those explain this result's own verdict
+result.GetDecidedBy()        // which of those explain this result's own verdict
 result.GetLeaves()           // every leaf reachable from here, flattened
 result.GetFailingLeaves()    // the leaves explaining a failure
 ```
 
 `RunResult` exposes `GetLeaves()`/`GetFailingLeaves()` too, flattened
 across every rule the run evaluated.
+
+**Only `SubResults` and `DecidedByIndices` are stored**, which is what
+keeps `JsonSerializer.Serialize(result)` a finite tree. Build a result by
+passing positions, not children:
+
+```csharp
+new RuleResult("pair", false, subResults: [a, b], decidedByIndices: [1]);
+```
+
+An index naming a child the result does not have throws
+`ArgumentOutOfRangeException` at construction.
 
 Key an audit trail on a leaf's own `RuleName`, never a composite's:
 

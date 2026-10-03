@@ -21,8 +21,23 @@ cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skil
   language's own spelling, with the short-circuit caveat beside them: a
   failed `AndRule` has exactly one failing leaf, and a passing `OrRule`
   has none even when an earlier branch failed on the way to that pass.
-  C#'s notes spell these as `GetLeaves()`/`GetFailingLeaves()` methods,
-  which is that SDK alone.
+  C#'s notes spell `GetLeaves()`/`GetFailingLeaves()`/`GetDecidedBy()`
+  as methods, which is that SDK alone.
+- **Which views are stored and which are derived is now stated.** A
+  result holds its children and the *positions* of the deciding ones;
+  everything else is computed on access. Every constructor example
+  passes `decidedByIndices` (in each language's spelling) rather than
+  child results, and each language's notes name the error type a
+  position outside the children raises. Guidance that built a result by
+  handing it the deciding children produces code that no longer
+  compiles.
+- **Serializing a result is documented per language**, including that
+  the derived views are absent from the output and that the opaque
+  `data` slot is the one part that can fail to encode. Dart's notes
+  carry `toJson()`, which that SDK needs and no other does —
+  `jsonEncode` cannot encode an arbitrary object.
+- **JS's notes state that result instances are frozen**, since
+  `readonly` is a compile-time claim erased at runtime.
 - **Keying an audit trail on a leaf's own rule name** — never a
   composite's, whose name says only that something in the group failed
   and which changes when its children are renamed or reordered — is

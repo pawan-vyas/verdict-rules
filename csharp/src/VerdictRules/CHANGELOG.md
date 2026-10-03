@@ -36,9 +36,28 @@ Tagged `csharp-vX.Y.Z`.
   read-only collection properties are serialized even with
   `IgnoreReadOnlyProperties` set, and the per-member attribute is not
   in-box for `netstandard2.1`, which this package also targets.
-- **`RuleResult.DecidedBy`** — which of `SubResults` explain *this*
+- **`RuleResult.GetDecidedBy()`** — which of `SubResults` explain *this*
   result's own verdict. One level, non-recursive; not the same question
-  `GetFailingLeaves()` answers.
+  `GetFailingLeaves()` answers. A method for the same reason the two
+  above are: a get-only collection property returning the children is
+  serialized, which reintroduces exactly the duplication the stored form
+  exists to prevent.
+- **`RuleResult.DecidedByIndices`** — the stored field, the positions of
+  the deciding children within `SubResults` rather than the children
+  themselves. Holding the same results under two properties makes the
+  stored graph a DAG, and `System.Text.Json` expands a shared node once
+  per path: forty levels of nesting threw `OutOfMemoryException`, and
+  sixteen measured 13 MB. An index naming a child the result does not
+  have throws `ArgumentOutOfRangeException` at construction, which the
+  objects form admitted no check for.
+- **A result serializes.** `JsonSerializer.Serialize(result)` emits the
+  stored properties only, the three derived views being methods. `Data`
+  remains opaque, so encoding whatever a caller put in it is the
+  caller's own responsibility.
+- **Every `await` uses `ConfigureAwait(false)`**, so no continuation
+  resumes on the caller's synchronization context — a deadlock a
+  sync-over-async caller on a platform with one would otherwise hit.
+  Now covered by its own tests rather than only by convention.
 - **`NotRule` / `NotRule<TContext>`** — passes exactly when the one
   wrapped rule fails.
 - **`SequentialEvaluator<TContext>` / `ShortCircuitEvaluator<TContext>`**
@@ -65,7 +84,7 @@ Tagged `csharp-vX.Y.Z`.
   stays opaque and now carries only what a predicate attached.
 - **`AndRule`/`OrRule` leave their own `Detail` empty.** The failing
   sub-rule and its own detail are in
-  `SubResults`/`DecidedBy`/`GetFailingLeaves()`.
+  `SubResults`/`GetDecidedBy()`/`GetFailingLeaves()`.
 
 ### Fixed
 

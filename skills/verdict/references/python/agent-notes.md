@@ -37,7 +37,7 @@ await engine.try_run_group(group, context)# -> RunResult  | None
 engine.rule_names, engine.group_names     # tuples of what exists
 
 PredicateOutcome(passed, detail="", data=None)   # what a predicate returns; it has no name field
-RuleResult(rule_name, passed, detail="", data=None, sub_results=(), decided_by=())
+RuleResult(rule_name, passed, detail="", data=None, sub_results=(), decided_by_indices=())
 RunResult(passed, results)                       # all three are frozen dataclasses
 ```
 
@@ -63,6 +63,18 @@ result.failing_leaves  # the leaves explaining a failure
 
 `RunResult` exposes `leaves`/`failing_leaves` too, flattened across every
 rule the run evaluated.
+
+**Only `sub_results` and `decided_by_indices` are stored.** The other three
+are `@property` accessors computed on access, so a result is a finite tree
+and `json.dumps(dataclasses.asdict(result))` works. Build one by passing
+positions, not children:
+
+```python
+RuleResult(rule_name="pair", passed=False, sub_results=(a, b), decided_by_indices=(1,))
+```
+
+An index naming a child the result does not have raises `IndexError` at
+construction.
 
 Key an audit trail on a leaf's own `rule_name`, never a composite's:
 
