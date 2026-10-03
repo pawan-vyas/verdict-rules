@@ -41,7 +41,7 @@ class ThresholdRule<TContext> implements Rule<TContext> {
       ruleName: name,
       passed: passedCount >= _minimum,
       detail: '$passedCount of ${_rules.length} passed, needed $_minimum',
-      data: subResults,
+      subResults: subResults,
     );
   }
 }

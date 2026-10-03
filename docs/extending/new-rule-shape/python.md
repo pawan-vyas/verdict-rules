@@ -34,7 +34,7 @@ class ThresholdRule(Generic[TContext]):
             rule_name=self.name,
             passed=passed_count >= self._minimum,
             detail=f"{passed_count} of {len(self._rules)} passed, needed {self._minimum}",
-            data=sub_results,
+            sub_results=sub_results,
         )
 ```
 

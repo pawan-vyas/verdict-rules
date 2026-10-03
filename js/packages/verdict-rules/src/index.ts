@@ -19,6 +19,7 @@
 
 export { RulesEngine } from "./engine.js";
 export { UnknownLookupError } from "./errors.js";
-export type { Context, RuleResult, RunResult } from "./result.js";
+export type { Context, RuleResultInit } from "./result.js";
+export { RuleResult, RunResult } from "./result.js";
 export { AndRule, FunctionRule, NotRule, OrRule, SequentialEvaluator, ShortCircuitEvaluator } from "./rule.js";
 export type { PredicateOutcome, Rule, RulePredicate, StepDecider } from "./rule.js";

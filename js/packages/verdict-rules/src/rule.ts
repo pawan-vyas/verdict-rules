@@ -1,4 +1,4 @@
-import { buildRuleResult, type RuleResult } from "./result.js";
+import { RuleResult } from "./result.js";
 
 /**
  * The contract every rule satisfies.
@@ -14,7 +14,7 @@ import { buildRuleResult, type RuleResult } from "./result.js";
  * const overEighteen: Rule<Context> = {
  *   name: "over_18",
  *   async evaluate(ctx) {
- *     return { ruleName: "over_18", passed: (ctx.age as number) >= 18, subResults: [], decidedBy: [], leaves: [], failingLeaves: [] };
+ *     return new RuleResult("over_18", (ctx.age as number) >= 18);
  *   },
  * };
  * ```
@@ -114,7 +114,7 @@ export class FunctionRule<TContext> implements Rule<TContext> {
    */
   async evaluate(context: TContext): Promise<RuleResult> {
     const outcome = assertPredicateOutcome(await this.#predicate(context), this.name);
-    return buildRuleResult(this.name, outcome.passed, { detail: outcome.detail, data: outcome.data });
+    return new RuleResult(this.name, outcome.passed, { detail: outcome.detail, data: outcome.data });
   }
 
   /** @returns A one-line summary -- the name, and the group when set. */
@@ -190,7 +190,7 @@ export class SequentialEvaluator {
     // element, so this must be an independent branch, not a special case
     // of the one below.
     if (rules.length === 0) {
-      return buildRuleResult(name, this.#vacuousResult, { subResults: [] });
+      return new RuleResult(name, this.#vacuousResult, { subResults: [] });
     }
 
     const soFar: RuleResult[] = [];
@@ -207,14 +207,14 @@ export class SequentialEvaluator {
         // using the one extra fact (its own stopOn) a fully generic
         // decider doesn't have access to -- see ShortCircuitEvaluator.evaluate.
         const decidedBy = soFar.length === rules.length ? soFar : [latest];
-        return buildRuleResult(name, early, { subResults: soFar, decidedBy });
+        return new RuleResult(name, early, { subResults: soFar, decidedBy });
       }
     }
     // Non-null: `rules.length === 0` already returned above, so the loop
     // ran at least once and `soFar` is never empty here.
     const lastEvaluated = soFar[soFar.length - 1]!;
     const final = this.#decider(lastEvaluated, soFar, rules.length);
-    return buildRuleResult(name, final ?? this.#vacuousResult, { subResults: soFar, decidedBy: soFar });
+    return new RuleResult(name, final ?? this.#vacuousResult, { subResults: soFar, decidedBy: soFar });
   }
 }
 
@@ -274,11 +274,9 @@ export class ShortCircuitEvaluator {
     const result = await this.#inner.evaluate(name, rules, context);
     const last = result.subResults.length > 0 ? result.subResults[result.subResults.length - 1] : undefined;
     const decidedBy = last !== undefined && last.passed === this.#stopOn ? [last] : result.subResults;
-    // Through buildRuleResult, not a `{ ...result, decidedBy }` spread --
-    // every library-constructed RuleResult is frozen (buildRuleResult's own
-    // job), and a plain spread of a frozen object produces a new, unfrozen
-    // one, silently breaking that invariant for every AndRule/OrRule result.
-    return buildRuleResult(result.ruleName, result.passed, {
+    // Constructed, not spread: a spread of a `RuleResult` produces a plain
+    // object, which is neither frozen nor a `RuleResult`.
+    return new RuleResult(result.ruleName, result.passed, {
       detail: result.detail,
       data: result.data,
       subResults: result.subResults,
@@ -421,7 +419,7 @@ export class NotRule<TContext> implements Rule<TContext> {
    */
   async evaluate(context: TContext): Promise<RuleResult> {
     const inner = await this.#rule.evaluate(context);
-    return buildRuleResult(this.name, !inner.passed, { subResults: [inner], decidedBy: [inner] });
+    return new RuleResult(this.name, !inner.passed, { subResults: [inner], decidedBy: [inner] });
   }
 
   /** @returns A one-line summary -- the name, and the group when set. */

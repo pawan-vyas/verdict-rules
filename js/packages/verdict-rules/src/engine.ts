@@ -1,5 +1,5 @@
 import { UnknownLookupError } from "./errors.js";
-import { buildRunResult, type RuleResult, type RunResult } from "./result.js";
+import { RunResult, type RuleResult } from "./result.js";
 import type { Rule } from "./rule.js";
 
 /**
@@ -44,7 +44,7 @@ export class RulesEngine<TContext> {
     for (const rule of this.#rules) {
       results.push(await rule.evaluate(context));
     }
-    return buildRunResult(results);
+    return new RunResult(results);
   }
 
   /**
@@ -89,7 +89,7 @@ export class RulesEngine<TContext> {
     for (const rule of rules) {
       results.push(await rule.evaluate(context));
     }
-    return buildRunResult(results);
+    return new RunResult(results);
   }
 
   /**

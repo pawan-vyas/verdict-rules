@@ -6,7 +6,7 @@
 > JS/TS code.
 
 ```ts
-import { FunctionRule, type Rule, type RuleResult } from "verdict-rules";
+import { FunctionRule, RuleResult, type Rule } from "verdict-rules";
 
 /**
  * Passes if at least `minimum` of the given sub-rules pass.
@@ -34,12 +34,10 @@ class ThresholdRule<TContext> implements Rule<TContext> {
       subResults.push(await rule.evaluate(context));
     }
     const passedCount = subResults.filter((r) => r.passed).length;
-    return {
-      ruleName: this.name,
-      passed: passedCount >= this.#minimum,
+    return new RuleResult(this.name, passedCount >= this.#minimum, {
       detail: `${passedCount} of ${this.#rules.length} passed, needed ${this.#minimum}`,
-      data: subResults,
-    };
+      subResults,
+    });
   }
 }
 ```

@@ -9,7 +9,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { AndRule, FunctionRule, OrRule, RulesEngine, SequentialEvaluator } from "verdict-rules";
+import { AndRule, FunctionRule, OrRule, RuleResult, RulesEngine, SequentialEvaluator } from "verdict-rules";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // Fixture data lives at the repo root, shared by every language's own port of
@@ -92,10 +92,14 @@ export class AtLeastNRule {
   async evaluate(context) {
     const result = await this.#evaluator.evaluate(this.name, this.#rules, context);
     const passedCount = result.subResults.filter((r) => r.passed).length;
-    return {
-      ...result,
+    // Constructed, not spread: a spread would drop the prototype, and with
+    // it `leaves`/`failingLeaves`, leaving a shape that is not a RuleResult.
+    return new RuleResult(result.ruleName, result.passed, {
       detail: `${passedCount} of ${this.#rules.length} passed, needed ${this.minimum}`,
-    };
+      data: result.data,
+      subResults: result.subResults,
+      decidedBy: result.decidedBy,
+    });
   }
 }
 

@@ -13,8 +13,24 @@ releases independently of the other language SDKs and of the AI-agent skill.
   showed only the bare class dump; it now shows `FunctionRule "name"`
   (or `"name" (group)`), `AndRule "name" (group) — N sub-rule(s)`,
   `OrRule "name" (group) — N sub-rule(s)`, or `RulesEngine — N rule(s),
-  M group(s)`. `RuleResult`/`RunResult` are unaffected -- they are plain
-  interfaces with no runtime shape to attach a method to.
+  M group(s)`.
+- **`RuleResult` and `RunResult` are classes with public constructors**,
+  replacing the plain interfaces and the unexported `buildRuleResult`/
+  `buildRunResult` factories. `new RuleResult(ruleName, passed, { detail,
+  data, subResults, decidedBy })` is how a custom rule or composite builds
+  its own result — the same constructor-based shape Python, Dart, and C#
+  already use. Both are exported as values, not type-only.
+- **`leaves`/`failingLeaves` are computed accessors rather than stored
+  fields.** A leaf result's own leaves list is `[itself]`, so storing it
+  placed a reference to the result inside the result. Any tree-shaped
+  traversal of that structure — `JSON.stringify`, a structured logger, a
+  reflection-based mapper — recursed until it gave up. Computing on access
+  keeps the object graph acyclic, so a result now serializes. `leaves`/
+  `failingLeaves` are absent from `JSON.stringify` output, being
+  accessors; they are derivable from `subResults`/`passed` at any time.
+- A custom composite must construct its result rather than spreading one.
+  `{ ...result, detail: "..." }` yields a plain object without the
+  accessors, which is not a `RuleResult`.
 
 ## [0.3.1] - 2026-09-18
 
