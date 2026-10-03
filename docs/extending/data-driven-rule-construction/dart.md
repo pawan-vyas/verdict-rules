@@ -16,11 +16,10 @@ class RuleConfig {
   RuleConfig({required this.name, required this.field, required this.expected});
 }
 
-FunctionRule makeRule(RuleConfig ruleConfig) {
+FunctionRule<Context> makeRule(RuleConfig ruleConfig) {
   return FunctionRule(ruleConfig.name, (context) async {
     final actual = context[ruleConfig.field];
-    final passed = actual == ruleConfig.expected;
-    return RuleResult(ruleName: ruleConfig.name, passed: passed);
+    return PredicateOutcome(actual == ruleConfig.expected);
   });
 }
 
@@ -36,11 +35,17 @@ final combinedRule = AndRule('combined', configuredRules);
 
 ```dart
 await combinedRule.evaluate({'role': 'manager', 'office': 'HQ'});
-// RuleResult(ruleName: combined, passed: true, ...)
+// passed: true
 
-await combinedRule.evaluate({'role': 'manager', 'office': 'Remote'});
-// RuleResult(ruleName: combined, passed: false, ...) -- in_headquarters fails
+final refused =
+    await combinedRule.evaluate({'role': 'manager', 'office': 'Remote'});
+refused.failingLeaves.first.ruleName;
+// in_headquarters -- the config-driven name, carried through
 ```
+
+The rule name comes from the config once, at the `FunctionRule` call —
+the predicate no longer repeats it, so a config whose name changes cannot
+leave a result labelled with the old one.
 
 An empty `loadRuleConfigs()` produces an empty `AndRule`, which
 vacuously passes.

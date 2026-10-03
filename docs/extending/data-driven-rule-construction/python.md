@@ -6,14 +6,13 @@
 > Python code.
 
 ```python
-from verdict import AndRule, FunctionRule, RuleResult
+from verdict import AndRule, FunctionRule, PredicateOutcome
 
 
 def make_rule(rule_config: dict) -> FunctionRule:
-    async def predicate(context: dict) -> RuleResult:
+    async def predicate(context: dict) -> PredicateOutcome:
         actual = context.get(rule_config["field"])
-        passed = actual == rule_config["expected"]
-        return RuleResult(rule_name=rule_config["name"], passed=passed)
+        return PredicateOutcome(passed=actual == rule_config["expected"])
     return FunctionRule(rule_config["name"], predicate)
 
 
@@ -36,6 +35,10 @@ await combined_rule.evaluate({"role": "manager", "office": "HQ"})
 await combined_rule.evaluate({"role": "manager", "office": "Remote"})
 # RuleResult(passed=False, ...) — in_headquarters fails
 ```
+
+The rule name comes from the config once, at the `FunctionRule` call —
+the predicate no longer repeats it, so a config whose name changes cannot
+leave a result labelled with the old one.
 
 An empty `load_rule_configs()` produces an empty `AndRule`, which
 vacuously passes.

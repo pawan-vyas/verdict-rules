@@ -14,11 +14,12 @@ same rule, with no special-casing needed at the call site.
 
 This is exactly the shape where testing has to scale with the rule set:
 as the configuration source grows more varied, a handful of hand-picked
-fixtures stops being enough coverage, the same way it stopped being
-enough for the sample above. Reach for property-based testing or an
-oracle/differential approach — an independent reference implementation
-checked against many randomly-generated configurations — rather than
-adding fixtures one at a time as bugs are found.
+cases stops being enough coverage. Reach for property-based testing or
+an oracle/differential approach — an independent reference
+implementation checked against many randomly-generated configurations —
+rather than adding cases one at a time as bugs are found. The
+[`graduation_verdict`](../../../fixtures/graduation_verdict/README.md)
+scenario is a worked instance of exactly that, in every language.
 
 A builder that constructs a leaf differently from how it constructs a
 composite is the shape where a shared per-rule field — a group label,

@@ -39,10 +39,12 @@ sealed record RuleConfig(string Name, string Field, object? Expected);
 
 ```csharp
 await combinedRule.EvaluateAsync(new Dictionary<string, object?> { ["role"] = "manager", ["office"] = "HQ" });
-// RuleResult(Passed: true, ...)
+// Passed: true
 
-await combinedRule.EvaluateAsync(new Dictionary<string, object?> { ["role"] = "manager", ["office"] = "Remote" });
-// RuleResult(Passed: false, ...) -- in_headquarters fails
+var refused = await combinedRule.EvaluateAsync(
+    new Dictionary<string, object?> { ["role"] = "manager", ["office"] = "Remote" });
+refused.GetFailingLeaves()[0].RuleName;
+// in_headquarters -- the config-driven name, carried through
 ```
 
 An empty `LoadRuleConfigs()` produces an empty `AndRule`, which
