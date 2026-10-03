@@ -97,6 +97,36 @@ tests that prove these:
   a wrong, quiet result instead of a stack trace. Every entry point
   needs its own dedicated test: a composite's own `evaluate`, and each
   of the engine's own run modes.
+- **The failing-leaves recursion is independent, not a filter over the
+  leaves one.** The two formulas diverge deliberately: a passed result
+  contributes no failing leaves even when an earlier short-circuited
+  branch failed, and a failed result with no failing children *is*
+  itself the leaf. Both divergences need their own test, because a
+  filter-over-leaves implementation gets the common cases right and
+  only the negation and short-circuit cases wrong.
+- **The decided-by set is one level and non-recursive.** It answers
+  "which of my own children explain my verdict," which is a different
+  question from the terminal failures — a failed negation names its
+  *passing* child. A test that only checks a flat two-rule composite
+  cannot tell the two questions apart; nest one.
+- **A predicate reports an outcome, never a full result.** The rule
+  wrapping it owns the name, so a predicate returning a result-shaped
+  object must raise rather than appear to work — otherwise a result can
+  carry a name that disagrees with the rule it came from. Needs its own
+  test; the happy path never exercises the rejection.
+- **A constructed rule or result owns its collections.** Appending to
+  the list a caller passed in must not change the composite's sub-rules
+  (or its verdict), must not change a result's children, and must not
+  be able to place a result inside itself. Language-level immutability
+  does not cover this — a frozen or sealed instance still points at a
+  caller's mutable list. Prove it by mutating the original list after
+  construction and re-reading.
+- **A result can leave the process.** Serialize one — including a deep,
+  partly-failing tree — with the language's own standard serializer and
+  assert it round-trips. A derived accessor that stores a reference to
+  its own result makes the object graph cyclic, which no unit test of
+  the accessor's *value* detects and every tree-shaped traversal
+  (a JSON encoder, a structured logger, a reflective mapper) dies on.
 
 ## Fixing a defect
 
@@ -124,6 +154,8 @@ idiom or implementation stays a language-local test, same as any other.
 | A new `RulesEngine` run mode | That it evaluates the right subset, its own vacuous case (nothing matches the selector), and whether it short-circuits or not — state which, explicitly |
 | A change to `RuleResult`/`RunResult`'s shape | Every existing test still passes unmodified (a required-field addition breaks every construction site — see [`../maintenance/before-merging-checklists.md`](../maintenance/before-merging-checklists.md#consumer-impact-checklist-for-a-shape-change)) plus a new assertion covering whatever the new field is for |
 | A change to `Rule`'s required attributes/signature | Re-run every real consumer's own test suite, not just this package's — see the consumer-impact checklist linked above |
+| A derived accessor on a result (a computed collection, a flattened view) | That the object graph stays acyclic — serialize a result built through that accessor's own path, don't just assert the value it returns. An accessor whose base case is "itself" is the shape that makes a result contain itself |
+| A new constructor parameter holding a collection | That it is copied, not aliased: mutate the caller's own collection after construction and assert nothing visible changed |
 
 New tests live in whichever existing test file matches where the new
 code lives (per

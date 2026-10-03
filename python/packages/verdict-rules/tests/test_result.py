@@ -1,5 +1,5 @@
-"""Unit tests for verdict.result: RuleResult.leaves/failing_leaves and
-RunResult's own forwarders.
+"""Unit tests for verdict.result: RuleResult.leaves/failing_leaves,
+RunResult's own forwarders, and the serializability both depend on.
 
 `failing_leaves` is an independent recursion, not a filter over `leaves` —
 see RuleResult.failing_leaves's own docstring for the exact formula this
@@ -8,7 +8,13 @@ file pins down case by case.
 
 from __future__ import annotations
 
+import dataclasses
+import json
+
+import pytest
+
 from verdict.result import RuleResult, RunResult
+from verdict.engine import RulesEngine
 from verdict.rule import AndRule, FunctionRule, NotRule, OrRule, PredicateOutcome
 
 
@@ -30,6 +36,27 @@ def _leaf(name: str, passed: bool, detail: str = "") -> RuleResult:
 
 def _composite(name: str, passed: bool, *sub_results: RuleResult) -> RuleResult:
     return RuleResult(rule_name=name, passed=passed, sub_results=sub_results)
+
+
+def _to_json(result: RuleResult | RunResult) -> str:
+    """What a caller actually writes to log a result: the stdlib's own
+    dataclass walk, then the stdlib's own encoder. No verdict-provided
+    serializer sits in between -- that is the point of the result types
+    being plain dataclasses."""
+    return json.dumps(dataclasses.asdict(result))
+
+
+def _from_decoded(payload: dict) -> RuleResult:
+    """Rebuild a RuleResult from decoded JSON, so a round-trip can be
+    compared against the original rather than only inspected."""
+    return RuleResult(
+        rule_name=payload["rule_name"],
+        passed=payload["passed"],
+        detail=payload["detail"],
+        data=payload["data"],
+        sub_results=[_from_decoded(sub) for sub in payload["sub_results"]],
+        decided_by=[_from_decoded(sub) for sub in payload["decided_by"]],
+    )
 
 
 class TestLeaves:
@@ -262,3 +289,75 @@ class TestMixedCompositeTree:
         assert result.passed is False
         assert [leaf.rule_name for leaf in result.leaves] == ["a3", "b3", "empty_or"]
         assert [leaf.rule_name for leaf in result.failing_leaves] == ["empty_or"]
+
+
+class TestSerialization:
+    """A result has to be able to leave the process -- into a log line, an
+    audit record, an HTTP response. `leaves`/`failing_leaves` are properties
+    rather than stored fields precisely so that this works: a leaf result's
+    own leaves list is `[itself]`, so storing it would place the result
+    inside itself and every tree-shaped walk (`asdict`, a JSON encoder, a
+    structured logger) would recurse until it gave up.
+    """
+
+    def test_a_leaf_result_round_trips(self) -> None:
+        leaf = RuleResult(rule_name="a", passed=False, detail="too young", data={"age": 15})
+        restored = _from_decoded(json.loads(_to_json(leaf)))
+        assert restored == leaf
+
+    async def test_a_deep_partly_failing_tree_round_trips_intact(self) -> None:
+        a = AndRule("a", [_pass("a1"), OrRule("a2", [_fail("a2x"), _pass("a2y")]), NotRule("a3", _pass("a3-inner"))])
+        root = AndRule("root", [a, _pass("b")])
+        result = await root.evaluate({})
+
+        restored = _from_decoded(json.loads(_to_json(result)))
+
+        assert restored == result
+        # The two derived accessors are recomputed from the restored tree
+        # rather than carried across, so agreeing proves nothing they depend
+        # on was lost in transit.
+        assert [leaf.rule_name for leaf in restored.leaves] == [
+            leaf.rule_name for leaf in result.leaves
+        ]
+        assert [leaf.rule_name for leaf in restored.failing_leaves] == ["a3"]
+
+    async def test_the_derived_accessors_are_absent_from_the_serialized_form(self) -> None:
+        result = await AndRule("root", [_pass("a"), _fail("b")]).evaluate({})
+        payload = json.loads(_to_json(result))
+
+        assert sorted(payload) == ["data", "decided_by", "detail", "passed", "rule_name", "sub_results"]
+        assert "leaves" not in payload
+        assert "failing_leaves" not in payload
+
+    async def test_a_run_result_round_trips(self) -> None:
+        engine = RulesEngine([_pass("a"), _fail("b")])
+        run = await engine.run_all({})
+
+        payload = json.loads(_to_json(run))
+
+        assert payload["passed"] is False
+        assert sorted(payload) == ["passed", "results"]
+        restored = RunResult(passed=payload["passed"], results=[_from_decoded(r) for r in payload["results"]])
+        assert restored == run
+        assert [leaf.rule_name for leaf in restored.failing_leaves] == ["b"]
+
+    def test_a_result_built_from_a_list_the_caller_then_appended_to_still_serializes(self) -> None:
+        """The early-define/late-init shape: construct from an empty list,
+        then append the result to that same list. Copying on construction
+        severs the alias, so the walk terminates instead of recursing
+        through a result that contains itself."""
+        kids: list[RuleResult] = []
+        result = RuleResult(rule_name="p", passed=False, sub_results=kids)
+        kids.append(result)
+
+        assert json.loads(_to_json(result))["sub_results"] == []
+
+    def test_an_unencodable_payload_in_data_fails_at_the_encoder(self) -> None:
+        """`data` is opaque: verdict never reads it, and never promises it is
+        encodable. A caller putting something the stdlib cannot encode in
+        there gets the stdlib's own TypeError, not a verdict error and not a
+        silently dropped field."""
+        result = RuleResult(rule_name="a", passed=True, data=object())
+
+        with pytest.raises(TypeError):
+            _to_json(result)
