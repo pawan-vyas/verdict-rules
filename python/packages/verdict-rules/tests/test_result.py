@@ -2,9 +2,8 @@
 RunResult's own forwarders.
 
 `failing_leaves` is an independent recursion, not a filter over `leaves` —
-see RuleResult.failing_leaves's own docstring and
-.agents/plans/composite-rule-and-leaves-redesign/README.md §2 for the exact
-formula this file pins down case by case.
+see RuleResult.failing_leaves's own docstring for the exact formula this
+file pins down case by case.
 """
 
 from __future__ import annotations

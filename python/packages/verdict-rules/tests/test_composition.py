@@ -2,8 +2,10 @@
 new shipped NotRule: SequentialEvaluator, ShortCircuitEvaluator, and
 RuleResult.decided_by.
 
-See .agents/plans/composite-rule-and-leaves-redesign/README.md §3-§3d for
-the design this pins down.
+Each type's own docstring in verdict.rule states the contract these pin
+down case by case -- including why ShortCircuitEvaluator recomputes
+decided_by from stop_on rather than trusting SequentialEvaluator's generic
+rule.
 """
 
 from __future__ import annotations

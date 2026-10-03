@@ -12,8 +12,8 @@ first since [`RuleResult.decided_by`](../../python/packages/verdict-rules/src/ve
 was added and the three static accessor pairs it replaced
 (`AndRule.failed`/`AndRule.passing`, `OrRule.passed`/`OrRule.failing`,
 `NotRule.negated`) were removed along with their tests — see
-[`.agents/plans/composite-rule-and-leaves-redesign/README.md`](../../.agents/plans/composite-rule-and-leaves-redesign/README.md)
-§3d for the design. None of `decided_by`'s own producing code —
+[`src/verdict/rule.py`](../../python/packages/verdict-rules/src/verdict/rule.py)
+for the design. None of `decided_by`'s own producing code —
 `SequentialEvaluator.evaluate`'s generic rule, `ShortCircuitEvaluator`'s
 `stop_on`-aware override — had ever been through mutation testing before this
 run; the 190/191 (99.5%) result this page previously described predates

@@ -11,8 +11,8 @@
 This is Dart's **first** mutation run since the composite-rule-and-leaves
 redesign (`SequentialEvaluator`/`ShortCircuitEvaluator`/`NotRule`/
 `PredicateOutcome`/`RuleResult.decidedBy` -- see
-[`.agents/plans/composite-rule-and-leaves-redesign/README.md`](../../.agents/plans/composite-rule-and-leaves-redesign/README.md)
-§3-§3e) -- the prior version of this doc described the pre-redesign code (40
+[`lib/src/rule.dart`](../../dart/packages/verdict_rules/lib/src/rule.dart) and
+[`lib/src/result.dart`](../../dart/packages/verdict_rules/lib/src/result.dart)) -- the prior version of this doc described the pre-redesign code (40
 mutations, 5 survivors, all against `ArgumentError.value` argument order and
 one `OrRule` `subResults` gap) and has been replaced in full, not amended.
 

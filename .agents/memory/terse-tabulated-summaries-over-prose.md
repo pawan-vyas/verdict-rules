@@ -27,8 +27,8 @@ template.
 
 **Standing follow-up, not yet done**: formalize this into an actual
 authoring template in `docs/maintenance/doc-authoring/` once the
-queued doc-verbosity audit (see `.agents/plans/composite-rule-and-leaves-redesign/README.md`
-§0) actually begins — that audit is expected to surface further
+queued documentation audit ([`doc-hygiene-audit-protocol`](doc-hygiene-audit-protocol.md))
+actually begins — that audit is expected to surface further
 verbosity-optimization patterns beyond tabulation alone, so the
 template should get written after seeing what the full sweep turns up,
 not locked in ahead of it.

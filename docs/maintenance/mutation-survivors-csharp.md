@@ -10,12 +10,13 @@
 
 This record was rewritten from a fresh run, not patched -- the previous
 version (93.9%, 10 survivors) described the code as it stood right after the
-[composite-rule-and-leaves redesign](../../.agents/plans/composite-rule-and-leaves-redesign/README.md)
+composite-rule-and-leaves redesign
 landed, before `RuleResult.DecidedBy` existed and before the three static
 accessor pairs it replaced (`AndRule.Failed`/`Passing`, `OrRule.Passed`/`Failing`)
 were removed. Neither `RuleResult.DecidedBy` itself, `SequentialEvaluator`'s
 generic computation of it, nor `ShortCircuitEvaluator`'s `stopOn`-aware
-override of it (see that plan's §3d) had ever been through mutation testing
+override of it (see [`ShortCircuitEvaluator.cs`](../../csharp/src/VerdictRules/ShortCircuitEvaluator.cs))
+had ever been through mutation testing
 before this run. Every survivor below was re-investigated from scratch
 against the current source; the two carried-forward equivalence findings
 (the `ConfigureAwait` class and the `ShortCircuitEvaluator.cs` line 46

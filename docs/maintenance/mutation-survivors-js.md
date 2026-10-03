@@ -11,8 +11,8 @@
 This is JS/TS's **first** mutation run since the composite-rule-and-leaves
 redesign (`SequentialEvaluator`/`ShortCircuitEvaluator`/`NotRule`/
 `PredicateOutcome`/`RuleResult.decidedBy` -- see
-[`.agents/plans/composite-rule-and-leaves-redesign/README.md`](../../.agents/plans/composite-rule-and-leaves-redesign/README.md)
-§3-§3e) -- the prior version of this doc described code from before that
+[`src/rule.ts`](../../js/packages/verdict-rules/src/rule.ts) and
+[`src/result.ts`](../../js/packages/verdict-rules/src/result.ts)) -- the prior version of this doc described code from before that
 redesign and has been replaced in full, not amended.
 
 The run (`js/packages/verdict-rules/src/` via
