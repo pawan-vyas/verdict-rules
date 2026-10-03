@@ -45,7 +45,7 @@ stateDiagram-v2
     state "⚖️ Proven · 0.1.0" as Proven
 
     Clerical --> Minimal: every naming and registry question answered in writing
-    Minimal --> Claimed: seven types correct, basic tests green
+    Minimal --> Claimed: every type correct, basic tests green
     Claimed --> Hardened: tests expanded, docs written, CI green
     Hardened --> Proven: graduation fixture passes, docs at release quality
     Proven --> [*]: language ships
@@ -79,7 +79,7 @@ stateDiagram-v2
 >    answered *in writing*, not in someone's head. This is the stage
 >    people skip, and the only one whose mistakes cannot be corrected
 >    later.
-> 2. **Minimal → Claimed**: all seven types exist and are faithful to
+> 2. **Minimal → Claimed**: every public type exists and is faithful to
 >    the execution-model guarantees, with short-circuit and
 >    vacuous-truth tests proving it. Correct but small — not a stub.
 > 3. **Claimed → Hardened**: the name is held. Everything after this is
@@ -141,8 +141,14 @@ belongs in `.agents/scratch/`, not in the repo's public surfaces.
       import one; Dart's is deferred because pub workspaces would raise its SDK
       floor from 3.0 to 3.6 for no present gain. Adding a root later is itself
       additive
-- [ ] All seven types: `Rule`, `FunctionRule`, `AndRule`, `OrRule`,
-      `RulesEngine`, `RuleResult`, `RunResult`
+- [ ] Every public type the other SDKs have — read one language's own
+      public-API snapshot for the current list rather than trusting a
+      count written here, which goes stale every time the surface grows
+      (see [`api-snapshots.md`](api-snapshots.md)). As of the 0.4 surface:
+      `Rule`, `FunctionRule`, `AndRule`, `OrRule`, `NotRule`,
+      `RulesEngine`, `PredicateOutcome`, `RuleResult`, `RunResult`,
+      `SequentialEvaluator`, `ShortCircuitEvaluator`, and that language's
+      own spelling of the step-decider callback
 - [ ] **`Rule` and the types that hold it are generic over the context
       they read (`Rule<TContext>` or that language's own idiom for it)
       from the first commit** — this is the settled cross-language
@@ -204,26 +210,22 @@ belongs in `.agents/scratch/`, not in the repo's public surfaces.
   Query the **version-specific** endpoint, not the package summary: the
   summary is usually CDN-cached and lags a publish by minutes, so
   asserting against it fails good releases.
-- [ ] `skills/verdict/references/<lang>/agent-notes.md` — **one file**,
-      and the only hand-written skill content a language needs. Everything
-      about what verdict *is* comes from the repository's own documents,
-      which `scripts/build.sh` copies into the bundle from
-      `skills/verdict/MANIFEST.toml`; a language restating them is how the
-      skill went stale twice. Keep it to what is specific to this SDK:
-      its idioms, its naming, the mistakes that show up in generated code
-      for this language, and the fetch recipe for the documents the
-      bundle does not carry.
-- [ ] Add this language to `skills/verdict/MANIFEST.toml`'s top-level
-      `languages` list. Every `[[fetch_group]]` (testing, each extending
-      scenario, each sample) expands against that list automatically —
-      landing there is what makes this language's own file for each
-      existing topic fetchable, with no edit to any of those blocks
-      themselves. Only the quickstart still needs its own new `[[fetch]]`
-      row — its path shape (`<lang>/packages/verdict-rules/docs/`,
-      `csharp/src/VerdictRules/docs/`, ...) is genuine per-ecosystem
-      variation a pattern can't describe, not the hand-duplicated shape
-      `fetch_group` exists to remove. The `bundled` tier is
-      language-agnostic and should not grow.
+- [ ] `skills/verdict/references/<lang>/agent-notes.md` — **one file,
+      and the only skill content a language adds.** Nothing registers it:
+      `scripts/build.sh` copies `skills/verdict/` wholesale into the
+      bundle, and `scripts/generate_repository_map.py` builds
+      `references/REPOSITORY-MAP.md` by discovering
+      [`../extending/`](../extending/README.md) and
+      [`../../fixtures/`](../../fixtures/README.md) directories, which are
+      language-agnostic. [`SKILL.md`](../../skills/verdict/SKILL.md) names
+      no language either — it routes to `references/<language>/`. So this
+      file appears in the next build with no list to join.
+      Keep it to what is specific to this SDK: its idioms, its naming, and
+      the mistakes that show up in generated code for this language.
+      Restating what verdict *is* here is what made the skill go stale
+      before — link the repository's own document instead. See
+      [`doc-authoring/skill-agent-notes.md`](doc-authoring/skill-agent-notes.md)
+      for the shape the existing four converged on.
 - [ ] `.claude-plugin/plugin.json` bumped in the same commit, with a
       `## skill-vX.Y.Z` changelog entry. **[`SKILL.md`](../../skills/verdict/SKILL.md)
       needs no edit** — it routes to `references/<language>/` and names
@@ -248,10 +250,10 @@ belongs in `.agents/scratch/`, not in the repo's public surfaces.
       be able to resolve
 - [ ] Documentation at the quality of the Python set: architecture
       notes where the language diverges, extension scenarios in its own
-      idiom, one `<lang>.md` per existing scenario under `docs/extending/`
-      (skip a sample already restricted to specific languages by
-      design — check its own spec before assuming every sample needs
-      every language)
+      idiom, one `<lang>.md` per existing scenario under
+      [`../extending/`](../extending/README.md) (skip a scenario its own
+      spec restricts to specific languages by design — check before
+      assuming every scenario needs every language)
 - [ ] The root [`README.md`](../../README.md) gets this language's own
       collapsed `<details>` block under **Quickstart** (install command
       plus the same minimal example every other language's block shows,
@@ -377,7 +379,7 @@ Any language claiming to be verdict has to clear it.
 - [`../architecture/`](../architecture/README.md) — the guarantees a port must
   preserve.
 - [`../testing/`](../testing/README.md) — what a change has to prove.
-- [`README.md`](README.md) — release procedure, tagging, and the
-  skill's separate version.
+- [`releases/`](releases/README.md) — the shared release pipeline, and
+  each target's own concrete procedure.
 - [`../extending/`](../extending/README.md) — the scenarios each
   language's own reference content should cover.
