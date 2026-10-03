@@ -10,9 +10,16 @@ export interface RuleResultInit {
   // `PredicateOutcome`'s own optional `detail`/`data` (itself possibly
   // `undefined`) needs to be allowed to pass that `undefined` through
   // explicitly, not just omit the key entirely.
+  /** See {@link RuleResult.detail}. Defaults to the empty string. */
   readonly detail?: string | undefined;
+
+  /** See {@link RuleResult.data}. */
   readonly data?: unknown;
+
+  /** See {@link RuleResult.subResults}. Defaults to empty, marking a leaf. */
   readonly subResults?: readonly RuleResult[] | undefined;
+
+  /** See {@link RuleResult.decidedBy}. Defaults to empty. */
   readonly decidedBy?: readonly RuleResult[] | undefined;
 }
 
@@ -89,8 +96,12 @@ export class RuleResult {
     this.passed = passed;
     this.detail = init.detail ?? "";
     this.data = init.data;
-    this.subResults = init.subResults ?? [];
-    this.decidedBy = init.decidedBy ?? [];
+    // Copied, not aliased: Object.freeze below seals this instance, not
+    // an array the caller passed and kept. Without the copy, appending
+    // the result to the very array it was built from makes it contain
+    // itself, and every traversal here recurses through that.
+    this.subResults = [...(init.subResults ?? [])];
+    this.decidedBy = [...(init.decidedBy ?? [])];
     Object.freeze(this);
   }
 
@@ -145,7 +156,7 @@ export class RunResult {
 
   constructor(results: readonly RuleResult[]) {
     this.passed = results.every((r) => r.passed);
-    this.results = results;
+    this.results = [...results];
     Object.freeze(this);
   }
 

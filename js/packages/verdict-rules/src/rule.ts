@@ -321,7 +321,10 @@ export class AndRule<TContext> implements Rule<TContext> {
   constructor(name: string, rules: readonly Rule<TContext>[], group?: string) {
     this.name = name;
     this.group = group;
-    this.#rules = rules;
+    // Copied, not aliased: a caller retaining the array it passed could
+    // otherwise change this composite's sub-rules, and its verdict,
+    // after construction.
+    this.#rules = [...rules];
   }
 
   evaluate(context: TContext): Promise<RuleResult> {
@@ -363,7 +366,10 @@ export class OrRule<TContext> implements Rule<TContext> {
   constructor(name: string, rules: readonly Rule<TContext>[], group?: string) {
     this.name = name;
     this.group = group;
-    this.#rules = rules;
+    // Copied, not aliased: a caller retaining the array it passed could
+    // otherwise change this composite's sub-rules, and its verdict,
+    // after construction.
+    this.#rules = [...rules];
   }
 
   evaluate(context: TContext): Promise<RuleResult> {

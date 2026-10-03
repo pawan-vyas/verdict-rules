@@ -77,15 +77,24 @@ export interface Rule<TContext> {
 export type RulePredicate<TContext> = (context: TContext) => Promise<PredicateOutcome>;
 
 // @public
-export interface RuleResult {
-    readonly data?: unknown;
+export class RuleResult {
+    constructor(ruleName: string, passed: boolean, init?: RuleResultInit);
+    readonly data: unknown;
     readonly decidedBy: readonly RuleResult[];
-    readonly detail?: string;
-    readonly failingLeaves: readonly RuleResult[];
-    readonly leaves: readonly RuleResult[];
+    readonly detail: string;
+    get failingLeaves(): readonly RuleResult[];
+    get leaves(): readonly RuleResult[];
     readonly passed: boolean;
     readonly ruleName: string;
     readonly subResults: readonly RuleResult[];
+}
+
+// @public
+export interface RuleResultInit {
+    readonly data?: unknown;
+    readonly decidedBy?: readonly RuleResult[] | undefined;
+    readonly detail?: string | undefined;
+    readonly subResults?: readonly RuleResult[] | undefined;
 }
 
 // @public
@@ -103,9 +112,10 @@ export class RulesEngine<TContext> {
 }
 
 // @public
-export interface RunResult {
-    readonly failingLeaves: readonly RuleResult[];
-    readonly leaves: readonly RuleResult[];
+export class RunResult {
+    constructor(results: readonly RuleResult[]);
+    get failingLeaves(): readonly RuleResult[];
+    get leaves(): readonly RuleResult[];
     readonly passed: boolean;
     readonly results: readonly RuleResult[];
 }
