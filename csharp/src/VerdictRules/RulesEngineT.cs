@@ -31,7 +31,11 @@ public sealed class RulesEngine<TContext>
     /// <param name="rules">Rules this engine holds, indexed by name and group.</param>
     public RulesEngine(IReadOnlyList<IRule<TContext>> rules)
     {
-        _rules = rules;
+        // Copied for the same reason, and because the name and group
+        // indexes below are snapshots taken here: aliasing this one let
+        // RuleNames report what was registered while RunAllAsync iterated
+        // whatever the caller's list held by then.
+        _rules = [.. rules];
         _byName = new Dictionary<string, IRule<TContext>>(rules.Count, StringComparer.Ordinal);
         _byGroup = new Dictionary<string, List<IRule<TContext>>>(StringComparer.Ordinal);
 

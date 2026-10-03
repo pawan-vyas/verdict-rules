@@ -30,7 +30,11 @@ public sealed class AndRule<TContext>(string name, IReadOnlyList<IRule<TContext>
     private static readonly ShortCircuitEvaluator<TContext> Evaluator = new(stopOn: false);
 
     /// <summary>Sub-rules, evaluated in order until one fails or all pass.</summary>
-    private readonly IReadOnlyList<IRule<TContext>> _rules = rules;
+    // Copied, not aliased: IReadOnlyList is a read-only view, not an
+    // immutable collection -- a caller passing a List<T> keeps a mutable
+    // handle to the same object and could otherwise change this
+    // composite's sub-rules, and its verdict, after construction.
+    private readonly IReadOnlyList<IRule<TContext>> _rules = [.. rules];
 
     /// <summary>
     /// Same sub-rules as <see cref="_rules"/>, exposed for the non-generic
