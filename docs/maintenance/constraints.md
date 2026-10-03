@@ -5,13 +5,16 @@
 > load-bearing, not incidental — a maintainer's first job on any change
 > is checking it doesn't erode either one.
 
-1. **Zero external dependencies.** Each language's own manifest lists no
-   runtime dependencies, on purpose. A change that reaches for a
-   third-party package — even a small, well-regarded one — is a
-   discussion-worthy exception, not a default. If a future need
-   genuinely can't be met without one, that's a real design
-   conversation (does it belong in this package at all, or in a
-   consumer's own adapter?), not a routine dependency bump.
+1. **No third-party runtime dependencies.** Each language's own
+   manifest lists none, on purpose, and every registry-visible
+   description says so — which is what makes taking one a
+   release-visible change rather than a routine bump. A **first-party**
+   package, maintained by the language's own owner (`package:meta` from
+   the Dart team, a `Microsoft.*` package), is permitted but is still a
+   decision: it has to be worth amending that claim for. A third-party
+   package, however small or well-regarded, is a real design
+   conversation first — does this belong in this package at all, or in a
+   consumer's own adapter?
 2. **No knowledge of any specific domain.** Nothing under a language's
    own package source should ever import or reference rate limiting,
    access grants, discounts, or any other consumer's vocabulary.

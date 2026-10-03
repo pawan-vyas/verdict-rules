@@ -24,7 +24,7 @@ tool built for exactly this:
 | C# | [Stryker.NET](https://stryker-mutator.io/docs/stryker-net/introduction/) (`dotnet-stryker`) | `csharp/src/VerdictRules/` via `dotnet test` |
 | Python | [mutmut](https://github.com/boxed/mutmut) | `python/packages/verdict-rules/src/verdict/` via `pytest` |
 | JS/TS | [StrykerJS](https://stryker-mutator.io/docs/stryker-js/guides/nodejs/) | `js/packages/verdict-rules/src/` via its TAP runner, consuming `node --test`'s own TAP output (StrykerJS ships no first-class `node:test` plugin, but a dedicated TAP runner plugin has existed since v7.0 and explicitly covers the built-in test runner this way) |
-| Dart | [dart_apitool](https://pub.dev/packages/mutation_test)'s sibling package [`mutation_test`](https://pub.dev/packages/mutation_test) | `dart/packages/verdict_rules/lib/` via `dart test`, zero-config |
+| Dart | [`mutation_test`](https://pub.dev/packages/mutation_test) | `dart/packages/verdict_rules/lib/` via `dart test`, zero-config. A regex-based text mutator rather than an AST-aware one, so its reach is much narrower than the other three -- see [`mutation-survivors-dart.md`](mutation-survivors-dart.md) before reading its score as comparable |
 
 ## Not a required CI gate
 

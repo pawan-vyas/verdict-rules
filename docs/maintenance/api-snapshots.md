@@ -51,9 +51,9 @@ extractor converting it to a flat `(type, member)` set), then asserts:
    readable string/debugger representation" row leaves Dart's cell empty
    because `dart_apitool` drops every `@override` member outright, so
    `toString()` is invisible to it in its entirety even though the
-   method genuinely exists and is tested elsewhere (#98's own
-   cross-language tests prove the behavior; this mechanism only asserts
-   what a given tool can re-confirm on every future change). A concept
+   method genuinely exists and is covered by that language's own
+   diagnostics tests. This mechanism only asserts what a given tool can
+   re-confirm on every future change. A concept
    silently missing from a language's actual exported surface, where the
    tool *can* see it, is exactly the drift this exists to catch.
 2. **Every symbol a snapshot actually exports is accounted for** --

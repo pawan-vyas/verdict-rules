@@ -28,9 +28,9 @@ fixtures/<name>/
   <implementation files>
 ```
 
-Three homes, three different things, matching the same split used
-everywhere else in this repo: **data** lives with the fixture, **design**
-lives with the sample spec, **code** lives in that language's own tree
+Two homes, matching the same split used everywhere else in this repo:
+**data and design** live together with the fixture, which is the
+scenario's single home, and **code** lives in that language's own tree
 where its own build and test tooling expects to find it.
 
 ## Why code stays in each language's own tree
@@ -56,12 +56,13 @@ consolidate under `fixtures/<name>/` while the code does not.
    demonstrates. The fixture's README is the scenario's single home, so
    the design sits beside the contract rather than in a separate spec.
 3. **Build the first language's implementation** in that language's own
-   `examples/<name>/` (or wherever that language's own conventions put
-   a full tested project), reading the fixture's data files, and add
+   `examples/<name>/` (or wherever that language's own conventions put a
+   full tested project), reading the fixture's data files rather than
+   restating any of them, and add a row to
+   [`../../fixtures/README.md`](../../fixtures/README.md)'s index.
 4. **A second language's port** adds its own `examples/<name>/`
-   directory —
-   additive on every axis: a new fixture-consuming directory in that
-   language's own tree, a new file in the sample-spec directory, nothing
+   directory and nothing else — additive on every axis: a new
+   fixture-consuming directory in that language's own tree, nothing
    existing edited.
 
 ## What must stay identical across every language's port
@@ -69,9 +70,15 @@ consolidate under `fixtures/<name>/` while the code does not.
 Whatever the fixture's own `README.md` pins — for
 [`graduation_verdict`](../../fixtures/graduation_verdict/README.md),
 the verdict itself, how many rules actually ran (proving
-short-circuiting survived the port), which rule is blamed, and both
-absence-shaped lookup behaviors — every language's implementation must
-reproduce exactly. See
+short-circuiting survived the port), which rule is blamed, the flattened
+leaf views on both a composite's result *and* a run's, the one-level
+explanation of a composite's own verdict, and both absence-shaped lookup
+behaviours — every language's implementation must reproduce exactly.
+
+**Pin every view a reader could reach for, not only the one the first
+implementation happened to use.** A run's failing-leaf view went
+unpinned while a composite's was asserted eight ways, and the defect
+that hid there was found downstream rather than here. See
 [`adding-a-language.md`](adding-a-language.md)'s Stage 4 for where this
 fits in a new language's own release ritual.
 
