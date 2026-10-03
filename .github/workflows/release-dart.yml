@@ -68,6 +68,25 @@ jobs:
             # -- the tag was cut from the commit where they already agreed.
             tag="${GITHUB_REF_NAME}"
             version="${tag#dart-v}"
+
+            # A prerelease tag never publishes. Tag names follow the skill's
+            # own `<language>-v<version>` convention, so a release candidate
+            # cut purely to let the skill's doc fetch resolve against new
+            # docs necessarily matches this workflow's own `dart-v*` trigger
+            # -- Dart is the only language whose release listens on tags at
+            # all. pub.dev has no unpublish, so the guard sits here rather
+            # than in the trigger, where a pattern change could be reverted
+            # without anyone noticing what it protected.
+            case "${version}" in
+              *-*)
+                echo "${tag} is a prerelease -- not publishing."
+                echo "phase=none" >> "$GITHUB_OUTPUT"
+                echo "version=${version}" >> "$GITHUB_OUTPUT"
+                echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+                exit 0
+                ;;
+            esac
+
             echo "Tag push ${tag} -- publishing."
             echo "phase=publish" >> "$GITHUB_OUTPUT"
             echo "version=${version}" >> "$GITHUB_OUTPUT"
