@@ -1,0 +1,16 @@
+{
+  "eval_name": "serializing-a-result",
+  "prompt": "We evaluate an eligibility decision with verdict in one service and need to ship the whole result to another one over HTTP, plus write it to our structured log. The consumer wants the full tree, not just the boolean -- they re-render which checks ran and which refused. Two complications: our predicates attach a domain object to the result's data slot for internal use, and the rule tree can nest fairly deep for some tenants. Can you set up the serialization?",
+  "expected_output": "A response that serializes the result with the language's own standard encoder rather than hand-rolling a walk, and that correctly reports what lands in the output: the stored fields, with the derived views absent because they are recomputable from what is there. It should flag the data slot as the real risk -- it is opaque to verdict and holds whatever the predicate put there, so encoding it is the caller's problem, and a non-encodable payload fails at the encoder. A response that claims the flattened views appear in the output, or that strips them with custom encoder configuration, has the shape wrong.",
+  "files": [
+    "files/pyproject.toml"
+  ],
+  "expectations": [
+    "The result is serialized using the language's own standard mechanism rather than a hand-written recursive walk over the tree",
+    "The response states that the derived views (the leaves, failing-leaves and decided-by views) are absent from the output, and that this is because they are computed rather than stored",
+    "The consumer-side reconstruction does not expect the derived views in the payload -- they are recomputed from the stored children, or the consumer reads the stored fields directly",
+    "The opaque data slot is called out as the one part that can fail to encode, since verdict never inspects it and makes no promise about it",
+    "Deep nesting is not treated as a serialization hazard in itself -- the stored shape is a tree, so output grows with depth rather than exponentially in it",
+    "If the response builds a result by hand anywhere, it supplies the deciding children as positions within the children list rather than as result objects, which is the only form the constructor accepts"
+  ]
+}
