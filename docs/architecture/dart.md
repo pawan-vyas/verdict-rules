@@ -41,6 +41,11 @@ classDiagram
         +group: String?
         +evaluate(context: TContext)* Future~RuleResult~
     }
+    class PredicateOutcome {
+        +passed: bool
+        +detail: String
+        +data: Object?
+    }
     class `FunctionRule~TContext~` {
         -predicate: RulePredicate~TContext~
         +evaluate(context: TContext) Future~RuleResult~
@@ -51,6 +56,10 @@ classDiagram
     }
     class `OrRule~TContext~` {
         -rules: List~Rule~TContext~~
+        +evaluate(context: TContext) Future~RuleResult~
+    }
+    class `NotRule~TContext~` {
+        -rule: Rule~TContext~
         +evaluate(context: TContext) Future~RuleResult~
     }
     class `RulesEngine~TContext~` {
@@ -69,22 +78,32 @@ classDiagram
         +passed: bool
         +detail: String
         +data: Object?
+        +subResults: List~RuleResult~
+        +decidedBy: List~RuleResult~
+        +leaves: List~RuleResult~
+        +failingLeaves: List~RuleResult~
     }
     class RunResult {
         +passed: bool
         +results: List~RuleResult~
+        +leaves: List~RuleResult~
+        +failingLeaves: List~RuleResult~
     }
 
     `Rule~TContext~` <|.. `FunctionRule~TContext~`
     `Rule~TContext~` <|.. `AndRule~TContext~`
     `Rule~TContext~` <|.. `OrRule~TContext~`
+    `Rule~TContext~` <|.. `NotRule~TContext~`
+    `FunctionRule~TContext~` ..> PredicateOutcome : its predicate reports
     `AndRule~TContext~` o-- `Rule~TContext~` : sub-rules
     `OrRule~TContext~` o-- `Rule~TContext~` : sub-rules
+    `NotRule~TContext~` o-- `Rule~TContext~` : the one negated rule
     `RulesEngine~TContext~` o-- `Rule~TContext~` : holds
     `RulesEngine~TContext~` ..> RuleResult : produces
     `RulesEngine~TContext~` ..> RunResult : produces
     `RulesEngine~TContext~` ..> ArgumentError : throws
     RunResult --> RuleResult : contains
+    RuleResult --> RuleResult : subResults
 ```
 
 See [`README.md`](README.md)'s "Type structure" section for why each of
@@ -96,6 +115,26 @@ checking it against `null` is always true and proves nothing; the
 check that means something is `.isEmpty`. `Context` (a `typedef` for
 `Map<String, Object?>`) is the dict-context spelling of `TContext` —
 see "Generic context, concretely" below.
+
+`leaves`/`failingLeaves` are getters computed from `subResults` on
+access, not stored fields, which keeps a result's own object graph a
+finite tree. The lists a result hands back are built with
+`List.unmodifiable`, so `subResults.add(...)` throws rather than
+silently changing a result a caller already holds. `README.md`'s
+"Inspecting a composite's own decision" section covers what each of the
+three answers.
+
+`RuleResult`/`RunResult` have no `const` constructor: copying the
+collections they are handed requires a call, which a const initializer
+cannot make, and a const result would have to alias the caller's list.
+
+`AndRule`/`OrRule` each hold a `ShortCircuitEvaluator` as an instance
+field — not a static one, because Dart does not allow a generic class's
+static member to reference that class's own type parameter — and
+`NotRule` holds none, since one child has no sequence to iterate.
+`SequentialEvaluator` is the general form a custom composite composes
+directly, taking a `StepDecider` that returns `true`/`false` to stop or
+`null` to continue.
 
 ## Generic context, concretely
 

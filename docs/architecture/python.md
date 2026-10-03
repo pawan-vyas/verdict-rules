@@ -34,8 +34,13 @@ classDiagram
         +group: str|None
         +evaluate(context: TContext)* RuleResult
     }
+    class PredicateOutcome {
+        +passed: bool
+        +detail: str
+        +data: object|None
+    }
     class FunctionRule~TContext~ {
-        -predicate: Callable~TContext, Awaitable~RuleResult~~
+        -predicate: Callable~TContext, Awaitable~PredicateOutcome~~
         +evaluate(context: TContext) RuleResult
     }
     class AndRule~TContext~ {
@@ -44,6 +49,10 @@ classDiagram
     }
     class OrRule~TContext~ {
         -rules: list~Rule~TContext~~
+        +evaluate(context: TContext) RuleResult
+    }
+    class NotRule~TContext~ {
+        -rule: Rule~TContext~
         +evaluate(context: TContext) RuleResult
     }
     class RulesEngine~TContext~ {
@@ -62,29 +71,52 @@ classDiagram
         +passed: bool
         +detail: str
         +data: object|None
+        +sub_results: Sequence~RuleResult~
+        +decided_by: Sequence~RuleResult~
+        +leaves: list~RuleResult~
+        +failing_leaves: list~RuleResult~
     }
     class RunResult {
         +passed: bool
         +results: list~RuleResult~
+        +leaves: list~RuleResult~
+        +failing_leaves: list~RuleResult~
     }
 
     Rule <|.. FunctionRule
     Rule <|.. AndRule
     Rule <|.. OrRule
+    Rule <|.. NotRule
+    FunctionRule ..> PredicateOutcome : its predicate reports
     AndRule o-- Rule : sub-rules
     OrRule o-- Rule : sub-rules
+    NotRule o-- Rule : the one negated rule
     RulesEngine o-- Rule : holds
     RulesEngine ..> RuleResult : produces
     RulesEngine ..> RunResult : produces
     RunResult --> RuleResult : contains
+    RuleResult --> RuleResult : sub_results
 ```
 
 See [`README.md`](README.md)'s "Type structure" section for why each of
 these relationships is shaped the way it is — the reasoning applies
 here unchanged; this diagram is just Python's own type syntax for it.
 `RuleResult`/`RunResult` are deliberately not generic — see "Generic
-context, concretely" below for why `Data`/`data` stays opaque rather
-than following `TContext`.
+context, concretely" below for why `data` stays opaque rather than
+following `TContext`.
+
+`leaves`/`failing_leaves` are `@property` methods computed from
+`sub_results` on access, not stored fields — which is why
+`dataclasses.asdict()` returns the stored fields only and a result's own
+object graph stays a finite tree. `README.md`'s "Inspecting a
+composite's own decision" section covers what each of the three answers.
+
+`AndRule`/`OrRule` hold a class-level `ShortCircuitEvaluator` rather
+than a loop of their own, and `NotRule` holds none — one child has no
+sequence to iterate. `SequentialEvaluator` is the general form a custom
+composite composes directly, taking a `StepDecider` that returns
+`True`/`False` to stop or `None` to continue; `ShortCircuitEvaluator`
+is the narrower case where a single sub-result value ends evaluation.
 
 ## Generic context, concretely
 

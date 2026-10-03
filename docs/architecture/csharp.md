@@ -48,6 +48,11 @@ classDiagram
     class IRule {
         <<Interface>>
     }
+    class PredicateOutcome {
+        +Passed: bool
+        +Detail: string
+        +Data: object?
+    }
     class `FunctionRule~TContext~` {
         -_predicate: RulePredicate~TContext~
         +EvaluateAsync(context, cancellationToken) Task~RuleResult~
@@ -58,6 +63,10 @@ classDiagram
     }
     class `OrRule~TContext~` {
         -_rules: IReadOnlyList~IRule~TContext~~
+        +EvaluateAsync(context, cancellationToken) Task~RuleResult~
+    }
+    class `NotRule~TContext~` {
+        -_rule: IRule~TContext~
         +EvaluateAsync(context, cancellationToken) Task~RuleResult~
     }
     class `RulesEngine~TContext~` {
@@ -76,22 +85,32 @@ classDiagram
         +Passed: bool
         +Detail: string
         +Data: object?
+        +SubResults: IReadOnlyList~RuleResult~
+        +DecidedBy: IReadOnlyList~RuleResult~
+        +GetLeaves() IReadOnlyList~RuleResult~
+        +GetFailingLeaves() IReadOnlyList~RuleResult~
     }
     class RunResult {
         +Passed: bool
         +Results: IReadOnlyList~RuleResult~
+        +GetLeaves() IReadOnlyList~RuleResult~
+        +GetFailingLeaves() IReadOnlyList~RuleResult~
     }
 
     IRule --|> `IRule~TContext~` : closes TContext to IReadOnlyDictionary
     `IRule~TContext~` <|.. `FunctionRule~TContext~`
     `IRule~TContext~` <|.. `AndRule~TContext~`
     `IRule~TContext~` <|.. `OrRule~TContext~`
+    `IRule~TContext~` <|.. `NotRule~TContext~`
+    `FunctionRule~TContext~` ..> PredicateOutcome : its predicate reports
     `AndRule~TContext~` o-- `IRule~TContext~` : sub-rules
     `OrRule~TContext~` o-- `IRule~TContext~` : sub-rules
+    `NotRule~TContext~` o-- `IRule~TContext~` : the one negated rule
     `RulesEngine~TContext~` o-- `IRule~TContext~` : holds
     `RulesEngine~TContext~` ..> RuleResult : produces
     `RulesEngine~TContext~` ..> RunResult : produces
     RunResult --> RuleResult : contains
+    RuleResult --> RuleResult : SubResults
 ```
 
 See [`README.md`](README.md)'s "Type structure" section for why each of
@@ -102,6 +121,30 @@ non-generic type here (`IRule`, `FunctionRule`, `AndRule`, `OrRule`,
 — see "Generic context, concretely" below for why that's the correct
 relationship rather than one inheriting the other in the opposite
 direction.
+
+`Leaves`/`FailingLeaves` are spelled as **methods** here —
+`GetLeaves()`/`GetFailingLeaves()` — and this SDK is the only one that
+does. Each walks the subtree and allocates a fresh list per call, which
+the Framework Design Guidelines put on the method side of the line
+("orders of magnitude slower than a field set", and "the member returns
+an array"). A get-only collection property is also traversed by any
+reflection-based property walker — `System.Text.Json`, a
+structured-logging destructurer, an object mapper — and a leaf's own
+leaves list is itself, so such a walker recurses until it gives up.
+`[JsonIgnore]` cannot suppress that: read-only collection properties
+are serialized even with `IgnoreReadOnlyProperties` set, and the
+per-member attribute is not in-box for `netstandard2.1`, which this
+package also targets. `README.md`'s "Inspecting a composite's own
+decision" section covers what each of the three answers.
+
+`AndRule<TContext>`/`OrRule<TContext>` each hold a
+`private static readonly ShortCircuitEvaluator<TContext>` — one per
+closed generic type, since a static member of a generic class is
+per-instantiation — and `NotRule<TContext>` holds none, one child
+having no sequence to iterate. `SequentialEvaluator<TContext>` is the
+general form a custom composite composes directly, taking a
+`StepDecider` that returns `true`/`false` to stop or `null` to
+continue.
 
 ## Generic context, concretely
 
