@@ -56,8 +56,8 @@ touches an existing scenario's files.
 
 The same goes for first-class language integrations these scenarios
 currently leave to consumer code — an extensions entry point
-(`verdict_rules.extensions` in Python, `verdict-rules/extensions` in a
-future JS package, or that language's own idiomatic equivalent) is a
+(`verdict_rules.extensions` in Python, a `verdict-rules/extensions`
+subpath export in JS, or that language's own idiomatic equivalent) is a
 reasonable ask once real, repeated demand for one shows up, and belongs
 as a proposal in [`../future_plan.md`](../future_plan.md) rather than
 something to guess at speculatively ahead of that demand.
