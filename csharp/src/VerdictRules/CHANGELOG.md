@@ -82,9 +82,22 @@ Tagged `csharp-vX.Y.Z`.
   caller wrote becomes `result.SubResults`, or
   `result.GetFailingLeaves()` if the goal was the refusing leaf. `Data`
   stays opaque and now carries only what a predicate attached.
+- **A custom rule that put its children in `Data` now reads as a
+  *leaf*.** The silent one: a hand-rolled composite — a negation written
+  as `new RuleResult(name, !inner.Passed, data: new[] { inner })`, say —
+  still compiles and still evaluates, but its child disappears from
+  `GetLeaves()` and `GetDecidedBy()`, which report it as a single
+  terminal check. Migration: pass children as `subResults`, with
+  `decidedByIndices` naming the ones that explain the verdict — or wrap
+  `NotRule`, if the custom rule was only ever a negation.
 - **`AndRule`/`OrRule` leave their own `Detail` empty.** The failing
   sub-rule and its own detail are in
-  `SubResults`/`GetDecidedBy()`/`GetFailingLeaves()`.
+  `SubResults`/`GetDecidedBy()`/`GetFailingLeaves()`. Migration,
+  reproducing 0.3's own `AndRule` text for a flat composite:
+
+  ```csharp
+  string.Join(" | ", result.GetFailingLeaves().Select(l => $"'{l.RuleName}' failed: {l.Detail}"))
+  ```
 
 ### Fixed
 
@@ -99,12 +112,6 @@ Tagged `csharp-vX.Y.Z`.
   `RunResult.GetLeaves()` was always correct and is unchanged. Reported
   from downstream use of the Dart package; the same defect was present in
   all four SDKs.
-- **A result hand-built with child results in `Data` is read as a
-  *leaf*.** `GetLeaves()`, `GetFailingLeaves()` and `GetDecidedBy()`
-  consult `SubResults` only, so a 0.3-era fixture that put children in
-  `Data` still constructs and still evaluates, but reports itself as one
-  terminal check rather than a tree. Nothing throws; the shape is just
-  read differently.
 - **A composite's sub-rules, a result's children, and an engine's rules
   are copied on construction, not aliased.** `IReadOnlyList<T>` is a
   read-only *view*, not an immutable collection, so a caller passing a

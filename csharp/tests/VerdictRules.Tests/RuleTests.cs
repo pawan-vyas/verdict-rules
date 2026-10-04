@@ -294,6 +294,29 @@ public class NotRuleTests
         Assert.Equal(new[] { notBResult }, result.GetFailingLeaves());
     }
 
+    /// <summary>
+    /// The shape a caller rendering a checklist from <c>GetLeaves()</c> gets
+    /// wrong: <c>all</c> fails because of the negation, yet every leaf below
+    /// it passed. <c>GetLeaves()</c> enumerates what ran; only
+    /// <c>GetFailingLeaves()</c> explains a verdict. Reported from downstream
+    /// use.
+    /// </summary>
+    [Fact]
+    public async Task AFailedResultCanHaveEveryLeafPassing()
+    {
+        var rule = new AndRule("all", new IRule[]
+        {
+            Rules.Pass("a"),
+            new NotRule("not(b)", Rules.Pass("b")),
+        });
+
+        var result = await rule.EvaluateAsync(Rules.Empty);
+
+        Assert.False(result.Passed);
+        Assert.Equal(new[] { true, true }, result.GetLeaves().Select(l => l.Passed));
+        Assert.Equal(new[] { "not(b)" }, result.GetFailingLeaves().Select(l => l.RuleName));
+    }
+
     /// <summary>Mirrors <c>test_repr_shows_the_name</c>.</summary>
     [Fact]
     public void ToStringShowsTheName()

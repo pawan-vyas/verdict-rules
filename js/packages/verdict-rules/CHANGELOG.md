@@ -56,7 +56,13 @@ releases independently of the other language SDKs and of the AI-agent skill.
   the refusing leaf. `data` stays opaque.
 - **`AndRule`/`OrRule` leave their own `detail` empty.** The failing
   sub-rule and its own detail are in
-  `subResults`/`decidedBy`/`failingLeaves`.
+  `subResults`/`decidedBy`/`failingLeaves`. Migration, reproducing 0.3's
+  own `AndRule` text for a flat composite:
+
+  ```ts
+  result.failingLeaves.map((l) => `'${l.ruleName}' failed: ${l.detail}`).join(" | ")
+  ```
+
 - **`RunResult.failingLeaves` disagreed with
   `RuleResult.failingLeaves`** in both directions. It filtered the
   flattened leaves by `!passed` instead of forwarding to each result's own
@@ -68,12 +74,15 @@ releases independently of the other language SDKs and of the AI-agent skill.
   `RunResult.leaves` was always correct and is unchanged. Reported from
   downstream use of the Dart package; the same defect was present in all
   four SDKs.
-- **A result hand-built with child results in `data` is read as a
-  *leaf*.** `leaves`, `failingLeaves` and `decidedBy` consult
-  `subResults` only, so a 0.3-era fixture that put children in `data`
-  still constructs and still evaluates, but reports itself as one
-  terminal check rather than a tree. Nothing throws; the shape is just
-  read differently.
+- **A custom rule that put its children in `data` now reads as a
+  *leaf*.** A behaviour change rather than a fix, and the silent one: a
+  hand-rolled composite — a negation written as
+  `new RuleResult(name, !inner.passed, { data: [inner] })`, say — still
+  compiles and still evaluates, but its child disappears from `leaves`
+  and `decidedBy`, which report it as a single terminal check.
+  Migration: pass children as `subResults`, with `decidedByIndices`
+  naming the ones that explain the verdict — or wrap `NotRule`, if the
+  custom rule was only ever a negation.
 - **A composite's sub-rules and a result's children are copied on
   construction, not aliased.** A caller that kept the array it passed
   could change a composite's sub-rules — and its verdict — after

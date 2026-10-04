@@ -65,7 +65,13 @@ Tagged `dart-vX.Y.Z`.
   what a predicate attached.
 - **Changed**: `AndRule`/`OrRule` leave their own `detail` empty. The
   failing sub-rule and its own detail are in
-  `subResults`/`decidedBy`/`failingLeaves`.
+  `subResults`/`decidedBy`/`failingLeaves`. Migration, reproducing 0.3's
+  own `AndRule` text for a flat composite:
+
+  ```dart
+  result.failingLeaves.map((l) => "'${l.ruleName}' failed: ${l.detail}").join(' | ')
+  ```
+
 - **Changed**: `RuleResult`/`RunResult`'s general constructors are no
   longer `const`. Copying the collections they are handed requires a
   call, which a const initializer cannot make, and a const result would
@@ -91,12 +97,14 @@ Tagged `dart-vX.Y.Z`.
   `[for (final r in results) ...r.failingLeaves]`. `RunResult.leaves` was
   always correct and is unchanged. Reported from downstream use; the
   same defect was present in all four SDKs.
-- **Changed**: a result hand-built with child results in `data` is read
-  as a *leaf*. `leaves`/`failingLeaves`/`decidedBy` consult `subResults`
-  only, so a 0.3-era fixture that put children in `data` still
-  constructs and still evaluates, but reports itself as one terminal
-  check rather than a tree. Nothing raises; the shape is just read
-  differently.
+- **Changed**: a custom rule that put its children in `data` now reads
+  as a *leaf*. The silent one: a hand-rolled composite — a negation
+  written as `RuleResult(ruleName: n, passed: !inner.passed, data:
+  [inner])`, say — still compiles and still evaluates, but its child
+  disappears from `leaves` and `decidedBy`, which report it as a single
+  terminal check. Migration: pass children as `subResults`, with
+  `decidedByIndices` naming the ones that explain the verdict — or wrap
+  `NotRule`, if the custom rule was only ever a negation.
 - **Changed**: `leaves`/`failingLeaves`/`decidedBy` are instance getters
   now, and an instance member always wins over an extension member in
   Dart. An extension on `RuleResult` declaring any of those three names

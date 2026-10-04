@@ -88,6 +88,14 @@ class RuleResult:
         A leaf is any result with no :attr:`sub_results` of its own —
         for a non-composite result, that's itself. Plain recursion over
         :attr:`sub_results`.
+
+        **Each leaf's own ``passed`` is its own outcome, not a
+        contribution to this result's verdict.** A
+        :class:`~verdict.rule.NotRule` above a leaf inverts it, and an
+        :class:`~verdict.rule.OrRule` can pass despite a failed branch,
+        so rendering a checklist straight from ``leaves`` can show every
+        item green on a result that failed. Use :attr:`failing_leaves`
+        to explain a verdict; use this to enumerate what ran.
         """
         if not self.sub_results:
             return [self]

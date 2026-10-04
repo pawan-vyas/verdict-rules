@@ -141,6 +141,15 @@ public sealed class RuleResult(
     /// <c>IgnoreReadOnlyProperties</c> is set, and the per-member attribute
     /// is not in-box for <c>netstandard2.1</c>, which this package targets.
     /// </remarks>
+    /// <remarks>
+    /// <b>Each leaf's own <see cref="Passed"/> is its own outcome, not a
+    /// contribution to this result's verdict.</b> A
+    /// <see cref="NotRule{TContext}"/> above a leaf inverts it, and an
+    /// <see cref="OrRule{TContext}"/> can pass despite a failed branch, so
+    /// rendering a checklist straight from this can show every item green on
+    /// a result that failed. Use <see cref="GetFailingLeaves"/> to explain a
+    /// verdict; use this to enumerate what ran.
+    /// </remarks>
     /// <returns>The leaves, in evaluation order.</returns>
     public IReadOnlyList<RuleResult> GetLeaves() =>
         SubResults.Count == 0 ? [this] : SubResults.SelectMany(s => s.GetLeaves()).ToList();

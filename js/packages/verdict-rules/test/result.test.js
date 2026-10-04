@@ -132,6 +132,27 @@ describe("RuleResult.failingLeaves", () => {
       ["b"],
     );
   });
+
+  it("a failed result can have every leaf passing", async () => {
+    // The shape a caller rendering a checklist from leaves gets wrong: "all"
+    // fails because of the negation, yet every leaf below it passed. leaves
+    // enumerates what ran; only failingLeaves explains a verdict. Reported
+    // from downstream use.
+    const result = await new AndRule("all", [
+      leaf("a", true),
+      new NotRule("not(b)", leaf("b", true)),
+    ]).evaluate({});
+
+    assert.equal(result.passed, false);
+    assert.deepEqual(
+      result.leaves.map((l) => l.passed),
+      [true, true],
+    );
+    assert.deepEqual(
+      result.failingLeaves.map((l) => l.ruleName),
+      ["not(b)"],
+    );
+  });
 });
 
 describe("RunResult forwarders", () => {

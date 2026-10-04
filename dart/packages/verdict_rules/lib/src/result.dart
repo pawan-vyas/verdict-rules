@@ -106,6 +106,13 @@ class RuleResult {
 
   /// Every leaf result reachable from this one, in evaluation order --
   /// this result itself when it has no sub-results.
+  ///
+  /// **Each leaf's own [passed] is its own outcome, not a contribution to
+  /// this result's verdict.** A `NotRule` above a leaf inverts it, and an
+  /// `OrRule` can pass despite a failed branch, so rendering a checklist
+  /// straight from [leaves] can show every item green on a result that
+  /// failed. Use [failingLeaves] to explain a verdict; use this to
+  /// enumerate what ran.
   List<RuleResult> get leaves => subResults.isEmpty
       ? [this]
       : [for (final sub in subResults) ...sub.leaves];

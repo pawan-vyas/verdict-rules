@@ -68,10 +68,23 @@ Tagged `python-vX.Y.Z`.
   wrote becomes `result.sub_results`, or `result.failing_leaves` if the
   goal was the refusing leaf. `data` stays opaque and now carries only
   what a predicate attached.
+- **A custom rule that put its children in `data` now reads as a
+  *leaf*.** The silent one: a hand-rolled composite — a negation written
+  as `RuleResult(name, not inner.passed, data=[inner])`, say — still
+  compiles and still evaluates, but its child disappears from `leaves`
+  and `decided_by`, which report it as a single terminal check.
+  Migration: pass children as `sub_results`, with `decided_by_indices`
+  naming the ones that explain the verdict — or wrap `NotRule`, if the
+  custom rule was only ever a negation.
 - **`AndRule`/`OrRule` leave their own `detail` empty.** Composing a
   shared evaluator leaves no channel richer than a boolean to build a
   string from. The failing sub-rule and its own detail are in
-  `sub_results`/`decided_by`/`failing_leaves`.
+  `sub_results`/`decided_by`/`failing_leaves`. Migration, reproducing
+  0.3's own `AndRule` text for a flat composite:
+
+  ```python
+  " | ".join(f"{leaf.rule_name!r} failed: {leaf.detail}" for leaf in result.failing_leaves)
+  ```
 
 ### Fixed
 
@@ -86,12 +99,6 @@ Tagged `python-vX.Y.Z`.
   `RunResult.leaves` was always correct and is unchanged. Reported from
   downstream use of the Dart package; the same defect was present in all
   four SDKs.
-- **A result hand-built with child results in `data` is read as a
-  *leaf*.** `leaves`, `failing_leaves` and `decided_by` consult
-  `sub_results` only, so a 0.3-era fixture that put children in `data`
-  still constructs and still evaluates, but reports itself as one
-  terminal check rather than a tree. Nothing raises; the shape is just
-  read differently.
 - **A composite's sub-rules, a result's children, and an engine's rules
   are copied on construction, not aliased.** A caller that kept the list
   it passed could change a composite's sub-rules — and its verdict —

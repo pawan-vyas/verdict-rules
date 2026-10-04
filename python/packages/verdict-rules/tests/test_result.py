@@ -146,6 +146,17 @@ class TestFailingLeaves:
         outer_and = _composite("outer_and", False, a, inner_or)
         assert outer_and.failing_leaves == [b]
 
+    async def test_a_failed_result_can_have_every_leaf_passing(self) -> None:
+        """The shape a caller rendering a checklist from `leaves` gets wrong:
+        `all` fails because of the negation, yet every leaf below it passed.
+        `leaves` enumerates what ran; only `failing_leaves` explains a
+        verdict. Reported from downstream use."""
+        result = await AndRule("all", [_pass("a"), NotRule("not(b)", _pass("b"))]).evaluate({})
+
+        assert result.passed is False
+        assert [leaf.passed for leaf in result.leaves] == [True, True]
+        assert [leaf.rule_name for leaf in result.failing_leaves] == ["not(b)"]
+
 
 class TestRunResultForwarders:
     def test_leaves_flattens_across_every_result(self) -> None:

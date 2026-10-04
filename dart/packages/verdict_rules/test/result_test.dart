@@ -120,6 +120,21 @@ void main() {
       expect(outerAnd.failingLeaves, [notB]);
     });
 
+    test('a failed result can have every leaf passing', () async {
+      // The shape a caller rendering a checklist from leaves gets wrong:
+      // 'all' fails because of the negation, yet every leaf below it passed.
+      // leaves enumerates what ran; only failingLeaves explains a verdict.
+      // Reported from downstream use.
+      final result = await AndRule<Context>('all', [
+        _pass('a'),
+        NotRule<Context>('not(b)', _pass('b')),
+      ]).evaluate({});
+
+      expect(result.passed, isFalse);
+      expect(result.leaves.map((l) => l.passed), [true, true]);
+      expect(result.failingLeaves.map((l) => l.ruleName), ['not(b)']);
+    });
+
     test('nested failure flattens to the deepest actual failures', () {
       final a = _leaf('a', true);
       final b = _leaf('b', false);

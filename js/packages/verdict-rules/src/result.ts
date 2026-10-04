@@ -143,6 +143,13 @@ export class RuleResult {
    * tree-shaped traversal of that structure — `JSON.stringify`, a
    * structured logger, a reflection-based mapper — would recurse until it
    * gave up.
+   *
+   * **Each leaf's own `passed` is its own outcome, not a contribution to
+   * this result's verdict.** A `NotRule` above a leaf inverts it, and an
+   * `OrRule` can pass despite a failed branch, so rendering a checklist
+   * straight from `leaves` can show every item green on a result that
+   * failed. Use {@link RuleResult.failingLeaves} to explain a verdict;
+   * use this to enumerate what ran.
    */
   get leaves(): readonly RuleResult[] {
     return this.subResults.length === 0
