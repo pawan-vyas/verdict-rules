@@ -23,7 +23,9 @@ material, and `eval_name` is the lasting name.
 ## Why
 
 Adding a language must stay a new directory, never an edit to something
-shared — see [[adding-a-variant-is-a-new-file]] for the general rule. Three SDK
+shared — see
+[`adding-a-variant-is-a-new-file`](adding-a-variant-is-a-new-file.md) for
+the general rule. Three SDK
 branches were in flight when this was written, and a single hand-maintained
 eval list would have conflicted three ways over a file none of them actually
 disagreed about.
@@ -41,6 +43,7 @@ disagreed about.
   version to read.
 - A behavioural change that introduces a new way to be *subtly* wrong earns an
   eval, not just a doc edit — see
-  [[a-behaviour-change-is-a-documentation-change]]. An expectation is the only
+  [`a-behaviour-change-is-a-documentation-change`](a-behaviour-change-is-a-documentation-change.md).
+  An expectation is the only
   thing in this repo that checks whether an agent reading the skill arrives at
   the right design; the test suite only checks that the library is right.

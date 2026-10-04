@@ -23,7 +23,7 @@
 
 **Do** put there: what is being built, what was decided, and what
 remains. A naming decision is stated as *"`verdict` is unavailable on
-npm; the chosen name is `@verdict/core`"* — a fact and a decision, with
+npm; the chosen name is `verdict-rules`"* — a fact and a decision, with
 no characterisation of whoever holds the name.
 
 ## Where the research goes instead

@@ -22,10 +22,13 @@ the answer there is a zero-dependency mechanism or nothing.
 
 ## The cost of using it, which is why it isn't free
 
-"Zero dependencies" is asserted in **20 tracked files**, including all
-four registry-visible package descriptions (`VerdictRules.csproj`,
-`pubspec.yaml`, `package.json`, `pyproject.toml`) and the four package
-READMEs that render on the registry pages. Taking a first-party
+"Zero dependencies" is asserted across a couple of dozen tracked files —
+don't trust a written count, search for it, since the number moves every
+time a doc is added. It includes all four registry-visible package
+descriptions (`VerdictRules.csproj`, `pubspec.yaml`, `package.json`,
+`pyproject.toml`) and the four package READMEs that render on the registry
+pages, which are the ones that cannot be corrected after the fact. Taking
+a first-party
 dependency in any language makes an unqualified "zero dependencies"
 claim false for that language, on the registry page where the dependency
 list is displayed directly beside the description.

@@ -81,23 +81,42 @@ to say so.
 
 ## What the evals cover, and what they deliberately do not
 
-The three scenario evals measure the thing the skill exists for —
-turning a conditional chain into named, independently-changing rules
-with real diagnostics. Two more cover behaviour that is easy to get
-wrong *and* silent when it is:
+The scenario evals measure the thing the skill exists for — turning a
+conditional chain into named, independently-changing rules with real
+diagnostics. The rest cover behaviour that is easy to get wrong *and*
+silent when it is.
 
-- `python/04-absence-versus-emptiness` — an unknown rule name is not an
-  empty rule set, and collapsing the two hides a typo as a policy
-  outcome.
-- `cross-language/01-unsupported-language` — a language with no SDK
-  should produce a plain statement of that, not an invented import path.
+Each of the four language targets carries the same core set, and
+`cross-language/` carries what belongs to no single SDK:
+
+| Eval name | Targets | Measures |
+| :-- | :-- | :-- |
+| `discount-eligibility` | all four languages | the core translation: a conditional chain becomes named rules |
+| `shipping-fee-waiver` | all four languages | the same, with a composite and an explained failure |
+| `data-driven-admin-rules` | all four languages | rules built from runtime configuration rather than authored by hand |
+| `absence-versus-emptiness` | all four languages | an unknown rule name is not an empty rule set; collapsing the two hides a typo as a policy outcome |
+| `employee-bonus-eligibility` | all four languages | a second domain, to check the pattern transfers rather than being memorised |
+| `custom-composite-reporting-its-decision` | all four languages | a custom composite built on the shared evaluator, reporting which children explain its own verdict |
+| `which-result-view-to-read` | `cross-language/` | choosing between the recursive failing view, the flat leaf enumeration, and the one-level decided-by view |
+| `serializing-a-result` | `cross-language/` | encoding a result with the language's own serializer, with the derived views absent and `data` the caller's problem |
+| `unsupported-language` | `cross-language/` | a language with no SDK produces a plain statement of that, not an invented import path |
+| `redacted-defect-report` | `cross-language/` | a defect report carrying no domain names, context values, or application stack frames |
+| `recurring-pattern-evidence-report` | `cross-language/` | a recurring-gap report filed as evidence, not as an argument for a specific design |
+
+**Numbering is per-target and does not line up across targets.** The same
+eval is `06` in Python and C# and `07` in Dart and JS, because each target
+numbers its own directory and some carry a language-native eval the others
+have no counterpart for. `eval_name` is the identity; the number is
+positional, exactly as the ids are.
+
+Three evals are language-native by design, with no counterpart elsewhere:
+
 - `js/05-cdn-conditional-ui` — the one scenario with no `package.json` at
   all: a plain HTML page loading `verdict-rules` from a CDN, no build
   step. Probes whether the pinned-version-plus-integrity-hash guidance
   in the package's own README actually gets followed when there's no
   npm-based manifest to establish the language from in the first place.
-  This is JS-native — no other language ships a browser-global bundle —
-  so it has no counterpart in another target's numbering by design.
+  No other language ships a browser-global bundle.
 - `dart/05-flutter-conditional-banner` — the "UI" role `js/05` plays for
   JS/TS, filled by Dart's own dominant UI framework rather than a
   language-native mechanism like JS's CDN script tag (Dart has no

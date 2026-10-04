@@ -26,10 +26,10 @@ a diagram node, restricted everywhere dispatch/parsing actually happens
 — applied to punctuation instead of emoji.
 
 **Why draw the line there and not at "anywhere in the repo"**: the repo
-has roughly 2000 em-dashes across 137 markdown files, all of it
+has thousands of em-dashes across every markdown file, all of it
 deliberate prose voice with zero evidence of causing any actual parsing
-failure — audited directly (`grep` across every source extension) and
-found no leaked escape sequence, no mojibake, nothing broken. Purging
+failure — audited directly across every source extension and found no
+leaked escape sequence, no mojibake, nothing broken. Purging
 those would reverse an established, working style for no real defect
 found. The actual, verified risk is narrower: a value serialized by one
 language's JSON/YAML library and consumed or re-serialized by another's,
@@ -49,3 +49,11 @@ than the character it represents.
   file that also contains ordinary comments in the house prose style —
   judge by whether the string is consumed by tooling, not by the file
   extension it sits in.
+- **No gate enforces this**, so it has to be checked by hand. Two places
+  the by-hand check keeps mattering: a `.json` file has no comment
+  syntax, so *every* em-dash in one is in a value by definition, and a
+  manifest's `description` renders straight onto a registry page where it
+  cannot be corrected for an already-published version. A sweep found all
+  four published descriptions clean and the unpublished JS workspace root
+  carrying one, which is the right direction to be wrong in but is still
+  the rule.

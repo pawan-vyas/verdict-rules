@@ -9,10 +9,13 @@
 
 ## What each version means
 
-- **`python/pyproject.toml`'s `version`** — the Python library's public
-  API. Published to PyPI, asserted against the `python-vX.Y.Z` tag by
-  `release-python.yml`. Each future language gets its own, on its own
-  cadence.
+- **`python/packages/verdict-rules/pyproject.toml`'s `version`** — the
+  Python library's public API. Published to PyPI, asserted against the
+  `python-vX.Y.Z` tag by `release-python.yml`. Note the path: `python/`'s
+  own `pyproject.toml` is the workspace root and declares no `[project]`
+  or `version` at all, so the obvious-looking file is the wrong one.
+  Every language keeps its version in its own package manifest, on its
+  own cadence.
 - **`.claude-plugin/plugin.json`'s `version`** — the **skill's**
   content, for Claude Code's marketplace only. Bumped when
   `skills/verdict/` changes: wording tweaks so the skill advertises the
@@ -27,8 +30,8 @@ skill hasn't needed a revision.
 ## Don't re-derive this as a bug
 
 It looks like an unenforced invariant from inside the release workflow:
-`release-python.yml` verifies tag ↔ `pyproject.toml` and never reads
-`plugin.json`. That is not a missing check — there is no invariant.
+`release-python.yml` verifies tag ↔ that package's own manifest and never
+reads `plugin.json`. That is not a missing check — there is no invariant.
 A strict-equality assertion would force meaningless no-op bumps and
 make the skill version lie about whether the skill changed.
 
@@ -47,18 +50,24 @@ in that path.
 
 `scripts/get.sh` (the `curl … | sh` path) is the exception: it resolves
 GitHub's *latest release* and pulls `verdict-tools.zip` from it, so it
-needs an actual release to exist. That's what `release-skill.yml` is
-for — a `skill-vX.Y.Z` tag, verified against `plugin.json`, cutting a
-release of its own. Both release workflows attach the **full** set of
-skill artifacts, so `latest` always carries a usable
+needs an actual release to exist. That's what `release-skill.yml`
+produces, off the version bump alone. Both release workflows attach the
+**full** set of skill artifacts, so `latest` always carries a usable
 `verdict-tools.zip` regardless of which kind of release came last.
 
 ## How a skill change ships
 
-Bump `plugin.json` in the same commit as the skill edit, add a
-`skill-vX.Y.Z` CHANGELOG entry, tag, push. Full procedure in
-[`docs/maintenance/releases/verdict-agent-skill.md`](../../docs/maintenance/releases/verdict-agent-skill.md). Marketplace and clone installs are current as
-soon as it lands on `main`; the tag exists for `get.sh`.
+Bump `plugin.json` in the same commit as the skill edit and add a
+`skill-vX.Y.Z` CHANGELOG entry. **Then merge — there is no tag to
+create.** `release-skill.yml` triggers on a push to `main` touching
+`skills/verdict/` or `.claude-plugin/`, detects the version bump, and
+cuts its own `skill-vX.Y.Z` tag and release, exactly as
+`release-python.yml` does for a library. Hand-tagging is not a step, and
+assuming it is leads to writing down an exception that does not exist.
+Full procedure in
+[`docs/maintenance/releases/verdict-agent-skill.md`](../../docs/maintenance/releases/verdict-agent-skill.md).
+Marketplace and clone installs are current as soon as it lands on `main`;
+the tag the workflow creates exists for `get.sh`.
 
 ## What enforces it
 

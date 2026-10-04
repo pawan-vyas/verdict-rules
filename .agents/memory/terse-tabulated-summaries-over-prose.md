@@ -25,10 +25,13 @@ different kind of doc without checking it fits. The principle to
 carry forward is the density-without-loss test itself, not a fixed
 template.
 
-**Standing follow-up, not yet done**: formalize this into an actual
-authoring template in `docs/maintenance/doc-authoring/` once the
-queued documentation audit ([`doc-hygiene-audit-protocol`](doc-hygiene-audit-protocol.md))
-actually begins — that audit is expected to surface further
-verbosity-optimization patterns beyond tabulation alone, so the
-template should get written after seeing what the full sweep turns up,
-not locked in ahead of it.
+**Standing follow-up, now unblocked**: formalize this into an authoring
+template under `docs/maintenance/doc-authoring/`. It was deliberately
+held until the documentation audit
+([`doc-hygiene-audit-protocol`](doc-hygiene-audit-protocol.md)) had run,
+so the template could be written from what the sweep actually turned up
+rather than locked in ahead of it. That sweep has since covered
+`docs/extending/`, `docs/maintenance/`, the root files, and this
+directory, and the patterns it surfaced beyond tabulation are already
+recorded in the protocol's own verbosity pass. The template is the
+remaining step.

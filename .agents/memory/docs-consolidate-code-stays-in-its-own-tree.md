@@ -32,9 +32,8 @@ triggering CI at all, with no error, just silence.
   discovering it from inside that language's own conventional root
   (`pytest`'s rootdir, an npm workspace's `package.json`, a cargo
   workspace's `Cargo.toml`). It stays inside that language's own
-  top-level directory (`python/examples/graduation_verdict/` today),
-  reading the shared fixture via a relative path — exactly as it
-  already did before any of this session's restructuring.
+  top-level directory, at `<language>/examples/<name>/`, reading the
+  shared fixture via a relative path.
 
 ## The real-world precedent
 

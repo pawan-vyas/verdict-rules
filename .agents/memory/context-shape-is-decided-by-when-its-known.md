@@ -1,11 +1,10 @@
 <!-- Title: Context Shape Is Decided By When It's Known -->
 # Whether a sample's context should be typed or dict-shaped has one test
 
-> Extracted from the finished `post-generics-docs-and-skill-rebalance`
-> plan (PR #95, merged 2026-09-18) before deleting it — the plan itself
-> was transient per [`../plans/README.md`](../plans/README.md)'s own
-> rule, but this heuristic is a reusable design-review test worth
-> keeping for every future sample or extending scenario.
+> A reusable design-review test for every sample, extending scenario, or
+> eval fixture: one question that decides whether its context should be
+> typed or dict-shaped. Settled while rebalancing the generics docs and
+> the skill, 2026-09-18.
 
 ## The test
 
