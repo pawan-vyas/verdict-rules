@@ -42,6 +42,16 @@
   `` [`AGENTS.md`'s "What this repo is" section](AGENTS.md#what-this-repo-is) `` —
   the filename is followed by `'s "..." section]`, not `](`, so it
   looks bare when it is not.
+- **A link's label can name a file that does not exist while the link
+  itself is valid, and nothing anywhere reports it.** A link checker
+  resolves the target and passes; an anchor checker passes; a bare-mention
+  sweep skips it because it *is* a link. The root `README.md` carried four
+  of these at once — `` [`python/README.md`](python/packages/verdict-rules/README.md) ``
+  and the same for three more languages, where no `<language>/README.md`
+  file has ever existed. A reader sees a path, trusts it, and cannot find
+  it. The check is its own pass: for every link whose label is a
+  backtick-quoted path, resolve **the label** as well as the target, and
+  require them to agree.
 - **Double-backtick code spans defeat any regex-based link scanner.**
   `` `` [`extension.md`](../extension.md) `` `` — used deliberately to
   show a reader the *syntax* of a link as prose, not to create a real
@@ -57,10 +67,26 @@
 2. A real anchor checker: extract every heading from the *target* file
    and slugify it with GitHub's actual algorithm (strip punctuation,
    replace spaces with hyphens, **do not** collapse repeated hyphens).
-3. A dedicated bare-mention sweep, separate from both of the above,
+3. A label-versus-target pass: wherever a link's label is itself a
+   backtick-quoted path, resolve that path too and require it to match
+   what the link points at.
+
+   This repo's labels are deliberately **shortened**, so the check needs
+   that convention built in or it reports mostly noise. A label names the
+   meaningful suffix of the target and drops the `../` climb and the
+   `README.md` leaf — `` [`testing/`](../../testing/README.md) ``,
+   `` [`SKILL.md`](../../skills/verdict/SKILL.md) ``. A suffix match is
+   correct; the failure to flag is a label that is a *complete path claim*
+   and still wrong, which is either a path that never existed
+   (`python/README.md`) or a relative path with the wrong number of
+   levels. Python's own quickstart carried the second kind — `../../`
+   labels on four-level targets, stale from before the package moved
+   under `packages/` — while every other language's quickstart wrote the
+   full climb correctly.
+4. A dedicated bare-mention sweep, separate from all of the above,
    since a bare mention is invisible to link/anchor checking by
    definition.
-4. Manual judgment on every bare-mention hit — a filename naming a
+5. Manual judgment on every bare-mention hit — a filename naming a
    *pattern* ("each package's own `CHANGELOG.md`") or a file that does
    not exist yet is correctly left bare; only genuine references to one
    specific, currently-existing file or section get linked.

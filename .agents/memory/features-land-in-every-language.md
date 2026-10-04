@@ -41,8 +41,30 @@ for additions; this raises it deliberately.
 ## How it is enforced
 
 Not by memory. A behaviour change shows up as a change to
-`fixtures/graduation_verdict/`, and every language's suite fails until
-it matches. A language cannot drift silently, which is the property that
-makes the rule hold without anyone policing it.
+[`fixtures/`](../../fixtures/README.md), and every language's suite fails
+until it matches. A language cannot drift silently, which is the property
+that makes the rule hold without anyone policing it.
 
-Confirmed with the maintainer, 2026-09-12.
+## What the fixture cannot catch
+
+It catches **divergence**, never **agreement on the wrong answer**. A
+defect introduced in the reference implementation and faithfully ported
+three times leaves every suite green, because the fixture asserts what
+the four agree on and they agree.
+
+This is not hypothetical. `RunResult`'s failing-leaves view filtered the
+flattened leaves instead of forwarding to each result's own view, in all
+four SDKs, and three suites contained a test asserting the defect as
+intentional. Nothing failed. The fixture had no failing-leaves
+expectations at all, so the one mechanism that would have caught it was
+silent on the question — and mutation testing cannot help either, since a
+mutant is only killed by an assertion that already exists.
+
+**So: a new view or guarantee is not covered until the fixture asserts
+it.** When adding one, add the expectation to the fixture data in the
+same change, and pick the value by hand from the scenario rather than
+from what the implementation returns. A fixture populated from the code's
+own output asserts only that the code is self-consistent.
+
+Confirmed with the maintainer, 2026-09-12; the fixture-blindness section
+added after the failing-leaves defect.

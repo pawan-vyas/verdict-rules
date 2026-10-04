@@ -4,8 +4,9 @@
 > The five names you need, and one complete example using all of them.
 > See [`../README.md`](../README.md) for this package's own
 > pip-install/first-rule quickstart, the top-level
-> [`../../README.md`](../../../../README.md) for what Verdict is in narrative
-> form, and [`../../docs/architecture/`](../../../../docs/architecture/README.md)
+> [`../../../../README.md`](../../../../README.md) for what Verdict is in
+> narrative form, and
+> [`../../../../docs/architecture/`](../../../../docs/architecture/README.md)
 > for the full design reasoning — this doc is just "how do I start."
 
 ## Core concepts
@@ -233,11 +234,13 @@ for the scenario.
 
 ## Related docs
 
-- [`../../README.md`](../../../../README.md) — the narrative front door.
-- [`../../docs/architecture/`](../../../../docs/architecture/README.md) — the full
-  design reasoning.
-- [`../../docs/extending/`](../../../../docs/extending/README.md) — building on top
-  of this package from your own code.
-- [`../../docs/testing/`](../../../../docs/testing/README.md) — `uv sync && uv run
-  pytest`, and what a test here actually needs to prove.
+- [`../../../../README.md`](../../../../README.md) — the narrative front
+  door.
+- [`../../../../docs/architecture/`](../../../../docs/architecture/README.md)
+  — the full design reasoning.
+- [`../../../../docs/extending/`](../../../../docs/extending/README.md) —
+  building on top of this package from your own code.
+- [`../../../../docs/testing/`](../../../../docs/testing/README.md) —
+  `uv sync && uv run pytest`, and what a test here actually needs to
+  prove.
 - [`../../../../fixtures/README.md`](../../../../fixtures/README.md) — more worked examples.

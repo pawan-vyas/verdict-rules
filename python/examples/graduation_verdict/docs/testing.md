@@ -82,7 +82,7 @@ graph LR
 > project alongside `tests/` with no extra configuration) is the
 > concrete action — run it after any change to `src/verdict/`, not just
 > a change to this project. This is also cross-linked from verdict's
-> own [`maintenance.md`](../../../../docs/maintenance/before-merging-checklists.md#consumer-impact-checklist-for-a-shape-change)
+> own [`before-merging-checklists.md`](../../../../docs/maintenance/before-merging-checklists.md#consumer-impact-checklist-for-a-shape-change)
 > consumer-impact checklist as one of the things to re-run, alongside
 > any external consumer's own suite.
 
