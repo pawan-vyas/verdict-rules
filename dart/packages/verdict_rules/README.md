@@ -105,10 +105,11 @@ one everybody thinks of first.
   can have. Use `ruleNames` / `groupNames` to check membership, or
   `tryRunNamed` / `tryRunGroup` where your own domain has an answer for
   absence — both return null instead of throwing.
-- **`RuleResult.data` is opaque** — never written to by any shipped composite.
-  A composite's own children live in `RuleResult.subResults` instead — only
-  what actually ran, never padded, never flattened. `RuleResult.leaves` /
-  `RuleResult.failingLeaves` give the flattened view across any depth.
+- **`RuleResult.data` is opaque** — never read or written by this package.
+  `AndRule`/`OrRule`/`NotRule` carry their own children in
+  `RuleResult.subResults` instead — only what actually ran, never padded,
+  never flattened. `RuleResult.leaves` / `RuleResult.failingLeaves` give the
+  flattened view across any depth.
 - **Zero runtime dependencies.**
 
 ## Where to go next

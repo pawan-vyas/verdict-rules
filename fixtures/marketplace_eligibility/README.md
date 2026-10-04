@@ -5,10 +5,10 @@
 > design, and the inputs and expected outcomes every language port must
 > reproduce. Where [`graduation_verdict/`](../graduation_verdict/README.md)
 > proves the engine survives a port at all, this proves the **generic
-> context** design does — a typed `Rule<TContext>`, a dict-context
-> `Rule` in the same domain, a `ProjectingRule` adapter reusing one rule
-> across two differently-shaped contexts, and both `RulesEngine` forms,
-> in one place.
+> context** design does — two typed `Rule<TContext>` composites over
+> contexts that share no fields, a `ProjectingRule` adapter reusing one
+> rule across both of them, and a dict-context `RulesEngine` catalog
+> living in the same domain, in one place.
 
 **The question**: does this seller's listing, or this buyer's purchase,
 clear the marketplace's eligibility bar — and can a compliance rule set
@@ -78,27 +78,27 @@ graph TB
     Identity[["✅ is_verified_identity<br/>(IdentityFlag context)"]]
     ProjSeller{"🔀 ProjectingRule<br/>SellerListingContext → IdentityFlag"}
     ProjBuyer{"🔀 ProjectingRule<br/>BuyerPurchaseContext → IdentityFlag"}
-    SellerEngine[["⚙️ RulesEngine&lt;SellerListingContext&gt;"]]
-    BuyerEngine[["⚙️ RulesEngine&lt;BuyerPurchaseContext&gt;"]]
+    SellerCheck{"🔀 AndRule&lt;SellerListingContext&gt;<br/>listing_eligible"}
+    BuyerCheck{"🔀 AndRule&lt;BuyerPurchaseContext&gt;<br/>purchase_eligible"}
 
     %% Link 0: Identity -> ProjSeller
     Identity -->|"[1]<br/>wrapped, unchanged"| ProjSeller
     %% Link 1: Identity -> ProjBuyer
     Identity -->|"[2]<br/>wrapped, unchanged"| ProjBuyer
-    %% Link 2: ProjSeller -> SellerEngine
-    ProjSeller -->|"[3]<br/>alongside price/category checks"| SellerEngine
-    %% Link 3: ProjBuyer -> BuyerEngine
-    ProjBuyer -->|"[4]<br/>alongside balance/limit checks"| BuyerEngine
+    %% Link 2: ProjSeller -> SellerCheck
+    ProjSeller -->|"[3]<br/>alongside price/category checks"| SellerCheck
+    %% Link 3: ProjBuyer -> BuyerCheck
+    ProjBuyer -->|"[4]<br/>alongside balance/limit checks"| BuyerCheck
 
     style Identity fill:#51CF66,stroke:#37B24D,stroke-width:3px,color:#000
     style ProjSeller fill:#B47EFF,stroke:#9654E8,stroke-width:2px,color:#000
     style ProjBuyer fill:#B47EFF,stroke:#9654E8,stroke-width:2px,color:#000
-    style SellerEngine fill:#FFB84D,stroke:#E69500,stroke-width:2px,color:#000
-    style BuyerEngine fill:#FFB84D,stroke:#E69500,stroke-width:2px,color:#000
+    style SellerCheck fill:#B47EFF,stroke:#9654E8,stroke-width:3px,color:#000
+    style BuyerCheck fill:#B47EFF,stroke:#9654E8,stroke-width:3px,color:#000
 
     %% Link Index:
     %% 0-1: the same rule instance is wrapped twice, never rewritten
-    %% 2-3: each projection composes into its own side's typed engine
+    %% 2-3: each projection composes into its own side's typed composite
     linkStyle 0 stroke:#7EDB8F,stroke-width:2px
     linkStyle 1 stroke:#7EDB8F,stroke-width:2px
     linkStyle 2 stroke:#D0AFFF,stroke-width:2px
@@ -128,11 +128,11 @@ graph LR
     %% Link 0: Event -> Engine
     Event -->|"[1]"| Engine
     %% Link 1: Engine -> HighValue
-    Engine -->|"[2]<br/>runNamed"| HighValue
+    Engine -->|"[2]<br/>run_named"| HighValue
     %% Link 2: Engine -> Blocked
-    Engine -->|"[3]<br/>runNamed"| Blocked
+    Engine -->|"[3]<br/>run_named"| Blocked
     %% Link 3: Engine -> NewSeller
-    Engine -->|"[4]<br/>runNamed"| NewSeller
+    Engine -->|"[4]<br/>run_named"| NewSeller
 
     style Event fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
     style Engine fill:#FFB84D,stroke:#E69500,stroke-width:3px,color:#000
@@ -168,7 +168,7 @@ graph LR
 
 ## What each expectation proves
 
-### `sellers.json` — typed `Rule<SellerListingContext>`, engine mode 1
+### `sellers.json` — the typed `listing_eligible` composite over `SellerListingContext`
 
 | Field | Proves |
 | :-- | :-- |
@@ -184,7 +184,7 @@ price but a disallowed category** — the third, independent failure
 mode, so all three seller-side rules are each proven capable of being
 the one that fails.
 
-### `buyers.json` — typed `Rule<BuyerPurchaseContext>`, engine mode 2
+### `buyers.json` — the typed `purchase_eligible` composite over `BuyerPurchaseContext`
 
 | Field | Proves |
 | :-- | :-- |
@@ -193,21 +193,22 @@ the one that fails.
 
 **`buyer_frank` is unverified but otherwise perfect** — the identity
 check fails him, mirroring `seller_bob`. **`buyer_gita` is verified
-with an affordable purchase limit but an insufficient balance** —
-proves the balance check independently. **`buyer_hank` is verified
+with her purchase inside the limit but an insufficient balance to
+cover it** — proves the balance check independently. **`buyer_hank` is verified
 with plenty of balance but a purchase over the limit** — the third
 independent failure mode.
 
-### `compliance_events.json` — dict-context `Rule`, engine mode 3 (untyped)
+### `compliance_events.json` — the dict-context `RulesEngine` catalog
 
-A **heterogeneous catalog**, not a composite: three independent checks
-that read different, overlapping subsets of one event, run through a
-plain, untyped `RulesEngine` because no single typed context would fit
-all three naturally in a system where checks are added over time by a
+A **heterogeneous catalog**, not a composite: three independent checks,
+each reading a different field of the same event, run through a plain,
+untyped `RulesEngine` because no single typed context would fit all
+three naturally in a system where checks are added over time by a
 compliance team, not by a type author. Each event's `expected` block
-pins all three flags independently — every combination of "flag fires"
-and "flag doesn't fire" appears at least once across the four events,
-so a port can't accidentally wire one flag's condition to another's.
+pins all three flags independently, and each flag appears both fired
+and not fired across the four events — it fires in exactly the one
+event named for it and stays quiet in the other three — so a port
+can't accidentally wire one flag's condition to another's.
 
 | Flag | Proves |
 | :-- | :-- |
@@ -225,20 +226,31 @@ never changes; only the projection differs. This is the fixture's
 concrete instance of
 [`../../docs/extending/reusing-a-rule-across-contexts/README.md`](../../docs/extending/reusing-a-rule-across-contexts/README.md).
 
-## Thresholds (data, not code, in every language's own port)
+## Thresholds every port must agree on
 
-| Threshold | Value |
-| :-- | :-- |
-| `price_floor_cents` | 100 |
-| `allowed_categories` | `["books", "electronics", "home"]` |
-| `purchase_limit_cents` | 100000 |
-| `high_value_threshold_cents` | 50000 |
-| `blocked_countries` | `["ir", "nk"]` |
-| `new_seller_threshold_days` | 30 |
+| Threshold | Value | Read by |
+| :-- | :-- | :-- |
+| `price_floor_cents` | 100 | `price_floor_met` |
+| `allowed_categories` | `["books", "electronics", "home"]` | `category_allowed` |
+| `purchase_limit_cents` | 100000 | `purchase_limit_not_exceeded` |
+| `high_value_threshold_cents` | 50000 | `high_value_flag` |
+| `blocked_countries` | `["ir", "nk"]` | `blocked_country_flag` |
+| `new_seller_threshold_days` | 30 | `new_seller_flag` |
 
-These are pinned here, not hardcoded in any language's implementation —
-see the design above for where each
-language's own factory function reads them from.
+This README is where those values are pinned; unlike
+[`graduation_verdict`](../graduation_verdict/README.md)'s curriculum,
+there is no threshold JSON beside the fixture data, because nothing in
+this fixture varies them — every expectation in the three data files is
+observed against exactly this set. Each port therefore declares them as
+named constants beside its own rule builders, in that language's own
+casing, rather than inlining the literals at each comparison site:
+[`python/`](../../python/examples/marketplace_eligibility/README.md) and
+[`js/`](../../js/examples/marketplace_eligibility/README.md) use
+`PRICE_FLOOR_CENTS`,
+[`dart/`](../../dart/examples/marketplace_eligibility/README.md) uses
+`priceFloorCents`, and
+[`csharp/`](../../csharp/examples/MarketplaceEligibility/README.md) uses
+`PriceFloorCents`.
 
 ## What is deliberately *not* pinned
 
@@ -246,6 +258,12 @@ language's own factory function reads them from.
   worded naturally per language, the same convention
   [`graduation_verdict`](../graduation_verdict/README.md) already
   establishes.
+- **The result-inspection views.** Sub-results, decided-by, leaves and
+  failing leaves are pinned exhaustively by
+  [`graduation_verdict`](../graduation_verdict/README.md); every
+  `expected` block here is booleans only, because what this fixture
+  proves is which context a rule reads, not how a result explains
+  itself.
 - **Short-circuit counts.** Unlike `graduation_verdict`, this fixture's
   purpose is proving the generic-context design, not re-proving
   short-circuiting — that guarantee is already pinned exhaustively

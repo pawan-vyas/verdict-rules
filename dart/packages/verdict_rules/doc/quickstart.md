@@ -17,8 +17,13 @@
   custom rule shape says `implements Rule` explicitly — Dart has no
   free structural typing for a multi-member interface the way Python's
   `Protocol` does.
-- **`FunctionRule`** — wraps a plain function as a `Rule`. The common
-  case: most rules are "run this function against the context."
+- **`FunctionRule`** — wraps a plain async predicate as a `Rule`. The
+  common case: most rules are "run this function against the context."
+  The predicate reports a **`PredicateOutcome`** (`passed` positionally,
+  plus an optional `detail`/`data`) — never a `RuleResult` directly, and
+  never a `ruleName`: `FunctionRule` already owns the name it was
+  constructed with, so the predicate has no legitimate reason to restate
+  it.
 - **`AndRule`** / **`OrRule`** — composite rules that combine other
   rules, short-circuiting the same way a boolean `&&`/`||` expression
   would (`AndRule` stops at the first failure, `OrRule` stops at the
@@ -31,14 +36,20 @@
   `null` instead, for callers whose own domain has an answer for
   absence — see
   [`../../../../docs/extending/absence-vs-failure/`](../../../../docs/extending/absence-vs-failure/README.md).
-- **`RuleResult`** / **`RunResult`** — immutable outcome types.
-  `RuleResult.data` is a fully opaque slot for a caller's own domain
-  object to ride through evaluation — Verdict never reads or depends on
-  its shape. The rest of the surface answers three different questions:
+- **`RuleResult`** / **`RunResult`** — immutable outcome types, each
+  answering three different questions about a composite's decision:
   `subResults` (what actually ran, one level), `decidedBy` (which of
-  those explain *this* verdict, one level), and `leaves`/`failingLeaves`
-  (the terminal checks, fully recursive). Only `subResults` is stored;
-  the rest are getters. `toJson()` on both types feeds `jsonEncode`.
+  those children explain *this* verdict, one level), and
+  `leaves`/`failingLeaves` (the terminal checks, fully recursive).
+  A result stores only `subResults` plus `decidedByIndices`, the
+  *positions* within it of the deciding children — so building a result
+  by hand means passing positions, and an out-of-range one throws an
+  `ArgumentError` at construction. Every other view is a getter, derived
+  and computed on access, which is what keeps a result a tree and
+  serializable: `toJson()` on both types feeds `jsonEncode`, which looks
+  for that method by convention. `RuleResult.data` is a fully opaque slot
+  for a caller's own domain object to ride through evaluation — Verdict
+  never reads or depends on its shape.
 
 ## One complete example
 

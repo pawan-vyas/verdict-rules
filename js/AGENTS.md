@@ -5,8 +5,11 @@ Read that first.
 
 ## The guarantees, in JS/TS terms
 
-- **Sequential evaluation.** `AndRule`/`OrRule` use a plain `for…of` loop with
-  `await`. **Never `Promise.all`.** Short-circuiting only means something if
+- **Sequential evaluation.** `AndRule`/`OrRule` delegate to a shared
+  `ShortCircuitEvaluator`, itself wrapping `SequentialEvaluator`'s plain
+  `for…of` loop with `await`. **Never `Promise.all`.** A custom composite
+  composes the same evaluator rather than hand-rolling the loop.
+  Short-circuiting only means something if
   later work never *starts*, and the returned boolean is identical either way
   — so this is the one mistake here that passes its own tests.
 - **Vacuous truth.** `AndRule([])` passes, `OrRule([])` fails.
@@ -28,17 +31,23 @@ Read that first.
   carries whatever a predicate attached, unchanged. A composite's children
   live in `subResults`, which holds only what actually ran: never padded to
   the full sub-rule list, never flattened into the parent's level.
-  `decidedByIndices` stores the positions of the children explaining the
-  verdict; `decidedBy`, `leaves` and `failingLeaves` are getters derived
-  from those two.
+  `decidedByIndices` stores the *positions* of the children explaining the
+  verdict — positions, not the children themselves, so the stored graph stays
+  a tree and a result stays serializable. Everything else is a getter computed
+  on access: `decidedBy` indexes those positions into `subResults` and stops
+  after one level; `leaves` and `failingLeaves` recurse. `failingLeaves` is an
+  **independent recursion, never a filter over `leaves`** — a passing result
+  has none, even when a short-circuited branch failed on the way to that pass.
+  An out-of-range index is rejected by the constructor with a `RangeError`.
 
 ## Layout
 
 `js/` is a **workspace root, not a package** — its `package.json` is private,
-carries no `version`, and exists only to declare `workspaces: ["packages/*"]`
-and fan scripts out across them. Everything published lives in
-`packages/<name>/`, with its manifest, README, changelog, sources and tests
-together in that one directory.
+carries no `version`, and exists only to declare
+`workspaces: ["packages/*", "examples/*"]` and fan scripts out across them.
+Everything published lives in `packages/<name>/`, with its manifest, README,
+changelog, sources and tests together in that one directory; `examples/*` are
+workspaces too, each `private` so nothing there can be published by accident.
 
 A second distribution is therefore a new directory under `packages/`, matched
 by the existing glob — nothing at the root is edited to add one. npm keeps a
@@ -79,21 +88,24 @@ maps are off because `src/` is not published — esbuild's JS maps embed
 `sourcesContent` and are self-contained, which those would not be.
 
 `src/` not shipping matters for more than declaration maps: a Python skill
-eval was seen opening the installed package's own source to double-check a
-signature already fully documented in
+eval opens the installed package's own source to double-check a signature
+already fully documented in
 [`references/python/agent-notes.md`](../skills/verdict/references/python/agent-notes.md)
-— worth watching for whether an agent does the same here once this language
-has its own evals (full note on `csharp/AGENTS.md`). What such an agent would actually find is
-worth being precise about, since "the source ships too" is not quite true
-for this package: `files` in `package.json` excludes `src/` outright, so the
-original, per-file TypeScript with its own comments never reaches a
-consumer's `node_modules`. What *does* ship is `dist/index.js`/`index.cjs` —
-bundled by esbuild, not minified (nothing in this package is) — plus the
-full `.d.ts` declarations. An agent checking "the real source" here
-would find a bundled, single-file artifact rather than this repository's own
-tree, and the `.d.ts` file alone is arguably a more targeted way to confirm
-an exact signature than either. Sits between Python/Dart (full original
-source, freely readable) and C# (no local source at all) on that spectrum.
+— worth watching for in this language's own
+[`evals/`](../skills/verdict-workspace/evals/README.md) too (full
+reasoning under
+[`csharp/AGENTS.md`](../csharp/AGENTS.md#worth-watching-once-evals-exist-here-no-local-source-to-peek-at)).
+What such an agent finds here is worth being precise about, since "the
+source ships too" is not quite true for this package: `files` in
+`package.json` excludes `src/` outright, so the original, per-file
+TypeScript with its own comments never reaches a consumer's `node_modules`.
+What *does* ship is `dist/index.js`/`index.cjs` — bundled by esbuild, not
+minified (nothing in this package is) — plus the full `.d.ts` declarations.
+An agent checking "the real source" here finds a bundled, single-file
+artifact rather than this repository's own tree, and the `.d.ts` file alone
+is arguably a more targeted way to confirm an exact signature than either.
+Sits between Python/Dart (full original source, freely readable) and C# (no
+local source at all) on that spectrum.
 
 ## Errors are typed, not string-matched
 

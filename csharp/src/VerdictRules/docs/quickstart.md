@@ -31,16 +31,23 @@
   absence — see
   [`../../../../docs/extending/absence-vs-failure/`](../../../../docs/extending/absence-vs-failure/README.md).
 - **`RuleResult`** / **`RunResult`** — plain, immutable outcome types.
-  `RuleResult.Data` is a fully opaque slot for a caller's own domain
-  object to ride through evaluation — Verdict never reads or depends on
-  its shape. `RuleResult.SubResults` is the opposite: a composite's own
-  children, always exactly what it evaluated, never opaque — walk it
-  yourself, call `GetDecidedBy()` for just the children that explain this
-  verdict, or `GetLeaves()`/`GetFailingLeaves()` to flatten straight to
-  the leaf checks that actually decided the outcome. Those three are
-  methods rather than properties on purpose: a get-only collection
-  property would be picked up by `System.Text.Json` and every reflective
-  logger, which is what a result has to stay serializable through.
+  `RuleResult` answers three different questions about a composite's
+  decision: `SubResults` (what actually ran, one level), `GetDecidedBy()`
+  (which of those children explain *this* verdict, one level), and
+  `GetLeaves()`/`GetFailingLeaves()` (the terminal checks, fully
+  recursive) — `RunResult` carries that last pair too, flattened across
+  every rule a run evaluated. A result stores only `SubResults` plus
+  `DecidedByIndices`,
+  the *positions* within it of the deciding children — so building a
+  result by hand means passing positions, and an out-of-range one throws
+  `ArgumentOutOfRangeException` at construction. Every other view is
+  derived and computed on access, which is what keeps a result a tree and
+  serializable. Those three are methods rather than properties on
+  purpose: a get-only collection property would be picked up by
+  `System.Text.Json` and every reflective logger, which is what a result
+  has to stay serializable through. `RuleResult.Data` is a fully opaque
+  slot for a caller's own domain object to ride through evaluation —
+  Verdict never reads or depends on its shape.
 
 ## One complete example
 
@@ -169,8 +176,6 @@ compiling rather than failing at runtime on a missing key or a bad cast:
 ```csharp
 using VerdictRules;
 
-record OrderContext(decimal Total, bool IsMember);
-
 static Task<PredicateOutcome> OrderTotalMet(OrderContext ctx, CancellationToken cancellationToken = default) =>
     Task.FromResult(new PredicateOutcome(ctx.Total >= 50));
 
@@ -188,6 +193,10 @@ var result = await engine.RunNamedAsync("free_shipping", new OrderContext(Total:
 
 Console.WriteLine(result.Passed);                        // False
 Console.WriteLine(result.GetFailingLeaves()[0].RuleName); // is_member
+
+// A type declaration has to follow the top-level statements, not precede
+// them -- a record above the first statement is a compile error (CS8803).
+record OrderContext(decimal Total, bool IsMember);
 ```
 
 The generic form is the implementation and the non-generic one is a closed

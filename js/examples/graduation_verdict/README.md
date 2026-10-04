@@ -36,12 +36,12 @@ day.
 
 ## Read more
 
-- [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md) --
+- [`fixtures/graduation_verdict/` -- what the naive approach gets wrong](../../../fixtures/graduation_verdict/README.md#what-the-naive-approach-gets-wrong) --
   the naive way this policy is usually implemented, why it breaks down,
   and both diagrams behind the design actually used here.
-- [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md) --
-  how to add a subject, a student scenario, or a new subject type, and
-  the shared cross-language fixture contract.
+- [`fixtures/graduation_verdict/` -- extending the curriculum](../../../fixtures/graduation_verdict/README.md#extending-the-curriculum) --
+  how to add a subject, a student scenario, or a new subject type, on
+  top of the shared cross-language fixture contract.
 - [`docs/testing.md`](docs/testing.md) -- the five test suites and what
   each proves, including why this project's own tests also serve as an
   integration/e2e regression net for verdict-rules itself.

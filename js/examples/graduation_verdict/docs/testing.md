@@ -4,9 +4,9 @@
 > How this project is tested, and why its five test files each serve a
 > different purpose rather than being one bigger suite of the same
 > kind. See
-> [`../../../../fixtures/graduation_verdict/README.md`](../../../../fixtures/graduation_verdict/README.md)
+> [`fixtures/graduation_verdict/`](../../../../fixtures/graduation_verdict/README.md)
 > for why it's built the way it is, and
-> [`../../../../fixtures/graduation_verdict/README.md`](../../../../fixtures/graduation_verdict/README.md)
+> [its own extending section](../../../../fixtures/graduation_verdict/README.md#extending-the-curriculum)
 > for how to extend the curriculum.
 
 ## Five suites, five different jobs
@@ -20,9 +20,11 @@
 | `test/shrink.test.js` | Unit tests of a debugging tool | `shrink.js`'s own simplification algorithm -- converges to a local minimum, stops exactly when a candidate would stop reproducing, never overshoots. See [below](#failing-run-to-fixture-shrinking). |
 
 `npm test --workspace=@verdict-rules/example-graduation-verdict` runs
-all five (1738 tests in this project as of this writing). Also picked up
+all five (1765 tests -- 84 curated scenarios, 500 chaos cases, 1006
+structural cases, 170 fuzz cases, 5 shrinker unit tests). Also picked up
 by the workspace root's own `npm test`, alongside `verdict-rules`' own
-suite, no extra configuration needed.
+147-test core suite and the sibling `marketplace_eligibility` example's
+33, no extra configuration needed.
 
 ## Why this project is a regression net for verdict-rules itself, not just a sample
 
@@ -89,7 +91,8 @@ scenarios come out right. `test/chaos.test.js` checks a much wider
 space, using a different technique than fixture matching: **differential
 testing** against `oracle.js`, a second, deliberately dumb,
 verdict-rules-free re-implementation of the same decision (the "naive
-way" from the [the scenario spec](../../../../fixtures/graduation_verdict/README.md),
+way" from
+[the scenario spec](../../../../fixtures/graduation_verdict/README.md#what-the-naive-approach-gets-wrong),
 generalized to score *any* policy list). If the real engine and the
 oracle ever disagree on a generated case, one of them is wrong -- that
 disagreement is the signal, not a fixed expected value.
@@ -177,7 +180,7 @@ second generator) to check something the oracle can't: the *shape* of the
 result tree `graduates.evaluate(context)` produces.
 
 It rebuilds the same `Rule` tree `buildGraduationCheck` builds, using
-only exported, pure constructors (`ruleForSubject`, the newly-exported
+only exported, pure constructors (`ruleForSubject`,
 `vocationalChildRules`/`languageChildRules`, `AtLeastNRule`, and
 verdict-rules' own `AndRule`/`OrRule`/`FunctionRule`) rather than reaching
 into an `AndRule`/`OrRule`'s own private fields, which aren't
@@ -247,21 +250,21 @@ for), or it raises `TypeError` (`loadCurriculum` also accepts
 `SyntaxError`, for invalid JSON text). Never an unrelated crash, and
 never a silent, wrong-but-plausible policy list.
 
-Running this fuzzer against the reader as it stood before this suite was
-added found three genuine cases of the latter: a subject row that was a
-bare string or number silently produced a policy with every field
-`undefined` instead of raising; a row missing a required field
-(`subject_id`, `subject_type`, or `written_min_pct`) did the same.
-`curriculumFromObject` now validates exactly the shape it already
-depended on implicitly -- that `curriculum` and each row are plain
-objects, that `subjects` is an array, and that every field this module's
-own `subjectPolicy` has no default for is present -- raising a `TypeError`
-with a clear message instead of either an accidental, confusingly-worded
-`TypeError` from deep inside unguarded property access, or silence. It
-still does not check field *types* (a string where a number was
-expected, say) or validate that `subject_type` names a known type --
-this reader was never meant to be a general-purpose JSON schema
-validator, and fuzzing didn't find a crash anywhere in that territory.
+The silently-wrong outcome is the one fuzzing is here to catch, and it
+is what a reader that only indexes into whatever it is handed produces:
+a subject row that is a bare string or number yields a policy with every
+field `undefined` rather than an error, and so does a row missing
+`subject_id`, `subject_type`, or `written_min_pct`. So
+`curriculumFromObject` validates exactly the shape it depends on -- that
+`curriculum` and each row are plain objects, that `subjects` is an array,
+and that every field this module's own `subjectPolicy` has no default for
+is present -- raising a `TypeError` with a clear message instead of
+either an accidental, confusingly-worded `TypeError` from deep inside
+unguarded property access, or silence. It deliberately does not check
+field *types* (a string where a number was expected, say) or validate
+that `subject_type` names a known type: this reader is not a
+general-purpose JSON schema validator, and fuzzing finds no crash
+anywhere in that territory.
 
 ## Failing-run-to-fixture shrinking
 
@@ -285,29 +288,26 @@ this example's real engine is broken.
 
 ### Verifying the shrinker
 
-Because the engine is correct, there is no real failing case to shrink.
-The mechanism was instead verified once, by hand, against a deliberately
-injected bug, and then fully reverted:
+Because the engine is correct, there is no real failing case to shrink,
+so the mechanism is validated against a deliberately injected bug
+instead. The injection lives in a scratch script, never in a tracked
+file -- it wraps (never edits) `buildGraduationCheck`'s real
+`evaluate()` with one wrong context override, forcing
+`attendancePct`/`attendanceFloor` so the attendance check can never
+fail, regardless of the student's real attendance. Scanning the same 500
+`CHAOS_SEED`-derived cases `test/chaos.test.js` uses finds the first
+disagreement with `oracle.js` at case 147, a 7-subject curriculum, and
+`shrinkFailingCase` reduces it from 7 subjects down to 0: an empty
+curriculum with `attendancePct: 0`, `attendanceFloor: 1`, where the real
+engine correctly fails attendance and the bugged one doesn't.
+`writeShrunkFixture` then writes that case out, and the script
+re-checks it still reproduces the disagreement before reporting success.
 
-1. A throwaway script wrapped (never edited) `buildGraduationCheck`'s real
-   `evaluate()` with one deliberately wrong context override -- forcing
-   `attendancePct`/`attendanceFloor` so the attendance check could never
-   fail, regardless of the student's real attendance.
-2. It scanned the same 500 `CHAOS_SEED`-derived cases `test/chaos.test.js`
-   uses for the first one where this buggy evaluation disagreed with
-   `oracle.js` -- found at case 147, a 7-subject curriculum.
-3. `shrinkFailingCase` reduced that disagreement from 7 subjects down to
-   0, converging on the smallest case that still disagreed (an empty
-   curriculum with `attendancePct: 0`, `attendanceFloor: 1` -- the real
-   engine correctly fails attendance; the bugged one doesn't).
-4. `writeShrunkFixture` wrote the shrunk case to a fixture file; the
-   script confirmed the shrunk case still reproduced the disagreement
-   before reporting success.
-5. The throwaway script and the fixture it wrote were both deleted. The
-   bug never touched any shipped file -- it lived only in a local wrapper
-   function inside the now-deleted script -- so there was nothing to
-   revert in `graduation-verdict.js` itself, and the full suite was
-   confirmed green immediately afterward.
+That the shrinker converges on exactly the `attendancePct`/
+`attendanceFloor` pair the injected bug is blind to, with every other
+field simplified away, is the evidence that it finds the relevant
+difference rather than an arbitrary smaller case. Nothing from the
+injection runs as part of the shipped suite.
 
 ## Running the tests
 
@@ -318,11 +318,11 @@ npm test --workspace=@verdict-rules/example-graduation-verdict
 
 ## Related
 
-- [`../../../../fixtures/graduation_verdict/README.md`](../../../../fixtures/graduation_verdict/README.md) --
+- [`fixtures/graduation_verdict/`](../../../../fixtures/graduation_verdict/README.md) --
   the language-agnostic spec, why it's built the way it is.
-- [`../../../../fixtures/graduation_verdict/README.md`](../../../../fixtures/graduation_verdict/README.md) --
-  how to extend the curriculum, and the shared cross-language fixture
-  contract.
+- [`fixtures/graduation_verdict/` -- extending the curriculum](../../../../fixtures/graduation_verdict/README.md#extending-the-curriculum) --
+  how to add a subject, a student scenario, or a new subject type, on top
+  of the shared cross-language fixture contract.
 - [`../README.md`](../README.md) -- how to run the demo.
 - [`../../../../docs/maintenance/`](../../../../docs/maintenance/README.md) --
   verdict-rules' own maintenance guide, whose consumer-impact checklist

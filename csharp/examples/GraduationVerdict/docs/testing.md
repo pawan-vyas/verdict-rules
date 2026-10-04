@@ -4,9 +4,9 @@
 > How this project is tested, and why its four test files each serve a
 > different purpose rather than being one bigger suite of the same
 > kind. See
-> [`../../../../fixtures/graduation_verdict/README.md`](../../../../fixtures/graduation_verdict/README.md)
+> [`fixtures/graduation_verdict/`](../../../../fixtures/graduation_verdict/README.md)
 > for why it's built the way it is, and
-> [`../../../../fixtures/graduation_verdict/README.md`](../../../../fixtures/graduation_verdict/README.md)
+> [its own extending section](../../../../fixtures/graduation_verdict/README.md#extending-the-curriculum)
 > for how to extend the curriculum.
 
 ## Four suites, four different jobs
@@ -19,8 +19,8 @@
 | `Shrinker.cs` / `ShrinkerTests.cs` | Shrinking mechanism | `GraduationShrinker.Shrink` genuinely minimizes a failing (policies, context, electiveMinimum) case while re-checking the same failure still reproduces at each step, proven against a synthetic predicate so the test ships without needing a real bug to shrink. |
 
 `dotnet test examples/GraduationVerdict.Tests/GraduationVerdict.Tests.csproj`
-runs all four (1720 tests in this project as of this writing -- 57 curated
-scenarios, 1011 chaos-derived cases, 150 fuzz cases, 2 shrinker unit tests).
+runs all four (1744 tests in this project -- 81 curated scenarios, 1511
+chaos-derived cases, 150 fuzz cases, 2 shrinker unit tests).
 
 ## Why this project is a regression net for verdict-rules itself, not just a sample
 
@@ -84,8 +84,8 @@ graph LR
 scenarios come out right. `ChaosTests.cs` checks a much wider space,
 using a different technique than fixture matching: **differential
 testing** against `Oracle.cs`, a second, deliberately dumb,
-verdict-rules-free re-implementation of the same decision (the "naive
-way" from the [the scenario spec](../../../../fixtures/graduation_verdict/README.md),
+verdict-rules-free re-implementation of the same decision (the
+[naive way from the scenario spec](../../../../fixtures/graduation_verdict/README.md#what-the-naive-approach-gets-wrong),
 generalized to score *any* policy list). If the real engine and the
 oracle ever disagree on a generated case, one of them is wrong -- that
 disagreement is the signal, not a fixed expected value.
@@ -212,10 +212,9 @@ handful of whole-document shapes that aren't well-formed JSON at all
 a usable policy list or raise one of the reader's own already-documented
 error types (`JsonException`, `KeyNotFoundException`,
 `InvalidOperationException`, `FormatException`) -- never an unrelated
-crash or a silent, wrong-but-plausible policy list. This run found no
-genuine reader bug; the reader's existing exception behavior already
-covers every malformed shape the harness generates, so no change was
-needed to `GraduationCheck.CurriculumFromJson`.
+crash or a silent, wrong-but-plausible policy list. Fuzzing has found no
+genuine reader bug: the reader's own exception behavior already covers
+every malformed shape the harness generates.
 
 ## Failing-run-to-fixture shrinking
 
@@ -238,16 +237,15 @@ never under the shared cross-language `fixtures/` directory.
 `FailurePredicate` ("at least 2 subjects, and a positive cgpa") that has
 nothing to do with `GraduationCheck`'s real evaluation, so this ships as
 a permanent, ordinary unit test rather than a one-off demonstration.
-The mechanism was additionally verified by hand against a real
-disagreement: a scratch copy of `Oracle.cs`'s vocational-subject check
-with `&&` deliberately flipped to `||`, run across the same 500 chaos
-cases to find a genuine engine/buggy-oracle disagreement, shrunk from 7
-subjects down to 2, and written to a real fixture file -- confirming in
-the process that the shrinker correctly *refused* to zero a field
-(`written_min_pct`) whose simplification would have made the
-disagreement stop reproducing. That demonstration lived only in a
-throwaway test file for the duration of the check and was deleted
-afterward; nothing from it is part of the committed suite.
+The mechanism is additionally validated against a deliberately injected
+bug: a scratch copy of `Oracle.cs`'s vocational-subject check with `&&`
+flipped to `||`, run across the same 500 chaos cases to find a genuine
+engine/buggy-oracle disagreement, shrunk from 7 subjects down to 2, and
+written to a real fixture file. That run is also the evidence the
+shrinker correctly *refuses* to zero a field (`written_min_pct`) whose
+simplification would make the disagreement stop reproducing. The
+injection lives in a scratch file, never in this repo's tracked files,
+so nothing from it runs as part of the shipped suite.
 
 ## Running the tests
 
@@ -258,11 +256,11 @@ dotnet test examples/GraduationVerdict.Tests/GraduationVerdict.Tests.csproj
 
 ## Related
 
-- [`../../../../fixtures/graduation_verdict/README.md`](../../../../fixtures/graduation_verdict/README.md) --
-  the language-agnostic spec, why it's built the way it is.
-- [`../../../../fixtures/graduation_verdict/README.md`](../../../../fixtures/graduation_verdict/README.md) --
-  how to extend the curriculum, and the shared cross-language fixture
-  contract.
+- [`fixtures/graduation_verdict/`](../../../../fixtures/graduation_verdict/README.md) --
+  the language-agnostic spec, why it's built the way it is, and the
+  shared cross-language fixture contract.
+- [`fixtures/graduation_verdict/` -- extending the curriculum](../../../../fixtures/graduation_verdict/README.md#extending-the-curriculum) --
+  how to add a subject, a student scenario, or a new subject type.
 - [`../README.md`](../README.md) -- how to run the demo.
 - [`../../../../docs/maintenance/`](../../../../docs/maintenance/README.md) --
   verdict-rules' own maintenance guide, whose consumer-impact checklist

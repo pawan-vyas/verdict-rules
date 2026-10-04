@@ -83,11 +83,13 @@ declaring a type.
 
 ## Debugging
 
-`RuleResult` and `RunResult` carry `[DebuggerDisplay]`, and `RunResult` a
-debugger type proxy that expands straight to the per-rule results. A failing
-composite's `SubResults` is a nested list of its own sub-results, and stepping
-through one is the normal way anyone diagnoses it — so the shape is legible in
-a watch window without expanding every level by hand.
+Every public type carries `[DebuggerDisplay]` and an agreeing `ToString()`.
+`RunResult`, the composites (`AndRule`/`OrRule`/`NotRule`) and `RulesEngine`
+also carry a debugger type proxy that expands straight to the per-rule results
+or sub-rules. A failing composite's `SubResults` is a nested list of its own
+sub-results, and stepping through one is the normal way anyone diagnoses it —
+so the shape is legible in a watch window without expanding every level by
+hand.
 
 SourceLink is enabled and symbols ship as a `.snupkg`, so stepping into the
 package lands on real source rather than a decompiler.
@@ -133,7 +135,7 @@ one everybody thinks of first.
   back unchanged.
 - **`RuleResult.SubResults` is exactly what actually ran** — a composite's own
   children, never padded, never flattened. `GetLeaves()`/
-  `GetFailingLeaves()` walk it recursively for you -- methods rather than
+  `GetFailingLeaves()` walk it recursively for you — methods rather than
   properties, so a reflection-based serializer or structured logger never
   traverses them.
 - **Zero runtime dependencies.**

@@ -4,9 +4,9 @@
 > How this project is tested, and why its four test files each serve a
 > different purpose rather than being one bigger suite of the same
 > kind. See
-> [`../../../../fixtures/graduation_verdict/README.md`](../../../../fixtures/graduation_verdict/README.md)
+> [`fixtures/graduation_verdict/` -- the scenario and its shared contract](../../../../fixtures/graduation_verdict/README.md)
 > for why it's built the way it is, and
-> [`../../../../fixtures/graduation_verdict/README.md`](../../../../fixtures/graduation_verdict/README.md)
+> [`fixtures/graduation_verdict/` -- extending the curriculum](../../../../fixtures/graduation_verdict/README.md#extending-the-curriculum)
 > for how to extend the curriculum.
 
 ## Four suites, four different jobs
@@ -15,12 +15,12 @@
 | --- | --- | --- |
 | `test/graduation_verdict_test.dart` | Curated scenarios | Each subject type builds the right `Rule` shape; `runNamed`/`runGroup`/`runAll` each behave as documented; all 8 hand-picked, hand-verified students get exactly the verdict their own `expected` block says. |
 | `test/chaos_test.dart` | Differential/property-based | The real engine agrees with an independent oracle across 500 deterministically-generated, schema-valid random curricula and students -- a much wider space than anyone would hand-curate. |
-| `test/structural_invariants_test.dart` | Property-based, tree-shaped | The *shape* of every generated case's result tree, not just its final boolean -- short-circuit position, vacuous truth, `AtLeastNRule`'s no-short-circuit contrast, a `runAll` count, and purity across two independent evaluations. See [Structural invariants on the result tree](#structural-invariants-on-the-result-tree) below. |
+| `test/structural_invariants_test.dart` | Property-based, tree-shaped | The *shape* of every generated case's result tree, not just its final boolean -- short-circuit position, vacuous truth, `AtLeastNRule`'s own stop-as-soon-as-decided contrast, a `runAll` count, and purity across two independent evaluations. See [Structural invariants on the result tree](#structural-invariants-on-the-result-tree) below. |
 | `test/policy_fuzz_test.dart` | Fuzz | `curriculumFromJson`/`loadCurriculum` either parse successfully or raise the one documented error type for malformed input, never an unrelated crash. See [Fuzzing the curriculum reader](#fuzzing-the-curriculum-reader) below. |
 
-`dart test` runs all four (1247 tests in this project as of this writing
--- 57 curated scenarios, 500 chaos cases, 500 structural-invariant cases
-plus 10 purity cases, and 180 fuzz cases).
+`dart test` runs all four (1271 tests -- 81 curated scenarios, 500 chaos
+cases, 500 structural-invariant cases plus 10 purity cases, and 180 fuzz
+cases).
 
 ## Why this project is a regression net for verdict_rules itself, not just a sample
 
@@ -86,7 +86,8 @@ scenarios come out right. `test/chaos_test.dart` checks a much wider
 space, using a different technique than fixture matching: **differential
 testing** against `lib/src/oracle.dart`, a second, deliberately dumb,
 verdict_rules-free re-implementation of the same decision (the "naive
-way" from the [the scenario spec](../../../../fixtures/graduation_verdict/README.md),
+way" from
+[the scenario spec](../../../../fixtures/graduation_verdict/README.md#what-the-naive-approach-gets-wrong),
 generalized to score *any* policy list). If the real engine and the
 oracle ever disagree on a generated case, one of them is wrong -- that
 disagreement is the signal, not a fixed expected value.
@@ -191,12 +192,16 @@ nested inside the first two, asserts:
   sub-result failed except the last, which passed; a failed result has
   every sub-result failed, proving a full failure really did evaluate
   every one of them (`OrRule` only short-circuits on a pass).
-- **`AtLeastNRule`**: the contrast case -- its own `result.data` always
-  has exactly as many entries as it has sub-rules, regardless of
-  pass/fail, since [`AtLeastNRule`](../lib/src/at_least_n_rule.dart)
-  deliberately never short-circuits.
-- **`FunctionRule`**: a leaf -- its `result.data` is never a list of
-  `RuleResult`, and recursion stops there.
+- **`AtLeastNRule`**: the contrast case --
+  [`AtLeastNRule`](../lib/src/at_least_n_rule.dart) composes
+  `SequentialEvaluator` directly and stops the moment its own minimum is
+  mathematically decided either way (enough sub-rules have passed to
+  guarantee it, or too many have failed for it to still be reachable),
+  so `result.subResults` holds exactly the sub-rules evaluated before
+  that point -- never one fewer, which would not have been decidable
+  yet, and never one more.
+- **`FunctionRule`**: a leaf -- `result.subResults` is always empty, and
+  recursion stops there.
 
 Since `AndRule`/`OrRule` never expose their own sub-rules publicly (by
 design -- see [`Rule`](../../../packages/verdict_rules/lib/src/rule.dart)),
@@ -213,9 +218,9 @@ shape:
 - **Purity**: building `buildGraduationCheck(policies, electiveMinimum)`
   twice and evaluating both against the same `context` produces two
   result trees identical in every field -- `ruleName`, `passed`,
-  `detail`, and the full nested `data` -- recursively, not just an equal
-  top-level `passed`. This reuses a handful of the same 500 generated
-  cases rather than a new sample.
+  `detail`, `data`, and the full nested `subResults` -- recursively, not
+  just an equal top-level `passed`. This reuses a handful of the same 500
+  generated cases rather than a new sample.
 
 ## Fuzzing the curriculum reader
 
@@ -236,9 +241,9 @@ parse into a valid policy list, or the one error type these readers
 already document for malformed input -- a `TypeError` from a failed
 `as` cast, or a `FormatException` from `jsonDecode` on invalid JSON
 text. An unrelated crash (a raw `NoSuchMethodError`, a `RangeError`, a
-silently wrong policy list) would fail the suite. As of this writing,
-fuzzing found no such case -- `curriculumFromJson`/`loadCurriculum`
-needed no changes.
+silently wrong policy list) fails the suite. Fuzzing finds no such case
+anywhere in that space, so `curriculumFromJson`/`loadCurriculum` stay as
+deliberately thin as the "naive way" framing intends.
 
 ## Failing-run-to-fixture shrinking
 
@@ -255,20 +260,18 @@ stopping at a fixed point where no further simplification keeps it
 failing. `writeShrunkFixture` then serializes the minimal case to a
 standalone JSON file under this project's own `test/testdata/`, in the
 same `{curriculum, student}` shape
-[`fixtures/graduation_verdict/edge_cases.json`](../../../../fixtures/graduation_verdict/README.md)
+[`fixtures/graduation_verdict/edge_cases.json`](../../../../fixtures/graduation_verdict/edge_cases.json)
 uses -- a per-language debugging aid, never the shared cross-language
 fixtures directory.
 
 Because the engine agrees with the oracle on every generated case, there
-is no real failure to show this shrinking from -- so it was verified by
-injecting a deliberate bug into a scratch copy of the oracle check
-inside a throwaway test file (an oracle that always claimed "passed"
-for an empty policy list), confirming the shrinker found the
-disagreement, shrank it down to the minimal zero-subject reproduction,
-and wrote a fixture recording it, then deleting both the throwaway test
-file and the fixture it wrote and confirming the real suite was back to
-green. Nothing from that demonstration is part of this repository --
-only `shrink.dart` itself ships.
+is no real failure to shrink, so the mechanism is validated against a
+deliberately injected bug instead: a scratch copy of the oracle check
+that always claims "passed" for an empty policy list. The shrinker finds
+the resulting disagreement, reduces it to the minimal zero-subject
+reproduction, and writes a fixture recording it. That injection lives
+only in a throwaway script -- nothing from it is tracked here, and only
+`shrink.dart` itself ships.
 
 ## Running the tests
 
@@ -279,11 +282,11 @@ dart test
 
 ## Related
 
-- [`../../../../fixtures/graduation_verdict/README.md`](../../../../fixtures/graduation_verdict/README.md) --
+- [`fixtures/graduation_verdict/` -- the scenario and its shared contract](../../../../fixtures/graduation_verdict/README.md) --
   the language-agnostic spec, why it's built the way it is.
-- [`../../../../fixtures/graduation_verdict/README.md`](../../../../fixtures/graduation_verdict/README.md) --
-  how to extend the curriculum, and the shared cross-language fixture
-  contract.
+- [`fixtures/graduation_verdict/` -- extending the curriculum](../../../../fixtures/graduation_verdict/README.md#extending-the-curriculum) --
+  how to extend the curriculum, on top of the shared cross-language
+  fixture contract.
 - [`../README.md`](../README.md) -- how to run the demo.
 - [`../../../../docs/maintenance/`](../../../../docs/maintenance/README.md) --
   verdict_rules' own maintenance guide, whose consumer-impact checklist

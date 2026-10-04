@@ -33,10 +33,14 @@
   `sub_results` (what actually ran, one level), `decided_by` (which of
   those children explain *this* verdict, one level), and
   `leaves`/`failing_leaves` (the terminal checks, fully recursive).
-  Only `sub_results` is stored; the rest are computed on access, which
-  is what keeps a result serializable. `RuleResult.data` is a fully
-  opaque slot for a caller's own domain object to ride through
-  evaluation — Verdict never reads or depends on its shape.
+  A result stores only `sub_results` plus `decided_by_indices`, the
+  *positions* within it of the deciding children — so building a result
+  by hand means passing positions, and an out-of-range one raises
+  `IndexError` at construction. Every other view is derived and computed
+  on access, which is what keeps a result a tree and serializable.
+  `RuleResult.data` is a fully opaque slot for a caller's own domain
+  object to ride through evaluation — Verdict never reads or depends on
+  its shape.
 
 ## One complete example
 

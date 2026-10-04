@@ -36,15 +36,18 @@
   [`../../../../docs/extending/absence-vs-failure/`](../../../../docs/extending/absence-vs-failure/README.md).
 - **`RuleResult`** / **`RunResult`** — frozen classes with public
   constructors, so a custom rule builds one rather than returning an
-  object literal. `RuleResult.data` is a fully opaque slot for a caller's own
-  domain object to ride through evaluation — Verdict never reads or
-  depends on its shape. A composite's own children live in
-  `RuleResult.subResults` instead, in evaluation order; `decidedBy` names
-  which of those explain *this* verdict, one level; `leaves`/
-  `failingLeaves` flatten the whole tree down to the leaf checks that
-  actually decided the outcome. Only `subResults` is stored -- the rest
-  are getters computed on access, which is what keeps a result
-  `JSON.stringify`-able.
+  object literal. Each answers three different questions about a
+  composite's decision: `subResults` (what actually ran, one level),
+  `decidedBy` (which of those children explain *this* verdict, one
+  level), and `leaves`/`failingLeaves` (the terminal checks, fully
+  recursive). A result stores only `subResults` plus `decidedByIndices`,
+  the *positions* within it of the deciding children — so building a
+  result by hand means passing positions, and an out-of-range one throws
+  a `RangeError` at construction. Every other view is a getter, derived
+  and computed on access, which is what keeps a result a tree and
+  `JSON.stringify`-able. `RuleResult.data` is a fully opaque slot for a
+  caller's own domain object to ride through evaluation — Verdict never
+  reads or depends on its shape.
 
 ## One complete example
 

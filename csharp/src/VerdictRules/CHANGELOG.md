@@ -42,14 +42,15 @@ Tagged `csharp-vX.Y.Z`.
   above are: a get-only collection property returning the children is
   serialized, which reintroduces exactly the duplication the stored form
   exists to prevent.
-- **`RuleResult.DecidedByIndices`** — the stored field, the positions of
-  the deciding children within `SubResults` rather than the children
-  themselves. Holding the same results under two properties makes the
-  stored graph a DAG, and `System.Text.Json` expands a shared node once
-  per path: forty levels of nesting threw `OutOfMemoryException`, and
-  sixteen measured 13 MB. An index naming a child the result does not
-  have throws `ArgumentOutOfRangeException` at construction, which the
-  objects form admitted no check for.
+- **`RuleResult.DecidedByIndices`** — the stored property a constructor
+  call passes: the positions of the deciding children within
+  `SubResults`, not the children themselves. Holding the same results
+  under two properties makes the stored graph a DAG, and
+  `System.Text.Json` expands a shared node once per path — serialized
+  size doubling per nesting level, measured at 13 MB for sixteen levels
+  and an `OutOfMemoryException` at forty. An index naming a child the
+  result does not have throws `ArgumentOutOfRangeException` at
+  construction.
 - **A result serializes.** `JsonSerializer.Serialize(result)` emits the
   stored properties only, the three derived views being methods. `Data`
   remains opaque, so encoding whatever a caller put in it is the
@@ -59,10 +60,14 @@ Tagged `csharp-vX.Y.Z`.
   sync-over-async caller on a platform with one would otherwise hit.
   Now covered by its own tests rather than only by convention.
 - **`NotRule` / `NotRule<TContext>`** — passes exactly when the one
-  wrapped rule fails.
+  wrapped rule fails. No vacuous case, since it wraps exactly one rule.
 - **`SequentialEvaluator<TContext>` / `ShortCircuitEvaluator<TContext>`**
   — the sequencing `AndRule`/`OrRule` compose, now public so a custom
   composite composes the same primitive rather than hand-rolling a loop.
+  `SequentialEvaluator<TContext>` takes a `StepDecider` returning
+  `true`/`false` to stop or `null` to continue;
+  `ShortCircuitEvaluator<TContext>` is the narrower case where one
+  sub-result value ends evaluation.
 - `FunctionRule`, `AndRule`, `OrRule`, and `RulesEngine` (both arities)
   carry `[DebuggerDisplay]` and `ToString()`, matching
   `RuleResult`/`RunResult`; the composites and the engine also carry

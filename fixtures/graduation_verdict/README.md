@@ -120,9 +120,12 @@ graph TB
 > **Reading the Diagram**: three genuinely different rule shapes come
 > out of one factory function reading one uniform row shape — nothing
 > about the AND/OR/plain-predicate shapes needs to know *why* a
-> particular subject picked its shape, and adding a fourth subject
-> *type* later (say, a portfolio-reviewed elective) means one more
-> branch in that one function, not a new concept anywhere else.
+> particular subject picked its shape. The factory selects a builder by
+> looking the `subject_type` value up in a table of one builder per
+> type, so adding a fourth subject *type* later (say, a
+> portfolio-reviewed elective) means one more builder and one more row
+> in that table — never a new branch inside the factory, and not a new
+> concept anywhere else.
 
 The built rules then serve **two separate purposes from the same
 objects** — a diagnostic engine for lookups and reports, and a fast
@@ -218,7 +221,7 @@ actually ran**, which makes that failure visible.
 | :-- | :-- |
 | `policies.json` | The curriculum: subjects, their thresholds, which are electives, and how many electives are required |
 | `students.json` | Eight students, their scores, and the expected outcome for each |
-| `edge_cases.json` | Degenerate curricula proving vacuous-truth polarity |
+| `edge_cases.json` | Degenerate curricula proving vacuous-truth polarity, plus the strict-and-lenient lookup expectations proving emptiness is not absence |
 
 ## What each expectation proves
 
@@ -245,7 +248,9 @@ would report 4 for both and still "pass" a boolean-only fixture.
 
 **`run_all` is always 7.** Every student, regardless of outcome, while
 the composite evaluates between 1 and 4. That constant against that
-variation *is* the documented difference between the two run modes.
+variation *is* the documented difference between an engine run, which
+reports every registered rule, and a composite, which stops as soon as
+its verdict is decided.
 
 **`harish` graduates but his elective group fails.** Not a
 contradiction: `run_group("elective")` reports whether *all* electives
@@ -266,8 +271,11 @@ build the same composite structure:
 - `all_core_subjects_pass` — an all-must-pass composite over core subjects
 - `elective_requirement` — an at-least-N composite over electives
 - `cgpa_met`, `attendance_met` — single predicate rules
-- Per-subject rules named by `subject_id`, with compound subjects
-  nesting a `<subject_id>:practical` sub-rule
+- Per-subject rules named by `subject_id`. An academic subject is a
+  single leaf under that name; a compound subject is a composite under
+  that name whose children are leaves named `<subject_id>:written` plus
+  `<subject_id>:practical` (vocational) or `<subject_id>:exemption`
+  (a language subject with an exemption path)
 
 That structure is the thing being proven portable, so pinning it is
 deliberate.
@@ -276,10 +284,17 @@ deliberate.
 
 `edge_cases.json` pins both halves of a deliberate asymmetry:
 
-- **Empty composites fold to their identity.** `AndRule([])` passes,
-  `OrRule([])` fails. A port that raises here breaks the
-  build-rules-from-configuration pattern, where "no rules configured"
-  legitimately means "nothing to enforce".
+- **An empty rule list is valid input, and its verdict is the
+  composite's own identity.** Both edge cases run the same empty
+  curriculum and differ only in `elective_minimum`, which is what makes
+  the polarity visible: at `0` (`vacuous_pass`) the empty core AND and
+  the empty at-least-N both pass, so the student graduates; at `2`
+  (`unsatisfiable_threshold`) the same empty elective set can never
+  reach the minimum, so `elective_requirement` fails and the composite
+  short-circuits after two rules. The same asymmetry is why an empty
+  `AndRule` passes and an empty `OrRule` fails. A port that raises on an
+  empty list instead breaks the build-rules-from-configuration pattern,
+  where "no rules configured" legitimately means "nothing to enforce".
 - **Unknown lookups signal absence — two ways, both required.** With no
   subjects there is no `core` group, so `run_group("core")` must raise
   rather than report zero results and a vacuous pass. `try_run_group`
@@ -289,8 +304,8 @@ deliberate.
 
   ```json
   "lookups": {
-    "unknown_group": { "run_group_raises": true, "try_run_group_returns_null": true },
-    "unknown_rule":  { "run_named_raises": true, "try_run_named_returns_null": true }
+    "unknown_group": { "name": "core", "run_group_raises": true, "try_run_group_returns_null": true },
+    "unknown_rule": { "name": "MATH101", "run_named_raises": true, "try_run_named_returns_null": true }
   }
   ```
 
@@ -326,9 +341,13 @@ an existing type — is the one change that isn't data-only: it needs a
 new builder plus a new entry in whatever each language's own port calls
 its subject-type-to-builder table, since a new *kind* of pass condition
 is a new concept, not new data — additive, though: nothing existing
-moves, and the factory function's own dispatch code never changes. See
-this document
-for where each language's own factory function and dispatch table live.
+moves, and the factory function's own dispatch code never changes. Each
+language's own factory function and its subject-type-to-builder table
+live in that language's port of this scenario:
+[`python/`](../../python/examples/graduation_verdict/README.md),
+[`js/`](../../js/examples/graduation_verdict/README.md),
+[`dart/`](../../dart/examples/graduation_verdict/README.md),
+[`csharp/`](../../csharp/examples/GraduationVerdict/README.md).
 
 ## Regenerating
 

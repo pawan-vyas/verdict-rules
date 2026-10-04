@@ -38,12 +38,12 @@ invocation is required day to day.
 
 ## Read more
 
-- [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md) —
+- [`fixtures/graduation_verdict/` — what the naive approach gets wrong](../../../fixtures/graduation_verdict/README.md#what-the-naive-approach-gets-wrong) —
   the naive way this policy is usually implemented, why it breaks down,
   and both diagrams behind the design actually used here.
-- [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md) —
-  how to add a subject, a student scenario, or a new subject type, and
-  the shared cross-language fixture contract.
+- [`fixtures/graduation_verdict/` — extending the curriculum](../../../fixtures/graduation_verdict/README.md#extending-the-curriculum) —
+  how to add a subject, a student scenario, or a new subject type, on
+  top of the shared cross-language fixture contract.
 - [`docs/testing.md`](docs/testing.md) — the four test suites and what
   each proves, including why this project's own tests also serve as an
   integration/e2e regression net for `verdict` itself.
@@ -56,7 +56,7 @@ invocation is required day to day.
 | [`../../../fixtures/graduation_verdict/students.json`](../../../fixtures/graduation_verdict/students.json) | 8 varied students, each carrying its own expected outcome — including how many rules should run, which proves short-circuiting. **Shared.** |
 | [`../../../fixtures/graduation_verdict/edge_cases.json`](../../../fixtures/graduation_verdict/edge_cases.json) | Degenerate curricula proving vacuous-truth polarity. **Shared.** |
 | `graduation_verdict.py` | The real implementation, plus a runnable `__main__` demo. |
-| `test_graduation_verdict.py` | The curated-scenario suite — loads both JSON files, asserts generically. |
+| `test_graduation_verdict.py` | The curated-scenario suite — loads all three JSON files, asserts generically. |
 | `oracle.py` | A second, `verdict`-free implementation, used as ground truth by the chaos suite. |
 | `chaos_data.py` | A deterministic generator for randomized, schema-valid curricula and students. |
 | `test_chaos.py` | 500 generated cases, checked against `oracle.py` — see [`docs/testing.md`](docs/testing.md#the-chaos-suite-differential-testing-against-an-independent-oracle). |

@@ -32,11 +32,11 @@ invocation is required day to day.
 
 ## Read more
 
-- [`../../../fixtures/marketplace_eligibility/README.md`](../../../fixtures/marketplace_eligibility/README.md) —
+- [`fixtures/marketplace_eligibility/` — what the naive approach gets wrong](../../../fixtures/marketplace_eligibility/README.md#what-the-naive-approach-gets-wrong) —
   the naive way this problem is usually approached, why it breaks down,
   and both diagrams behind the design actually used here.
-- [`../../../fixtures/marketplace_eligibility/README.md`](../../../fixtures/marketplace_eligibility/README.md) —
-  the shared cross-language fixture contract.
+- [`fixtures/marketplace_eligibility/` — what each expectation proves](../../../fixtures/marketplace_eligibility/README.md#what-each-expectation-proves) —
+  the shared cross-language fixture contract, file by file.
 - [`../../../docs/extending/reusing-a-rule-across-contexts/README.md`](../../../docs/extending/reusing-a-rule-across-contexts/README.md) —
   the standalone `ProjectingRule` pattern this project's identity check
   is a full-scale instance of.

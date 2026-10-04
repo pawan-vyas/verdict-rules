@@ -31,17 +31,17 @@ dart test
 
 This is its own standalone package (its own `pubspec.yaml`, depending
 on `verdict_rules` via a `path:` dependency) rather than a member of a
-pub workspace -- see `dart/AGENTS.md` for why there is deliberately no
-root `pubspec.yaml` yet.
+pub workspace -- see [`dart/AGENTS.md` -- Layout](../../AGENTS.md#layout)
+for why there is deliberately no root `pubspec.yaml` yet.
 
 ## Read more
 
-- [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md) --
+- [`fixtures/graduation_verdict/` -- what the naive approach gets wrong](../../../fixtures/graduation_verdict/README.md#what-the-naive-approach-gets-wrong) --
   the naive way this policy is usually implemented, why it breaks down,
   and both diagrams behind the design actually used here.
-- [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md) --
-  how to add a subject, a student scenario, or a new subject type, and
-  the shared cross-language fixture contract.
+- [`fixtures/graduation_verdict/` -- extending the curriculum](../../../fixtures/graduation_verdict/README.md#extending-the-curriculum) --
+  how to add a subject, a student scenario, or a new subject type, on
+  top of the shared cross-language fixture contract.
 - [`docs/testing.md`](docs/testing.md) -- the four test suites and what
   each proves, including why this project's own tests also serve as an
   integration/e2e regression net for verdict_rules itself.

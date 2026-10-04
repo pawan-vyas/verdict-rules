@@ -49,7 +49,7 @@ python/
   AGENTS.md                 this file
   examples/                 worked examples, may use any package
   packages/verdict-rules/   the distribution: manifest, README, CHANGELOG,
-                            docs/, src/verdict/, tests/
+                            docs/, src/verdict/, tests/, api-snapshot.json
 ```
 
 Three things the workspace changes, all easy to get wrong:

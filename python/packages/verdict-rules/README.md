@@ -10,7 +10,7 @@ pip install verdict-rules
 ```
 
 ```python
-from verdict import Rule, FunctionRule, AndRule, OrRule, NotRule, RulesEngine
+from verdict import Rule, FunctionRule, AndRule, OrRule, NotRule, RuleResult, RulesEngine
 ```
 
 ## A first rule
@@ -103,4 +103,4 @@ async function.
 | [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.4.0/docs/maintenance/README.md) | Changing this package itself |
 | [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.4.0/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
 | [`fixtures/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.4.0/fixtures/README.md) | The two worked scenarios — each one's problem, design, and the cross-language data contract every port reproduces |
-| [`examples/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.4.0/python/examples/README.md) | Full, tested mini-projects behind the more comprehensive samples — real code, real tests, real docs |
+| [`examples/`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.4.0/python/examples/README.md) | Full, tested mini-projects behind the fixtures — real code, real tests, real docs |

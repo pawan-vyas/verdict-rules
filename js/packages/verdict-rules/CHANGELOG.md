@@ -5,6 +5,8 @@ Release history for the `verdict-rules` JS/TS package. Format follows
 [semantic versioning](https://semver.org/), scoped to this package — it
 releases independently of the other language SDKs and of the AI-agent skill.
 
+Tagged `js-vX.Y.Z`.
+
 ## [0.4.0] - 2026-10-03
 
 - `FunctionRule`, `AndRule`, `OrRule`, and `RulesEngine` now define
