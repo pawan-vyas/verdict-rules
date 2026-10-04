@@ -1,11 +1,11 @@
 ---
 kind: session-handoff
 handoff_schema: 1
-updated_utc: 2026-10-04T04:52:24Z
-updated_local: 2026-10-04T10:22:24+05:30
+updated_utc: 2026-10-04T04:57:24Z
+updated_local: 2026-10-04T10:27:24+05:30
 branch: diagnostics/debugger-display-all-languages
-state_at_commit: fdceb598737584486ddf64bad65ade622eb1b76f
-state_at_commit_short: fdceb59
+state_at_commit: 8ba0bcb7367956e39fdaab64147664c672a0c9ef
+state_at_commit_short: 8ba0bcb
 # Freshness: run `git log --oneline "$(git log -1 --format=%H -- HANDOFF.md)"..HEAD`. Empty (+ clean
 # tree) = current. Non-empty = stale — reconcile per §0.1 before trusting §2–§3. (Comparing against
 # state_at_commit directly always shows the handoff commit itself as "drift" — see §0.1.)
@@ -138,21 +138,20 @@ bundle is internally consistent, and 33 evals assemble.
 
 ## 3 · What to do next (prioritized)
 
-1. **Push, if `origin` is behind.** `git log --oneline origin/HEAD..HEAD` — this session ended with
-   a push, but confirm.
-2. **Resolve the open decisions in §4.** They are all small, and several are cross-language
+1. **Resolve the open decisions in §4.** Eight of them, all small, several cross-language
    consistency calls that should be made once for all four SDKs rather than per language. Nothing
-   else on this branch depends on them.
-3. **Write the tabulated-summaries authoring template** under `docs/maintenance/doc-authoring/`.
+   else on this branch depends on them. (`origin` was current at this handoff; confirm with
+   `git log --oneline origin/HEAD..HEAD` before assuming it still is.)
+2. **Write the tabulated-summaries authoring template** under `docs/maintenance/doc-authoring/`.
    This was deliberately held until the documentation audit had run so it could be written from what
    the sweep found rather than guessed at; the sweep is now complete, so it is unblocked. See
    [`.agents/memory/terse-tabulated-summaries-over-prose.md`](.agents/memory/terse-tabulated-summaries-over-prose.md).
-4. **Decide on the release.** Merging this branch releases all four SDKs *and* the skill — each
+3. **Decide on the release.** Merging this branch releases all four SDKs *and* the skill — each
    `release-<lang>.yml` and `release-skill.yml` triggers on a version bump landing on `main` and
    creates its own tag. There is no hand-tagging step. Until then the seven evals that test
    `0.4`-only surface are unrunnable (not merely unrun), because an eval fixture must pin a version
    that is actually published.
-5. **Re-run mutation testing** if the library source changes again. It was run for all four
+4. **Re-run mutation testing** if the library source changes again. It was run for all four
    languages earlier on this branch; the surviving-mutant notes are in
    `docs/maintenance/mutation-survivors-<language>.md`. One language at a time, per §5.
 
@@ -184,9 +183,6 @@ None of these block anything; each is a judgment call that was deliberately not 
 - **`skill-v0.5.2` has a changelog entry but no git tag**, while every other released version from
   `0.1.1` to `0.7.0` has one. The changelog header promises "Tagged `skill-vX.Y.Z`". Flagged in case
   the tag should be created retroactively.
-- **`release-python.yml` runs `pytest --cov=verdict`** while the distribution is `verdict-rules`. If
-  the importable module is `verdict` this is correct and there is nothing to fix; flagged only
-  because a mismatched `--cov` target measures nothing and still exits green.
 - **Two harness drop-in trigger strategies are a preference call.** Kiro's `fileMatchPattern` and
   OpenHands' `paths` now enumerate all four SDKs' file extensions, which means a fifth SDK edits
   each drop-in. The alternative, matching the always-on cline/copilot/claude pointers, is
