@@ -12,7 +12,8 @@ the same session. The intent throughout had been a fresh branch off `main`.
 
 ## How it surfaced
 
-`check_changelogs.py`'s own output, run as a routine pre-commit check, printed
+`scripts/check_changelogs.py`'s own output, run as a routine pre-commit
+check, printed
 `OK dart/packages/verdict_rules 0.0.1 -> ...` — a package that has no reason
 to exist on a branch meant to hold only repo-root and fixture changes. That
 one unexpected line was the only signal; `git status` was not checked first

@@ -52,19 +52,17 @@ For an **annotated** tag, `git rev-parse refs/tags/<tag>` returns the tag
 its own hash. It is never equal to any commit's SHA, including the exact
 commit the tag was created at. The check would reject every annotated tag
 unconditionally, regardless of which commit it actually pointed to. It
-happened to go unnoticed until now because no caller had ever pre-pushed an
-annotated tag ahead of calling this workflow before Dart's two-phase design
-— every other language's release lets this same workflow create the
-(lightweight, by omission of `-a`... actually also annotated, but never
-pre-existing) tag itself, so the "already exists" branch was never
-exercised for a caller-pushed tag until this run.
+went unnoticed because no caller had ever pre-pushed a tag ahead of calling
+this workflow before Dart's two-phase design — every other language's
+release lets this same workflow create the tag itself, with its own
+`git tag -a` (so annotated too, but never pre-existing), which left the
+"already exists" branch unexercised for a caller-pushed tag.
 
-This is the same shared file [008](008-dart-tag-push-never-triggered-phase-2.md)'s
-fix depends on, and the same run that finally exercised 008's fix for the
-first time was also the first run to ever exercise this branch of
-`release-github.yml` — both gaps were invisible until Dart's first real,
-complete two-phase run, not because either was subtle, but because nothing
-before this had the shape to trigger either path.
+Dart's phase 2 calls this shared workflow, so the recovery run that followed
+[008](008-dart-tag-push-never-triggered-phase-2.md)'s fix was also the first
+run ever to reach that branch. Both gaps were invisible until Dart's first
+real, complete two-phase release — not because either was subtle, but
+because nothing before it had the shape to reach either path.
 
 ## The fix
 

@@ -104,7 +104,18 @@ def _strip_slash_comment(line: str) -> str:
 
 def tracked() -> list[str]:
     """Every tracked data/config file, minus vendored and generated ones."""
-    patterns = ["*.json", "*.yaml", "*.yml", "*.toml", "*.csproj", "*.props"]
+    patterns = [
+        "*.json",
+        "*.yaml",
+        "*.yml",
+        "*.toml",
+        "*.csproj",
+        "*.props",
+        # A harness drop-in is prose with a parsed frontmatter block on top.
+        # Only the frontmatter is checked -- see _frontmatter_only below.
+        "*.md",
+        "*.mdc",
+    ]
     listing = subprocess.run(
         ["git", "ls-files", *patterns],
         cwd=ROOT,
@@ -151,11 +162,37 @@ def _shell_block_lines(path: Path) -> set[int]:
     return exempt
 
 
+def _frontmatter_only(text: str) -> tuple[str, int]:
+    """The YAML frontmatter block of a markdown file, and the line it starts on.
+
+    A markdown body is prose and keeps the em-dash. Its frontmatter is not: a
+    harness reads `description:`, `globs:`, `inclusion:` and friends as config,
+    and the drop-ins under scripts/harness-templates/ are both at once -- a
+    parsed block on top of a prose pointer. Returns an empty block for a file
+    with no frontmatter, which is most of them.
+    """
+    lines = text.splitlines()
+    if not lines or lines[0].strip() != "---":
+        return "", 0
+    for index, line in enumerate(lines[1:], start=1):
+        if line.strip() in ("---", "..."):
+            return "\n".join(lines[1:index]), 2
+    return "", 0
+
+
 def check(rel: str) -> list[str]:
     """Return human-readable failures for one data/config file."""
     path = ROOT / rel
     suffix = path.suffix
     text = path.read_text()
+
+    first_lineno = 1
+    if suffix in (".md", ".mdc"):
+        text, first_lineno = _frontmatter_only(text)
+        if not text:
+            return []
+        # Frontmatter is YAML, so `#` comments apply to it.
+        suffix = ".yaml"
 
     if suffix in (".csproj", ".props"):
         # Blank XML comments out, preserving line structure.
@@ -168,7 +205,7 @@ def check(rel: str) -> list[str]:
     is_jsonc = suffix == ".json" and path.stem.split(".")[0] in JSONC_STEMS
     failures: list[str] = []
 
-    for lineno, raw in enumerate(text.splitlines(), 1):
+    for lineno, raw in enumerate(text.splitlines(), first_lineno):
         if lineno in exempt_lines:
             continue
 

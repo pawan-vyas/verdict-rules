@@ -66,10 +66,10 @@ class AtLeastNRule:
     enough sub-rules have passed to guarantee the minimum is met, or
     once too many have failed for the minimum to be reachable even if
     every remaining sub-rule passed -- so a sub-rule after that point
-    never runs. This matches the plan's own worked `AtLeastNRule`
-    sketch; a prior version of this rule deferred (`None`) until every
-    sub-rule had run, which was a pre-`SequentialEvaluator` artifact,
-    not a deliberate design choice.
+    never runs. Deferring (`None`) until every sub-rule had run would
+    return the same boolean while evaluating work the threshold had
+    already settled, which is the short-circuit contract broken
+    silently -- the reason this decides as soon as the answer is known.
     """
 
     def __init__(
@@ -289,9 +289,9 @@ async def _demo() -> None:
     for student_id, context in students.items():
         verdict = await graduates.evaluate(context)
         status = "GRADUATES" if verdict.passed else "DOES NOT GRADUATE"
-        # `graduates` is a composite -- its own `detail` is always empty (see
-        # AGENTS.md/the redesign notes: a composed ShortCircuitEvaluator has
-        # no per-composite channel to build a descriptive string from). The
+        # `graduates` is a composite -- its own `detail` is always empty,
+        # because a composed ShortCircuitEvaluator has no per-composite
+        # channel richer than a boolean to build a descriptive string from. The
         # actual reason lives in `failing_leaves` instead, flattened from
         # wherever in the tree the short-circuit actually stopped.
         reasons = "; ".join(

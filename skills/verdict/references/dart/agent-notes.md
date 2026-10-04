@@ -103,13 +103,18 @@ Key an audit trail on a leaf's own `ruleName`, never a composite's:
 ```dart
 final verdict = await graduates.evaluate(student);
 if (!verdict.passed) {
-  log.warning('refused by ${verdict.failingLeaves.first.ruleName}');
+  final refusals = verdict.failingLeaves.map((leaf) => leaf.ruleName);
+  log.warning("refused by ${refusals.join(', ')}");
 }
 ```
 
-Composites short-circuit, so these hold only what was evaluated: a failed
-`AndRule` has exactly one failing leaf, and a passing `OrRule` has none
-even when an earlier branch failed on the way to that pass.
+Composites short-circuit, so these hold only what was evaluated: a passing
+`OrRule` has no failing leaves even when an earlier branch failed on the
+way to that pass. **A failed `AndRule` reports the failing leaves of the
+one sub-rule that stopped it** -- a single leaf only when that sub-rule is
+itself a leaf, and several when it is a composite that failed on more than
+one of its own. Read the whole list; `.first` names one of several causes
+without saying so, and throws outright on an empty list.
 
 ## Which run mode
 

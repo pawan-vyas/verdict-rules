@@ -106,13 +106,19 @@ Key an audit trail on a leaf's own `RuleName`, never a composite's:
 var verdict = await graduates.EvaluateAsync(student, cancellationToken);
 if (!verdict.Passed)
 {
-    logger.LogWarning("refused by {Rule}", verdict.GetFailingLeaves()[0].RuleName);
+    logger.LogWarning(
+        "refused by {Rules}",
+        string.Join(", ", verdict.GetFailingLeaves().Select(leaf => leaf.RuleName)));
 }
 ```
 
-Composites short-circuit, so these hold only what was evaluated: a failed
-`AndRule` has exactly one failing leaf, and a passing `OrRule` has none
-even when an earlier branch failed on the way to that pass.
+Composites short-circuit, so these hold only what was evaluated: a passing
+`OrRule` has no failing leaves even when an earlier branch failed on the
+way to that pass. **A failed `AndRule` reports the failing leaves of the
+one sub-rule that stopped it** -- a single leaf only when that sub-rule is
+itself a leaf, and several when it is a composite that failed on more than
+one of its own. Read the whole list; indexing `[0]` names one of several
+causes without saying so.
 
 ## Which run mode
 

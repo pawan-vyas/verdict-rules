@@ -46,7 +46,9 @@ interpolation of untrusted-shaped text is the general form.
 ## The fix
 
 Write the notes to a file in the generating step and pass `--notes-file`, so
-the bytes reach `gh` untouched. Applied to both release workflows.
+the bytes reach `gh` untouched. Every release path does this: GitHub release
+creation is shared in `release-github.yml`, which each language's release
+workflow calls, and it passes `--notes-file`.
 
 ## Recurrence, 2026-09-12 — same cause, different tool
 

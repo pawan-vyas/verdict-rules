@@ -404,9 +404,9 @@ async function demo() {
   for (const [studentId, context] of Object.entries(students)) {
     const verdict = await graduates.evaluate(context);
     const status = verdict.passed ? "GRADUATES" : "DOES NOT GRADUATE";
-    // `graduates` is a composite -- its own `detail` is always empty (see
-    // AGENTS.md/the redesign notes: a composed ShortCircuitEvaluator has no
-    // per-composite channel to build a descriptive string from). The actual
+    // `graduates` is a composite -- its own `detail` is always empty,
+    // because a composed ShortCircuitEvaluator has no per-composite channel
+    // richer than a boolean to build a descriptive string from. The actual
     // reason lives in `failingLeaves` instead, flattened from wherever in
     // the tree the short-circuit actually stopped.
     const reasons = verdict.failingLeaves

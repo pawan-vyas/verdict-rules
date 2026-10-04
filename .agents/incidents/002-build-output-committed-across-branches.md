@@ -17,8 +17,8 @@ A `git checkout` refused to switch branches:
 error: The following untracked working tree files would be overwritten
 ```
 
-Then a deliberate audit before a recap, counting tracked files matching build
-patterns per branch. It was not caught by any test or check.
+Then a deliberate audit, counting tracked files matching build patterns per
+branch. It was not caught by any test or check.
 
 ## Impact
 
@@ -35,9 +35,9 @@ Three SDKs were being developed in one working tree, on separate branches. On
 C# build output sitting in the same directory was untracked-and-unignored, and
 `git add -A` swept it in.
 
-Two compounding factors, both mine: using `git add -A` at all when the change
-was known and listable, and adding each language's ignore rules on the branch
-that introduced that language, which felt tidy and was exactly wrong.
+Two compounding factors: using `git add -A` at all when the change was known
+and listable, and adding each language's ignore rules on the branch that
+introduced that language, which felt tidy and was exactly wrong.
 
 ## The fix
 

@@ -22,7 +22,10 @@ class AtLeastNRule implements Rule<Context> {
   final SequentialEvaluator<Context> _evaluator;
 
   AtLeastNRule(this.name, List<Rule<Context>> rules, int minimum, {this.group})
-      : _rules = rules,
+      // Copied, not aliased, the same way the library's own composites do
+      // it: a caller that kept the list it passed could otherwise change
+      // this rule's sub-rules -- and its verdict -- after construction.
+      : _rules = List.unmodifiable(rules),
         _minimum = minimum,
         _evaluator = SequentialEvaluator<Context>(
           decider: (latest, soFar, total) {

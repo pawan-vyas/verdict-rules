@@ -7,9 +7,10 @@
 
 `release-dart.yml` is deliberately two-phase: phase 1 (triggered by a push to
 `main`) tests and pushes a tag; that tag push is supposed to re-trigger the
-same workflow into phase 2, which actually publishes to pub.dev. This is
-different from `release-python.yml` and the JS release workflow, both of
-which publish in a single run and never need a second trigger.
+same workflow into phase 2, which actually publishes to pub.dev. Every other
+language's release workflow — `release-python.yml`, `release-js.yml`,
+`release-csharp.yml` — publishes in a single run and never needs a second
+trigger.
 
 Phase 1 ran clean: tests passed, `dart-v0.0.2` was pushed and genuinely
 existed (`git ls-remote --tags origin` confirmed it). Nothing was flagged as
@@ -32,8 +33,10 @@ Recovered by hand via `gh workflow run release-dart.yml --ref dart-v0.0.2`
 (the `workflow_dispatch` escape hatch already built into the workflow),
 which is not subject to the same suppression and correctly routed into
 phase 2 since `github.ref_type` reads `tag` for a dispatch against a tag ref.
-`release-github.yml`'s own tag-idempotency (tolerates a pre-existing tag at
-the same commit) meant the recovery run hit no conflict.
+That recovery run published to pub.dev and then failed in the GitHub-release
+job, on `release-github.yml`'s own tag-idempotency check, which rejected the
+pre-pushed tag — recorded separately as
+[009](009-annotated-tag-sha-never-equals-commit-sha.md).
 
 ## Root cause
 

@@ -107,13 +107,19 @@ Key an audit trail on a leaf's own `ruleName`, never a composite's:
 ```ts
 const verdict = await graduates.evaluate(student);
 if (!verdict.passed) {
-  logger.warn(`refused by ${verdict.failingLeaves[0]!.ruleName}`);
+  const refusals = verdict.failingLeaves.map((leaf) => leaf.ruleName);
+  logger.warn(`refused by ${refusals.join(", ")}`);
 }
 ```
 
-Composites short-circuit, so these hold only what was evaluated: a failed
-`AndRule` has exactly one failing leaf, and a passing `OrRule` has none
-even when an earlier branch failed on the way to that pass.
+Composites short-circuit, so these hold only what was evaluated: a passing
+`OrRule` has no failing leaves even when an earlier branch failed on the
+way to that pass. **A failed `AndRule` reports the failing leaves of the
+one sub-rule that stopped it** -- a single leaf only when that sub-rule is
+itself a leaf, and several when it is a composite that failed on more than
+one of its own. Read the whole list; indexing `[0]!` names one of several
+causes without saying so, and the non-null assertion hides that the list
+could have been empty.
 
 A custom composite builds its result with the constructor, never by
 spreading an existing one -- a spread yields a plain object without the

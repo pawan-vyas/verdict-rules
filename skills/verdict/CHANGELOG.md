@@ -19,8 +19,11 @@ cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skil
 - **The result-inspection surface is documented.** `subResults`,
   `decidedBy`, and the flattened `leaves`/`failingLeaves` views, in each
   language's own spelling, with the short-circuit caveat beside them: a
-  failed `AndRule` has exactly one failing leaf, and a passing `OrRule`
-  has none even when an earlier branch failed on the way to that pass.
+  passing `OrRule` has no failing leaves even when an earlier branch
+  failed on the way to that pass, and a failed `AndRule` reports the
+  failing leaves of the one sub-rule that stopped it -- a single leaf only
+  when that sub-rule is itself a leaf. Each language's worked snippet
+  reads the whole list rather than indexing the first entry.
   C#'s notes spell `GetLeaves()`/`GetFailingLeaves()`/`GetDecidedBy()`
   as methods, which is that SDK alone.
 - **Which views are stored and which are derived is now stated.** A

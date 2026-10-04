@@ -45,8 +45,8 @@
 # supports one) are ergonomic layers on top of that, not a substitute.
 #
 # Global scope vendors to ~/.claude/skills/verdict/ and ~/.agents/skills/verdict/ — the only two
-# home-directory skill-discovery paths confirmed by research (see docs/harnesses/cursor.md,
-# code.claude.com/docs/en/skills). Other harnesses' global config (Kiro's ~/.kiro/steering/, pi's
+# home-directory skill-discovery paths confirmed by each tool's own documentation
+# (code.claude.com/docs/en/skills, cursor.com/docs). Other harnesses' global config (Kiro's ~/.kiro/steering/, pi's
 # ~/.pi/agent/AGENTS.md, etc.) isn't a confirmed agentskills.io-style skill directory, so global
 # scope doesn't attempt to write there — those harnesses still need per-project --scope=project
 # wiring.
@@ -145,7 +145,7 @@ vendor_one() {
   local dest="$1"
   would "vendor SKILL.md + references/ into $dest/ (refreshed if already present)"
   if [ "$DRY_RUN" -eq 0 ]; then
-    # references/ nests one subdirectory per language (today: references/python/), and that set of
+    # references/ nests one subdirectory per language, and that set of
     # languages changes as new SDKs ship -- a plain `cp -r` only ever adds or overwrites, it never
     # removes, so a stale destination accumulates orphaned files a source removal should have cleaned
     # up. rm -rf + recreate makes this a real sync, not a merge.
@@ -172,7 +172,7 @@ if [ "$SCOPE" = "global" ]; then
   fi
   vendor_one "$HOME/.claude/skills/verdict"
   vendor_one "$HOME/.agents/skills/verdict"
-  note "Done. Vendored globally — every project you open in Claude Code or Cursor now discovers verdict without any per-project step. Run --scope=project in a specific repo if you want it to travel with that repo for collaborators too (see docs/harnesses/README.md)."
+  note "Done. Vendored globally -- every project you open in Claude Code or Cursor now discovers verdict without any per-project step. Run --scope=project in a specific repo if you want it to travel with that repo for collaborators too; see --help for the per-harness options."
   exit 0
 fi
 
