@@ -1,11 +1,11 @@
 ---
 kind: session-handoff
 handoff_schema: 1
-updated_utc: 2026-09-18T09:23:35Z
-updated_local: 2026-09-18T14:53:35+05:30
-branch: main
-state_at_commit: 53399f7ff1431ffb33cba006e1362c363f7c2250
-state_at_commit_short: 53399f7
+updated_utc: 2026-10-04T04:52:24Z
+updated_local: 2026-10-04T10:22:24+05:30
+branch: diagnostics/debugger-display-all-languages
+state_at_commit: fdceb598737584486ddf64bad65ade622eb1b76f
+state_at_commit_short: fdceb59
 # Freshness: run `git log --oneline "$(git log -1 --format=%H -- HANDOFF.md)"..HEAD`. Empty (+ clean
 # tree) = current. Non-empty = stale — reconcile per §0.1 before trusting §2–§3. (Comparing against
 # state_at_commit directly always shows the handoff commit itself as "drift" — see §0.1.)
@@ -24,9 +24,10 @@ state_at_commit_short: 53399f7
 You (the next agent) are continuing work on **verdict**. Read §1 for what it is, §2 for where we
 are, §3 for what to do next, §4 for known issues, §5 for how to verify.
 
-**The generics program (GitHub issue #33) is fully closed.** All four language SDKs and the skill
-are on `main`, released, live on their registries. **One small PR is open** (#95, a planning doc for
-the next piece of work) — see §2 and §3.
+**One PR is open and is the whole of the current work**: #103 on branch
+`diagnostics/debugger-display-all-languages`, covering issues #98/#100/#101. It carries unreleased
+`0.4.0` for all four SDKs and unreleased `0.8.0` for the skill. **Release tags are deliberately on
+hold** — see §2.
 
 ## 0.1 · Freshness & alignment protocol (read before trusting §2–§3)
 
@@ -53,23 +54,20 @@ git status --short
 `git pull` before trusting any of this if you have been away — the formula above compares against
 your *local* HEAD, so an out-of-date clone reads "current" while `origin/main` has moved.
 
-**One untracked, unexplained file sits in the working tree as of this handoff**:
-`skills/verdict-workspace/evals/csharp/.gitignore` (contents: `bin/`/`obj/`). It predates this
-session's own changes and wasn't touched by anything recorded in §2 — flagged rather than silently
-committed or deleted, since its origin isn't known. Look at it before doing either.
+The working tree is clean as of this handoff, with no untracked files.
 
 ## 1 · What this project is (one paragraph)
 
 `verdict` is a small, zero-dependency, async-native rule-evaluation engine —
-`Rule`/`FunctionRule`/`AndRule`/`OrRule`/`RulesEngine`/`RuleResult`/`RunResult` — designed to exist
-in more than one language with identical execution-model guarantees: sequential, never concurrent,
-evaluation so short-circuiting is a real contract rather than an optimization, and vacuous-truth
-polarity decided explicitly per composite shape. **All four language SDKs are on `main`, all at
-`v0.3.0`, all live**: Python (PyPI `verdict-rules`), JS/TS (npm `verdict-rules`), C# (NuGet
-`VerdictRules`), Dart (pub.dev `verdict_rules`) — each with its own top-level directory, its own
-`AGENTS.md`, and its own `docs/maintenance/releases/<language>.md`. `Rule` (or each language's own
-idiom) is generic over its context (`Rule<TContext>`/`Rule[TContext]`) in every language as of this
-release; dict-context stays permanently first-class alongside it — see
+`Rule`/`FunctionRule`/`AndRule`/`OrRule`/`NotRule`/`RulesEngine`/`PredicateOutcome`/`RuleResult`/
+`RunResult` — designed to exist in more than one language with identical execution-model guarantees:
+sequential, never concurrent, evaluation so short-circuiting is a real contract rather than an
+optimization, and vacuous-truth polarity decided explicitly per composite shape. **All four language
+SDKs are live on their registries at `0.3.1`**: Python (PyPI `verdict-rules`), JS/TS (npm
+`verdict-rules`), C# (NuGet `VerdictRules`), Dart (pub.dev `verdict_rules`) — each with its own
+top-level directory, its own `AGENTS.md`, and its own `docs/maintenance/releases/<language>.md`.
+`Rule` is generic over its context in every language; dict-context stays permanently first-class
+alongside a typed one — see
 [`docs/architecture/README.md`](docs/architecture/README.md#generic-context). Cross-language docs
 are in `docs/`, the AI-agent skill in `skills/verdict/` (vendored into other projects by
 `scripts/install.sh`), the published site in `site/`, and agent working material in `.agents/`.
@@ -81,85 +79,127 @@ are in-tree copies, so no network, plugin install, or sibling checkout is needed
 
 ## 2 · Where we are (this session's work)
 
-Branch `diagnostics/debugger-display-all-languages`, PR #103, covering issues #98/#100/#101.
-Everything below is committed and pushed; nothing is released.
+Branch `diagnostics/debugger-display-all-languages`, PR #103 (open, not draft), covering
+issues #98, #100 and #101. Everything is committed; nothing is released.
 
-**The branch started as a diagnostics/inspection pass and turned up two real defects in its own
-new, unreleased surface.** Both were fixed in all four languages after being put to the user as
-decisions rather than assumed:
+**Release tags are on hold by explicit decision.** Every adopter is running a locally cloned, pinned
+working tree so they can read the source and suggest changes, so there is no pressure to publish —
+and `skills/verdict/SKILL.md` now documents that case as the first branch of its version-resolution
+instruction. Merging this branch *is* the release for all four SDKs and the skill, so do not merge
+until the release decision is actually made.
 
-1. **A result's serialized size was exponential in nesting depth.** `decidedBy` stored the same
-   `RuleResult` objects already held in `subResults`, making the stored graph a DAG; every
-   tree-shaped walk expands a shared node once per path. Measured: 3,223 chars at depth 4, 13.6 MB
-   at depth 16, and `OutOfMemoryException` in C# at depth 40. The fix stores *positions*
-   (`decidedByIndices` / `decided_by_indices` / `DecidedByIndices`) and derives `decidedBy` from
-   them. Depth 16 is now 1,942 chars. The indices form also admits a construction-time range check
-   the objects form could not: an index naming a non-child raises.
-2. **Nothing anywhere proved a result could leave the process.** Python, C# and Dart had zero
-   serialization tests; JS had one `length > 0` assertion. Dart could not be encoded at all, since
-   `jsonEncode` needs a `toJson()` — now added to both result types, that SDK's own convention.
+Version state: all four SDKs at **`0.4.0`, unreleased** (no `<language>-v0.4.0` tag exists). The
+skill is at **`0.8.0`, unreleased**; the last released skill is `skill-v0.7.0`, so that is a single
+minor bump with one changelog entry and no intermediate versions.
 
-**Current state, all measured rather than asserted:**
+### What the branch did, in order
 
-| Language | Package tests | Mutation score | Survivors |
-| :-- | --: | --: | :-- |
-| Python | 143 (100% line) | 241/242 (99.6%) | 1, equivalent |
-| C# | 171 | 174/176 (98.9%) | 2 (1 equivalent, 1 tool mis-attribution) |
-| JS | 144 (100% line/branch/func) | 238/243 (97.9%) | 5, all equivalent |
-| Dart | 133 | 57/57 (100%) | 0 |
+1. **Diagnostics/inspection surface** (the original scope): rules, composites and engines print as
+   more than an opaque object, in each language's own idiom.
+2. **Two real defects in that new, unreleased surface**, found while testing it and fixed in all
+   four languages after being put to the user as decisions:
+   - **Exponential serialization.** A result stored its derived views, making the object graph a DAG
+     that a tree-shaped encoder expands once per path. Measured at six depths; emptying the deciding
+     view took a depth-16 result from 13.6 MB to 1,790 characters. Fixed by storing *positions*
+     (`decided_by_indices` and its per-language spellings) and deriving every view on access.
+   - **`RunResult`'s failing-leaves view filtered instead of forwarding.** A result's verdict is not
+     a function of its leaves' verdicts, so filtering was wrong in both directions. Present
+     identically in all four SDKs, and **three suites contained a test asserting the defect as
+     intentional**, which is why nothing caught it.
+3. **`NotRule` shipped** in all four languages, along with the public `SequentialEvaluator` /
+   `ShortCircuitEvaluator`, Dart's `toJson()`, and a const `RuleResult.leaf`.
+4. **The shared fixtures gained failing-leaves expectations**, which they had none of — the gap that
+   let (2) go undetected. Values picked by hand from each scenario, not from implementation output.
+5. **`docs/extending/` rebuilt** — all eight scenarios across four languages, every predicate moved
+   to `PredicateOutcome`, every `result.data` read moved to sub-results.
+6. **`docs/maintenance/` swept** — all 31 files read whole, 19 defects fixed.
+7. **A full documentation audit of everything else**, 80+ files read whole, ~110 defects fixed. Run
+   as a seven-group sequential workflow after the earlier passes were done by hand. Highlights:
+   `docs/future_plan.md` argued at length against `NotRule`, which ships; the root `AGENTS.md` said
+   only Python ships; the root `README.md` advertised five worked examples by names no fixture has
+   ever had, and claimed a custom rule imports nothing from the package (false for Dart and C#).
+8. **A false guarantee removed from the shipped skill.** All four `agent-notes.md` told agents a
+   failed `AndRule` has exactly one failing leaf. It has as many as the sub-rule that stopped it,
+   and the claim sat directly above the `[0]`/`.first` one-liner it licensed. The library was always
+   correct. Each language's snippet now reads the whole list and was executed to prove it.
+9. **Two new CI gates**, both for defects that leave every other signal green:
+   `scripts/check_link_labels.py` (a link label naming a path that does not exist, while its target
+   resolves) and `scripts/check_ascii_values.py` (non-ASCII punctuation in a value a tool parses,
+   including markdown frontmatter). Both verified clean *and* firing on a deliberately reintroduced
+   defect — the first draft of the link gate was a silent no-op.
+10. **One new eval**: `cross-language/06-local-pin-resolution`, covering the version-resolution
+    branch every adopter currently exercises.
 
-Example suites: Python 1,420 total from `python/`, JS 1,765 + 33, C# 1,744 + 32, Dart 1,271 + 32.
+### Current green state
 
-**Two mutation findings worth not relearning.** A previous C# survivor record filed nine
-`ConfigureAwait(false)` mutants as an *equivalence class*; they were not equivalent, only
-unobservable to every assertion on a result. `ContextCaptureTests.cs` kills them with a recording
-`SynchronizationContext`, which moved C# from 92.0% to 98.9%. And Dart's 100% is the weakest of the
-four, not the strongest: its tool generates 57 mutations where mutmut generates 242, has no ternary
-rule, and so verifies none of that language's derived accessors — the oracle suite carries them.
-
-**The documentation sweep is complete.** All four testing pages rebuilt against measured numbers
-(three claimed no CI test workflow existed; all four exist and gate every PR). `docs/architecture/`
-carries the stored-versus-derived fact and four revalidated class diagrams. All four survivor
-records rewritten. Every landing quickstart and every per-language quickstart now shows a typed
-context, each verified by execution rather than inspection. The skill, its four `agent-notes.md`,
-four package changelogs and the skill changelog describe the final shape.
-
-**`scripts/check_package_readmes.py` was fixed, not just worked around.** Its C# check cleared
-`packageSources` but not the global packages folder, so it extracted into `~/.nuget/packages` and a
-same-version entry left there satisfied a later restore before the freshly packed `.nupkg` was
-opened. It was seeding the staleness that then broke it. The dangerous direction was never the
-failure but the pass — the same shadowing would confirm a README against stale code just as
-silently.
+Python 1423 · JS 147 core + 1765 graduation + 33 marketplace · Dart 140 core + 1271 + 32 ·
+C# 174 core + 1744 + 32. Every gate in §5 passes, markdownlint is clean across 168 files, the skill
+bundle is internally consistent, and 33 evals assemble.
 
 ## 3 · What to do next (prioritized)
 
-1. **Cut the four RC tags, then run the skill evals, then promote 0.4.0.** The evals currently pin
-   `verdict-rules==0.3.1`, so they validate the previous surface and only become meaningful once an
-   RC exists. Tags are `<language>-v<version>` per `SKILL.md`; **Dart's release workflow triggers on
-   `dart-v*`**, so an RC tag there fires a real publish path — the prerelease guard in
-   `release-dart.yml`'s phase-detection step is in place for exactly this. Confirm before pushing
-   any tag; this is the one outward-facing step left.
-2. **Run the six new evals sequentially** — never in parallel, per
-   [`.agents/memory/`](.agents/memory/). Two cross-language (which result view to read; serializing
-   a result) and one per language (build the "at least N of these" composite, which cannot be
-   completed without that language's own spelling).
-3. **Then the ground-up rewrite, as its own long-term PR.** Explicitly deferred: the rule-engine
-   redesign, the CEL-profile decision, and the new-package/new-name question all belong there, not
-   here. This branch is the scoped unblocking release.
+1. **Push, if `origin` is behind.** `git log --oneline origin/HEAD..HEAD` — this session ended with
+   a push, but confirm.
+2. **Resolve the open decisions in §4.** They are all small, and several are cross-language
+   consistency calls that should be made once for all four SDKs rather than per language. Nothing
+   else on this branch depends on them.
+3. **Write the tabulated-summaries authoring template** under `docs/maintenance/doc-authoring/`.
+   This was deliberately held until the documentation audit had run so it could be written from what
+   the sweep found rather than guessed at; the sweep is now complete, so it is unblocked. See
+   [`.agents/memory/terse-tabulated-summaries-over-prose.md`](.agents/memory/terse-tabulated-summaries-over-prose.md).
+4. **Decide on the release.** Merging this branch releases all four SDKs *and* the skill — each
+   `release-<lang>.yml` and `release-skill.yml` triggers on a version bump landing on `main` and
+   creates its own tag. There is no hand-tagging step. Until then the seven evals that test
+   `0.4`-only surface are unrunnable (not merely unrun), because an eval fixture must pin a version
+   that is actually published.
+5. **Re-run mutation testing** if the library source changes again. It was run for all four
+   languages earlier on this branch; the surviving-mutant notes are in
+   `docs/maintenance/mutation-survivors-<language>.md`. One language at a time, per §5.
 
-## 4 · Known issues / blockers
+## 4 · Known issues / open decisions
 
-- No open defect in any shipped package. Both defects found this session were in unreleased surface
-  and are fixed.
-- **Nothing is released from this branch yet.** Four packages sit at `0.4.0` in their manifests and
-  changelogs with no corresponding tag; the skill sits at `0.8.0`, also untagged (`skill-v0.7.0` is
-  the latest released).
-- The untracked `skills/verdict-workspace/evals/csharp/.gitignore` — origin unknown, outside this
-  session's changes, flagged rather than acted on.
-- C#'s NuGet publish-verification step has hit its documented propagation-lag failure mode three
-  times (`csharp-v0.0.1`, `js-v0.0.4`'s npm equivalent, `csharp-v0.3.0`). If it recurs a fourth
-  time it earns an `.agents/incidents/` entry and a structural fix — a `workflow_dispatch`
-  re-verify job rather than an ever-widening retry budget.
+None of these block anything; each is a judgment call that was deliberately not made unilaterally.
+
+- **Library-source doc comments carry process narration, in all four SDKs.** `PredicateOutcome`'s
+  docstring explains the pre-`PredicateOutcome` convention; `FunctionRule.evaluate`'s says "No
+  longer a straight pass-through"; `AndRule`'s says "unchanged from before this class held an
+  evaluator". These ship to rendered API docs, and JS's own `0.3.1` changelog already asserts every
+  doc comment was trimmed to state current behaviour only. The question is whether the
+  no-narration rule reaches into source docstrings at all — the convention list exempts docstrings
+  only for em-dashes. Each is recoverable as present-tense rationale.
+- **`NotRule` is absent from two places that enumerate the surface**: all four quickstarts open
+  "The five names you need" without it, and all four `0.4.0` changelog entries credit the
+  debugger-display work to `FunctionRule`/`AndRule`/`OrRule`/`RulesEngine` while the source also
+  carries it on `NotRule` (and, in C#, on `PredicateOutcome` and both evaluators). Both are
+  consistent across all four SDKs, so changing one would break parity — decide once, for all four.
+- **`marketplace_eligibility`'s thresholds are hardcoded constants in all four ports**, with no data
+  file, against `AGENTS.md`'s "no hardcoded values that could plausibly change ... this is the
+  entire point of every example project". The fixture README was corrected to describe reality
+  rather than assert the opposite. Making the examples match the convention means a `thresholds.json`
+  plus a loader per port, and that README wording would then need reverting.
+- **Are historical changelog entries exempt from the every-mention-is-a-link rule?** Dart's `0.0.2`
+  entry names a maintenance doc as a bare filename. The only convention-correct link would be
+  pinned to `dart-v0.0.2`, and Python's changelog keeps bare paths in its own historical entries for
+  the same reason. Worth a one-line ruling.
+- **`skill-v0.5.2` has a changelog entry but no git tag**, while every other released version from
+  `0.1.1` to `0.7.0` has one. The changelog header promises "Tagged `skill-vX.Y.Z`". Flagged in case
+  the tag should be created retroactively.
+- **`release-python.yml` runs `pytest --cov=verdict`** while the distribution is `verdict-rules`. If
+  the importable module is `verdict` this is correct and there is nothing to fix; flagged only
+  because a mismatched `--cov` target measures nothing and still exits green.
+- **Two harness drop-in trigger strategies are a preference call.** Kiro's `fileMatchPattern` and
+  OpenHands' `paths` now enumerate all four SDKs' file extensions, which means a fifth SDK edits
+  each drop-in. The alternative, matching the always-on cline/copilot/claude pointers, is
+  `inclusion: always` and dropping `paths:`. Separately, the OpenHands frontmatter follows that
+  tool's current documented schema and ships to consumers — worth confirming against the version
+  actually targeted.
+- **The JS package README has no `examples/` row** in "Where to go next", where Python's does. There
+  is no `js/examples/README.md` index to link, so adding the row means first creating that index —
+  a decision about the JS package's doc surface.
+- **Every incident file's HTML `<!-- Title: ... -->` comment contains an em-dash.** Nothing in-repo
+  parses it and `docs/` uses the identical form, so it was treated as comment prose. If an external
+  doc-site generator consumes that comment, it is a data value by this repo's own rule and all six
+  want ASCII `--`.
 
 ## 5 · Verify (gate / test commands)
 
@@ -196,7 +236,8 @@ Real relative-link checking (not grep), and the linter CI actually runs:
 ```bash
 python3 scripts/check_shipped_links.py
 python3 scripts/check_doc_comment_links.py
-npx --yes markdownlint-cli2@0.18.1        # cli2, not cli -- matches lint-docs.yml
+python3 scripts/check_link_labels.py       # a label naming a path that does not exist
+npx --yes markdownlint-cli2@0.18.1         # cli2, not cli -- matches lint-docs.yml
 ```
 
 Every repo consistency gate, all of which must pass before a release:
@@ -204,7 +245,8 @@ Every repo consistency gate, all of which must pass before a release:
 ```bash
 for s in check_api_snapshots check_changelogs check_package_readmes \
          check_package_metadata check_fixture_coverage check_doc_comment_links \
-         check_shipped_links check_workflow_shell; do
+         check_shipped_links check_workflow_shell check_link_labels \
+         check_ascii_values; do
   python3 "scripts/$s.py" || echo "FAILED: $s"
 done
 
@@ -214,6 +256,10 @@ PATH="$PATH:$HOME/.pub-cache/bin" python3 scripts/check_api_snapshot_dart.py
 
 python3 scripts/build_evals.py            # evals.json is generated, never committed
 bash scripts/build.sh                     # all three skill artifacts still assemble
+
+# check_skill_bundle.py takes the *assembled* bundle, not skills/verdict/ --
+# REPOSITORY-MAP.md is generated at build time and never checked in.
+unzip -q dist/verdict.skill -d /tmp/sk && python3 scripts/check_skill_bundle.py /tmp/sk/verdict
 ```
 
 Mutation testing, one language at a time — never in parallel, and clear each
@@ -235,7 +281,8 @@ bash scripts/build.sh && ls dist/   # verdict-plugin.zip  verdict-tools.zip  ver
 
 ## 5b · Tooling / skills
 
-- **Python** ≥3.10 (floor in `python/packages/verdict-rules/pyproject.toml`), managed with
+- **Python** ≥3.10 (floor in `python/packages/verdict-rules/pyproject.toml`, which is also where the
+  version lives — `python/pyproject.toml` is the workspace root and declares neither), managed with
   **`uv`**. Zero runtime dependencies.
 - **Node** 18+ for JS/TS (`npm`, workspace-rooted at `js/`); also needed for the mermaid diagram
   validator regardless of language.
@@ -251,21 +298,24 @@ bash scripts/build.sh && ls dist/   # verdict-plugin.zip  verdict-tools.zip  ver
   material — the per-target eval JSON files under `evals/<target>/` are tracked, the assembled
   `evals/evals.json` is gitignored. Evals run via the **skill-creator** plugin, not `claude plugin
   eval`.
+- **A batch of costly subagents runs one at a time**, never in parallel — see
+  [`.agents/memory/run-costly-subagent-batches-sequentially.md`](.agents/memory/run-costly-subagent-batches-sequentially.md).
 
 ## 6 · Key docs
 
 - [`AGENTS.md`](AGENTS.md) — standing rules for every agent (`CLAUDE.md` is just `@AGENTS.md`);
-  each language's own `AGENTS.md` adds that language's own layer. Its dispatch-table rule is what
-  this session's own review caught a real violation against — read it again if extending any example.
+  each language's own `AGENTS.md` adds that language's own layer.
 - [`docs/architecture/README.md`](docs/architecture/README.md#generic-context) — design source of
-  truth, including the "Generic context" subsection this program added.
-- the post-generics rebalance plan (since removed) —
-  the next piece of work, full scope and reasoning.
+  truth, including the "Generic context" subsection and the result-inspection surface.
 - [`docs/testing/`](docs/testing/README.md) — the testing checklist, shared across every language.
 - [`docs/extending/`](docs/extending/README.md) — the eight extension scenarios.
-- [`fixtures/README.md`](fixtures/README.md) — the ten worked samples §2's new plan doc audits.
+- [`fixtures/README.md`](fixtures/README.md) — the two cross-language parity fixtures every port
+  must reproduce exactly.
 - [`docs/maintenance/releases/`](docs/maintenance/releases/README.md) — the shared release pipeline
-  plus each registry's own real mechanics, including the NuGet propagation-lag pattern from §2/§4.
-- [`docs/future_plan.md`](docs/future_plan.md) — exploratory candidates, explicitly not a roadmap.
+  plus each registry's own real mechanics.
+- [`docs/future_plan.md`](docs/future_plan.md) — exploratory candidates, explicitly not a roadmap,
+  including the one verdict it records as overturned.
 - [`.agents/README.md`](.agents/README.md) — the agent working-material layout, and
-  [`.agents/memory/`](.agents/memory/) — durable facts worth not re-deriving.
+  [`.agents/memory/`](.agents/memory/) — durable facts worth not re-deriving. Start with
+  [`doc-hygiene-audit-protocol.md`](.agents/memory/doc-hygiene-audit-protocol.md) before any
+  documentation sweep.
