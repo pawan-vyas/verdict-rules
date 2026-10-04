@@ -12,8 +12,15 @@ evals/
   <target>/
     NN-<name>.json     one eval
     files/             input files those evals hand to the agent
+      <variant>/       a different file of the same name, for one eval
   evals.json           assembled by scripts/build_evals.py — not committed
 ```
+
+Most evals in a target share one manifest out of `files/`. An eval that needs a
+*different* manifest — a local path pin rather than a registry version, say —
+puts it in a subdirectory, since the staged file keeps its basename and two
+`pyproject.toml` files cannot sit beside each other. `files/` is never itself a
+target, so a subdirectory there adds no eval.
 
 A **target** is what the eval exercises: a language (`python/`), or
 `cross-language/` for behaviour that belongs to no single SDK.
@@ -99,6 +106,7 @@ Each of the four language targets carries the same core set, and
 | `custom-composite-reporting-its-decision` | all four languages | a custom composite built on the shared evaluator, reporting which children explain its own verdict |
 | `which-result-view-to-read` | `cross-language/` | choosing between the recursive failing view, the flat leaf enumeration, and the one-level decided-by view |
 | `serializing-a-result` | `cross-language/` | encoding a result with the language's own serializer, with the derived views absent and `data` the caller's problem |
+| `local-pin-resolution` | `cross-language/` | a dependency pinned to a local checkout is read on disk, in place, with no tag resolved and no fallback to the default branch |
 | `unsupported-language` | `cross-language/` | a language with no SDK produces a plain statement of that, not an invented import path |
 | `redacted-defect-report` | `cross-language/` | a defect report carrying no domain names, context values, or application stack frames |
 | `recurring-pattern-evidence-report` | `cross-language/` | a recurring-gap report filed as evidence, not as an argument for a specific design |

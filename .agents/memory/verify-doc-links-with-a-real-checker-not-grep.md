@@ -69,7 +69,9 @@
    replace spaces with hyphens, **do not** collapse repeated hyphens).
 3. A label-versus-target pass: wherever a link's label is itself a
    backtick-quoted path, resolve that path too and require it to match
-   what the link points at.
+   what the link points at. **This one is now a gate** --
+   `scripts/check_link_labels.py`, run by `check-release-readiness.yml`
+   on every pull request -- so it no longer needs doing by hand.
 
    This repo's labels are deliberately **shortened**, so the check needs
    that convention built in or it reports mostly noise. A label names the
@@ -92,7 +94,16 @@
    specific, currently-existing file or section get linked.
 
 None of this needs a heavyweight tool — a short Python script per check
-is enough, and disposable (write it to `.agents/scratch/`, not
-committed). The discipline that matters is running all of it, in this
-order, rather than trusting a single grep pass to have caught
-everything.
+is enough. Write one to `.agents/scratch/` first and see what it finds;
+promote it to `scripts/` only once it has earned it, which means verified
+in **both** directions: clean on a correct tree *and* firing on the real
+defect, reintroduced deliberately. A check that only ever passes is
+indistinguishable from a no-op, and the first draft of
+`check_link_labels.py` was exactly that — it blanked out code spans
+before looking for links, and since every label here is a backtick-quoted
+path, it erased the thing it was searching for and reported a clean tree
+forever. It was caught by re-introducing a known defect and noticing the
+gate stayed green.
+
+The discipline that matters is running all of it, in this order, rather
+than trusting a single grep pass to have caught everything.

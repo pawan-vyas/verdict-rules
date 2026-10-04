@@ -39,6 +39,12 @@ jobs:
       - name: Every doc-comment reference resolves
         run: python3 scripts/check_doc_comment_links.py
 
+      - name: Every link label names a path that exists
+        run: python3 scripts/check_link_labels.py
+
+      - name: Machine-consumed values are plain ASCII
+        run: python3 scripts/check_ascii_values.py
+
       - name: Every language's public API surface matches the cross-language concept map
         run: |
           set -euo pipefail

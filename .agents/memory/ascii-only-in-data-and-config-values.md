@@ -49,11 +49,16 @@ than the character it represents.
   file that also contains ordinary comments in the house prose style —
   judge by whether the string is consumed by tooling, not by the file
   extension it sits in.
-- **No gate enforces this**, so it has to be checked by hand. Two places
-  the by-hand check keeps mattering: a `.json` file has no comment
-  syntax, so *every* em-dash in one is in a value by definition, and a
-  manifest's `description` renders straight onto a registry page where it
-  cannot be corrected for an already-published version. A sweep found all
-  four published descriptions clean and the unpublished JS workspace root
-  carrying one, which is the right direction to be wrong in but is still
-  the rule.
+- **`scripts/check_ascii_values.py` enforces this**, run by
+  `check-release-readiness.yml` on every pull request. The exemptions it
+  encodes are the line this file draws, so they are worth knowing: a
+  whole-line *or trailing* `#` comment in YAML/TOML, a `//` comment in a
+  tsconfig (which is JSONC — TypeScript's own parser accepts them), an
+  XML comment in a `.csproj`, and every line of a shell `run:` block in a
+  workflow, since an `echo` there is written for a person reading a CI
+  log. A plain `.json` file gets no exemption at all, because it has no
+  comment syntax, so *every* em-dash in one is in a value by definition.
+- The case that cannot be taken back is a manifest's `description`: it
+  renders straight onto a registry page, and no registry retroactively
+  edits the page of an already-published version. All four published
+  descriptions are clean; the gate exists so they stay that way.
