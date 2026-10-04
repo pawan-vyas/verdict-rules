@@ -38,6 +38,19 @@ cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skil
   `jsonEncode` cannot encode an arbitrary object.
 - **JS's notes state that result instances are frozen**, since
   `readonly` is a compile-time claim erased at runtime.
+- **How to resolve which version's documentation to read now covers a
+  local pin, not only a registry version.** `SKILL.md` previously gave one
+  path: derive a `<language>-v<version>` tag from the installed version. A
+  project consuming verdict by local path, project reference or checked-out
+  clone has no version to derive from, so an agent following that
+  instruction had no documented option left and would either read the
+  default branch — the one thing the instruction forbids — or skip the
+  deeper documents entirely. That is the mode every current adopter uses.
+  Four cases now, branching on what the manifest from Step 1 already said:
+  read the files on disk for a local pin (the most reliable case, with no
+  resolution step to get wrong), the matching tag for a registry version,
+  the same ref for a commit SHA or branch, and read nothing while saying so
+  when none of those resolve.
 - **Keying an audit trail on a leaf's own rule name** — never a
   composite's, whose name says only that something in the group failed
   and which changes when its children are renamed or reordered — is

@@ -109,16 +109,29 @@ unnamed pattern when none of them do.
 ## Where to look next
 
 `references/REPOSITORY-MAP.md` names what else exists in the source
-repository — the design rationale, worked samples, and extension
-scenarios — each with a one-line description. Nothing there is
+repository — the design rationale, worked scenarios, and extension
+points — each with a one-line description. Nothing there is
 vendored; decide whether something is worth reading, then get it
 yourself.
 
-Repository tags are `<language>-v<version>` (e.g. `python-v0.3.1`) —
-read at the tag matching what this project has installed, never the
-default branch. A project pinned to an older release shown current
-documentation is told about an API it does not have, which is worse
-than not reading it at all.
+**Read the version this project actually has, never the default
+branch.** A project pinned to an older release and shown current
+documentation is told about an API it does not have, which is worse than
+reading nothing. The manifest from Step 1 already says which case you are
+in:
+
+- **A local path, a project reference, or a checked-out clone** — the
+  source and its own docs are already on disk, at exactly the version in
+  use. Read them in place. This is the most reliable case and has no
+  resolution step to get wrong: the code and the documentation beside it
+  cannot disagree.
+- **A registry version** (`verdict-rules==0.4.0`, a `PackageReference`) —
+  repository tags are `<language>-v<version>`, for example
+  `python-v0.3.1`. Read at the tag matching that version.
+- **A git ref** (a commit SHA, a branch) — read at that same ref; file
+  contents resolve at a SHA exactly as they do at a tag.
+- **Nothing resolvable** — say so and read nothing, rather than falling
+  back to the default branch.
 
 ## If you find something worth telling verdict about
 

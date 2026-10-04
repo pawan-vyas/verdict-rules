@@ -302,10 +302,13 @@ they do** — the tests pass and CI stays green while the wrong answer
 sits there. Sweep outward from the code every time: source docstrings,
 [`docs/architecture/`](docs/architecture/README.md) **and its diagrams**, [`docs/extending/`](docs/extending/README.md) (does
 this enable a scenario, or invalidate one?), [`docs/testing/`](docs/testing/README.md) (it names
-specific tests by name), [`docs/maintenance/`](docs/maintenance/README.md), each language's
-quickstart and samples, the shared fixture if the change is behavioural,
-`skills/verdict/references/` with a `plugin.json` bump, that package's own
-`CHANGELOG.md`, and the [root `README.md`](README.md).
+specific tests by name), [`docs/maintenance/`](docs/maintenance/README.md), **each language's own
+`AGENTS.md`** (they restate the guarantees in that language's own terms,
+so a contract change leaves all of them wrong at once), each language's
+quickstart, the shared fixture if the change is behavioural,
+`skills/verdict/SKILL.md` and `skills/verdict/references/` with a
+`plugin.json` bump, that package's own `CHANGELOG.md`, and the
+[root `README.md`](README.md).
 
 A behavioural change usually also means the skill's evals no longer
 measure the current skill. If the change introduced a way to be *subtly*

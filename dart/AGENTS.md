@@ -20,8 +20,18 @@ Read that first; this file only adds what is particular to this language.
   fallback can never mask a failure. When testing code that uses one, cover the
   *present but failing* case — testing only the absent one looks complete and
   misses the direction where a bug is silent.
-- **`RuleResult.data`** holds only what actually ran. Never padded to the full
-  sub-rule list, never flattened into the parent's level.
+- **A predicate returns a `PredicateOutcome`.** `PredicateOutcome(true)` —
+  `passed` is positional — plus an optional `detail`/`data`, never a
+  `RuleResult`. The `FunctionRule` wrapping it owns the name and builds the
+  result, so a predicate cannot name itself something the rule disagrees
+  with.
+- **`RuleResult.data` is opaque.** Never read or written by verdict — it
+  carries whatever a predicate attached, unchanged. A composite's children
+  live in `subResults`, which holds only what actually ran: never padded to
+  the full sub-rule list, never flattened into the parent's level.
+  `decidedByIndices` stores the positions of the children explaining the
+  verdict; `decidedBy`, `leaves` and `failingLeaves` are getters derived
+  from those two. `toJson()` emits the stored fields only.
 
 ## Be precise about structural typing
 

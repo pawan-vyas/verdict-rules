@@ -21,8 +21,18 @@ Read that first.
   fallback can never mask a failure. When testing code that uses one, cover the
   *present but failing* case — testing only the absent one looks complete and
   misses the direction where a bug is silent.
-- **`RuleResult.Data`** holds only what actually ran. Never padded, never
-  flattened into the parent's level.
+- **A predicate returns a `PredicateOutcome`.** `new PredicateOutcome(true)`
+  plus an optional detail/payload — never a `RuleResult`. The
+  `FunctionRule` wrapping it owns the name and builds the result, so a
+  predicate cannot name itself something the rule disagrees with.
+- **`RuleResult.Data` is opaque.** Never read or written by verdict — it
+  carries whatever a predicate attached, unchanged. A composite's children
+  live in `SubResults`, which holds only what actually ran: never padded to
+  the full sub-rule list, never flattened into the parent's level.
+  `DecidedByIndices` stores the positions of the children explaining the
+  verdict; `GetDecidedBy()`, `GetLeaves()` and `GetFailingLeaves()` are
+  methods derived from those two — not properties, so a serializer does not
+  walk them.
 
 ## Be precise about structural typing
 
