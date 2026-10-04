@@ -163,7 +163,7 @@ var canProceed = new AndRule<AccessContext>("can_proceed", new IRule<AccessConte
 var engine = new RulesEngine<AccessContext>(new IRule<AccessContext>[] { canProceed });
 var verdict = await engine.RunNamedAsync("can_proceed", new AccessContext(Permission: true, Available: false));
 
-Console.WriteLine(verdict.Passed);                          // false
+Console.WriteLine(verdict.Passed);                          // False
 Console.WriteLine(verdict.GetFailingLeaves()[0].RuleName);  // resource_is_available
 ```
 
@@ -237,30 +237,34 @@ graph LR
   a caller writes, never inside this package. That's what lets the exact
   same engine answer unrelated questions in the same codebase without
   the two ever coupling to each other.
-- **Rules are structurally typed, not inherited.** A custom rule never
-  imports anything from this package or subclasses anything — it just
-  needs a `name`, a `group`, and an `evaluate(context)` that returns a
-  `RuleResult`.
+- **A rule is a contract, not a base class.** A custom rule needs a
+  `name`, a `group`, and an `evaluate(context)` returning a `RuleResult`
+  — nothing to subclass, and nothing to register before a composite will
+  run it. How that contract is spelled follows each language's own type
+  system: Python's `Protocol` and TypeScript's `interface` are satisfied
+  structurally, so a rule there imports nothing from this package at all,
+  while Dart and C# name the interface explicitly the way those
+  ecosystems expect.
 
 ## Where to go next
 
 | Doc | For |
 | --- | --- |
-| [`python/README.md`](python/packages/verdict-rules/README.md) | Python quickstart — `pip install verdict-rules`, first rule |
+| [`python/packages/verdict-rules/README.md`](python/packages/verdict-rules/README.md) | Python quickstart — `pip install verdict-rules`, first rule |
 | [`python/packages/verdict-rules/docs/quickstart.md`](python/packages/verdict-rules/docs/quickstart.md) | Core concepts and a full worked example |
-| [`js/README.md`](js/packages/verdict-rules/README.md) | JS/TS quickstart — `npm install verdict-rules`, first rule |
+| [`js/packages/verdict-rules/README.md`](js/packages/verdict-rules/README.md) | JS/TS quickstart — `npm install verdict-rules`, first rule |
 | [`js/packages/verdict-rules/docs/quickstart.md`](js/packages/verdict-rules/docs/quickstart.md) | Core concepts and a full worked example |
-| [`dart/README.md`](dart/packages/verdict_rules/README.md) | Dart quickstart — add `verdict_rules` to `pubspec.yaml`, first rule |
+| [`dart/packages/verdict_rules/README.md`](dart/packages/verdict_rules/README.md) | Dart quickstart — add `verdict_rules` to `pubspec.yaml`, first rule |
 | [`dart/packages/verdict_rules/doc/quickstart.md`](dart/packages/verdict_rules/doc/quickstart.md) | Core concepts and a full worked example |
-| [`csharp/README.md`](csharp/src/VerdictRules/README.md) | C# quickstart — `dotnet add package VerdictRules`, first rule |
+| [`csharp/src/VerdictRules/README.md`](csharp/src/VerdictRules/README.md) | C# quickstart — `dotnet add package VerdictRules`, first rule |
 | [`csharp/src/VerdictRules/docs/quickstart.md`](csharp/src/VerdictRules/docs/quickstart.md) | Core concepts and a full worked example |
 | [`docs/architecture/`](docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
 | [`docs/extending/`](docs/extending/README.md) | Building on top of it from your own code, with no changes here |
 | [`docs/maintenance/`](docs/maintenance/README.md) | Changing this package itself |
 | [`docs/testing/`](docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
 | [`docs/future_plan.md`](docs/future_plan.md) | Exploratory feature candidates, and the test used to evaluate one |
-| [`fixtures/README.md`](fixtures/README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
-| [`python/examples/`](python/examples/README.md) | Full, tested mini-projects behind the more comprehensive samples — real code, real tests, real docs |
+| [`fixtures/README.md`](fixtures/README.md) | The shared inputs and expected outcomes every language must reproduce exactly — the evidence a port is the same engine |
+| [`python/examples/README.md`](python/examples/README.md) | Full, tested mini-projects behind the fixtures — real code, real tests, real docs. Every language ships the same two under its own `examples/` |
 | [`skills/verdict/SKILL.md`](skills/verdict/SKILL.md) | The AI-agent skill for building with Verdict |
 
 ## Contributing

@@ -21,9 +21,11 @@ test used to decide whether something belongs in the core at all.
 ## Setting up a change
 
 Each language keeps its own concrete setup commands in its own
-`AGENTS.md`, under "Before calling a change done" — `python/AGENTS.md`,
-`js/AGENTS.md`, `dart/AGENTS.md`, and so on for any later one. A new
-language adds its own file there; nothing here changes for it to do so.
+`AGENTS.md`, under "Before calling a change done" —
+[`python/AGENTS.md`](python/AGENTS.md), [`js/AGENTS.md`](js/AGENTS.md),
+[`dart/AGENTS.md`](dart/AGENTS.md), and
+[`csharp/AGENTS.md`](csharp/AGENTS.md). A new language adds its own file
+there; nothing here changes for it to do so.
 None of them need external services or environment variables — every
 language's test suite is as standalone as its own package.
 

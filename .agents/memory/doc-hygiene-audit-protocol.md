@@ -11,10 +11,18 @@
 
 **In**: architecture/design docs, dev docs, agent-facing docs — every
 durable, committed doc. Concretely in this repo: `docs/`, each
-language's `AGENTS.md`/`README.md`/`CHANGELOG.md`/`docs/quickstart.md`,
-`.agents/memory/`, `skills/verdict/` +
-`skills/verdict-workspace/`, root `AGENTS.md`/`CLAUDE.md`/
-`CONTRIBUTING.md`/`README.md`, `.github/` templates, `fixtures/*/README.md`.
+language's `AGENTS.md`/`README.md`/`CHANGELOG.md`/quickstart and its
+`examples/*/README.md` + `examples/*/docs/`, `.agents/memory/`,
+`skills/verdict/` + `skills/verdict-workspace/`, root `AGENTS.md`/
+`CLAUDE.md`/`CONTRIBUTING.md`/`README.md`, `.github/` templates, and
+`fixtures/README.md` plus `fixtures/*/README.md`.
+
+Every index `README.md` is in scope as a file in its own right, not just
+as a route to the files it lists. An index is where a stale claim hides
+longest, because nothing it describes has to be wrong for the index to
+be — a sweep found `fixtures/README.md` carrying the orphaned tail of a
+deleted bullet, and the root `README.md` describing five worked examples
+by names no fixture has ever had.
 
 **Out, fully**: transient planning/ticket docs and anything not this
 repo's own content:
@@ -45,14 +53,26 @@ apply to an incident file.
    files suspected to have problems. Fix violations found in the same
    pass, check it off, move to the next. No skipping ahead on the
    assumption a file is clean.
-3. Commit in small batches (per directory/logical group, never one
+3. **No grep for discovery or verification inside the sweep.** Read the
+   whole file, then write the whole file. A search tells you a term is
+   present, never whether the sentence around it is true, and a count of
+   matches reads as evidence while being none — a file "touched" with the
+   right symbol count can still be broken in a way only reading finds.
+   Grep is fine for building the file list in step 1, and for one narrow
+   job inside the sweep: confirming a concrete claim about the repo
+   elsewhere (does this path exist, is this symbol really exported, does
+   this anchor resolve). Never for deciding whether a file needs reading
+   or has been fixed. Stated by the maintainer after a sweep reported
+   eighteen broken files where twenty-six were broken, because two had
+   been marked clean from a match count rather than a read.
+4. Commit in small batches (per directory/logical group, never one
    giant end-of-sweep commit), push as you go, update the checklist in
    the *same* commit as the fixes.
-4. Short status report after each batch: what was read, what was
+5. Short status report after each batch: what was read, what was
    found, what was fixed.
-5. Stop and ask — don't guess and keep going — on anything needing a
+6. Stop and ask — don't guess and keep going — on anything needing a
    judgment call only the repo owner can make.
-6. Defer the full test suite until the entire sweep is done, run it
+7. Defer the full test suite until the entire sweep is done, run it
    once at the end as a final regression check.
 
 ## Violations to fix
@@ -127,7 +147,16 @@ though still trimmable if bloated.
 - Confirm the whole file was read, not an excerpt.
 - Confirm every fix preserves technical meaning — change phrasing,
   never the underlying fact.
-- Check every cross-reference/link touched still resolves.
+- Check every cross-reference/link touched still resolves, and that a
+  link's own label names the path it actually points at — a label naming
+  a file that doesn't exist passes every link checker, because the target
+  is fine.
+- **Execute every code sample, don't read it.** A sample that looks right
+  and is subtly wrong is worse than none, and the mismatch is usually in
+  the output comment rather than the code: a sweep of the root `README.md`
+  found all four examples correct and the C# one's expected output
+  written `false` where the runtime prints `False`. Nothing but running it
+  catches that.
 - Check the file off in the tracking checklist.
 
 ## Bugs found along the way (layered on top, given in the same session)

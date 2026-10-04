@@ -29,7 +29,8 @@ docs/
 ## Reading order
 
 1. **[`../README.md`](../README.md)** — the narrative overview of what
-   this package is and why, with no code.
+   this package is and why, with the whole library shown once per
+   language.
 2. **That language's own quickstart** — the core concepts and one
    complete, runnable example.
 3. **[`architecture/`](architecture/README.md)** — the "why": type
@@ -40,8 +41,10 @@ docs/
    - Changing `verdict` itself → [`maintenance/`](maintenance/README.md),
      then [`testing/`](testing/README.md) to prove the change.
    - Building something on top of it, without changing anything here →
-     [`extending/`](extending/README.md), whose scenarios have full worked
-     instances in [`../fixtures/README.md`](../fixtures/README.md) covering generic domains.
-5. **[`future_plan.md`](future_plan.md)** — exploratory feature
-   candidates rejected or deferred so far, and the test used to
-   evaluate a new one.
+     [`extending/`](extending/README.md), one scenario per directory with
+     per-language code. Two of those scenarios also run as full
+     mini-projects under each language's own `examples/`, against the
+     shared data in [`../fixtures/README.md`](../fixtures/README.md).
+5. **[`future_plan.md`](future_plan.md)** — the test used to evaluate a
+   proposed addition, applied to candidates rejected, deferred, shipped,
+   and in one case overturned.

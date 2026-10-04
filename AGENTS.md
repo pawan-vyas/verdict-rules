@@ -8,14 +8,22 @@ model given this file as raw context.
 ## What this repo is
 
 `verdict` is a small, zero-dependency, async-native rule-evaluation
-engine — the same `Rule`/`FunctionRule`/`AndRule`/`OrRule`/
-`RulesEngine`/`RuleResult`/`RunResult` design and execution-model
-guarantees, meant to exist in more than one language. **Only Python
-ships today** — see [`python/README.md`](python/packages/verdict-rules/README.md) and its own
-[`python/AGENTS.md`](python/AGENTS.md) for everything Python-specific. A second language
-lands as a new top-level directory alongside `python/`, with its own
-`AGENTS.md` for that language's own conventions — check which
-directories actually exist before assuming a language has an SDK yet.
+engine — the same `Rule`/`FunctionRule`/`AndRule`/`OrRule`/`NotRule`/
+`RulesEngine`/`PredicateOutcome`/`RuleResult`/`RunResult` design and
+execution-model guarantees, in more than one language. **Four SDKs ship
+today**, each a top-level directory with its own `AGENTS.md` for that
+language's conventions and its own package docs:
+
+| Language | Standing instructions | Package |
+| :-- | :-- | :-- |
+| Python | [`python/AGENTS.md`](python/AGENTS.md) | [`python/packages/verdict-rules/`](python/packages/verdict-rules/README.md) |
+| JS/TS | [`js/AGENTS.md`](js/AGENTS.md) | [`js/packages/verdict-rules/`](js/packages/verdict-rules/README.md) |
+| Dart | [`dart/AGENTS.md`](dart/AGENTS.md) | [`dart/packages/verdict_rules/`](dart/packages/verdict_rules/README.md) |
+| C# | [`csharp/AGENTS.md`](csharp/AGENTS.md) | [`csharp/src/VerdictRules/`](csharp/src/VerdictRules/README.md) |
+
+A fifth language lands the same way, adding a directory and nothing
+else — check which directories actually exist before assuming a
+language has an SDK.
 [`skills/verdict/`](skills/verdict/SKILL.md) is the AI-agent skill for
 building with verdict, vendored back into consuming projects via
 `scripts/install.sh`.

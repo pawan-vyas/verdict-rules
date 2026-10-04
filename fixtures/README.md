@@ -42,5 +42,3 @@ for the shape a new one follows, if the need arises.
   existing fixture here.
 - [`../docs/testing/README.md`](../docs/testing/README.md) — where a
   fixture fits among the other testing layers.
-  language-agnostic design specs, including the ones built on top of a
-  fixture here.

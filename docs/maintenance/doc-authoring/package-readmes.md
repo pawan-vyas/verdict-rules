@@ -57,12 +57,13 @@ restatement. The two must never demonstrate a different subset of the API.
   heading repeats the page's own chrome. Add one only for a registry that
   doesn't.
 - **`## Development`** — dropped, not merely unmandated: it failed the
-  three-leaks test below.
-  [`../../../CONTRIBUTING.md`](../../../CONTRIBUTING.md)'s per-language
-  section already carries the same commands plus the testing and PR bar
-  around them, and a subset of that here is contributor-facing content on
-  a page someone opened to install the package. Section 7 already links
-  `docs/maintenance/` for changing the package itself.
+  three-leaks test below. Setup commands live in that language's own
+  `AGENTS.md`, which
+  [`../../../CONTRIBUTING.md`](../../../CONTRIBUTING.md) routes to along
+  with the testing and PR bar around them; a subset of that here is
+  contributor-facing content on a page someone opened to install the
+  package. Section 7 already links `docs/maintenance/` for changing the
+  package itself.
 
 ## What's genuinely registry- or language-specific
 
