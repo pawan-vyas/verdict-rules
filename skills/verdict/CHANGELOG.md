@@ -8,6 +8,15 @@ cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skil
 
 ## [0.8.0] - 2026-10-03
 
+- **Walking a rule tree is documented, and the trap named.** A composite now
+  exposes the rules it was built from, before anything is evaluated, under a
+  contract separate from `Rule` -- so `SKILL.md` states it as a guarantee and
+  each language's notes carry the walk in its own idiom, with the narrowing
+  spelling that language uses (`isinstance`, a type guard, `is`, a pattern
+  match). The trap is the reason it is written down: a type switch over
+  `AndRule`/`OrRule`/`NotRule` silently walks past any other composite,
+  including the reader's own, and reports the rules inside it as absent rather
+  than failing. The notes say to test for the contract instead.
 - **The predicate contract is corrected in every language's notes.** A
   predicate returns a `PredicateOutcome` — `passed` plus an optional
   detail and payload — and the `FunctionRule` wrapping it owns the rule's

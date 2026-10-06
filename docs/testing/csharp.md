@@ -13,7 +13,7 @@ dotnet build src/VerdictRules/VerdictRules.csproj -warnaserror
 dotnet test tests/VerdictRules.Tests/VerdictRules.Tests.csproj
 ```
 
-171 tests, around 30 ms. There is no solution file, so a bare
+183 tests, around 30 ms. There is no solution file, so a bare
 `dotnet build`/`dotnet test` from `csharp/` fails with "Specify a project or
 solution file" — always name the project. No external context or environment
 variables are needed; this suite is as standalone as the package.
@@ -24,6 +24,7 @@ The stronger measure than any count is the survivor list in
 
 | File | Tests | Proves |
 | :-- | --: | :-- |
+| `CompositeRuleTests.cs` | 9 | `ICompositeRule<TContext>`, `SubRules`, and that one walk reaches a consumer-defined composite |
 | `RuleTests.cs` | 39 | `FunctionRule`/`AndRule`/`OrRule`/`NotRule` — part of the portable contract suite |
 | `DiagnosticsTests.cs` | 33 | `ToString` and `DebuggerDisplay` on every public type |
 | `EngineTests.cs` | 25 | `RunAllAsync`/`RunNamedAsync`/`RunGroupAsync` and the try-prefixed forms — part of the portable contract suite |

@@ -246,6 +246,12 @@ graph LR
   while Dart and C# name the interface explicitly the way those
   ecosystems expect.
 
+- **A composite tells you what it is made of.** The rules a composite was
+  built from are readable before anything runs, under a contract separate
+  from the rule contract itself — so a rule *tree* can be listed, audited or
+  resolved against your own registry without evaluating it. Your own
+  combinator joins in by satisfying that contract; nothing registers.
+
 ## Where to go next
 
 | Doc | For |

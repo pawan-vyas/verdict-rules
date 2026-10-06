@@ -13,7 +13,7 @@ cd python/packages/verdict-rules
 uv run pytest --cov=verdict --cov-report=term-missing
 ```
 
-140 tests, 100% line coverage of all four modules (`rule.py`,
+158 tests, 100% line coverage of all four modules (`rule.py`,
 `engine.py`, `result.py`, `__init__.py`), around a tenth of a second.
 Line coverage does not prove the contracts in [`README.md`](README.md)
 are enforced — a test can execute every line and assert the wrong
@@ -24,6 +24,7 @@ equivalent.
 
 | File | Tests | Proves |
 | :-- | --: | :-- |
+| `test_composite_rule.py` | 12 | `CompositeRule`, `sub_rules`, and that one walk reaches a consumer-defined composite |
 | `test_composition.py` | 31 | `SequentialEvaluator`/`ShortCircuitEvaluator`, and `decided_by`'s generic and short-circuit-aware rules |
 | `test_rule.py` | 27 | `FunctionRule`/`AndRule`/`OrRule`/`NotRule` — part of the portable contract suite |
 | `test_engine.py` | 27 | `run_all`/`run_named`/`run_group` and their try-prefixed forms — part of the portable contract suite |

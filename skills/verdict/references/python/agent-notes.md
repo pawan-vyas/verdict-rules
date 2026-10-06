@@ -11,8 +11,8 @@ pip install verdict-rules
 
 ```python
 from verdict import (
-    AndRule, FunctionRule, NotRule, OrRule, PredicateOutcome,
-    Rule, RuleResult, RulesEngine, RunResult,
+    AndRule, CompositeRule, FunctionRule, NotRule, OrRule,
+    PredicateOutcome, Rule, RuleResult, RulesEngine, RunResult,
 )
 ```
 
@@ -27,6 +27,9 @@ FunctionRule(name, predicate, group=None) # TContext inferred from the predicate
 AndRule(name, rules, group=None)          # passes only if every sub-rule passes
 OrRule(name, rules, group=None)           # passes as soon as one does
 NotRule(name, rule, group=None)           # passes exactly when the one wrapped rule fails
+
+rule.sub_rules                            # a composite's parts, un-evaluated; one element for NotRule
+isinstance(rule, CompositeRule)           # is it a composite? a leaf is not one
 
 engine = RulesEngine(rules)
 await engine.run_all(context)             # every rule, never short-circuits
@@ -98,6 +101,25 @@ one sub-rule that stopped it** -- a single leaf only when that sub-rule is
 itself a leaf, and several when it is a composite that failed on more than
 one of its own. Read the whole list; indexing `[0]` names one of several
 causes without saying so.
+
+## Walking a rule tree
+
+A composite exposes the rules it was built from, before anything is
+evaluated. Test for the `CompositeRule` protocol, never for concrete types —
+an `isinstance` chain over `AndRule`/`OrRule`/`NotRule` silently walks past
+any other composite, your own included, and reports the rules inside it as
+absent rather than failing:
+
+```python
+def leaf_names(rule: Rule[TContext]) -> list[str]:
+    if isinstance(rule, CompositeRule):
+        return [n for part in rule.sub_rules for n in leaf_names(part)]
+    return [rule.name]
+```
+
+Your own composite satisfies the protocol by having `sub_rules`; nothing to
+register. `sub_rules` is what was *built* — the result views are what *ran*,
+and they differ because a composite short-circuits.
 
 ## Which run mode
 

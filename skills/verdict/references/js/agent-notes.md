@@ -13,6 +13,7 @@ npm install verdict-rules
 import {
   AndRule,
   FunctionRule,
+  isCompositeRule,
   NotRule,
   OrRule,
   RuleResult,
@@ -20,7 +21,7 @@ import {
   RunResult,
   UnknownLookupError,
 } from "verdict-rules";
-import type { Context, PredicateOutcome, Rule, RulePredicate } from "verdict-rules";
+import type { CompositeRule, Context, PredicateOutcome, Rule, RulePredicate } from "verdict-rules";
 ```
 
 > `RuleResult` and `RunResult` are classes, so they are value imports --
@@ -51,6 +52,9 @@ new FunctionRule(name, predicate, group?) // TContext inferred from the predicat
 new AndRule(name, rules, group?)          // passes only if every sub-rule passes
 new OrRule(name, rules, group?)           // passes as soon as one does
 new NotRule(name, rule, group?)           // passes exactly when the one wrapped rule fails
+
+rule.subRules                             // a composite's parts, un-evaluated; one element for NotRule
+isCompositeRule(rule)                     // type guard narrowing to CompositeRule<T>; a leaf is not one
 
 const engine = new RulesEngine(rules);
 await engine.runAll(context);             // every rule, never short-circuits
@@ -124,6 +128,25 @@ could have been empty.
 A custom composite builds its result with the constructor, never by
 spreading an existing one -- a spread yields a plain object without the
 `leaves`/`failingLeaves` accessors, which is not a `RuleResult`.
+
+## Walking a rule tree
+
+A composite exposes the rules it was built from, before anything is
+evaluated. Narrow with `isCompositeRule`, never with `instanceof` — a chain
+over `AndRule`/`OrRule`/`NotRule` silently walks past any other composite,
+your own included, and reports the rules inside it as absent rather than
+failing:
+
+```ts
+function leafNames<T>(rule: Rule<T>): string[] {
+  return isCompositeRule(rule) ? rule.subRules.flatMap(leafNames) : [rule.name];
+}
+```
+
+The guard is structural, so your own composite narrows exactly as a built-in
+one does — implement `CompositeRule<T>` and you are done. Note the built-ins
+store their parts in a `#private` field, so `subRules` is the only way to read
+them at all. `subRules` is what was *built*; the result views are what *ran*.
 
 ## Which run mode
 

@@ -152,6 +152,37 @@ are cheap in-memory comparisons. Concurrency buys nothing in either.
 **Trigger for revisiting**: a rule set grows large and I/O-bound enough
 that run-all latency shows up in an actual profile — not before.
 
+## A third, shipped on one consumer's evidence
+
+**Reading a composite's own parts** -- a contract separate from `Rule` that a
+composite satisfies, exposing the rules it was built from before anything is
+evaluated. Recorded here because the *second* question was overridden, not
+met, and that should be visible rather than tidied away.
+
+The first question is clearly yes, and not about short-circuiting: a consumer
+that resolves named rules through its own registry, rejects duplicate names at
+build time, and records which rules a decision used has to enumerate the named
+rules inside a composite. Where it cannot, nothing fails -- it reports *fewer*
+rules than were used and its duplicate check misses the duplicates. The design
+answer is the subtle part, and it is why this is a contract rather than three
+accessors: accessors on `AndRule`/`OrRule`/`NotRule` alone leave a walk
+switching on concrete types, which falls through to the leaf case on a fourth
+kind of composite and reports the rules inside it as absent. That is the
+silent-wrong-answer shape, and it is introduced by the half-measure.
+
+The second question had **one** consumer, with a concrete and specific
+requirement, where the bar asks for two. The maintainer judged the subtlety
+sufficient on its own. The precedent is the engine introspection below, which
+shipped on one organically recurring need -- and the `NotRule` lesson above,
+where this test's first question was once applied too narrowly.
+
+Rebuilding a composite over new parts was considered in the same pass and is
+an explicit non-goal: reading parts is total, rebuilding is partial, and a
+contract cannot promise "the same composite over new parts" on behalf of a
+composite that holds state outside them -- `AtLeastNRule`'s own threshold
+being the worked example. See
+[`extending/walking-a-rule-tree/`](extending/walking-a-rule-tree/README.md).
+
 ## Two candidates this file named, both now shipped
 
 Recorded rather than deleted, because what each turned out to need is the

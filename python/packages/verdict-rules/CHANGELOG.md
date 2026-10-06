@@ -12,14 +12,30 @@ Tagged `python-vX.Y.Z`.
 
 ### Added
 
+- **`CompositeRule`** — a runtime-checkable `Protocol` a rule built from
+  other rules satisfies, exposing `sub_rules`: the parts it was built from,
+  readable before anything is evaluated. `AndRule`/`OrRule`/`NotRule`
+  satisfy it; a `FunctionRule` does not, so "structure or terminal check" is
+  answerable without naming concrete types. A negation reports a one-element
+  sequence rather than a differently-named single rule, so a walk needs no
+  knowledge of which composite it holds, and a vacuous composite reports an
+  empty one. Walk a tree with `isinstance(rule, CompositeRule)`, never an
+  `isinstance` chain over the three built-ins: a chain silently walks past
+  any other composite, a consumer's own included, reporting the rules inside
+  it as absent rather than failing. `Rule` is unchanged, so an existing rule
+  keeps satisfying it. This describes what was *built*; `sub_results` and the
+  flattened views describe what *ran*.
 - **`RuleResult.sub_results`** — a composite's own children, in
   evaluation order, holding exactly what it evaluated: never padded to
   the full sub-rule list, never flattened into the parent. An empty
   `sub_results` *is* the leaf signal, structurally.
 - **`RuleResult.leaves` / `RuleResult.failing_leaves`**, and the same
   pair on `RunResult`, flattened across every rule a run evaluated. A
-  consumer keying an audit trail on the refusing rule can read
-  `result.failing_leaves[0].rule_name` without knowing the tree's shape.
+  consumer keying an audit trail on the refusing rules can read every
+  `rule_name` in `result.failing_leaves` without knowing the tree's shape --
+  the whole list, since a failed `AndRule` reports the failing leaves of the
+  one sub-rule that stopped it, which is a single leaf only when that
+  sub-rule is itself a leaf.
   `failing_leaves` is an independent recursion, not a filter over
   `leaves`: a passed result contributes none even when an earlier
   short-circuited branch failed on the way to that pass, and a failed

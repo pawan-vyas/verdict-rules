@@ -13,14 +13,29 @@ Tagged `dart-vX.Y.Z`.
 
 ## 0.4.0
 
+- **Added `CompositeRule<TContext>`** — an `abstract interface class` a rule
+  built from other rules implements, exposing `subRules`: the parts it was
+  built from, readable before anything is evaluated. `AndRule`/`OrRule`/
+  `NotRule` implement it; a `FunctionRule` does not, so "structure or
+  terminal check" is answerable without naming concrete classes. A negation
+  reports a one-element unmodifiable list rather than a differently-named
+  single rule, so a walk needs no knowledge of which composite it holds, and
+  a vacuous composite reports an empty one. Test
+  `rule is CompositeRule<TContext>`, never an `is`-chain over the three
+  built-ins: a chain silently walks past any other composite, a consumer's
+  own included, reporting the rules inside it as absent rather than failing.
+  Implemented, never extended, the same way `Rule` is. `Rule` itself is
+  unchanged.
 - **Added `RuleResult.subResults`** — a composite's own children, in
   evaluation order, holding exactly what it evaluated: never padded to
   the full sub-rule list, never flattened into the parent.
 - **Added `RuleResult.leaves`/`failingLeaves`**, and the same pair on
   `RunResult`, flattened across every rule a run evaluated. A consumer
-  keying an audit trail on the refusing rule can read
-  `result.failingLeaves.first.ruleName` without knowing the tree's
-  shape. `failingLeaves` is an independent recursion, not a filter over
+  keying an audit trail on the refusing rules can read every `ruleName` in
+  `result.failingLeaves` without knowing the tree's shape -- the whole list,
+  since a failed `AndRule` reports the failing leaves of the one sub-rule
+  that stopped it, which is a single leaf only when that sub-rule is itself
+  a leaf. `failingLeaves` is an independent recursion, not a filter over
   `leaves`: a passed result contributes none even past an earlier
   short-circuited branch that failed, and a failed result with no
   failing children is itself the leaf.

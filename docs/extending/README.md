@@ -31,6 +31,7 @@ for that template.
 | [`absence-vs-failure/`](absence-vs-failure/README.md) | Deciding for yourself what a missing named rule or group should mean. |
 | [`isolating-flaky-predicates/`](isolating-flaky-predicates/README.md) | Stopping one predicate's own exception from taking out an entire run. |
 | [`reusing-a-rule-across-contexts/`](reusing-a-rule-across-contexts/README.md) | Composing a typed rule into more than one composite context via a small projecting adapter, without weakening the composite's own same-context guarantee. |
+| [`walking-a-rule-tree/`](walking-a-rule-tree/README.md) | Inspecting what a decision was *built* from before running it, without a type switch that silently skips your own composites. |
 
 ## What you never need to do
 

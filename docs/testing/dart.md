@@ -16,7 +16,7 @@ dart analyze                     # must report no issues
 dart test
 ```
 
-133 tests. `analysis_options.yaml` enables strict casts, inference and raw
+153 tests. `analysis_options.yaml` enables strict casts, inference and raw
 types, so `dart analyze` reporting clean is part of the suite rather than a
 separate nicety. `dart test` imports `lib/verdict_rules.dart` straight from
 source, the same as Python — unlike JS, which needs a build first.
@@ -32,6 +32,7 @@ suite in the example project below is what actually guards them.
 
 | File | Tests | Proves |
 | :-- | --: | :-- |
+| `composite_rule_test.dart` | 13 | `CompositeRule`, `subRules`, and that one walk reaches a consumer-defined composite |
 | `engine_test.dart` | 28 | `runAll`/`runNamed`/`runGroup` and the try-prefixed forms — part of the portable contract suite |
 | `composition_test.dart` | 26 | `SequentialEvaluator`/`ShortCircuitEvaluator`, and `decidedBy`'s two computation rules |
 | `result_test.dart` | 20 | `leaves`/`failingLeaves` on both result types |

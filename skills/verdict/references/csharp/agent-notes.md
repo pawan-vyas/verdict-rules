@@ -33,6 +33,9 @@ new FunctionRule(name, predicate, group: null)       // wraps a plain async pred
 new AndRule(name, rules, group: null)                // passes only if every sub-rule passes
 new OrRule(name, rules, group: null)                 // passes as soon as one does
 new NotRule(name, rule, group: null)                 // passes exactly when the one wrapped rule fails
+
+rule.SubRules                                        // a composite's parts, un-evaluated; one element for NotRule
+rule is ICompositeRule<TContext> composite           // is it a composite? a leaf is not one
 var engine = new RulesEngine(rules);
 await engine.RunAllAsync(context, cancellationToken);          // every rule, never short-circuits
 await engine.RunNamedAsync(name, context, cancellationToken);  // one rule; throws KeyNotFoundException if absent
@@ -119,6 +122,31 @@ one sub-rule that stopped it** -- a single leaf only when that sub-rule is
 itself a leaf, and several when it is a composite that failed on more than
 one of its own. Read the whole list; indexing `[0]` names one of several
 causes without saying so.
+
+## Walking a rule tree
+
+A composite exposes the rules it was built from, before anything is
+evaluated. Pattern-match `ICompositeRule<TContext>`, never a `switch` over
+concrete types — a type switch silently walks past any other composite, your
+own included, and reports the rules inside it as absent rather than failing:
+
+```csharp
+static void Walk<T>(IRule<T> rule, Action<IRule<T>> visit)
+{
+    visit(rule);
+    if (rule is ICompositeRule<T> composite)
+        foreach (var part in composite.SubRules)
+            Walk(part, visit);
+}
+```
+
+`SubRules` is a property, not a method, unlike a result's own derived views:
+those are methods because a get-only collection property gets serialized, and
+a rule is never serialized. The non-generic arity implements
+`ICompositeRule<IReadOnlyDictionary<string, object?>>`, whose element type is
+`IRule<TContext>` rather than `IRule`, so a walk written against the generic
+contract reaches both. `SubRules` is what was *built*; the result views are
+what *ran*.
 
 ## Which run mode
 

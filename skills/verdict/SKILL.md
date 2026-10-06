@@ -61,6 +61,15 @@ passes its own tests while being silently incorrect:
   `RuleResult`. Returning a `RuleResult` from a predicate raises.
 - **Result `data` is opaque.** Never read or written by verdict — it
   carries whatever a predicate attached, unchanged.
+- **A composite's own parts are readable before it runs.** A separate
+  contract from `Rule` -- a composite satisfies both, a leaf only `Rule` --
+  exposing the rules it was built from, uniformly: a negation reports a
+  one-element list, not a differently-named single rule. Walk a rule tree by
+  testing for that contract, never with a type switch over
+  `AndRule`/`OrRule`/`NotRule`: a switch silently walks past a composite the
+  engine did not define, including your own, and reports the rules inside it
+  as absent rather than failing. This describes what was *built*; the result
+  views describe what *ran*.
 - **A composite's children live in its result's sub-results, never in
   `data`.** They are exactly what the composite evaluated: never padded
   to the full sub-rule list, never flattened into the parent's level.

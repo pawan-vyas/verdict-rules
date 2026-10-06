@@ -14,14 +14,33 @@ Tagged `csharp-vX.Y.Z`.
 
 ### Added
 
+- **`ICompositeRule<TContext>`** — an interface a rule built from other
+  rules implements, exposing `SubRules`: the parts it was built from,
+  readable before anything is evaluated. `AndRule`/`OrRule`/`NotRule`
+  implement it at both arities; a `FunctionRule` does not, so "structure or
+  terminal check" is answerable without naming concrete types. A negation
+  reports a one-element list rather than a differently-named single rule, so
+  a walk needs no knowledge of which composite it holds, and a vacuous
+  composite reports an empty one. Pattern-match `is ICompositeRule<T>`,
+  never a `switch` over the three built-ins: a switch silently walks past
+  any other composite, a consumer's own included, reporting the rules inside
+  it as absent rather than failing. A property, not a method, unlike a
+  result's own derived views — those are methods because a get-only
+  collection property gets serialized, and a rule is never serialized. The
+  non-generic arity's element type is `IRule<TContext>`, not `IRule`, since
+  `IRule` derives from the closed generic and the inner composite holds the
+  base type. `IRule` itself is unchanged.
 - **`RuleResult.SubResults`** — a composite's own children, in
   evaluation order, holding exactly what it evaluated: never padded to
   the full sub-rule list, never flattened into the parent.
 - **`RuleResult.GetLeaves()` / `GetFailingLeaves()`**, and the same pair
   on `RunResult`, flattened across every rule a run evaluated. A
-  consumer keying an audit trail on the refusing rule can read
-  `result.GetFailingLeaves()[0].RuleName` without knowing the tree's
-  shape. `GetFailingLeaves()` is an independent recursion, not a filter
+  consumer keying an audit trail on the refusing rules can read every
+  `RuleName` in `result.GetFailingLeaves()` without knowing the tree's
+  shape -- the whole list, since a failed `AndRule` reports the failing
+  leaves of the one sub-rule that stopped it, which is a single leaf only
+  when that sub-rule is itself a leaf. `GetFailingLeaves()` is an
+  independent recursion, not a filter
   over `GetLeaves()`: a passed result contributes none even past an
   earlier short-circuited branch that failed, and a failed result with
   no failing children is itself the leaf.

@@ -9,6 +9,21 @@ Tagged `js-vX.Y.Z`.
 
 ## [0.4.0] - 2026-10-03
 
+- **Added `CompositeRule<TContext>` and `isCompositeRule`** — an interface a
+  rule built from other rules satisfies, exposing `subRules`: the parts it
+  was built from, readable before anything is evaluated, plus a type guard
+  that narrows to it. `AndRule`/`OrRule`/`NotRule` implement it; a
+  `FunctionRule` does not, so "structure or terminal check" is answerable
+  without naming concrete classes. A negation reports a one-element array
+  rather than a differently-named single rule, so a walk needs no knowledge
+  of which composite it holds, and a vacuous composite reports an empty one.
+  Narrow with `isCompositeRule`, never an `instanceof` chain over the three
+  built-ins: a chain silently walks past any other composite, a consumer's
+  own included, reporting the rules inside it as absent rather than failing.
+  The guard is structural, so a consumer's composite narrows exactly as a
+  built-in one does. This matters more here than in the other SDKs: the
+  built-ins store their parts in a `#private` field, so `subRules` is the
+  only way to read them at all. `Rule` is unchanged.
 - `FunctionRule`, `AndRule`, `OrRule`, and `RulesEngine` now define
   `toString()` and `[Symbol.for('nodejs.util.inspect.custom')]`. A rule
   or engine printed via `console.log` or in the Node REPL previously
@@ -23,7 +38,10 @@ Tagged `js-vX.Y.Z`.
 - **`RuleResult.leaves`/`failingLeaves`**, and the same pair on
   `RunResult`, flattened across every rule a run evaluated. A consumer
   keying an audit trail on the refusing rule can read
-  `result.failingLeaves[0].ruleName` without knowing the tree's shape.
+  every `ruleName` in `result.failingLeaves` without knowing the tree's
+  shape -- the whole list, since a failed `AndRule` reports the failing
+  leaves of the one sub-rule that stopped it, which is a single leaf only
+  when that sub-rule is itself a leaf.
   `failingLeaves` is an independent recursion, not a filter over
   `leaves`: a passed result contributes none even past an earlier
   short-circuited branch that failed, and a failed result with no

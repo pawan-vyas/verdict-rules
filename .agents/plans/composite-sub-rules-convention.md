@@ -154,7 +154,7 @@ static void Walk<T>(IRule<T> rule, Action<IRule<T>> visit)
   sub-results.
 - Timing: its own PR, after the branch in flight lands.
 
-## Decisions still open
+## Decisions, resolved during implementation
 
 - **C#: property or method?** A result spells its derived collection views as
   methods (`GetDecidedBy()`) because a get-only collection property gets
@@ -166,10 +166,42 @@ static void Walk<T>(IRule<T> rule, Action<IRule<T>> visit)
   `IRule<IReadOnlyDictionary<string, object?>>`, so the non-generic `AndRule`
   cannot promise `IReadOnlyList<IRule>` — its inner composite genuinely holds
   the base element type, and a caller may have passed one that is not an
-  `IRule`. Decide whether the non-generic arity exposes the base element type
-  or does not expose the member at all.
+  `IRule`. **Resolved: it exposes the base element type**, so a walk written
+  against `ICompositeRule<TContext>` reaches both arities. The practical
+  consequence, found by running the samples rather than reasoning about it: a
+  consumer's composite declared only `ICompositeRule<Dict>` will not compile
+  into the *non-generic* `AndRule`, whose constructor takes
+  `IReadOnlyList<IRule>` -- because `IRule` is the more derived type. Build
+  such a tree with the generic arity, or declare the composite
+  `: IRule, ICompositeRule<Dict>`. Documented in the scenario's C# page.
 - Whether a vacuous composite's empty list needs calling out in each
-  language's own notes, or only in the shared contract.
+  language's own notes, or only in the shared contract. **Resolved: the
+  shared contract plus each changelog**, not the per-language notes, which
+  stay one screen.
+
+## A non-goal, settled on the record
+
+**Rebuilding a composite over new parts** (a `WithSubRules(parts)` member) is
+not planned, and not merely deferred. Reading parts is *total* -- every
+composite can say what it is built from. Rebuilding is *partial*, and the
+contract cannot express that: a composite may hold state that is not in its
+parts, and this repo's own documented threshold rule in
+[`new-rule-shape/`](../../docs/extending/new-rule-shape/README.md) is exactly
+that shape. Asking an implementor to promise "the same composite over new
+parts" is a promise nothing verifies and that is silently broken by returning
+one that dropped its threshold -- the feature's own failure mode would be a
+wrong answer with no error, which is the shape this surface exists to prevent.
+
+It would also change the contract's nature: `SubRules` is a read a walker
+needs, while a rebuild is a construction capability most composites have no
+reason to offer, and putting it on the same interface would force every
+implementor to answer for it. If it ever happens it is a separate, opt-in
+contract on its own evidence.
+
+The safer pattern, for a consumer that needs substitution: rebuild the
+composites whose construction you know, and make anything else a **build
+problem**. That fails loudly at build time, where a silent rebuild would fail
+quietly at decide time.
 
 ## Landing checklist
 

@@ -106,6 +106,7 @@ Each of the four language targets carries the same core set, and
 | `custom-composite-reporting-its-decision` | all four languages | a custom composite built on the shared evaluator, reporting which children explain its own verdict |
 | `which-result-view-to-read` | `cross-language/` | choosing between the recursive failing view, the flat leaf enumeration, and the one-level decided-by view |
 | `serializing-a-result` | `cross-language/` | encoding a result with the language's own serializer, with the derived views absent and `data` the caller's problem |
+| `walking-a-rule-tree` | `cross-language/` | inspecting what a decision was built from before running it, by testing for the composite contract rather than switching on concrete composite types |
 | `local-pin-resolution` | `cross-language/` | a dependency pinned to a local checkout is read on disk, in place, with no tag resolved and no fallback to the default branch |
 | `unsupported-language` | `cross-language/` | a language with no SDK produces a plain statement of that, not an invented import path |
 | `redacted-defect-report` | `cross-language/` | a defect report carrying no domain names, context values, or application stack frames |

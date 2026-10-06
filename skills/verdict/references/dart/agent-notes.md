@@ -38,6 +38,9 @@ AndRule(name, rules, {group})              // passes only if every sub-rule pass
 OrRule(name, rules, {group})               // passes as soon as one does
 NotRule(name, rule, {group})               // passes exactly when the one wrapped rule fails
 
+rule.subRules                              // a composite's parts, un-evaluated; one element for NotRule
+rule is CompositeRule<TContext>            // is it a composite? a leaf is not one
+
 final engine = RulesEngine(rules);
 await engine.runAll(context);              // every rule, never short-circuits
 await engine.runNamed(name, context);      // one rule; throws ArgumentError if absent
@@ -115,6 +118,24 @@ one sub-rule that stopped it** -- a single leaf only when that sub-rule is
 itself a leaf, and several when it is a composite that failed on more than
 one of its own. Read the whole list; `.first` names one of several causes
 without saying so, and throws outright on an empty list.
+
+## Walking a rule tree
+
+A composite exposes the rules it was built from, before anything is
+evaluated. Test for `CompositeRule<TContext>`, never for concrete types — an
+`is`-chain over `AndRule`/`OrRule`/`NotRule` silently walks past any other
+composite, your own included, and reports the rules inside it as absent
+rather than failing:
+
+```dart
+List<String> leafNames<T>(Rule<T> rule) => rule is CompositeRule<T>
+    ? rule.subRules.expand(leafNames<T>).toList()
+    : [rule.name];
+```
+
+Your own composite `implements CompositeRule<TContext>` — it is an
+`abstract interface class`, like `Rule`, so you implement it and never extend
+it. `subRules` is what was *built*; the result views are what *ran*.
 
 ## Which run mode
 

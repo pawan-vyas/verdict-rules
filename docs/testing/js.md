@@ -14,7 +14,7 @@ npm run build                  # tests import from dist/, not src/
 npm run test:coverage
 ```
 
-144 tests across 29 suites, 100% line/branch/function coverage via Node's
+159 tests across 32 suites, 100% line/branch/function coverage via Node's
 own test runner and `--experimental-test-coverage` — no external coverage
 tool. `npm test` imports from `dist/`, so a build is a prerequisite, unlike
 Python and Dart where the suite imports the source tree directly.
@@ -26,6 +26,7 @@ enforced. The stronger measure is the survivor list in
 
 | File | Tests | Proves |
 | :-- | --: | :-- |
+| `composite-rule.test.js` | 12 | `CompositeRule`/`isCompositeRule`, `subRules`, and that one walk reaches a consumer-defined composite |
 | `composition.test.js` | 27 | `SequentialEvaluator`/`ShortCircuitEvaluator`, and `decidedBy`'s two computation rules |
 | `engine.test.js` | 27 | `runAll`/`runNamed`/`runGroup` and the try-prefixed forms — part of the portable contract suite |
 | `rule.test.js` | 25 | `FunctionRule`/`AndRule`/`OrRule`/`NotRule` — part of the portable contract suite |

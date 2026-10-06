@@ -80,6 +80,21 @@ that matter, and why:
 >    composite type. The payoff: a custom composite can compose the same
 >    primitive directly instead of hand-rolling its own loop — see
 >    [`../extending/new-rule-shape/`](../extending/new-rule-shape/README.md).
+> 6. **A composite's parts are readable, under a contract separate from
+>    `Rule`** — a composite satisfies both, a leaf only `Rule`, so "is this
+>    structure or a terminal check" is answerable without naming a concrete
+>    type. The separation is the design: putting the parts on a contract
+>    rather than on the three built-in types means one walk reaches a
+>    composite this package never defined, including a consumer's own. A
+>    switch over `AndRule`/`OrRule`/`NotRule` instead falls through to the
+>    leaf case on a fourth kind and reports the rules inside it as *absent*
+>    — wrong, and silent. This is the same reason nothing in this package
+>    dispatches on a concrete rule type either. The member is uniform, so a
+>    negation reports a one-element list rather than a differently-named
+>    single rule, and a vacuous composite reports an empty one. It describes
+>    what was *built*; (4)'s sub-results describe what *ran*, and the two
+>    differ exactly because a composite short-circuits. See
+>    [`../extending/walking-a-rule-tree/`](../extending/walking-a-rule-tree/README.md).
 
 ### Generic context
 
