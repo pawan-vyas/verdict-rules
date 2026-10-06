@@ -19,6 +19,7 @@
 | [`skill-agent-notes.md`](skill-agent-notes.md) | Each language's own `skills/verdict/references/<language>/agent-notes.md` |
 | [`release-procedures.md`](release-procedures.md) | Each language's own `docs/maintenance/releases/<language>.md` |
 | [`maintenance.md`](maintenance.md) | This `maintenance/` directory's own file-naming and structure conventions |
+| [`summaries.md`](summaries.md) | A pull-request description, a PR comment, or any doc section whose job is to summarize |
 
 ## No narration about the document itself
 

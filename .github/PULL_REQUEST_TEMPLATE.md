@@ -1,7 +1,10 @@
 <!-- markdownlint-disable MD041 (GitHub shows the PR title as the H1; a template starting with its own would duplicate it) -->
 ## What this changes and why
 
-<!-- One or two sentences. Link the issue this addresses, if any. -->
+<!-- One or two sentences for a small change. Link the issue this addresses, if
+any. For anything larger, prefer dense tables over prose paragraphs, keeping
+every fact a prose version would carry -- see
+../docs/maintenance/doc-authoring/summaries.md. -->
 
 ## Checklist
 
