@@ -1,4 +1,4 @@
-<!-- Title: Incident 007 — Edited On The Wrong Branch -->
+<!-- Title: Incident 007 -- Edited On The Wrong Branch -->
 # 007 · Edited and nearly committed a repo-wide fix directly onto an SDK branch
 
 > **2026-09-13 · no damage, recorded for the process failure and a recurring side-effect**

@@ -1,7 +1,8 @@
 <!-- Title: Verdict Quickstart (C#) -->
 # Verdict — Quickstart
 
-> The five names you need, and one complete example using all of them.
+> The six names you need, and one complete example wiring the composites
+> and the engine together.
 > See [`../README.md`](../README.md) for this package's own
 > `dotnet add package`/first-rule quickstart, the top-level
 > [`../../../../README.md`](../../../../README.md) for what Verdict is in
@@ -22,6 +23,8 @@
   rules, short-circuiting the same way a boolean `&&`/`||` expression
   would (`AndRule` stops at the first failure, `OrRule` stops at the
   first pass).
+- **`NotRule`** — wraps exactly one rule and inverts it: it passes when
+  that rule fails. One child, so it has no vacuous case.
 - **`RulesEngine`** — holds a set of rules and runs them three ways:
   `RunAllAsync` (every rule, full diagnostic picture — deliberately does
   **not** short-circuit), `RunNamedAsync` (one specific rule by name),

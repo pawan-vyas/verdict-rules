@@ -9,6 +9,14 @@ Tagged `js-vX.Y.Z`.
 
 ## [0.4.0] - 2026-10-03
 
+- **The `marketplace_eligibility` example reads its policy thresholds from
+  `fixtures/marketplace_eligibility/thresholds.json`** rather than declaring
+  its own literals, so the four ports cannot drift from each other or from
+  the data their suites assert against.
+- **Doc comments in this package's own source state current behaviour only.**
+  `PredicateOutcome` and `AndRule` each explained themselves by contrast with
+  an earlier design, which `0.3.1` had claimed was already done. Each keeps its
+  rationale in present tense; the claim now holds.
 - **Added `CompositeRule<TContext>` and `isCompositeRule`** — an interface a
   rule built from other rules satisfies, exposing `subRules`: the parts it
   was built from, readable before anything is evaluated, plus a type guard
@@ -24,13 +32,13 @@ Tagged `js-vX.Y.Z`.
   built-in one does. This matters more here than in the other SDKs: the
   built-ins store their parts in a `#private` field, so `subRules` is the
   only way to read them at all. `Rule` is unchanged.
-- `FunctionRule`, `AndRule`, `OrRule`, and `RulesEngine` now define
-  `toString()` and `[Symbol.for('nodejs.util.inspect.custom')]`. A rule
-  or engine printed via `console.log` or in the Node REPL previously
+- `FunctionRule`, `AndRule`, `OrRule`, `NotRule` and `RulesEngine` now
+  define `toString()` and `[Symbol.for('nodejs.util.inspect.custom')]`. A
+  rule or engine printed via `console.log` or in the Node REPL previously
   showed only the bare class dump; it now shows `FunctionRule "name"`
   (or `"name" (group)`), `AndRule "name" (group) — N sub-rule(s)`,
-  `OrRule "name" (group) — N sub-rule(s)`, or `RulesEngine — N rule(s),
-  M group(s)`.
+  `OrRule "name" (group) — N sub-rule(s)`, `NotRule "name"`, or
+  `RulesEngine — N rule(s), M group(s)`.
 - **`RuleResult.subResults`** — a composite's own children, in
   evaluation order, holding exactly what it evaluated: never padded to
   the full sub-rule list, never flattened into the parent. An empty
@@ -141,7 +149,7 @@ Tagged `js-vX.Y.Z`.
   default type parameter. Dict-context is `Rule<Context>`, written out
   explicitly. `TContext` is inferred from a predicate's own parameter
   type.
-- `docs/architecture/js.md` gained a "Generic context, concretely"
+- [`docs/architecture/js.md`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.3.0/docs/architecture/js.md) gained a "Generic context, concretely"
   section.
 
 ## [0.0.7] - 2026-09-17
@@ -185,7 +193,7 @@ Tagged `js-vX.Y.Z`.
 - **The structural-typing example swaps `overEighteen`/`age` for
   `isBusinessHours`/`hour`** -- kept distinct from the main example's
   own `age` field, which already lives on the same page.
-- **`docs/quickstart.md`'s complete example now nests a composite**
+- **[`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.5/js/packages/verdict-rules/docs/quickstart.md)'s complete example now nests a composite**
   (`AndRule` containing an `OrRule`, one branch of which is itself a
   further `AndRule`) and demonstrates `runGroup` alongside a passing
   and a failing call, rather than repeating the same flat two-rule
@@ -218,7 +226,7 @@ Tagged `js-vX.Y.Z`.
   composite's own `.evaluate()` — `RulesEngine` is one of the five named
   primitives, and the first example is meant to show all of them.
   `package-readmes.md`'s own authoring template now mandates this for
-  every language's first example and `docs/quickstart.md`'s worked
+  every language's first example and [`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.0.2/js/packages/verdict-rules/docs/quickstart.md)'s worked
   example alike, so the two never demonstrate a different subset of the
   API from each other.
 - **Drops the `## Development` section.** It duplicated a subset of

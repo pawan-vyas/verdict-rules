@@ -12,12 +12,39 @@ import 'package:verdict_rules/verdict_rules.dart';
 import 'contexts.dart';
 import 'projecting_rule.dart';
 
-const priceFloorCents = 100;
-const allowedCategories = ['books', 'electronics', 'home'];
-const purchaseLimitCents = 100000;
-const highValueThresholdCents = 50000;
-const blockedCountries = ['ir', 'nk'];
-const newSellerThresholdDays = 30;
+/// Read the shared policy numbers this example evaluates against.
+///
+/// Read from the fixture rather than written as literals here, so the four
+/// ports cannot drift from each other or from the data their suites assert
+/// against -- changing a number in one place changes every port at once.
+Map<String, Object?> loadThresholds(String path) =>
+    jsonDecode(File(path).readAsStringSync()) as Map<String, Object?>;
+
+/// Locate the shared fixture directory by walking up from the working
+/// directory, so this resolves whether the caller is `dart test` (cwd is the
+/// package) or `dart run` from somewhere else entirely.
+String _findFixtures() {
+  for (var dir = Directory.current.absolute;
+      dir.parent.path != dir.path;
+      dir = dir.parent) {
+    final candidate = '${dir.path}/fixtures/marketplace_eligibility';
+    if (File('$candidate/thresholds.json').existsSync()) return candidate;
+  }
+  throw StateError(
+      'fixtures/marketplace_eligibility not found above ${Directory.current.path}');
+}
+
+final _thresholds = loadThresholds('${_findFixtures()}/thresholds.json');
+
+final priceFloorCents = _thresholds['price_floor_cents']! as int;
+final allowedCategories =
+    (_thresholds['allowed_categories']! as List).cast<String>();
+final purchaseLimitCents = _thresholds['purchase_limit_cents']! as int;
+final highValueThresholdCents =
+    _thresholds['high_value_threshold_cents']! as int;
+final blockedCountries =
+    (_thresholds['blocked_countries']! as List).cast<String>();
+final newSellerThresholdDays = _thresholds['new_seller_threshold_days']! as int;
 
 Future<PredicateOutcome> _isVerifiedIdentity(IdentityFlag context) async =>
     PredicateOutcome(context.verified);

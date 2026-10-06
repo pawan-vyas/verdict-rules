@@ -1,4 +1,4 @@
-<!-- Title: Incident 006 — Deleting a Base Branch Closes a Stacked PR -->
+<!-- Title: Incident 006 -- Deleting a Base Branch Closes a Stacked PR -->
 # 006 · Deleting a merged PR's branch permanently closed a PR stacked on it
 
 > **2026-09-12 · recoverable, but the PR object could not be reopened**

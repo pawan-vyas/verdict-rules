@@ -13,6 +13,14 @@ Tagged `dart-vX.Y.Z`.
 
 ## 0.4.0
 
+- **The `marketplace_eligibility` example reads its policy thresholds from
+  `fixtures/marketplace_eligibility/thresholds.json`** rather than declaring
+  its own literals, so the four ports cannot drift from each other or from
+  the data their suites assert against.
+- **Doc comments in this package's own source state current behaviour only.**
+  `FunctionRule.evaluate` explained itself by contrast with an earlier design,
+  which ships into rendered API docs where a reader has no context for it. It
+  keeps its rationale in present tense.
 - **Added `CompositeRule<TContext>`** — an `abstract interface class` a rule
   built from other rules implements, exposing `subRules`: the parts it was
   built from, readable before anything is evaluated. `AndRule`/`OrRule`/
@@ -62,10 +70,13 @@ Tagged `dart-vX.Y.Z`.
 - **Added `SequentialEvaluator`/`ShortCircuitEvaluator`** — the
   sequencing `AndRule`/`OrRule` compose, now public so a custom
   composite composes the same primitive rather than hand-rolling a loop.
-- **Added**: `FunctionRule`, `AndRule`, `OrRule`, and `RulesEngine`
-  override `toString()`, matching `RuleResult`/`RunResult`:
+- **Added**: `FunctionRule`, `AndRule`, `OrRule`, `NotRule` and
+  `RulesEngine` override `toString()`, matching `RuleResult`/`RunResult`:
   `FunctionRule "name"` (or `"name" (group)`), `AndRule "name" (group) —
-  N sub-rule(s)`, `RulesEngine — N rule(s), M group(s)`.
+  N sub-rule(s)`, `NotRule "name"`, `RulesEngine — N rule(s), M
+  group(s)`. `PredicateOutcome`, `SequentialEvaluator` and
+  `ShortCircuitEvaluator` override it too, so nothing public prints as a
+  bare instance.
 - **Changed**: a predicate returns a `PredicateOutcome`, not a
   `RuleResult`. `RulePredicate` is a
   `Future<PredicateOutcome> Function(TContext)` now. Migration:
@@ -195,7 +206,7 @@ Rule<SomeTypedContext>`. Constructor call sites (`FunctionRule(...)`,
   `decision-engine`, `async` -- pub.dev caps this field at 5 entries,
   so it carries a curated subset of the full keyword set this project
   uses everywhere else (see
-  `docs/maintenance/discoverability-metadata.md`). Dropped `policy`:
+  [`docs/maintenance/discoverability-metadata.md`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.0.2/docs/maintenance/discoverability-metadata.md)). Dropped `policy`:
   it names a rule together with what happens when it's enforced, and
   this package only ever evaluates, never acts on the result.
 - **The structural-typing example swaps `hasQuorum`/`quorum` for
@@ -203,15 +214,15 @@ Rule<SomeTypedContext>`. Constructor call sites (`FunctionRule(...)`,
   [`extending/new-rule-shape/`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.0.2/docs/extending/new-rule-shape/README.md)'s
   own `quorum`/`ThresholdRule` vocabulary now that both ship in the
   same repository.
-- **`doc/quickstart.md`'s complete example now nests a composite**
+- **[`doc/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.0.2/dart/packages/verdict_rules/doc/quickstart.md)'s complete example now nests a composite**
   (`AndRule` containing an `OrRule`, one branch of which is itself a
   further `AndRule`) and demonstrates `runGroup` alongside a passing
   and a failing call, rather than repeating the same flat two-rule
   `AndRule` + `runNamed` shape the package README's own first example
   already covers.
 - This git tag also carries this package's own doc set for the
-  AI-agent skill, for the first time: `docs/testing/dart.md`,
-  `docs/architecture/dart.md`, one file per extending scenario, one
+  AI-agent skill, for the first time: [`docs/testing/dart.md`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.0.2/docs/testing/dart.md),
+  [`docs/architecture/dart.md`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.0.2/docs/architecture/dart.md), one file per extending scenario, one
   per sample -- repo-level content the skill fetches on demand, not
   part of the published `.tar.gz` itself.
 

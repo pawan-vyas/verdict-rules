@@ -1,4 +1,4 @@
-<!-- Title: Incident 002 — Build Output Committed Across Branches -->
+<!-- Title: Incident 002 -- Build Output Committed Across Branches -->
 # 002 · 436 build artefacts committed across two SDK branches
 
 > **2026-09-12 · caught before any merge**

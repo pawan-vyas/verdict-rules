@@ -15,12 +15,27 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // this example -- see fixtures/marketplace_eligibility/README.md for the contract.
 const FIXTURES = join(__dirname, "..", "..", "..", "fixtures", "marketplace_eligibility");
 
-export const PRICE_FLOOR_CENTS = 100;
-export const ALLOWED_CATEGORIES = ["books", "electronics", "home"];
-export const PURCHASE_LIMIT_CENTS = 100_000;
-export const HIGH_VALUE_THRESHOLD_CENTS = 50_000;
-export const BLOCKED_COUNTRIES = ["ir", "nk"];
-export const NEW_SELLER_THRESHOLD_DAYS = 30;
+/**
+ * Read the shared policy numbers this example evaluates against.
+ *
+ * Read from the fixture rather than written as literals here, so the four
+ * ports cannot drift from each other or from the data their suites assert
+ * against -- changing a number in one place changes every port at once.
+ *
+ * @param {string} path
+ */
+export function loadThresholds(path) {
+  return JSON.parse(readFileSync(path, "utf8"));
+}
+
+const THRESHOLDS = loadThresholds(join(FIXTURES, "thresholds.json"));
+
+export const PRICE_FLOOR_CENTS = THRESHOLDS.price_floor_cents;
+export const ALLOWED_CATEGORIES = THRESHOLDS.allowed_categories;
+export const PURCHASE_LIMIT_CENTS = THRESHOLDS.purchase_limit_cents;
+export const HIGH_VALUE_THRESHOLD_CENTS = THRESHOLDS.high_value_threshold_cents;
+export const BLOCKED_COUNTRIES = THRESHOLDS.blocked_countries;
+export const NEW_SELLER_THRESHOLD_DAYS = THRESHOLDS.new_seller_threshold_days;
 
 /** @typedef {{ verified: boolean }} IdentityFlag */
 /** @typedef {{ sellerId: string, sellerVerified: boolean, listingPriceCents: number, category: string }} SellerListingContext */

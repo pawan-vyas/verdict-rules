@@ -85,12 +85,11 @@ export function isCompositeRule<TContext>(rule: Rule<TContext>): rule is Composi
 /**
  * What a predicate reports back to the {@link FunctionRule} wrapping it.
  *
- * A predicate used to construct its own {@link RuleResult} directly,
- * including its own `ruleName` — completely decoupled from whatever name
- * the `FunctionRule` wrapping it was constructed with, and nothing kept the
- * two in sync. The fix is structural, not a runtime convention: a predicate
- * returns this instead, and only {@link FunctionRule.evaluate} ever builds
- * the final `RuleResult`, from the one name already fixed at construction.
+ * A predicate reports an outcome and never builds a {@link RuleResult}
+ * itself. That separation is structural rather than a runtime convention:
+ * only {@link FunctionRule.evaluate} builds the final `RuleResult`, from the
+ * one name fixed at construction, so a predicate has no way to report a
+ * `ruleName` that disagrees with the rule it belongs to.
  *
  * Deliberately has **no** `ruleName` field — restating a name that's
  * already fixed on the wrapping `FunctionRule` is never legitimate, not
@@ -357,9 +356,10 @@ const OR_EVALUATOR = new ShortCircuitEvaluator(true);
  * Composite that passes only if every sub-rule passes.
  *
  * Short-circuits on the first failing sub-rule, by composing a single,
- * shared {@link ShortCircuitEvaluator} -- construction syntax, `toString()`,
- * and type identity are unchanged from before this class held an evaluator
- * instead of a hand-rolled loop.
+ * shared {@link ShortCircuitEvaluator} rather than hand-rolling its own loop,
+ * so the sequencing lives in one place a custom composite can reuse. The
+ * evaluator is an implementation detail, not part of this class's own
+ * construction syntax or identity.
  *
  * An empty list passes vacuously.
  *

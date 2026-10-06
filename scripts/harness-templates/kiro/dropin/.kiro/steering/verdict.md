@@ -1,6 +1,5 @@
 ---
-inclusion: fileMatch
-fileMatchPattern: ["**/*.py", "**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.dart", "**/*.cs"]
+inclusion: always
 ---
 
 Consult the `verdict` skill before building any rule-based decision, eligibility, or

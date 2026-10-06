@@ -95,14 +95,12 @@ class CompositeRule(Protocol[TContext]):
 class PredicateOutcome:
     """What a predicate reports back to the :class:`FunctionRule` wrapping it.
 
-    A predicate used to construct its own :class:`~verdict.result.RuleResult`
-    directly, including its own ``rule_name`` — completely decoupled from
-    whatever name the ``FunctionRule`` wrapping it was constructed with, and
-    nothing kept the two in sync. The fix is structural, not a runtime
-    check: a predicate returns this instead, and only
-    :meth:`FunctionRule.evaluate` ever builds the final
-    :class:`~verdict.result.RuleResult`, from the one name already fixed at
-    construction.
+    A predicate reports an outcome and never builds a
+    :class:`~verdict.result.RuleResult` itself. That separation is structural
+    rather than a runtime convention: only :meth:`FunctionRule.evaluate` builds
+    the final result, from the one name fixed at construction, so a predicate
+    has no way to report a ``rule_name`` that disagrees with the rule it
+    belongs to.
 
     Deliberately has **no** ``name`` field — restating a name that's already
     fixed on the wrapping ``FunctionRule`` is never legitimate, not just
@@ -165,7 +163,7 @@ class FunctionRule(Generic[TContext]):
     async def evaluate(self, context: TContext) -> RuleResult:
         """Run the wrapped predicate and build this rule's own result.
 
-        No longer a straight pass-through — the predicate only reports a
+        Not a pass-through: the predicate reports only a
         :class:`PredicateOutcome`, so this is the one place that owns
         ``rule_name``, built fresh from ``self.name`` on every call.
 
@@ -360,10 +358,11 @@ class ShortCircuitEvaluator(Generic[TContext]):
 class AndRule(Generic[TContext]):
     """Composite rule that passes only if every sub-rule passes.
 
-    Short-circuits on the first failing sub-rule. Composes a single,
-    shared :class:`ShortCircuitEvaluator` — construction syntax,
-    ``__repr__``, and type identity are unchanged from before this class
-    held an evaluator instead of a hand-rolled loop.
+    Short-circuits on the first failing sub-rule. Composes a single, shared
+    :class:`ShortCircuitEvaluator` rather than hand-rolling its own loop, so
+    the sequencing lives in one place a custom composite can reuse — the
+    evaluator is an implementation detail, not part of this type's own
+    construction syntax or identity.
 
     Every sub-rule must share the same ``TContext``.
 

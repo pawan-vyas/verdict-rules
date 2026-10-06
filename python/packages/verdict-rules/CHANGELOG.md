@@ -12,6 +12,15 @@ Tagged `python-vX.Y.Z`.
 
 ### Added
 
+- The `marketplace_eligibility` example reads its policy thresholds from
+  the shared `fixtures/marketplace_eligibility/thresholds.json` rather than
+  declaring its own literals, so the four ports cannot drift from each other
+  or from the data their suites assert against.
+- Doc comments in this package's own source state current behaviour only.
+  `PredicateOutcome`, `FunctionRule.evaluate` and `AndRule` each explained
+  themselves by contrast with an earlier design, which ships into rendered API
+  docs and IDE tooltips where a reader has no context for it. Each keeps its
+  rationale in present tense.
 - **`CompositeRule`** — a runtime-checkable `Protocol` a rule built from
   other rules satisfies, exposing `sub_rules`: the parts it was built from,
   readable before anything is evaluated. `AndRule`/`OrRule`/`NotRule`
@@ -65,10 +74,11 @@ Tagged `python-vX.Y.Z`.
   `SequentialEvaluator` takes a `StepDecider` returning `True`/`False`
   to stop or `None` to continue; `ShortCircuitEvaluator` is the narrower
   case where one sub-result value ends evaluation.
-- `FunctionRule`, `AndRule`, `OrRule`, and `RulesEngine` define
+- `FunctionRule`, `AndRule`, `OrRule`, `NotRule` and `RulesEngine` define
   `__repr__`, matching `RuleResult`/`RunResult`'s dataclass-generated
   ones: `FunctionRule "name"` (or `"name" (group)`), `AndRule "name"
-  (group) — N sub-rule(s)`, `RulesEngine — N rule(s), M group(s)`.
+  (group) — N sub-rule(s)`, `NotRule "name"`, `RulesEngine — N rule(s),
+  M group(s)`.
 
 ### Changed
 
@@ -148,7 +158,7 @@ Tagged `python-vX.Y.Z`.
 
 ### Changed
 
-- `docs/architecture/python.md` gained a "Generic context, concretely"
+- [`docs/architecture/python.md`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.3.0/docs/architecture/python.md) gained a "Generic context, concretely"
   section.
 
 ## [0.2.9] - 2026-09-17
@@ -181,7 +191,7 @@ Tagged `python-vX.Y.Z`.
 - **The structural-typing example swaps `OverEighteen`/`age` for
   `IsBusinessHours`/`hour`** -- kept distinct from the main example's
   own `age` field now that both live on the same page.
-- **`docs/quickstart.md`'s complete example now nests a composite**
+- **[`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.7/python/packages/verdict-rules/docs/quickstart.md)'s complete example now nests a composite**
   (`AndRule` containing an `OrRule`, one branch of which is itself a
   further `AndRule`) and demonstrates `run_group` alongside a passing
   and a failing call, rather than repeating the same flat two-rule
@@ -241,7 +251,7 @@ Package identical to `0.2.6` otherwise.
 ### Changed
 
 - **The PyPI landing page's structure now matches the new, shared
-  package-README template** (`docs/maintenance/doc-authoring/package-readmes.md`):
+  package-README template** ([`docs/maintenance/doc-authoring/package-readmes.md`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.3/docs/maintenance/doc-authoring/package-readmes.md)):
   gains a **"What it guarantees"** section (short-circuiting, vacuous
   truth's polarity, emptiness-vs-absence, opaque `RuleResult.data`,
   zero runtime dependencies) — the one section a skimming reader most
@@ -274,7 +284,7 @@ corrected by publishing a new one.
 - The **Changelog** link in this package's PyPI metadata pointed at a
   repository-root `CHANGELOG.md` that no longer exists — each package now
   keeps its history beside its own manifest. It points at
-  `python/CHANGELOG.md`.
+  [`python/CHANGELOG.md`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.1/python/CHANGELOG.md).
 
 No code changed; the package itself is identical to `0.2.0`. It is a release
 rather than something left for the next one because PyPI metadata is immutable
@@ -310,7 +320,7 @@ right, which is what a reader lands on.
   `try_run_group(...) or default_pass` is a rule set that silently
   stopped being enforced.
 
-- `docs/extension.md` gains **Recipe 6**, working through the four real
+- [`docs/extension.md`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.0/docs/extension.md) gains **Recipe 6**, working through the four real
   shapes absence takes and why a library default would be wrong for
   three of them.
 
@@ -327,13 +337,13 @@ right, which is what a reader lands on.
   legitimately empty — and a misspelled group name silently passing is
   the worst failure mode for an eligibility or access-control caller.
   Released as a patch under the pre-1.0 carve-out documented in
-  `docs/maintenance.md`.
+  [`docs/maintenance.md`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.1.1/docs/maintenance.md).
 - **Added `RulesEngine.rule_names` and `RulesEngine.group_names`.**
   Read-only tuples of the registered names, so a caller who cannot know
   in advance whether a name exists can check rather than catch.
 - Empty composites are unchanged and deliberately so: `AndRule([])`
   still passes and `OrRule([])` still fails, being the identities of the
-  folds they perform. `docs/architecture.md` now states the distinction
+  folds they perform. [`docs/architecture.md`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.1.1/docs/architecture.md) now states the distinction
   as a design position — this package is permissive about emptiness and
   strict about absence.
 
@@ -346,7 +356,7 @@ Initial public release.
   Sequential (never concurrent) evaluation, real short-circuiting,
   vacuous-truth polarities decided explicitly per composite shape.
 - Zero external dependencies; `requires-python = ">=3.10"`.
-- Full doc suite (`docs/architecture.md`, `extension.md`,
+- Full doc suite ([`docs/architecture.md`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.1.0/docs/architecture.md), `extension.md`,
   `maintenance.md`, `testing.md`, `future_plan.md`), worked samples
   (`python/docs/samples/`), and a full tested example project
   (`python/examples/graduation_verdict/`, including a 500-case

@@ -85,6 +85,40 @@ the end of the doc) are deliberately not used here — inline links keep
 the target visible at the point of reading, without forcing a reader to
 scroll to the bottom and back for every reference.
 
+## A changelog entry links by tag, never relatively
+
+A changelog entry is a record of a *past* release, so a relative link inside
+one quietly re-points at today's file as the repo moves -- describing something
+the entry was never about. Tags are immutable, so a changelog mention of
+another file is a URL pinned to **that entry's own version**:
+
+```markdown
+[`docs/maintenance/discoverability-metadata.md`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.0.2/docs/maintenance/discoverability-metadata.md)
+```
+
+Not covered by `scripts/check_shipped_links.py`, which guards each package's
+README and manifest rather than its changelog -- so this one is on review.
+
+Three cases stay bare, and are not defects:
+
+- **A pattern, not one file** -- "each package's own `CHANGELOG.md`". Already
+  the general exception; a mention with no path separator is almost always
+  this.
+- **A path that did not resolve at that tag.** Verify before pinning: a
+  mention is often package-relative shorthand (`docs/quickstart.md` inside
+  Python's changelog meaning that package's own), in which case pin the real
+  path at that tag. If it resolves nowhere at that tag, leave it bare -- an
+  invented link that 404s is worse than a plain name.
+- **A file the entry's own release removed.** Python's `0.2.2` names three
+  pre-split monoliths it deleted; the only paths matching those names at that
+  tag are different files, so a link would be actively wrong.
+
+Editing a released entry to add a link is safe and is **not** a history
+rewrite: the registry copy of a published version is immutable, and that
+version's tag still points at a commit with the original text. The standing
+rule against backfilling an entry is about not changing *what was claimed to
+have shipped* -- making an existing claim navigable changes no claim.
+
 ## A doc category that will grow per-variant is a directory, not a flat file family
 
 If a doc is ever going to need more than one instance of the same shape

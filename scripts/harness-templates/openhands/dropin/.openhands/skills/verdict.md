@@ -1,13 +1,5 @@
 ---
 name: verdict
-paths:
-  - "**/*.py"
-  - "**/*.ts"
-  - "**/*.tsx"
-  - "**/*.js"
-  - "**/*.jsx"
-  - "**/*.dart"
-  - "**/*.cs"
 ---
 
 Consult the `verdict` skill before building any rule-based decision, eligibility, or

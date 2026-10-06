@@ -237,20 +237,28 @@ concrete instance of
 | `blocked_countries` | `["ir", "nk"]` | `blocked_country_flag` |
 | `new_seller_threshold_days` | 30 | `new_seller_flag` |
 
-This README is where those values are pinned; unlike
-[`graduation_verdict`](../graduation_verdict/README.md)'s curriculum,
-there is no threshold JSON beside the fixture data, because nothing in
-this fixture varies them — every expectation in the three data files is
-observed against exactly this set. Each port therefore declares them as
-named constants beside its own rule builders, in that language's own
-casing, rather than inlining the literals at each comparison site:
-[`python/`](../../python/examples/marketplace_eligibility/README.md) and
-[`js/`](../../js/examples/marketplace_eligibility/README.md) use
+Those values live in [`thresholds.json`](thresholds.json) beside the three
+data files, and **every port reads them from there** rather than declaring
+its own literals — the same way
+[`graduation_verdict`](../graduation_verdict/README.md) reads its
+curriculum. Each port exposes them under that language's own casing for use
+at the comparison sites
+([`python/`](../../python/examples/marketplace_eligibility/README.md) and
+[`js/`](../../js/examples/marketplace_eligibility/README.md) as
 `PRICE_FLOOR_CENTS`,
-[`dart/`](../../dart/examples/marketplace_eligibility/README.md) uses
-`priceFloorCents`, and
-[`csharp/`](../../csharp/examples/MarketplaceEligibility/README.md) uses
-`PriceFloorCents`.
+[`dart/`](../../dart/examples/marketplace_eligibility/README.md) as
+`priceFloorCents`,
+[`csharp/`](../../csharp/examples/MarketplaceEligibility/README.md) as
+`PriceFloorCents`), but the value itself is never written in source.
+
+That is load-bearing rather than tidy. Four ports each holding their own
+copy of six numbers is four chances to drift from each other and from the
+expectations the data files assert — and the drift would be silent, since
+each port's suite would still agree with itself. With one file, changing a
+threshold fails all four suites at once, which is the property worth having.
+The Dart and C# ports locate the file by walking up from the working
+directory rather than counting `../` levels, so `dart test` and
+`dotnet test` resolve it identically to a direct `run`.
 
 ## What is deliberately *not* pinned
 

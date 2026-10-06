@@ -1,4 +1,4 @@
-<!-- Title: Incident 008 — Dart's Tag Push Never Triggered Phase 2 -->
+<!-- Title: Incident 008 -- Dart's Tag Push Never Triggered Phase 2 -->
 # 008 · `release-dart.yml`'s own tag push never started the publish run
 
 > **2026-09-16 · `dart-v0.0.2`, the first real run of `release-dart.yml`**

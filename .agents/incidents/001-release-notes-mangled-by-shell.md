@@ -1,4 +1,4 @@
-<!-- Title: Incident 001 — Release Notes Mangled By Shell -->
+<!-- Title: Incident 001 -- Release Notes Mangled By Shell -->
 # 001 · Release notes published with every code span empty
 
 > **2026-09-11 · shipped in `python-v0.1.1` · GitHub release body only**

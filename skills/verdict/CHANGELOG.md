@@ -384,6 +384,12 @@ cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skil
 
 ## [0.5.2] - 2026-09-15
 
+> **No `skill-v0.5.2` tag exists, and that is correct.** The bump to `0.5.2`
+> was superseded by the bump to `0.5.3` before the release workflow next ran,
+> so everything below shipped inside `skill-v0.5.3` -- the commit that set
+> `0.5.2` is first contained by that tag. The entry is kept rather than folded
+> in, because `0.5.2` really was the manifest version for a while.
+
 - **The skill routes to JS/TS for the first time.** Adds
   `references/js/agent-notes.md`, matching Python's own depth: install
   and import, the full API on one screen, mistakes specific to

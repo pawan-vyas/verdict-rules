@@ -14,6 +14,10 @@ Tagged `csharp-vX.Y.Z`.
 
 ### Added
 
+- The `marketplace_eligibility` example reads its policy thresholds from
+  the shared `fixtures/marketplace_eligibility/thresholds.json` rather than
+  declaring its own literals, so the four ports cannot drift from each other
+  or from the data their suites assert against.
 - **`ICompositeRule<TContext>`** — an interface a rule built from other
   rules implements, exposing `SubRules`: the parts it was built from,
   readable before anything is evaluated. `AndRule`/`OrRule`/`NotRule`
@@ -87,10 +91,13 @@ Tagged `csharp-vX.Y.Z`.
   `true`/`false` to stop or `null` to continue;
   `ShortCircuitEvaluator<TContext>` is the narrower case where one
   sub-result value ends evaluation.
-- `FunctionRule`, `AndRule`, `OrRule`, and `RulesEngine` (both arities)
-  carry `[DebuggerDisplay]` and `ToString()`, matching
-  `RuleResult`/`RunResult`; the composites and the engine also carry
+- `FunctionRule`, `AndRule`, `OrRule`, `NotRule` and `RulesEngine` (both
+  arities) carry `[DebuggerDisplay]` and `ToString()`, matching
+  `RuleResult`/`RunResult`; every composite and the engine also carry
   `[DebuggerTypeProxy]`, so a debugger expands straight to sub-rules.
+  `PredicateOutcome`, `SequentialEvaluator` and `ShortCircuitEvaluator`
+  carry `[DebuggerDisplay]` as well, so nothing public shows as a bare
+  instance while stepping.
 
 ### Changed
 
@@ -234,7 +241,7 @@ Tagged `csharp-vX.Y.Z`.
 
 ### Changed
 
-- `docs/architecture/csharp.md` gained a "Generic context, concretely"
+- [`docs/architecture/csharp.md`](https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.3.0/docs/architecture/csharp.md) gained a "Generic context, concretely"
   section.
 
 ## [0.0.1] - 2026-09-17

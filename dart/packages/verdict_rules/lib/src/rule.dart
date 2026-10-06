@@ -104,9 +104,9 @@ class FunctionRule<TContext> implements Rule<TContext> {
 
   /// Runs the wrapped predicate and builds this rule's own result.
   ///
-  /// No longer a straight pass-through -- the predicate only reports a
-  /// [PredicateOutcome], so this is the one place that owns [name], built
-  /// fresh from it on every call.
+  /// Not a pass-through: the predicate reports only a [PredicateOutcome], so
+  /// this is the one place that owns [name], built fresh from it on every
+  /// call.
   @override
   Future<RuleResult> evaluate(TContext context) async {
     final outcome = await _predicate(context);

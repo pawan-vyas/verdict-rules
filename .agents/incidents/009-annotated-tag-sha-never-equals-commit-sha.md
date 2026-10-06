@@ -1,4 +1,4 @@
-<!-- Title: Incident 009 — An Annotated Tag's SHA Never Equals a Commit SHA -->
+<!-- Title: Incident 009 -- An Annotated Tag's SHA Never Equals a Commit SHA -->
 # 009 · The tag-idempotency check rejected a tag pointing at the exact right commit
 
 > **2026-09-16 · `dart-v0.0.2`, recovery run after fixing incident 008**

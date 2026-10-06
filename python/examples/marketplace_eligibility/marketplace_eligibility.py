@@ -21,12 +21,25 @@ _HERE = Path(__file__).parent
 # this example — see fixtures/marketplace_eligibility/README.md for the contract.
 _FIXTURES = _HERE.parents[2] / "fixtures" / "marketplace_eligibility"
 
-PRICE_FLOOR_CENTS = 100
-ALLOWED_CATEGORIES = ("books", "electronics", "home")
-PURCHASE_LIMIT_CENTS = 100_000
-HIGH_VALUE_THRESHOLD_CENTS = 50_000
-BLOCKED_COUNTRIES = ("ir", "nk")
-NEW_SELLER_THRESHOLD_DAYS = 30
+
+def load_thresholds(path: Path) -> dict:
+    """Read the shared policy numbers this example evaluates against.
+
+    Read from the fixture rather than written as literals here, so the four
+    ports cannot drift from each other or from the data their suites assert
+    against -- changing a number in one place changes every port at once.
+    """
+    return json.loads(path.read_text())
+
+
+_THRESHOLDS = load_thresholds(_FIXTURES / "thresholds.json")
+
+PRICE_FLOOR_CENTS: int = _THRESHOLDS["price_floor_cents"]
+ALLOWED_CATEGORIES: tuple[str, ...] = tuple(_THRESHOLDS["allowed_categories"])
+PURCHASE_LIMIT_CENTS: int = _THRESHOLDS["purchase_limit_cents"]
+HIGH_VALUE_THRESHOLD_CENTS: int = _THRESHOLDS["high_value_threshold_cents"]
+BLOCKED_COUNTRIES: tuple[str, ...] = tuple(_THRESHOLDS["blocked_countries"])
+NEW_SELLER_THRESHOLD_DAYS: int = _THRESHOLDS["new_seller_threshold_days"]
 
 
 @dataclass(frozen=True)

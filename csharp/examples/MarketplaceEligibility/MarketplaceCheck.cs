@@ -12,12 +12,52 @@ namespace MarketplaceEligibility;
 /// </remarks>
 public static class MarketplaceCheck
 {
-    public const int PriceFloorCents = 100;
-    public static readonly string[] AllowedCategories = ["books", "electronics", "home"];
-    public const int PurchaseLimitCents = 100_000;
-    public const int HighValueThresholdCents = 50_000;
-    public static readonly string[] BlockedCountries = ["ir", "nk"];
-    public const int NewSellerThresholdDays = 30;
+    /// <summary>
+    /// Locate the shared fixture directory by walking up from this assembly's
+    /// own location, so it resolves under `dotnet run` and `dotnet test` alike
+    /// without either caller hardcoding a depth.
+    /// </summary>
+    internal static string FindFixtures()
+    {
+        for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir is not null; dir = dir.Parent)
+        {
+            var candidate = Path.Combine(dir.FullName, "fixtures", "marketplace_eligibility");
+            if (File.Exists(Path.Combine(candidate, "thresholds.json")))
+            {
+                return candidate;
+            }
+        }
+
+        throw new InvalidOperationException(
+            $"fixtures/marketplace_eligibility not found above {AppContext.BaseDirectory}");
+    }
+
+    /// <summary>
+    /// The shared policy numbers this example evaluates against.
+    /// </summary>
+    /// <remarks>
+    /// Read from the fixture rather than written as literals here, so the four
+    /// ports cannot drift from each other or from the data their suites assert
+    /// against -- changing a number in one place changes every port at once.
+    /// That is also why these are <c>static readonly</c> rather than
+    /// <c>const</c>: a <c>const</c> cannot be read from a file.
+    /// </remarks>
+    private static readonly Dictionary<string, JsonElement> Thresholds =
+        LoadJson(Path.Combine(FindFixtures(), "thresholds.json"));
+
+    public static readonly int PriceFloorCents = Thresholds["price_floor_cents"].GetInt32();
+
+    public static readonly string[] AllowedCategories =
+        [.. Thresholds["allowed_categories"].EnumerateArray().Select(e => e.GetString()!)];
+
+    public static readonly int PurchaseLimitCents = Thresholds["purchase_limit_cents"].GetInt32();
+
+    public static readonly int HighValueThresholdCents = Thresholds["high_value_threshold_cents"].GetInt32();
+
+    public static readonly string[] BlockedCountries =
+        [.. Thresholds["blocked_countries"].EnumerateArray().Select(e => e.GetString()!)];
+
+    public static readonly int NewSellerThresholdDays = Thresholds["new_seller_threshold_days"].GetInt32();
 
     private static Task<PredicateOutcome> IsVerifiedIdentity(IdentityFlag context, CancellationToken ct = default) =>
         Task.FromResult(new PredicateOutcome(context.Verified));
