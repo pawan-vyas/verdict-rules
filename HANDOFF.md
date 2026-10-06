@@ -1,11 +1,11 @@
 ---
 kind: session-handoff
 handoff_schema: 1
-updated_utc: 2026-10-06T15:13:14Z
-updated_local: 2026-10-06T20:43:14+05:30
+updated_utc: 2026-10-06T15:45:54Z
+updated_local: 2026-10-06T21:15:54+05:30
 branch: diagnostics/debugger-display-all-languages
-state_at_commit: d0c7fd35e332502828541538f15b5e2e8b3af21a
-state_at_commit_short: d0c7fd3
+state_at_commit: f4b3850156f99fce5b890d0dafaf0c4fa5ac43d9
+state_at_commit_short: f4b3850
 # Freshness: run `git log --oneline "$(git log -1 --format=%H -- HANDOFF.md)"..HEAD`. Empty (+ clean
 # tree) = current. Non-empty = stale — reconcile per §0.1 before trusting §2–§3. (Comparing against
 # state_at_commit directly always shows the handoff commit itself as "drift" — see §0.1.)
@@ -142,20 +142,23 @@ minor bump with one changelog entry and no intermediate versions.
     `docs/maintenance/doc-authoring/summaries.md`, deliberately written after the sweep so it is
     built from real defects. Its "never write a number a reader will trust later" section is the
     sweep's most frequent single finding; the default PR template now routes to it.
+13. **The eight open decisions were resolved** in `f4b3850` -- see §4 for the list, and that
+    commit's message for what each turned out to be. The marketplace example moving onto a shared
+    `thresholds.json` was the substantial one: verified by changing the file and watching all four
+    suites fail.
 
 ### Current green state
 
 Python 1435 · JS 159 core + 1765 graduation + 33 marketplace · Dart 153 core + 1271 + 32 ·
-C# 183 core + 1744 + 32. Every gate in §5 passes, markdownlint is clean across 175 files, the skill
+C# 183 core + 1744 + 32. Every gate in §5 passes, markdownlint is clean across 178 files, the skill
 bundle is internally consistent, 34 evals assemble, and 288 exported symbols across four languages
 are accounted for in the concept map.
 
 ## 3 · What to do next (prioritized)
 
-1. **Resolve the open decisions in §4.** Eight of them, all small, several cross-language
-   consistency calls that should be made once for all four SDKs rather than per language. Nothing
-   else on this branch depends on them. (`origin` was current at this handoff; confirm with
-   `git log --oneline origin/HEAD..HEAD` before assuming it still is.)
+1. **Answer the one open request in §4** -- whether `AtLeastNRule` ships as a built-in. The eight
+   decisions this section used to list are resolved. (`origin` was current at this handoff; confirm
+   with `git log --oneline origin/HEAD..HEAD` before assuming it still is.)
 2. **Decide on the release.** The only substantial item left on this branch. Merging releases all
    four SDKs *and* the skill — each `release-<lang>.yml` and `release-skill.yml` triggers on a
    version bump landing on `main` and creates its own tag. There is no hand-tagging step. Until
@@ -168,51 +171,29 @@ are accounted for in the concept map.
 
 ## 4 · Known issues / open decisions
 
-None of these block anything; each is a judgment call that was deliberately not made unilaterally.
+**The eight decisions this section carried are all resolved**, in `f4b3850` --
+source doc comments reworded, `NotRule` added to the quickstarts and the
+changelog display bullets, the marketplace example moved onto a shared
+`thresholds.json`, changelog mentions tag-pinned with the rule written down,
+`skill-v0.5.2`'s missing tag explained rather than created, the Kiro and
+OpenHands drop-ins made always-on, examples indexes added for JS/Dart/C#, and
+incident Title comments converted to ASCII.
 
-- **Library-source doc comments carry process narration, in all four SDKs.** `PredicateOutcome`'s
-  docstring explains the pre-`PredicateOutcome` convention; `FunctionRule.evaluate`'s says "No
-  longer a straight pass-through"; `AndRule`'s says "unchanged from before this class held an
-  evaluator". These ship to rendered API docs, and JS's own `0.3.1` changelog already asserts every
-  doc comment was trimmed to state current behaviour only. The question is whether the
-  no-narration rule reaches into source docstrings at all — the convention list exempts docstrings
-  only for em-dashes. Each is recoverable as present-tense rationale.
-- **An agent-to-agent channel is live under `.agents/scratch/communication/`** (gitignored). An
-  adopter's session and this one exchange numbered messages there; the README holds the format and
-  the watching convention. Nothing durable lives there -- decisions land in this repo's own records.
-  One item is outstanding for whoever picks this up: the adopter asked for a `status: fyi` naming
-  the branch's final head commit once docs, skill and changelogs were done. That was posted as
-  `V-003`; if the branch moves again before merge, post another.
-- **`NotRule` is absent from two places that enumerate the surface**: all four quickstarts open
-  "The five names you need" without it, and all four `0.4.0` changelog entries credit the
-  debugger-display work to `FunctionRule`/`AndRule`/`OrRule`/`RulesEngine` while the source also
-  carries it on `NotRule` (and, in C#, on `PredicateOutcome` and both evaluators). Both are
-  consistent across all four SDKs, so changing one would break parity — decide once, for all four.
-- **`marketplace_eligibility`'s thresholds are hardcoded constants in all four ports**, with no data
-  file, against `AGENTS.md`'s "no hardcoded values that could plausibly change ... this is the
-  entire point of every example project". The fixture README was corrected to describe reality
-  rather than assert the opposite. Making the examples match the convention means a `thresholds.json`
-  plus a loader per port, and that README wording would then need reverting.
-- **Are historical changelog entries exempt from the every-mention-is-a-link rule?** Dart's `0.0.2`
-  entry names a maintenance doc as a bare filename. The only convention-correct link would be
-  pinned to `dart-v0.0.2`, and Python's changelog keeps bare paths in its own historical entries for
-  the same reason. Worth a one-line ruling.
-- **`skill-v0.5.2` has a changelog entry but no git tag**, while every other released version from
-  `0.1.1` to `0.7.0` has one. The changelog header promises "Tagged `skill-vX.Y.Z`". Flagged in case
-  the tag should be created retroactively.
-- **Two harness drop-in trigger strategies are a preference call.** Kiro's `fileMatchPattern` and
-  OpenHands' `paths` now enumerate all four SDKs' file extensions, which means a fifth SDK edits
-  each drop-in. The alternative, matching the always-on cline/copilot/claude pointers, is
-  `inclusion: always` and dropping `paths:`. Separately, the OpenHands frontmatter follows that
-  tool's current documented schema and ships to consumers — worth confirming against the version
-  actually targeted.
-- **The JS package README has no `examples/` row** in "Where to go next", where Python's does. There
-  is no `js/examples/README.md` index to link, so adding the row means first creating that index —
-  a decision about the JS package's doc surface.
-- **Every incident file's HTML `<!-- Title: ... -->` comment contains an em-dash.** Nothing in-repo
-  parses it and `docs/` uses the identical form, so it was treated as comment prose. If an external
-  doc-site generator consumes that comment, it is a data value by this repo's own rule and all six
-  want ASCII `--`.
+One request is open, from the adopter channel and **not yet answered**:
+
+- **Should `AtLeastNRule` become a built-in composite?** (`G-004`.) Verdict's
+  own [`future_plan.md`](docs/future_plan.md) currently lists at-least-N as
+  rejected, on the grounds that it is already the worked example in
+  [`extending/new-rule-shape/`](docs/extending/new-rule-shape/README.md) and
+  carries no real subtlety. That second half is now questionable: the example's
+  own stopping rule -- decide as soon as the threshold is reached *or* becomes
+  unreachable -- is exactly the kind of short-circuit contract that returns the
+  right boolean while being silently wrong if deferred, which is what the
+  evaluation test's first question asks about. Against it: shipping it makes
+  the documented example redundant, and the second question is one consumer
+  again, which was already overridden once this branch for the composite
+  contract. Overriding it twice would hollow out the test. Needs a maintainer
+  decision, not an agent's.
 
 ## 5 · Verify (gate / test commands)
 
