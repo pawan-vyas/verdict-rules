@@ -1,11 +1,11 @@
 ---
 kind: session-handoff
 handoff_schema: 1
-updated_utc: 2026-10-06T15:45:54Z
-updated_local: 2026-10-06T21:15:54+05:30
+updated_utc: 2026-10-06T16:39:33Z
+updated_local: 2026-10-06T22:09:42+05:30
 branch: diagnostics/debugger-display-all-languages
-state_at_commit: f4b3850156f99fce5b890d0dafaf0c4fa5ac43d9
-state_at_commit_short: f4b3850
+state_at_commit: a164acf99f13acedbf9d344abcdad18abfb32488
+state_at_commit_short: a164acf
 # Freshness: run `git log --oneline "$(git log -1 --format=%H -- HANDOFF.md)"..HEAD`. Empty (+ clean
 # tree) = current. Non-empty = stale — reconcile per §0.1 before trusting §2–§3. (Comparing against
 # state_at_commit directly always shows the handoff commit itself as "drift" — see §0.1.)
@@ -156,15 +156,13 @@ are accounted for in the concept map.
 
 ## 3 · What to do next (prioritized)
 
-1. **Answer the one open request in §4** -- whether `AtLeastNRule` ships as a built-in. The eight
-   decisions this section used to list are resolved. (`origin` was current at this handoff; confirm
-   with `git log --oneline origin/HEAD..HEAD` before assuming it still is.)
-2. **Decide on the release.** The only substantial item left on this branch. Merging releases all
-   four SDKs *and* the skill — each `release-<lang>.yml` and `release-skill.yml` triggers on a
-   version bump landing on `main` and creates its own tag. There is no hand-tagging step. Until
-   then the eight evals that test `0.4`-only surface are unrunnable (not merely unrun), because an
-   eval fixture must pin a version that is actually published.
-3. **Re-run mutation testing** if the library source changes again. It was run for all four
+1. **Decide on the release.** Nothing else is open -- §4 is clear. Merging releases all four SDKs
+   *and* the skill, since each `release-<lang>.yml` and `release-skill.yml` triggers on a version
+   bump landing on `main` and creates its own tag; there is no hand-tagging step. Until then the
+   eight evals that test `0.4`-only surface are unrunnable (not merely unrun), because an eval
+   fixture must pin a version that is actually published. (`origin` was current at this handoff;
+   confirm with `git log --oneline origin/HEAD..HEAD` before assuming it still is.)
+2. **Re-run mutation testing** if the library source changes again. It was run for all four
    languages earlier on this branch, *before* the composite-parts contract landed, so the
    surviving-mutant records in `docs/maintenance/mutation-survivors-<language>.md` do not cover
    `SubRules`/`sub_rules`/`subRules` or the new contract's narrowing. One language at a time, per §5.
@@ -179,21 +177,13 @@ changelog display bullets, the marketplace example moved onto a shared
 OpenHands drop-ins made always-on, examples indexes added for JS/Dart/C#, and
 incident Title comments converted to ASCII.
 
-One request is open, from the adopter channel and **not yet answered**:
-
-- **Should `AtLeastNRule` become a built-in composite?** (`G-004`.) Verdict's
-  own [`future_plan.md`](docs/future_plan.md) currently lists at-least-N as
-  rejected, on the grounds that it is already the worked example in
-  [`extending/new-rule-shape/`](docs/extending/new-rule-shape/README.md) and
-  carries no real subtlety. That second half is now questionable: the example's
-  own stopping rule -- decide as soon as the threshold is reached *or* becomes
-  unreachable -- is exactly the kind of short-circuit contract that returns the
-  right boolean while being silently wrong if deferred, which is what the
-  evaluation test's first question asks about. Against it: shipping it makes
-  the documented example redundant, and the second question is one consumer
-  again, which was already overridden once this branch for the composite
-  contract. Overriding it twice would hollow out the test. Needs a maintainer
-  decision, not an agent's.
+Nothing is open. The adopter request that was pending (`G-004`, whether `AtLeastNRule` should be a
+built-in) is answered and recorded: it stays a documented example, declined on the demand bar rather
+than on subtlety, with the trigger for reopening it -- a second, unrelated consumer -- written into
+[`future_plan.md`](docs/future_plan.md#declined-so-far-xor-and-at-least-n-of-m-on-demand-alone) and
+the reasoning onto
+[`extending/new-rule-shape/`](docs/extending/new-rule-shape/README.md), which is the page someone
+lands on when they want it.
 
 ## 5 · Verify (gate / test commands)
 
