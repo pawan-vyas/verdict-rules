@@ -1,11 +1,11 @@
 ---
 kind: session-handoff
 handoff_schema: 1
-updated_utc: 2026-10-06T15:03:11Z
-updated_local: 2026-10-06T20:33:11+05:30
+updated_utc: 2026-10-06T15:13:14Z
+updated_local: 2026-10-06T20:43:14+05:30
 branch: diagnostics/debugger-display-all-languages
-state_at_commit: 799031a1df2021dba360527542027cb4bc7d722c
-state_at_commit_short: 799031a
+state_at_commit: d0c7fd35e332502828541538f15b5e2e8b3af21a
+state_at_commit_short: d0c7fd3
 # Freshness: run `git log --oneline "$(git log -1 --format=%H -- HANDOFF.md)"..HEAD`. Empty (+ clean
 # tree) = current. Non-empty = stale — reconcile per §0.1 before trusting §2–§3. (Comparing against
 # state_at_commit directly always shows the handoff commit itself as "drift" — see §0.1.)
@@ -138,11 +138,15 @@ minor bump with one changelog entry and no intermediate versions.
     falls through on a fourth kind of composite and reports the rules inside it as absent. Rebuilding
     a composite over new parts is an explicit non-goal. Scenario at
     `docs/extending/walking-a-rule-tree/`, eval at `cross-language/07-walking-a-rule-tree`.
+12. **The tabulated-summary authoring template** landed at
+    `docs/maintenance/doc-authoring/summaries.md`, deliberately written after the sweep so it is
+    built from real defects. Its "never write a number a reader will trust later" section is the
+    sweep's most frequent single finding; the default PR template now routes to it.
 
 ### Current green state
 
 Python 1435 · JS 159 core + 1765 graduation + 33 marketplace · Dart 153 core + 1271 + 32 ·
-C# 183 core + 1744 + 32. Every gate in §5 passes, markdownlint is clean across 174 files, the skill
+C# 183 core + 1744 + 32. Every gate in §5 passes, markdownlint is clean across 175 files, the skill
 bundle is internally consistent, 34 evals assemble, and 288 exported symbols across four languages
 are accounted for in the concept map.
 
@@ -152,18 +156,15 @@ are accounted for in the concept map.
    consistency calls that should be made once for all four SDKs rather than per language. Nothing
    else on this branch depends on them. (`origin` was current at this handoff; confirm with
    `git log --oneline origin/HEAD..HEAD` before assuming it still is.)
-2. **Write the tabulated-summaries authoring template** under `docs/maintenance/doc-authoring/`.
-   This was deliberately held until the documentation audit had run so it could be written from what
-   the sweep found rather than guessed at; the sweep is now complete, so it is unblocked. See
-   [`.agents/memory/terse-tabulated-summaries-over-prose.md`](.agents/memory/terse-tabulated-summaries-over-prose.md).
-3. **Decide on the release.** Merging this branch releases all four SDKs *and* the skill — each
-   `release-<lang>.yml` and `release-skill.yml` triggers on a version bump landing on `main` and
-   creates its own tag. There is no hand-tagging step. Until then the eight evals that test
-   `0.4`-only surface are unrunnable (not merely unrun), because an eval fixture must pin a version
-   that is actually published.
-4. **Re-run mutation testing** if the library source changes again. It was run for all four
-   languages earlier on this branch; the surviving-mutant notes are in
-   `docs/maintenance/mutation-survivors-<language>.md`. One language at a time, per §5.
+2. **Decide on the release.** The only substantial item left on this branch. Merging releases all
+   four SDKs *and* the skill — each `release-<lang>.yml` and `release-skill.yml` triggers on a
+   version bump landing on `main` and creates its own tag. There is no hand-tagging step. Until
+   then the eight evals that test `0.4`-only surface are unrunnable (not merely unrun), because an
+   eval fixture must pin a version that is actually published.
+3. **Re-run mutation testing** if the library source changes again. It was run for all four
+   languages earlier on this branch, *before* the composite-parts contract landed, so the
+   surviving-mutant records in `docs/maintenance/mutation-survivors-<language>.md` do not cover
+   `SubRules`/`sub_rules`/`subRules` or the new contract's narrowing. One language at a time, per §5.
 
 ## 4 · Known issues / open decisions
 
