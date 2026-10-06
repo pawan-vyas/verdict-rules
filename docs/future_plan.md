@@ -102,7 +102,7 @@ SDKs. See
 a real correctness subtlety," not "is there a real *short-circuiting*
 subtlety." Ask it of the result surface too.
 
-## Still rejected: XOR and "at-least-N-of-M"
+## Declined so far: XOR, and "at-least-N-of-M" on demand alone
 
 - **`XorRule`** (passes iff exactly one sub-rule passes) has no
   short-circuit optimization available — final parity isn't knowable until
@@ -115,10 +115,37 @@ subtlety." Ask it of the result surface too.
   `AtLeastNRule` — a threshold of exactly one, plus a not-more-than-one
   check.
 - **"At-least-N-of-M"** is the general form, and *is* that worked example
-  already. Proposing it for core would duplicate a scenario this doc set
-  demonstrates costs nothing to write yourself. It ships in every
-  language's `graduation_verdict` example as consumer-side code, which is
-  the whole point.
+  already, shipping in every language's `graduation_verdict` as
+  consumer-side code. **Rejected on the second question, not the first** --
+  and that distinction was wrong here until a consumer asked for it
+  directly.
+
+  The first question is yes. Its stopping rule is a genuine short-circuit
+  contract with a silent way to get it wrong: decide as soon as the
+  threshold is *reached*, and also as soon as it becomes *unreachable* even
+  if every remaining sub-rule passed. Deferring until all have run returns
+  the identical boolean while evaluating work the threshold had already
+  settled -- the contract broken with nothing failing. Omitting only the
+  unreachable branch is the same bug, half the time. That is exactly the
+  shape this test's first question exists to catch, and an earlier version
+  of this entry claimed the opposite.
+
+  What it fails is the demand bar: one consumer, where two unrelated ones
+  are asked for. That bar had already been overridden once in the same
+  cycle, for the composite-parts contract; overriding it twice in
+  succession would leave this test unapplied rather than applied strictly.
+  **Trigger for reconsidering**: a second, unrelated consumer wanting the
+  same shape. At that point it is reconsidered on its merits rather than
+  re-argued from scratch, and the honest reason it was declined is on the
+  record here instead of a wrong one.
+
+  The guidance given meanwhile, which is what makes declining cheap: the
+  public `SequentialEvaluator` plus a `StepDecider` is the primitive, so a
+  consumer composes rather than hand-rolls a loop, and the worked decider
+  -- including the vacuous case, which should pass only when the minimum is
+  zero or less -- is in
+  [`extending/new-rule-shape/`](extending/new-rule-shape/README.md) to be
+  copied rather than derived.
 
 ## Worth watching, not yet justified: concurrent run-everything modes
 

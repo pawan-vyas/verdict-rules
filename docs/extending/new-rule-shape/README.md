@@ -83,6 +83,26 @@ graph TB
   legitimate, deliberate property for a shape like this to have, not a
   limitation to work around.
 
+## Why a threshold rule lives here and not in the engine
+
+`AtLeastNRule` is the most-requested shape that is deliberately *not* a
+built-in, so it is worth saying why once: the stopping rule is genuinely
+subtle -- decide as soon as the threshold is reached, **and** as soon as it
+becomes unreachable even if every remaining sub-rule passed -- but a
+documented, tested example is enough, because the public
+`SequentialEvaluator` means a consumer composes the sequencing rather than
+hand-rolling a loop. What is left to write is the decider, which is the four
+lines below.
+
+If you reached this page after writing something like
+`OrRule([AndRule([a, b]), AndRule([a, c]), AndRule([b, c])])` for "any two of
+three": that is the shape this replaces. It grows combinatorially in the
+number of rules and re-evaluates shared sub-rules.
+
+The bar this would have to clear to become a built-in, and the trigger that
+would reopen it, are recorded in
+[`../../future_plan.md`](../../future_plan.md#declined-so-far-xor-and-at-least-n-of-m-on-demand-alone).
+
 ## Related
 
 - [`../../architecture/README.md`](../../architecture/README.md#type-structure) —
