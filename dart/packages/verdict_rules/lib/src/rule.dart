@@ -19,6 +19,37 @@ abstract interface class Rule<TContext> {
   Future<RuleResult> evaluate(TContext context);
 }
 
+/// A rule built from other rules, whose parts can be read without evaluating
+/// it.
+///
+/// Satisfied by [AndRule], [OrRule] and [NotRule] -- and, deliberately, by a
+/// consumer's own composite. That is the point of putting this on an interface
+/// rather than on the three built-in classes: one walk reaches a combinator
+/// this package never saw, where an `is`-chain over concrete classes silently
+/// walks past it and reports the rules inside it as absent.
+///
+/// A leaf rule does not implement this, so "is this structure, or a terminal
+/// check" is answerable without naming concrete classes:
+///
+/// ```dart
+/// List<String> leafNames<T>(Rule<T> rule) => rule is CompositeRule<T>
+///     ? rule.subRules.expand(leafNames<T>).toList()
+///     : [rule.name];
+/// ```
+///
+/// Describes a rule tree, before anything is evaluated. It makes no claim
+/// about what ran -- that is [RuleResult.subResults]' job, and the two differ
+/// precisely because a composite short-circuits.
+///
+/// Declared `abstract interface class` for the same reason [Rule] is:
+/// consumers implement it, they never extend it.
+abstract interface class CompositeRule<TContext> implements Rule<TContext> {
+  /// The rules this composite is built from, in evaluation order: exactly one
+  /// for a negation, and empty for a vacuous [AndRule]/[OrRule], which is a
+  /// valid composite with no parts.
+  List<Rule<TContext>> get subRules;
+}
+
 /// What a [RulePredicate] reports back to the [FunctionRule] wrapping it.
 ///
 /// Deliberately carries no name -- a predicate has no legitimate reason to
@@ -261,7 +292,7 @@ class ShortCircuitEvaluator<TContext> {
 /// are actually implemented.
 ///
 /// Every sub-rule must be a [Rule] of the exact same `TContext`.
-class AndRule<TContext> implements Rule<TContext> {
+class AndRule<TContext> implements CompositeRule<TContext> {
   /// What an empty [AndRule] evaluates to -- pinned, not wired into
   /// construction ([ShortCircuitEvaluator] derives this internally from
   /// `stopOn`).
@@ -274,6 +305,9 @@ class AndRule<TContext> implements Rule<TContext> {
   final String? group;
 
   final List<Rule<TContext>> _rules;
+
+  @override
+  List<Rule<TContext>> get subRules => _rules;
 
   /// The one true implementation this composite forwards to.
   ///
@@ -310,7 +344,7 @@ class AndRule<TContext> implements Rule<TContext> {
 /// vacuously. The same same-`TContext` requirement across sub-rules applies
 /// here too. Composes a single [ShortCircuitEvaluator], the same way
 /// [AndRule] does with the opposite `stopOn`.
-class OrRule<TContext> implements Rule<TContext> {
+class OrRule<TContext> implements CompositeRule<TContext> {
   /// What an empty [OrRule] evaluates to -- pinned, not wired into
   /// construction. See [AndRule.vacuousResult].
   static const bool vacuousResult = false;
@@ -322,6 +356,9 @@ class OrRule<TContext> implements Rule<TContext> {
   final String? group;
 
   final List<Rule<TContext>> _rules;
+
+  @override
+  List<Rule<TContext>> get subRules => _rules;
 
   /// See [AndRule._evaluator] for why this is an instance field, not a
   /// shared static one.
@@ -350,7 +387,7 @@ class OrRule<TContext> implements Rule<TContext> {
 /// No [SequentialEvaluator]/[ShortCircuitEvaluator] composed in -- one
 /// child, no sequence to iterate, so that machinery would be indirection
 /// for nothing it uses.
-class NotRule<TContext> implements Rule<TContext> {
+class NotRule<TContext> implements CompositeRule<TContext> {
   @override
   final String name;
 
@@ -359,7 +396,19 @@ class NotRule<TContext> implements Rule<TContext> {
 
   final Rule<TContext> _rule;
 
-  NotRule(this.name, Rule<TContext> rule, {this.group}) : _rule = rule;
+  final List<Rule<TContext>> _subRules;
+
+  NotRule(this.name, Rule<TContext> rule, {this.group})
+      : _rule = rule,
+        _subRules = List.unmodifiable([rule]);
+
+  /// The one negated rule, as a list.
+  ///
+  /// Exactly one part, always, built once at construction. Named the same as
+  /// every other composite's so a walk over a rule tree needs no knowledge of
+  /// which composite it is holding.
+  @override
+  List<Rule<TContext>> get subRules => _subRules;
 
   /// Evaluates the wrapped rule and inverts its verdict.
   ///

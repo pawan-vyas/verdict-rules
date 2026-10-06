@@ -32,6 +32,26 @@
   type: { csharp: IRule, python: Rule, js: Rule, dart: Rule }
   member: { csharp: EvaluateAsync, python: evaluate, js: evaluate, dart: evaluate }
 
+- concept: CompositeRule (the contract a rule built from other rules satisfies)
+  type: { csharp: ICompositeRule, python: CompositeRule, js: CompositeRule, dart: CompositeRule }
+  member: ""
+
+- concept: CompositeRule.subRules (the parts, readable un-evaluated)
+  type: { csharp: ICompositeRule, python: CompositeRule, js: CompositeRule, dart: CompositeRule }
+  member: { csharp: SubRules, python: sub_rules, js: subRules, dart: subRules }
+
+- concept: AndRule.subRules
+  type: { csharp: AndRule, python: AndRule, js: AndRule, dart: AndRule }
+  member: { csharp: SubRules, python: sub_rules, js: subRules, dart: subRules }
+
+- concept: OrRule.subRules
+  type: { csharp: OrRule, python: OrRule, js: OrRule, dart: OrRule }
+  member: { csharp: SubRules, python: sub_rules, js: subRules, dart: subRules }
+
+- concept: NotRule.subRules
+  type: { csharp: NotRule, python: NotRule, js: NotRule, dart: NotRule }
+  member: { csharp: SubRules, python: sub_rules, js: subRules, dart: subRules }
+
 - concept: RulePredicate (the function shape FunctionRule wraps)
   type: { csharp: RulePredicate, python: RulePredicate, js: RulePredicate, dart: RulePredicate }
   member: ""

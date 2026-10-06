@@ -34,6 +34,55 @@ export interface Rule<TContext> {
 }
 
 /**
+ * A rule built from other rules, whose parts can be read without evaluating it.
+ *
+ * Satisfied by {@link AndRule}, {@link OrRule} and {@link NotRule} — and,
+ * deliberately, by a consumer's own composite. That is the point of putting
+ * this on an interface rather than on the three built-in classes: one walk
+ * reaches a combinator this package never saw, where an `instanceof` chain
+ * over concrete classes silently walks past it and reports the rules inside it
+ * as absent.
+ *
+ * This matters more here than in the other SDKs: every built-in composite
+ * stores its parts in a `#private` field, so there is no back door at all —
+ * `subRules` is the only way to read them.
+ *
+ * A leaf rule does not satisfy this, so "is this structure, or a terminal
+ * check" is answerable without naming concrete classes. Use
+ * {@link isCompositeRule} to narrow.
+ *
+ * Describes a rule tree, before anything is evaluated. It makes no claim about
+ * what ran — that is {@link RuleResult.subResults}' job, and the two differ
+ * precisely because a composite short-circuits.
+ */
+export interface CompositeRule<TContext> extends Rule<TContext> {
+  /**
+   * The rules this composite is built from, in evaluation order: exactly one
+   * for a negation, and empty for a vacuous {@link AndRule}/{@link OrRule},
+   * which is a valid composite with no parts.
+   */
+  readonly subRules: readonly Rule<TContext>[];
+}
+
+/**
+ * Narrow a rule to a {@link CompositeRule}.
+ *
+ * A structural check on `subRules`, not an `instanceof` chain, so a consumer's
+ * own composite narrows exactly as a built-in one does:
+ *
+ * ```ts
+ * function leafNames<T>(rule: Rule<T>): string[] {
+ *   return isCompositeRule(rule)
+ *     ? rule.subRules.flatMap(leafNames)
+ *     : [rule.name];
+ * }
+ * ```
+ */
+export function isCompositeRule<TContext>(rule: Rule<TContext>): rule is CompositeRule<TContext> {
+  return Array.isArray((rule as CompositeRule<TContext>).subRules);
+}
+
+/**
  * What a predicate reports back to the {@link FunctionRule} wrapping it.
  *
  * A predicate used to construct its own {@link RuleResult} directly,
@@ -316,7 +365,7 @@ const OR_EVALUATOR = new ShortCircuitEvaluator(true);
  *
  * Every sub-rule must share the exact same `TContext`.
  */
-export class AndRule<TContext> implements Rule<TContext> {
+export class AndRule<TContext> implements CompositeRule<TContext> {
   /** Pinned fact: `new AndRule("x", []).evaluate(...)` always passes. */
   static readonly VACUOUS_RESULT = true;
 
@@ -331,6 +380,17 @@ export class AndRule<TContext> implements Rule<TContext> {
     // otherwise change this composite's sub-rules, and its verdict,
     // after construction.
     this.#rules = [...rules];
+  }
+
+
+  /**
+   * The sub-rules this composite evaluates, in order.
+   *
+   * The stored array, already a copy taken at construction, so handing it out
+   * cannot let a caller reach the one they passed.
+   */
+  get subRules(): readonly Rule<TContext>[] {
+    return this.#rules;
   }
 
   evaluate(context: TContext): Promise<RuleResult> {
@@ -361,7 +421,7 @@ export class AndRule<TContext> implements Rule<TContext> {
  * An empty list fails vacuously. The same same-`TContext` requirement
  * across sub-rules applies here too.
  */
-export class OrRule<TContext> implements Rule<TContext> {
+export class OrRule<TContext> implements CompositeRule<TContext> {
   /** Pinned fact: `new OrRule("x", []).evaluate(...)` always fails. */
   static readonly VACUOUS_RESULT = false;
 
@@ -376,6 +436,17 @@ export class OrRule<TContext> implements Rule<TContext> {
     // otherwise change this composite's sub-rules, and its verdict,
     // after construction.
     this.#rules = [...rules];
+  }
+
+
+  /**
+   * The sub-rules this composite evaluates, in order.
+   *
+   * The stored array, already a copy taken at construction, so handing it out
+   * cannot let a caller reach the one they passed.
+   */
+  get subRules(): readonly Rule<TContext>[] {
+    return this.#rules;
   }
 
   evaluate(context: TContext): Promise<RuleResult> {
@@ -404,15 +475,28 @@ export class OrRule<TContext> implements Rule<TContext> {
  * child, no sequence to iterate, so that machinery would be indirection for
  * nothing it uses.
  */
-export class NotRule<TContext> implements Rule<TContext> {
+export class NotRule<TContext> implements CompositeRule<TContext> {
   readonly name: string;
   readonly group: string | undefined;
   readonly #rule: Rule<TContext>;
+  readonly #subRules: readonly Rule<TContext>[];
 
   constructor(name: string, rule: Rule<TContext>, group?: string) {
     this.name = name;
     this.group = group;
     this.#rule = rule;
+    this.#subRules = [rule];
+  }
+
+  /**
+   * The one negated rule, as an array.
+   *
+   * Exactly one part, always, built once at construction. Named the same as
+   * every other composite's, so a walk over a rule tree needs no knowledge of
+   * which composite it is holding.
+   */
+  get subRules(): readonly Rule<TContext>[] {
+    return this.#subRules;
   }
 
   /**

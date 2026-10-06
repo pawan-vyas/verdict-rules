@@ -5,7 +5,8 @@ namespace VerdictRules;
 /// <inheritdoc cref="NotRule{TContext}" />
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
 [DebuggerTypeProxy(typeof(NotRuleDebugView))]
-public sealed class NotRule(string name, IRule rule, string? group = null) : IRule
+public sealed class NotRule(string name, IRule rule, string? group = null)
+    : IRule, ICompositeRule<IReadOnlyDictionary<string, object?>>
 {
     /// <summary>The generic composite this type is a closed specialization of.</summary>
     private readonly NotRule<IReadOnlyDictionary<string, object?>> _inner = new(name, rule, group);
@@ -18,6 +19,9 @@ public sealed class NotRule(string name, IRule rule, string? group = null) : IRu
 
     /// <summary>The negated rule, for <see cref="NotRuleDebugView"/> to reach through <c>_inner</c>.</summary>
     internal IRule<IReadOnlyDictionary<string, object?>> Rule => _inner.Rule;
+
+    /// <inheritdoc />
+    public IReadOnlyList<IRule<IReadOnlyDictionary<string, object?>>> SubRules => _inner.SubRules;
 
     /// <inheritdoc cref="NotRule{TContext}.EvaluateAsync" />
     public Task<RuleResult> EvaluateAsync(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default) =>

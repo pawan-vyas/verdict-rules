@@ -15,6 +15,7 @@ from verdict.engine import RulesEngine
 from verdict.result import RuleResult, RunResult
 from verdict.rule import (
     AndRule,
+    CompositeRule,
     FunctionRule,
     NotRule,
     OrRule,
@@ -29,6 +30,7 @@ from verdict.rule import (
 
 __all__ = [
     "AndRule",
+    "CompositeRule",
     "FunctionRule",
     "NotRule",
     "OrRule",

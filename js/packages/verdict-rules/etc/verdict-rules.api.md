@@ -5,7 +5,7 @@
 ```ts
 
 // @public
-export class AndRule<TContext> implements Rule<TContext> {
+export class AndRule<TContext> implements CompositeRule<TContext> {
     constructor(name: string, rules: readonly Rule<TContext>[], group?: string);
     // (undocumented)
     evaluate(context: TContext): Promise<RuleResult>;
@@ -13,9 +13,15 @@ export class AndRule<TContext> implements Rule<TContext> {
     readonly group: string | undefined;
     // (undocumented)
     readonly name: string;
+    get subRules(): readonly Rule<TContext>[];
     // (undocumented)
     toString(): string;
     static readonly VACUOUS_RESULT = true;
+}
+
+// @public
+export interface CompositeRule<TContext> extends Rule<TContext> {
+    readonly subRules: readonly Rule<TContext>[];
 }
 
 // @public
@@ -34,19 +40,23 @@ export class FunctionRule<TContext> implements Rule<TContext> {
 }
 
 // @public
-export class NotRule<TContext> implements Rule<TContext> {
+export function isCompositeRule<TContext>(rule: Rule<TContext>): rule is CompositeRule<TContext>;
+
+// @public
+export class NotRule<TContext> implements CompositeRule<TContext> {
     constructor(name: string, rule: Rule<TContext>, group?: string);
     evaluate(context: TContext): Promise<RuleResult>;
     // (undocumented)
     readonly group: string | undefined;
     // (undocumented)
     readonly name: string;
+    get subRules(): readonly Rule<TContext>[];
     // (undocumented)
     toString(): string;
 }
 
 // @public
-export class OrRule<TContext> implements Rule<TContext> {
+export class OrRule<TContext> implements CompositeRule<TContext> {
     constructor(name: string, rules: readonly Rule<TContext>[], group?: string);
     // (undocumented)
     evaluate(context: TContext): Promise<RuleResult>;
@@ -54,6 +64,7 @@ export class OrRule<TContext> implements Rule<TContext> {
     readonly group: string | undefined;
     // (undocumented)
     readonly name: string;
+    get subRules(): readonly Rule<TContext>[];
     // (undocumented)
     toString(): string;
     static readonly VACUOUS_RESULT = false;

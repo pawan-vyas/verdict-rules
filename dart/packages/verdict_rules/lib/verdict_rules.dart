@@ -18,6 +18,7 @@ export 'src/result.dart' show RuleResult, RunResult;
 export 'src/rule.dart'
     show
         AndRule,
+        CompositeRule,
         Context,
         FunctionRule,
         NotRule,

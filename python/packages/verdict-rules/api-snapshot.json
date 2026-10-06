@@ -8,6 +8,7 @@
     },
     "exports": [
       "AndRule",
+      "CompositeRule",
       "FunctionRule",
       "NotRule",
       "OrRule",
@@ -24,13 +25,14 @@
     ],
     "filepath": "/Users/blackmambo/Projects/personal/verdict-rules/python/packages/verdict-rules/src/verdict/__init__.py",
     "git_info": {
-      "commit_hash": "fcb4c29158f3f211fa26b71433046b0505d1e0e2",
+      "commit_hash": "677e59301641e0cf02bfbe9d023b65b46c1acb6b",
       "remote_url": "https://github.com/pawan-vyas/verdict-rules",
       "repository": "/Users/blackmambo/Projects/personal/verdict-rules",
       "service": "github"
     },
     "imports": {
       "AndRule": "verdict.rule.AndRule",
+      "CompositeRule": "verdict.rule.CompositeRule",
       "FunctionRule": "verdict.rule.FunctionRule",
       "NotRule": "verdict.rule.NotRule",
       "OrRule": "verdict.rule.OrRule",
@@ -49,7 +51,7 @@
     "members": {
       "AndRule": {
         "analysis": "static",
-        "endlineno": 28,
+        "endlineno": 29,
         "inherited": false,
         "kind": "alias",
         "lineno": 16,
@@ -57,9 +59,19 @@
         "runtime": true,
         "target_path": "verdict.rule.AndRule"
       },
+      "CompositeRule": {
+        "analysis": "static",
+        "endlineno": 29,
+        "inherited": false,
+        "kind": "alias",
+        "lineno": 16,
+        "name": "CompositeRule",
+        "runtime": true,
+        "target_path": "verdict.rule.CompositeRule"
+      },
       "FunctionRule": {
         "analysis": "static",
-        "endlineno": 28,
+        "endlineno": 29,
         "inherited": false,
         "kind": "alias",
         "lineno": 16,
@@ -69,7 +81,7 @@
       },
       "NotRule": {
         "analysis": "static",
-        "endlineno": 28,
+        "endlineno": 29,
         "inherited": false,
         "kind": "alias",
         "lineno": 16,
@@ -79,7 +91,7 @@
       },
       "OrRule": {
         "analysis": "static",
-        "endlineno": 28,
+        "endlineno": 29,
         "inherited": false,
         "kind": "alias",
         "lineno": 16,
@@ -89,7 +101,7 @@
       },
       "PredicateOutcome": {
         "analysis": "static",
-        "endlineno": 28,
+        "endlineno": 29,
         "inherited": false,
         "kind": "alias",
         "lineno": 16,
@@ -99,7 +111,7 @@
       },
       "Rule": {
         "analysis": "static",
-        "endlineno": 28,
+        "endlineno": 29,
         "inherited": false,
         "kind": "alias",
         "lineno": 16,
@@ -109,7 +121,7 @@
       },
       "RulePredicate": {
         "analysis": "static",
-        "endlineno": 28,
+        "endlineno": 29,
         "inherited": false,
         "kind": "alias",
         "lineno": 16,
@@ -149,7 +161,7 @@
       },
       "SequentialEvaluator": {
         "analysis": "static",
-        "endlineno": 28,
+        "endlineno": 29,
         "inherited": false,
         "kind": "alias",
         "lineno": 16,
@@ -159,7 +171,7 @@
       },
       "ShortCircuitEvaluator": {
         "analysis": "static",
-        "endlineno": 28,
+        "endlineno": 29,
         "inherited": false,
         "kind": "alias",
         "lineno": 16,
@@ -169,7 +181,7 @@
       },
       "StepDecider": {
         "analysis": "static",
-        "endlineno": 28,
+        "endlineno": 29,
         "inherited": false,
         "kind": "alias",
         "lineno": 16,
@@ -179,7 +191,7 @@
       },
       "TContext": {
         "analysis": "static",
-        "endlineno": 28,
+        "endlineno": 29,
         "inherited": false,
         "kind": "alias",
         "lineno": 16,
@@ -189,18 +201,19 @@
       },
       "__all__": {
         "analysis": "static",
-        "endlineno": 45,
+        "endlineno": 47,
         "kind": "attribute",
         "labels": [
           "module-attribute"
         ],
-        "lineno": 30,
+        "lineno": 31,
         "name": "__all__",
         "runtime": true,
         "value": {
           "cls": "ExprList",
           "elements": [
             "'AndRule'",
+            "'CompositeRule'",
             "'FunctionRule'",
             "'NotRule'",
             "'OrRule'",
@@ -959,7 +972,7 @@
               "lineno": 11,
               "value": "Outcome of evaluating a single :class:`~verdict.rule.Rule`.\n\nAttributes:\n    rule_name: The name of the rule this result came from.\n    passed: Whether the rule's condition was satisfied.\n    detail: Optional human-readable explanation of the outcome.\n        Empty string when there's nothing to say beyond the boolean.\n    data: Optional payload a caller can attach; genuinely opaque to\n        this package \u2014 never read or written by verdict itself. A\n        composite rule's own children live in :attr:`sub_results`,\n        never here.\n    sub_results: This result's own children, in evaluation order \u2014\n        empty for a leaf result. A composite rule\n        (:class:`~verdict.rule.AndRule`, :class:`~verdict.rule.OrRule`,\n        :class:`~verdict.rule.NotRule`, or a custom composite built on\n        :class:`~verdict.rule.SequentialEvaluator`) populates this\n        with its own sub-results; an empty tuple *is* the leaf\n        signal, structurally, not just by convention.\n    decided_by_indices: Positions within :attr:`sub_results` of the\n        children that explain *this* result's own verdict. Stored as\n        positions rather than as the child results themselves so that\n        the stored object graph is a genuine tree: holding the same\n        child objects under two fields makes the graph a DAG, and\n        every tree-shaped walk (a JSON encoder, a structured logger)\n        expands a shared node once per path, so serialized size\n        doubles per nesting level. Read :attr:`decided_by` instead\n        unless building a result by hand."
             },
-            "endlineno": 119,
+            "endlineno": 127,
             "kind": "class",
             "labels": [
               "dataclass"
@@ -1233,16 +1246,16 @@
                   }
                 },
                 "docstring": {
-                  "endlineno": 115,
-                  "lineno": 98,
+                  "endlineno": 123,
+                  "lineno": 106,
                   "value": "The leaves that explain why this result failed.\n\nAn independent recursion, **not** a filter over :attr:`leaves` \u2014\nthe two formulas diverge on purpose:\n\n- A failed result with no failing children is itself the leaf.\n  This handles negation correctly without a composite like\n  :class:`~verdict.rule.NotRule` having to misrepresent its own\n  structure: a failed ``NotRule`` wraps an inner rule that\n  *passed*, so recursing into its sub-results would find no\n  failures at all, and the flattened list would need to still\n  end up with exactly one entry \u2014 this result itself.\n- A passed result always contributes no failing leaves, even if\n  an earlier short-circuited branch failed on the way to that\n  pass (an ``OrRule`` whose first sub-rule failed before its\n  second one passed reports no failing leaves at all, correctly\n  \u2014 the rule passed)."
                 },
-                "endlineno": 119,
+                "endlineno": 127,
                 "kind": "attribute",
                 "labels": [
                   "property"
                 ],
-                "lineno": 97,
+                "lineno": 105,
                 "name": "failing_leaves",
                 "runtime": true
               },
@@ -1262,11 +1275,11 @@
                   }
                 },
                 "docstring": {
-                  "endlineno": 91,
+                  "endlineno": 99,
                   "lineno": 86,
-                  "value": "This result's own leaves, flattened, in evaluation order.\n\nA leaf is any result with no :attr:`sub_results` of its own \u2014\nfor a non-composite result, that's itself. Plain recursion over\n:attr:`sub_results`."
+                  "value": "This result's own leaves, flattened, in evaluation order.\n\nA leaf is any result with no :attr:`sub_results` of its own \u2014\nfor a non-composite result, that's itself. Plain recursion over\n:attr:`sub_results`.\n\n**Each leaf's own ``passed`` is its own outcome, not a\ncontribution to this result's verdict.** A\n:class:`~verdict.rule.NotRule` above a leaf inverts it, and an\n:class:`~verdict.rule.OrRule` can pass despite a failed branch,\nso rendering a checklist straight from ``leaves`` can show every\nitem green on a result that failed. Use :attr:`failing_leaves`\nto explain a verdict; use this to enumerate what ran."
                 },
-                "endlineno": 94,
+                "endlineno": 102,
                 "kind": "attribute",
                 "labels": [
                   "property"
@@ -1365,8 +1378,8 @@
             "bases": [],
             "decorators": [
               {
-                "endlineno": 122,
-                "lineno": 122,
+                "endlineno": 130,
+                "lineno": 130,
                 "value": {
                   "arguments": [
                     {
@@ -1390,16 +1403,16 @@
               }
             ],
             "docstring": {
-              "endlineno": 135,
-              "lineno": 124,
+              "endlineno": 143,
+              "lineno": 132,
               "value": "Aggregate outcome of running a whole set of rules\n(:meth:`~verdict.engine.RulesEngine.run_all` or\n:meth:`~verdict.engine.RulesEngine.run_group`).\n\nAttributes:\n    passed: ``True`` only if every rule in :attr:`results` passed.\n    results: One :class:`RuleResult` per rule that was evaluated, in\n        evaluation order. A composite rule's own sub-results live in\n        that rule's own :attr:`RuleResult.sub_results`, not\n        flattened into this list \u2014 see :attr:`leaves` for the\n        flattened view across every rule this run evaluated."
             },
-            "endlineno": 156,
+            "endlineno": 177,
             "kind": "class",
             "labels": [
               "dataclass"
             ],
-            "lineno": 122,
+            "lineno": 130,
             "members": {
               "__init__": {
                 "decorators": [],
@@ -1457,9 +1470,9 @@
               "__post_init__": {
                 "analysis": "static",
                 "decorators": [],
-                "endlineno": 144,
+                "endlineno": 152,
                 "kind": "function",
-                "lineno": 140,
+                "lineno": 148,
                 "name": "__post_init__",
                 "parameters": [
                   {
@@ -1488,16 +1501,16 @@
                   }
                 },
                 "docstring": {
-                  "endlineno": 155,
-                  "lineno": 155,
-                  "value": "Every failing leaf across every rule this run evaluated."
+                  "endlineno": 176,
+                  "lineno": 163,
+                  "value": "Every failing leaf across every rule this run evaluated.\n\nA forwarder to each result's own :attr:`RuleResult.failing_leaves`,\n**not** a filter over :attr:`leaves`. Filtering disagrees with the\nper-result answer in both directions, because a result's verdict is\nnot a function of its leaves' verdicts:\n\n- A failed :class:`~verdict.rule.NotRule` wraps a child that\n  *passed*, so it is its own failing leaf. Filtering finds a passing\n  leaf and reports no failure on a failed run.\n- A passed :class:`~verdict.rule.OrRule` can hold a failed branch it\n  recovered from. Filtering reports that branch as a failure on a\n  passing run."
                 },
-                "endlineno": 156,
+                "endlineno": 177,
                 "kind": "attribute",
                 "labels": [
                   "property"
                 ],
-                "lineno": 154,
+                "lineno": 162,
                 "name": "failing_leaves",
                 "runtime": true
               },
@@ -1517,16 +1530,16 @@
                   }
                 },
                 "docstring": {
-                  "endlineno": 150,
-                  "lineno": 148,
+                  "endlineno": 158,
+                  "lineno": 156,
                   "value": "Every leaf across every rule this run evaluated, flattened,\nin evaluation order. One-line forwarder to each result's own\n:attr:`RuleResult.leaves`."
                 },
-                "endlineno": 151,
+                "endlineno": 159,
                 "kind": "attribute",
                 "labels": [
                   "property"
                 ],
-                "lineno": 147,
+                "lineno": 155,
                 "name": "leaves",
                 "runtime": true
               },
@@ -1537,12 +1550,12 @@
                   "member": null,
                   "name": "bool"
                 },
-                "endlineno": 137,
+                "endlineno": 145,
                 "kind": "attribute",
                 "labels": [
                   "instance-attribute"
                 ],
-                "lineno": 137,
+                "lineno": 145,
                 "name": "passed",
                 "runtime": true
               },
@@ -1561,13 +1574,13 @@
                     "name": "RuleResult"
                   }
                 },
-                "endlineno": 138,
+                "endlineno": 146,
                 "kind": "attribute",
                 "labels": [
                   "class-attribute",
                   "instance-attribute"
                 ],
-                "lineno": 138,
+                "lineno": 146,
                 "name": "results",
                 "runtime": true,
                 "value": {
@@ -1686,28 +1699,28 @@
             ],
             "decorators": [],
             "docstring": {
-              "endlineno": 337,
-              "lineno": 325,
+              "endlineno": 373,
+              "lineno": 361,
               "value": "Composite rule that passes only if every sub-rule passes.\n\nShort-circuits on the first failing sub-rule. Composes a single,\nshared :class:`ShortCircuitEvaluator` \u2014 construction syntax,\n``__repr__``, and type identity are unchanged from before this class\nheld an evaluator instead of a hand-rolled loop.\n\nEvery sub-rule must share the same ``TContext``.\n\nAttributes:\n    name: See :class:`Rule`.\n    group: See :class:`Rule`."
             },
-            "endlineno": 379,
+            "endlineno": 424,
             "kind": "class",
-            "lineno": 324,
+            "lineno": 360,
             "members": {
               "VACUOUS_RESULT": {
                 "analysis": "static",
                 "docstring": {
-                  "endlineno": 343,
-                  "lineno": 340,
+                  "endlineno": 379,
+                  "lineno": 376,
                   "value": "Pinned fact: ``AndRule([]).evaluate(...)`` always passes \u2014 not wired\ninto construction (:class:`ShortCircuitEvaluator` derives this\ninternally from ``stop_on``), kept here as a directly-readable\nguarantee."
                 },
-                "endlineno": 339,
+                "endlineno": 375,
                 "kind": "attribute",
                 "labels": [
                   "class-attribute",
                   "instance-attribute"
                 ],
-                "lineno": 339,
+                "lineno": 375,
                 "name": "VACUOUS_RESULT",
                 "runtime": true,
                 "value": "True"
@@ -1716,13 +1729,13 @@
                 "analysis": "static",
                 "decorators": [],
                 "docstring": {
-                  "endlineno": 355,
-                  "lineno": 348,
+                  "endlineno": 391,
+                  "lineno": 384,
                   "value": "Initialise with the ordered sub-rules to combine.\n\nArgs:\n    name: Unique identifier for this composite rule.\n    rules: Sub-rules evaluated in order until one fails (or all\n        pass). An empty list vacuously passes.\n    group: Optional group label, see :class:`Rule`."
                 },
-                "endlineno": 361,
+                "endlineno": 397,
                 "kind": "function",
-                "lineno": 347,
+                "lineno": 383,
                 "name": "__init__",
                 "parameters": [
                   {
@@ -1789,9 +1802,9 @@
               "__repr__": {
                 "analysis": "static",
                 "decorators": [],
-                "endlineno": 379,
+                "endlineno": 424,
                 "kind": "function",
-                "lineno": 377,
+                "lineno": 422,
                 "name": "__repr__",
                 "parameters": [
                   {
@@ -1823,13 +1836,13 @@
                     "name": "TContext"
                   }
                 },
-                "endlineno": 345,
+                "endlineno": 381,
                 "kind": "attribute",
                 "labels": [
                   "class-attribute",
                   "instance-attribute"
                 ],
-                "lineno": 345,
+                "lineno": 381,
                 "name": "_evaluator",
                 "runtime": true,
                 "value": {
@@ -1855,12 +1868,12 @@
               },
               "_rules": {
                 "analysis": "static",
-                "endlineno": 361,
+                "endlineno": 397,
                 "kind": "attribute",
                 "labels": [
                   "instance-attribute"
                 ],
-                "lineno": 361,
+                "lineno": 397,
                 "name": "_rules",
                 "runtime": true,
                 "value": {
@@ -1883,16 +1896,16 @@
                 "analysis": "static",
                 "decorators": [],
                 "docstring": {
-                  "endlineno": 374,
-                  "lineno": 364,
+                  "endlineno": 419,
+                  "lineno": 409,
                   "value": "Evaluate sub-rules in order, stopping at the first failure.\n\nArgs:\n    context: See :meth:`Rule.evaluate`.\n\nReturns:\n    A :class:`~verdict.result.RuleResult` for this composite rule\n    itself \u2014 ``passed`` is ``True`` only if every sub-rule\n    evaluated passed; ``sub_results`` carries every per-sub-rule\n    result gathered before stopping."
                 },
-                "endlineno": 375,
+                "endlineno": 420,
                 "kind": "function",
                 "labels": [
                   "async"
                 ],
-                "lineno": 363,
+                "lineno": 408,
                 "name": "evaluate",
                 "parameters": [
                   {
@@ -1921,12 +1934,12 @@
               },
               "group": {
                 "analysis": "static",
-                "endlineno": 357,
+                "endlineno": 393,
                 "kind": "attribute",
                 "labels": [
                   "instance-attribute"
                 ],
-                "lineno": 357,
+                "lineno": 393,
                 "name": "group",
                 "runtime": true,
                 "value": {
@@ -1937,12 +1950,12 @@
               },
               "name": {
                 "analysis": "static",
-                "endlineno": 356,
+                "endlineno": 392,
                 "kind": "attribute",
                 "labels": [
                   "instance-attribute"
                 ],
-                "lineno": 356,
+                "lineno": 392,
                 "name": "name",
                 "runtime": true,
                 "value": {
@@ -1950,6 +1963,43 @@
                   "member": null,
                   "name": "name"
                 }
+              },
+              "sub_rules": {
+                "analysis": "static",
+                "annotation": {
+                  "cls": "ExprSubscript",
+                  "left": {
+                    "cls": "ExprName",
+                    "member": "sub_rules",
+                    "name": "Sequence"
+                  },
+                  "slice": {
+                    "cls": "ExprSubscript",
+                    "left": {
+                      "cls": "ExprName",
+                      "member": "sub_rules",
+                      "name": "Rule"
+                    },
+                    "slice": {
+                      "cls": "ExprName",
+                      "member": "sub_rules",
+                      "name": "TContext"
+                    }
+                  }
+                },
+                "docstring": {
+                  "endlineno": 405,
+                  "lineno": 401,
+                  "value": "The sub-rules this composite evaluates, in order.\n\nThe stored tuple, already a copy taken at construction, so handing it\nout cannot let a caller reach the list they passed."
+                },
+                "endlineno": 406,
+                "kind": "attribute",
+                "labels": [
+                  "property"
+                ],
+                "lineno": 400,
+                "name": "sub_rules",
+                "runtime": true
               }
             },
             "name": "AndRule",
@@ -1975,6 +2025,84 @@
             "runtime": true,
             "target_path": "typing.Callable"
           },
+          "CompositeRule": {
+            "analysis": "static",
+            "bases": [
+              {
+                "cls": "ExprSubscript",
+                "left": {
+                  "cls": "ExprName",
+                  "member": "CompositeRule",
+                  "name": "Protocol"
+                },
+                "slice": {
+                  "cls": "ExprName",
+                  "member": "CompositeRule",
+                  "name": "TContext"
+                }
+              }
+            ],
+            "decorators": [
+              {
+                "endlineno": 58,
+                "lineno": 58,
+                "value": {
+                  "cls": "ExprName",
+                  "member": null,
+                  "name": "runtime_checkable"
+                }
+              }
+            ],
+            "docstring": {
+              "endlineno": 86,
+              "lineno": 60,
+              "value": "A rule built from other rules, whose parts are readable un-evaluated.\n\nSatisfied by :class:`AndRule`, :class:`OrRule` and :class:`NotRule` \u2014 and,\ndeliberately, by a consumer's own composite. That is the point of putting\nthis on a protocol rather than on the three built-in types: one walk\nreaches a combinator this package never saw, where ``isinstance`` checks\nagainst concrete types silently walk past it and report the rules inside\nit as absent.\n\nA leaf rule does not satisfy this, so \"is this structure, or a terminal\ncheck\" is answerable without naming concrete types::\n\n    def leaf_names(rule: Rule[TContext]) -> list[str]:\n        if isinstance(rule, CompositeRule):\n            return [n for part in rule.sub_rules for n in leaf_names(part)]\n        return [rule.name]\n\nThis describes a rule tree, before anything is evaluated. It makes no\nclaim about what ran \u2014 that is\n:attr:`~verdict.result.RuleResult.sub_results`' job, and the two differ\nprecisely because a composite short-circuits.\n\nAttributes:\n    sub_rules: The rules this composite is built from, in evaluation\n        order: exactly one for a negation, and empty for a vacuous\n        ``AndRule``/``OrRule``, which is a valid composite with no parts."
+            },
+            "endlineno": 91,
+            "kind": "class",
+            "lineno": 58,
+            "members": {
+              "sub_rules": {
+                "analysis": "static",
+                "annotation": {
+                  "cls": "ExprSubscript",
+                  "left": {
+                    "cls": "ExprName",
+                    "member": "sub_rules",
+                    "name": "Sequence"
+                  },
+                  "slice": {
+                    "cls": "ExprSubscript",
+                    "left": {
+                      "cls": "ExprName",
+                      "member": "sub_rules",
+                      "name": "Rule"
+                    },
+                    "slice": {
+                      "cls": "ExprName",
+                      "member": "sub_rules",
+                      "name": "TContext"
+                    }
+                  }
+                },
+                "docstring": {
+                  "endlineno": 90,
+                  "lineno": 90,
+                  "value": "See :class:`CompositeRule`."
+                },
+                "endlineno": 91,
+                "kind": "attribute",
+                "labels": [
+                  "property"
+                ],
+                "lineno": 89,
+                "name": "sub_rules",
+                "runtime": true
+              }
+            },
+            "name": "CompositeRule",
+            "runtime": true
+          },
           "FunctionRule": {
             "analysis": "static",
             "bases": [
@@ -1994,25 +2122,25 @@
             ],
             "decorators": [],
             "docstring": {
-              "endlineno": 108,
-              "lineno": 100,
+              "endlineno": 144,
+              "lineno": 136,
               "value": "Wraps a plain async predicate as a :class:`Rule`.\n\n``TContext`` is inferred from the wrapped predicate's own type\nannotation. An untyped predicate infers ``Any``.\n\nAttributes:\n    name: See :class:`Rule`.\n    group: See :class:`Rule`."
             },
-            "endlineno": 171,
+            "endlineno": 207,
             "kind": "class",
-            "lineno": 99,
+            "lineno": 135,
             "members": {
               "__init__": {
                 "analysis": "static",
                 "decorators": [],
                 "docstring": {
-                  "endlineno": 124,
-                  "lineno": 116,
+                  "endlineno": 160,
+                  "lineno": 152,
                   "value": "Initialise with a name and the predicate to run.\n\nArgs:\n    name: Unique identifier for this rule.\n    predicate: Async callable that inspects ``context`` and\n        reports a :class:`PredicateOutcome` \u2014 never constructs a\n        :class:`~verdict.result.RuleResult` itself.\n    group: Optional group label, see :class:`Rule`."
                 },
-                "endlineno": 127,
+                "endlineno": 163,
                 "kind": "function",
-                "lineno": 110,
+                "lineno": 146,
                 "name": "__init__",
                 "parameters": [
                   {
@@ -2071,9 +2199,9 @@
               "__repr__": {
                 "analysis": "static",
                 "decorators": [],
-                "endlineno": 171,
+                "endlineno": 207,
                 "kind": "function",
-                "lineno": 169,
+                "lineno": 205,
                 "name": "__repr__",
                 "parameters": [
                   {
@@ -2092,12 +2220,12 @@
               },
               "_predicate": {
                 "analysis": "static",
-                "endlineno": 127,
+                "endlineno": 163,
                 "kind": "attribute",
                 "labels": [
                   "instance-attribute"
                 ],
-                "lineno": 127,
+                "lineno": 163,
                 "name": "_predicate",
                 "runtime": true,
                 "value": {
@@ -2110,16 +2238,16 @@
                 "analysis": "static",
                 "decorators": [],
                 "docstring": {
-                  "endlineno": 155,
-                  "lineno": 130,
+                  "endlineno": 191,
+                  "lineno": 166,
                   "value": "Run the wrapped predicate and build this rule's own result.\n\nNo longer a straight pass-through \u2014 the predicate only reports a\n:class:`PredicateOutcome`, so this is the one place that owns\n``rule_name``, built fresh from ``self.name`` on every call.\n\nArgs:\n    context: See :meth:`Rule.evaluate`.\n\nReturns:\n    A :class:`~verdict.result.RuleResult` carrying this rule's own\n    ``name`` and whatever the predicate reported.\n\nRaises:\n    TypeError: ``predicate`` returned something other than a\n        :class:`PredicateOutcome` \u2014 including a\n        :class:`~verdict.result.RuleResult` built directly, the\n        pre-``PredicateOutcome`` calling convention this package\n        used to have. ``RulePredicate``'s own type annotation is\n        only ever checked by a type checker, never enforced at\n        runtime; an externally-authored predicate (not written\n        against this package's own tests) can still return the\n        wrong shape, and ``RuleResult`` happens to duck-type close\n        enough to silently \"work\" by accident if this weren't\n        checked explicitly."
                 },
-                "endlineno": 167,
+                "endlineno": 203,
                 "kind": "function",
                 "labels": [
                   "async"
                 ],
-                "lineno": 129,
+                "lineno": 165,
                 "name": "evaluate",
                 "parameters": [
                   {
@@ -2148,12 +2276,12 @@
               },
               "group": {
                 "analysis": "static",
-                "endlineno": 126,
+                "endlineno": 162,
                 "kind": "attribute",
                 "labels": [
                   "instance-attribute"
                 ],
-                "lineno": 126,
+                "lineno": 162,
                 "name": "group",
                 "runtime": true,
                 "value": {
@@ -2164,12 +2292,12 @@
               },
               "name": {
                 "analysis": "static",
-                "endlineno": 125,
+                "endlineno": 161,
                 "kind": "attribute",
                 "labels": [
                   "instance-attribute"
                 ],
-                "lineno": 125,
+                "lineno": 161,
                 "name": "name",
                 "runtime": true,
                 "value": {
@@ -2211,25 +2339,25 @@
             ],
             "decorators": [],
             "docstring": {
-              "endlineno": 445,
-              "lineno": 436,
+              "endlineno": 499,
+              "lineno": 490,
               "value": "Composite rule that passes exactly when its one wrapped rule fails.\n\nNo :class:`SequentialEvaluator`/:class:`ShortCircuitEvaluator` composed\nin \u2014 one child, no sequence to iterate, so that machinery would be\nindirection for nothing it uses.\n\nAttributes:\n    name: See :class:`Rule`.\n    group: See :class:`Rule`."
             },
-            "endlineno": 491,
+            "endlineno": 556,
             "kind": "class",
-            "lineno": 435,
+            "lineno": 489,
             "members": {
               "__init__": {
                 "analysis": "static",
                 "decorators": [],
                 "docstring": {
-                  "endlineno": 454,
-                  "lineno": 448,
+                  "endlineno": 508,
+                  "lineno": 502,
                   "value": "Initialise with the single rule to negate.\n\nArgs:\n    name: Unique identifier for this composite rule.\n    rule: The rule whose outcome is inverted.\n    group: Optional group label, see :class:`Rule`."
                 },
-                "endlineno": 457,
+                "endlineno": 512,
                 "kind": "function",
-                "lineno": 447,
+                "lineno": 501,
                 "name": "__init__",
                 "parameters": [
                   {
@@ -2288,9 +2416,9 @@
               "__repr__": {
                 "analysis": "static",
                 "decorators": [],
-                "endlineno": 491,
+                "endlineno": 556,
                 "kind": "function",
-                "lineno": 489,
+                "lineno": 554,
                 "name": "__repr__",
                 "parameters": [
                   {
@@ -2309,12 +2437,12 @@
               },
               "_rule": {
                 "analysis": "static",
-                "endlineno": 457,
+                "endlineno": 511,
                 "kind": "attribute",
                 "labels": [
                   "instance-attribute"
                 ],
-                "lineno": 457,
+                "lineno": 511,
                 "name": "_rule",
                 "runtime": true,
                 "value": {
@@ -2323,20 +2451,70 @@
                   "name": "rule"
                 }
               },
+              "_sub_rules": {
+                "analysis": "static",
+                "annotation": {
+                  "cls": "ExprSubscript",
+                  "left": {
+                    "cls": "ExprName",
+                    "member": null,
+                    "name": "tuple"
+                  },
+                  "slice": {
+                    "cls": "ExprTuple",
+                    "elements": [
+                      {
+                        "cls": "ExprSubscript",
+                        "left": {
+                          "cls": "ExprName",
+                          "member": null,
+                          "name": "Rule"
+                        },
+                        "slice": {
+                          "cls": "ExprName",
+                          "member": null,
+                          "name": "TContext"
+                        }
+                      },
+                      "..."
+                    ],
+                    "implicit": true
+                  }
+                },
+                "endlineno": 512,
+                "kind": "attribute",
+                "labels": [
+                  "instance-attribute"
+                ],
+                "lineno": 512,
+                "name": "_sub_rules",
+                "runtime": true,
+                "value": {
+                  "cls": "ExprTuple",
+                  "elements": [
+                    {
+                      "cls": "ExprName",
+                      "member": null,
+                      "name": "rule"
+                    }
+                  ],
+                  "implicit": false
+                }
+              },
               "evaluate": {
                 "analysis": "static",
                 "decorators": [],
                 "docstring": {
-                  "endlineno": 480,
-                  "lineno": 460,
+                  "endlineno": 545,
+                  "lineno": 525,
                   "value": "Evaluate the wrapped rule and invert its verdict.\n\nArgs:\n    context: See :meth:`Rule.evaluate`.\n\nReturns:\n    A :class:`~verdict.result.RuleResult` for this composite rule\n    itself \u2014 ``passed`` is the logical negation of the wrapped\n    rule's own ``passed``. ``sub_results`` is the one-element\n    ``(inner,)``, truthfully \u2014 never flattened away. An empty\n    ``sub_results`` has to mean *only* \"this is a leaf,\" never also\n    \"this is a composite hiding its own structure\" \u2014 that\n    guarantee is what makes ``leaves``/``failing_leaves`` safe to\n    call on any ``RuleResult`` at all, so ``NotRule`` doesn't get\n    to special-case it away just because a failed ``NotRule``'s own\n    ``failing_leaves`` can otherwise read as misleadingly empty\n    (the cause is a pass, not a failure). ``decided_by`` is the\n    one inner result unconditionally, in both directions \u2014 correct\n    either way, since \"inner passed\" is genuinely why a failing\n    ``NotRule`` failed, not an inconsistency."
                 },
-                "endlineno": 487,
+                "endlineno": 552,
                 "kind": "function",
                 "labels": [
                   "async"
                 ],
-                "lineno": 459,
+                "lineno": 524,
                 "name": "evaluate",
                 "parameters": [
                   {
@@ -2365,12 +2543,12 @@
               },
               "group": {
                 "analysis": "static",
-                "endlineno": 456,
+                "endlineno": 510,
                 "kind": "attribute",
                 "labels": [
                   "instance-attribute"
                 ],
-                "lineno": 456,
+                "lineno": 510,
                 "name": "group",
                 "runtime": true,
                 "value": {
@@ -2381,12 +2559,12 @@
               },
               "name": {
                 "analysis": "static",
-                "endlineno": 455,
+                "endlineno": 509,
                 "kind": "attribute",
                 "labels": [
                   "instance-attribute"
                 ],
-                "lineno": 455,
+                "lineno": 509,
                 "name": "name",
                 "runtime": true,
                 "value": {
@@ -2394,6 +2572,43 @@
                   "member": null,
                   "name": "name"
                 }
+              },
+              "sub_rules": {
+                "analysis": "static",
+                "annotation": {
+                  "cls": "ExprSubscript",
+                  "left": {
+                    "cls": "ExprName",
+                    "member": "sub_rules",
+                    "name": "Sequence"
+                  },
+                  "slice": {
+                    "cls": "ExprSubscript",
+                    "left": {
+                      "cls": "ExprName",
+                      "member": "sub_rules",
+                      "name": "Rule"
+                    },
+                    "slice": {
+                      "cls": "ExprName",
+                      "member": "sub_rules",
+                      "name": "TContext"
+                    }
+                  }
+                },
+                "docstring": {
+                  "endlineno": 521,
+                  "lineno": 516,
+                  "value": "The one negated rule, as a sequence.\n\nExactly one part, always, and named the same as every other\ncomposite's so a walk over a rule tree needs no knowledge of which\ncomposite it is holding."
+                },
+                "endlineno": 522,
+                "kind": "attribute",
+                "labels": [
+                  "property"
+                ],
+                "lineno": 515,
+                "name": "sub_rules",
+                "runtime": true
               }
             },
             "name": "NotRule",
@@ -2418,28 +2633,28 @@
             ],
             "decorators": [],
             "docstring": {
-              "endlineno": 391,
-              "lineno": 383,
+              "endlineno": 436,
+              "lineno": 428,
               "value": "Composite rule that passes if any sub-rule passes.\n\nShort-circuits on the first passing sub-rule. The same\nsame-``TContext`` requirement across sub-rules applies here too.\n\nAttributes:\n    name: See :class:`Rule`.\n    group: See :class:`Rule`."
             },
-            "endlineno": 432,
+            "endlineno": 486,
             "kind": "class",
-            "lineno": 382,
+            "lineno": 427,
             "members": {
               "VACUOUS_RESULT": {
                 "analysis": "static",
                 "docstring": {
-                  "endlineno": 396,
-                  "lineno": 394,
+                  "endlineno": 441,
+                  "lineno": 439,
                   "value": "Pinned fact: ``OrRule([]).evaluate(...)`` always fails \u2014 not wired\ninto construction, kept here as a directly-readable guarantee. See\n:attr:`AndRule.VACUOUS_RESULT`."
                 },
-                "endlineno": 393,
+                "endlineno": 438,
                 "kind": "attribute",
                 "labels": [
                   "class-attribute",
                   "instance-attribute"
                 ],
-                "lineno": 393,
+                "lineno": 438,
                 "name": "VACUOUS_RESULT",
                 "runtime": true,
                 "value": "False"
@@ -2448,13 +2663,13 @@
                 "analysis": "static",
                 "decorators": [],
                 "docstring": {
-                  "endlineno": 408,
-                  "lineno": 401,
+                  "endlineno": 453,
+                  "lineno": 446,
                   "value": "Initialise with the ordered sub-rules to combine.\n\nArgs:\n    name: Unique identifier for this composite rule.\n    rules: Sub-rules evaluated in order until one passes (or all\n        fail). An empty list vacuously fails.\n    group: Optional group label, see :class:`Rule`."
                 },
-                "endlineno": 414,
+                "endlineno": 459,
                 "kind": "function",
-                "lineno": 400,
+                "lineno": 445,
                 "name": "__init__",
                 "parameters": [
                   {
@@ -2521,9 +2736,9 @@
               "__repr__": {
                 "analysis": "static",
                 "decorators": [],
-                "endlineno": 432,
+                "endlineno": 486,
                 "kind": "function",
-                "lineno": 430,
+                "lineno": 484,
                 "name": "__repr__",
                 "parameters": [
                   {
@@ -2555,13 +2770,13 @@
                     "name": "TContext"
                   }
                 },
-                "endlineno": 398,
+                "endlineno": 443,
                 "kind": "attribute",
                 "labels": [
                   "class-attribute",
                   "instance-attribute"
                 ],
-                "lineno": 398,
+                "lineno": 443,
                 "name": "_evaluator",
                 "runtime": true,
                 "value": {
@@ -2587,12 +2802,12 @@
               },
               "_rules": {
                 "analysis": "static",
-                "endlineno": 414,
+                "endlineno": 459,
                 "kind": "attribute",
                 "labels": [
                   "instance-attribute"
                 ],
-                "lineno": 414,
+                "lineno": 459,
                 "name": "_rules",
                 "runtime": true,
                 "value": {
@@ -2615,16 +2830,16 @@
                 "analysis": "static",
                 "decorators": [],
                 "docstring": {
-                  "endlineno": 427,
-                  "lineno": 417,
+                  "endlineno": 481,
+                  "lineno": 471,
                   "value": "Evaluate sub-rules in order, stopping at the first pass.\n\nArgs:\n    context: See :meth:`Rule.evaluate`.\n\nReturns:\n    A :class:`~verdict.result.RuleResult` for this composite rule\n    itself \u2014 ``passed`` is ``True`` as soon as any sub-rule passes;\n    ``sub_results`` carries every per-sub-rule result gathered\n    before stopping."
                 },
-                "endlineno": 428,
+                "endlineno": 482,
                 "kind": "function",
                 "labels": [
                   "async"
                 ],
-                "lineno": 416,
+                "lineno": 470,
                 "name": "evaluate",
                 "parameters": [
                   {
@@ -2653,12 +2868,12 @@
               },
               "group": {
                 "analysis": "static",
-                "endlineno": 410,
+                "endlineno": 455,
                 "kind": "attribute",
                 "labels": [
                   "instance-attribute"
                 ],
-                "lineno": 410,
+                "lineno": 455,
                 "name": "group",
                 "runtime": true,
                 "value": {
@@ -2669,12 +2884,12 @@
               },
               "name": {
                 "analysis": "static",
-                "endlineno": 409,
+                "endlineno": 454,
                 "kind": "attribute",
                 "labels": [
                   "instance-attribute"
                 ],
-                "lineno": 409,
+                "lineno": 454,
                 "name": "name",
                 "runtime": true,
                 "value": {
@@ -2682,6 +2897,43 @@
                   "member": null,
                   "name": "name"
                 }
+              },
+              "sub_rules": {
+                "analysis": "static",
+                "annotation": {
+                  "cls": "ExprSubscript",
+                  "left": {
+                    "cls": "ExprName",
+                    "member": "sub_rules",
+                    "name": "Sequence"
+                  },
+                  "slice": {
+                    "cls": "ExprSubscript",
+                    "left": {
+                      "cls": "ExprName",
+                      "member": "sub_rules",
+                      "name": "Rule"
+                    },
+                    "slice": {
+                      "cls": "ExprName",
+                      "member": "sub_rules",
+                      "name": "TContext"
+                    }
+                  }
+                },
+                "docstring": {
+                  "endlineno": 467,
+                  "lineno": 463,
+                  "value": "The sub-rules this composite evaluates, in order.\n\nThe stored tuple, already a copy taken at construction, so handing it\nout cannot let a caller reach the list they passed."
+                },
+                "endlineno": 468,
+                "kind": "attribute",
+                "labels": [
+                  "property"
+                ],
+                "lineno": 462,
+                "name": "sub_rules",
+                "runtime": true
               }
             },
             "name": "OrRule",
@@ -2692,8 +2944,8 @@
             "bases": [],
             "decorators": [
               {
-                "endlineno": 58,
-                "lineno": 58,
+                "endlineno": 94,
+                "lineno": 94,
                 "value": {
                   "arguments": [
                     {
@@ -2717,16 +2969,16 @@
               }
             ],
             "docstring": {
-              "endlineno": 86,
-              "lineno": 60,
+              "endlineno": 122,
+              "lineno": 96,
               "value": "What a predicate reports back to the :class:`FunctionRule` wrapping it.\n\nA predicate used to construct its own :class:`~verdict.result.RuleResult`\ndirectly, including its own ``rule_name`` \u2014 completely decoupled from\nwhatever name the ``FunctionRule`` wrapping it was constructed with, and\nnothing kept the two in sync. The fix is structural, not a runtime\ncheck: a predicate returns this instead, and only\n:meth:`FunctionRule.evaluate` ever builds the final\n:class:`~verdict.result.RuleResult`, from the one name already fixed at\nconstruction.\n\nDeliberately has **no** ``name`` field \u2014 restating a name that's already\nfixed on the wrapping ``FunctionRule`` is never legitimate, not just\ninconvenient, so the capability doesn't exist. **No ``group`` field\neither, permanently** \u2014 ``RuleResult`` doesn't carry a ``group`` today;\nif that ever changes, ``group`` stays exclusively sourced from\n``FunctionRule.group``, the same way ``name`` already is, never from the\npredicate. This generalizes beyond the one bug it was fixed for: any\nfuture rule-owned field on ``RuleResult`` gets the same guarantee for\nfree, because a predicate has no path to set it at all.\n\nAttributes:\n    passed: Whether the predicate's condition was satisfied.\n    detail: Optional human-readable explanation of the outcome. Empty\n        string when there's nothing to say beyond the boolean.\n    data: Optional payload a caller can attach; opaque to this package."
             },
-            "endlineno": 90,
+            "endlineno": 126,
             "kind": "class",
             "labels": [
               "dataclass"
             ],
-            "lineno": 58,
+            "lineno": 94,
             "members": {
               "__init__": {
                 "decorators": [],
@@ -2792,13 +3044,13 @@
                   "operator": "|",
                   "right": "None"
                 },
-                "endlineno": 90,
+                "endlineno": 126,
                 "kind": "attribute",
                 "labels": [
                   "class-attribute",
                   "instance-attribute"
                 ],
-                "lineno": 90,
+                "lineno": 126,
                 "name": "data",
                 "runtime": true,
                 "value": "None"
@@ -2810,13 +3062,13 @@
                   "member": null,
                   "name": "str"
                 },
-                "endlineno": 89,
+                "endlineno": 125,
                 "kind": "attribute",
                 "labels": [
                   "class-attribute",
                   "instance-attribute"
                 ],
-                "lineno": 89,
+                "lineno": 125,
                 "name": "detail",
                 "runtime": true,
                 "value": "''"
@@ -2828,12 +3080,12 @@
                   "member": null,
                   "name": "bool"
                 },
-                "endlineno": 88,
+                "endlineno": 124,
                 "kind": "attribute",
                 "labels": [
                   "instance-attribute"
                 ],
-                "lineno": 88,
+                "lineno": 124,
                 "name": "passed",
                 "runtime": true
               }
@@ -2977,16 +3229,16 @@
               "name": "TypeAlias"
             },
             "docstring": {
-              "endlineno": 96,
-              "lineno": 94,
+              "endlineno": 132,
+              "lineno": 130,
               "value": "An async predicate a :class:`FunctionRule` wraps: inspects ``context``\nand reports a :class:`PredicateOutcome`, never a\n:class:`~verdict.result.RuleResult` directly."
             },
-            "endlineno": 93,
+            "endlineno": 129,
             "kind": "attribute",
             "labels": [
               "module-attribute"
             ],
-            "lineno": 93,
+            "lineno": 129,
             "name": "RulePredicate",
             "runtime": true,
             "value": {
@@ -3066,25 +3318,25 @@
             ],
             "decorators": [],
             "docstring": {
-              "endlineno": 192,
-              "lineno": 185,
+              "endlineno": 228,
+              "lineno": 221,
               "value": "Evaluates a list of sub-rules sequentially against one context,\nletting a :data:`StepDecider` choose when to stop.\n\nComposable \u2014 hold one as a field and delegate to it, the same way\n:class:`FunctionRule` holds a predicate. Plain class, no inheritance\nanywhere: every composite's dependency is a visible constructor\nargument, and each piece is unit-testable in isolation."
             },
-            "endlineno": 259,
+            "endlineno": 295,
             "kind": "class",
-            "lineno": 184,
+            "lineno": 220,
             "members": {
               "__init__": {
                 "analysis": "static",
                 "decorators": [],
                 "docstring": {
-                  "endlineno": 203,
-                  "lineno": 195,
+                  "endlineno": 239,
+                  "lineno": 231,
                   "value": "Initialise with the stopping decision and the empty-list verdict.\n\nArgs:\n    decider: Called once per sub-rule evaluated \u2014 see\n        :data:`StepDecider`.\n    vacuous_result: What to report when ``rules`` is empty, or when\n        ``decider`` never resolves to anything but ``None`` even\n        after every sub-rule has been evaluated."
                 },
-                "endlineno": 205,
+                "endlineno": 241,
                 "kind": "function",
-                "lineno": 194,
+                "lineno": 230,
                 "name": "__init__",
                 "parameters": [
                   {
@@ -3119,12 +3371,12 @@
               },
               "_decider": {
                 "analysis": "static",
-                "endlineno": 204,
+                "endlineno": 240,
                 "kind": "attribute",
                 "labels": [
                   "instance-attribute"
                 ],
-                "lineno": 204,
+                "lineno": 240,
                 "name": "_decider",
                 "runtime": true,
                 "value": {
@@ -3135,12 +3387,12 @@
               },
               "_vacuous_result": {
                 "analysis": "static",
-                "endlineno": 205,
+                "endlineno": 241,
                 "kind": "attribute",
                 "labels": [
                   "instance-attribute"
                 ],
-                "lineno": 205,
+                "lineno": 241,
                 "name": "_vacuous_result",
                 "runtime": true,
                 "value": {
@@ -3153,16 +3405,16 @@
                 "analysis": "static",
                 "decorators": [],
                 "docstring": {
-                  "endlineno": 224,
-                  "lineno": 210,
+                  "endlineno": 260,
+                  "lineno": 246,
                   "value": "Evaluate ``rules`` in order against ``context``, stopping when\n``decider`` says to.\n\nArgs:\n    name: The name the resulting :class:`~verdict.result.RuleResult`\n        carries \u2014 the composite's own name, not any sub-rule's.\n    rules: Sub-rules evaluated in order until ``decider`` decides,\n        or the list is exhausted.\n    context: See :meth:`Rule.evaluate`.\n\nReturns:\n    A :class:`~verdict.result.RuleResult` for the composite itself,\n    with ``sub_results`` holding every sub-result gathered before\n    stopping."
                 },
-                "endlineno": 259,
+                "endlineno": 295,
                 "kind": "function",
                 "labels": [
                   "async"
                 ],
-                "lineno": 207,
+                "lineno": 243,
                 "name": "evaluate",
                 "parameters": [
                   {
@@ -3248,32 +3500,32 @@
             ],
             "decorators": [],
             "docstring": {
-              "endlineno": 268,
-              "lineno": 263,
+              "endlineno": 304,
+              "lineno": 299,
               "value": "Stops at the first sub-rule whose own ``passed`` equals ``stop_on`` \u2014\nthe shape :class:`AndRule` and :class:`OrRule` both are.\n\nWraps :class:`SequentialEvaluator` internally; callers never need to\nknow that type exists unless they need more than this covers."
             },
-            "endlineno": 321,
+            "endlineno": 357,
             "kind": "class",
-            "lineno": 262,
+            "lineno": 298,
             "members": {
               "__init__": {
                 "analysis": "static",
                 "decorators": [],
                 "docstring": {
-                  "endlineno": 289,
-                  "lineno": 271,
+                  "endlineno": 325,
+                  "lineno": 307,
                   "value": "Initialise with the ``passed`` value that ends evaluation early.\n\nOnly takes ``stop_on`` \u2014 unlike :class:`SequentialEvaluator`, where\n``vacuous_result`` is a genuinely independent fact, here the\nexhaustion case already resolves to ``not stop_on``, and an empty\nlist is just that same exhaustion with zero iterations. A second,\nindependently-set argument could only ever restate that fact\ncorrectly or contradict it \u2014 never add real information \u2014 so it's\nderived, not accepted. Named ``stop_on`` rather than ``passed``:\n``passed`` would read as a verdict already decided before\nevaluation ever runs; ``stop_on`` reads as what it is, a stopping\ncondition.\n\nArgs:\n    stop_on: The sub-result ``passed`` value that ends evaluation\n        immediately with that same verdict \u2014 ``False`` for\n        :class:`AndRule` (stop on the first failure), ``True`` for\n        :class:`OrRule` (stop on the first pass)."
                 },
-                "endlineno": 300,
+                "endlineno": 336,
                 "kind": "function",
-                "lineno": 270,
+                "lineno": 306,
                 "members": {
                   "decider": {
                     "analysis": "static",
                     "decorators": [],
-                    "endlineno": 295,
+                    "endlineno": 331,
                     "kind": "function",
-                    "lineno": 290,
+                    "lineno": 326,
                     "name": "decider",
                     "parameters": [
                       {
@@ -3365,12 +3617,12 @@
                     "name": "TContext"
                   }
                 },
-                "endlineno": 300,
+                "endlineno": 336,
                 "kind": "attribute",
                 "labels": [
                   "instance-attribute"
                 ],
-                "lineno": 298,
+                "lineno": 334,
                 "name": "_inner",
                 "runtime": true,
                 "value": {
@@ -3418,12 +3670,12 @@
               },
               "_stop_on": {
                 "analysis": "static",
-                "endlineno": 297,
+                "endlineno": 333,
                 "kind": "attribute",
                 "labels": [
                   "instance-attribute"
                 ],
-                "lineno": 297,
+                "lineno": 333,
                 "name": "_stop_on",
                 "runtime": true,
                 "value": {
@@ -3436,16 +3688,16 @@
                 "analysis": "static",
                 "decorators": [],
                 "docstring": {
-                  "endlineno": 315,
-                  "lineno": 305,
+                  "endlineno": 351,
+                  "lineno": 341,
                   "value": "See :meth:`SequentialEvaluator.evaluate` \u2014 same result, except\n``decided_by`` is recomputed here rather than trusting\n:class:`SequentialEvaluator`'s own generic rule.\n\nThat generic rule can't distinguish \"found the trigger, which\nhappened to be the last item evaluated\" from \"genuinely exhausted\nevery item without ever finding it\" using count alone \u2014 an\n``AndRule`` failing on its *last* sub-rule has\n``len(sub_results) == total`` exactly like a genuine full pass\ndoes. ``stop_on`` is the one extra fact that tells them apart."
                 },
-                "endlineno": 321,
+                "endlineno": 357,
                 "kind": "function",
                 "labels": [
                   "async"
                 ],
-                "lineno": 302,
+                "lineno": 338,
                 "name": "evaluate",
                 "parameters": [
                   {
@@ -3520,16 +3772,16 @@
               "name": "TypeAlias"
             },
             "docstring": {
-              "endlineno": 181,
-              "lineno": 175,
+              "endlineno": 217,
+              "lineno": 211,
               "value": "Signature for the decision a :class:`SequentialEvaluator` delegates to:\ngiven the latest sub-result, every sub-result gathered so far (including the\nlatest), and the total number of sub-rules, return ``True``/``False`` to\nstop evaluating right now with that verdict, or ``None`` to keep going.\nInvoked once per step (per sub-rule evaluated), not a one-shot classifier of\nthe whole run. Not parameterized by ``TContext`` \u2014 it only ever touches\n``RuleResult``/counts, never the evaluation context itself."
             },
-            "endlineno": 174,
+            "endlineno": 210,
             "kind": "attribute",
             "labels": [
               "module-attribute"
             ],
-            "lineno": 174,
+            "lineno": 210,
             "name": "StepDecider",
             "runtime": true,
             "value": {

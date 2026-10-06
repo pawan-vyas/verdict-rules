@@ -21,7 +21,7 @@ namespace VerdictRules;
 /// <param name="group"><inheritdoc cref="IRule{TContext}.Group" path="/summary/node()" /></param>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
 [DebuggerTypeProxy(typeof(AndRuleDebugView<>))]
-public sealed class AndRule<TContext>(string name, IReadOnlyList<IRule<TContext>> rules, string? group = null) : IRule<TContext>
+public sealed class AndRule<TContext>(string name, IReadOnlyList<IRule<TContext>> rules, string? group = null) : ICompositeRule<TContext>
 {
     /// <summary>What an empty <see cref="AndRule{TContext}"/> evaluates to -- pinned, not wired into construction.</summary>
     public const bool VacuousResult = true;
@@ -36,12 +36,12 @@ public sealed class AndRule<TContext>(string name, IReadOnlyList<IRule<TContext>
     // composite's sub-rules, and its verdict, after construction.
     private readonly IReadOnlyList<IRule<TContext>> _rules = [.. rules];
 
-    /// <summary>
-    /// Same sub-rules as <see cref="_rules"/>, exposed for the non-generic
-    /// <see cref="AndRule"/> wrapper's own debugger proxy to reach through
-    /// <c>_inner</c> without widening this type's public surface.
-    /// </summary>
-    internal IReadOnlyList<IRule<TContext>> SubRules => _rules;
+    /// <inheritdoc />
+    /// <remarks>
+    /// The stored list itself, which is already a copy taken at construction,
+    /// so handing it out cannot let a caller reach the original they passed.
+    /// </remarks>
+    public IReadOnlyList<IRule<TContext>> SubRules => _rules;
 
     /// <inheritdoc />
     public string Name { get; } = name;

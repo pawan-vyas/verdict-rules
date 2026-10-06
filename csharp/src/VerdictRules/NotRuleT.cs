@@ -20,14 +20,18 @@ namespace VerdictRules;
 /// <param name="group"><inheritdoc cref="IRule{TContext}.Group" path="/summary/node()" /></param>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
 [DebuggerTypeProxy(typeof(NotRuleDebugView<>))]
-public sealed class NotRule<TContext>(string name, IRule<TContext> rule, string? group = null) : IRule<TContext>
+public sealed class NotRule<TContext>(string name, IRule<TContext> rule, string? group = null) : ICompositeRule<TContext>
 {
-    /// <summary>
-    /// The negated rule, exposed for the non-generic <see cref="NotRule"/>
-    /// wrapper's own debugger proxy to reach through <c>_inner</c> without
-    /// widening this type's public surface.
-    /// </summary>
+    /// <summary>The negated rule, which this composite's one part wraps.</summary>
     internal IRule<TContext> Rule { get; } = rule;
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// Exactly one part, always. Stored as a list once at construction rather
+    /// than built per call, and named the same as every other composite's so a
+    /// walk over a rule tree needs no knowledge of which composite it holds.
+    /// </remarks>
+    public IReadOnlyList<IRule<TContext>> SubRules { get; } = [rule];
 
     /// <inheritdoc />
     public string Name { get; } = name;

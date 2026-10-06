@@ -2,8 +2,8 @@
 /// new shipped NotRule: SequentialEvaluator, ShortCircuitEvaluator, and
 /// RuleResult.decidedBy.
 ///
-/// See .agents/plans/composite-rule-and-leaves-redesign/README.md §3-§3d
-/// for the design this pins down. A Dart-idiom sibling of Python's own
+/// Each type's own doc comment in `lib/src/rule.dart` states the contract
+/// these pin down case by case. A Dart-idiom sibling of Python's own
 /// test_composition.py -- not a strict 1:1 port (this package's test
 /// suite doesn't maintain that discipline the way rule_test.dart/
 /// engine_test.dart do), but the same cases, case for case.

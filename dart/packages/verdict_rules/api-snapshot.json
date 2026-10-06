@@ -3,7 +3,7 @@
     "packageApi": {
         "packageName": "verdict_rules",
         "packageVersion": "0.4.0",
-        "packagePath": "/var/folders/dt/_1vx47rj39b_yb9t0cgpk7880000gn/T/wdXCqo",
+        "packagePath": "/var/folders/dt/_1vx47rj39b_yb9t0cgpk7880000gn/T/s84ZbR",
         "interfaceDeclarations": [
             {
                 "name": "RulesEngine",
@@ -646,6 +646,95 @@
                 "relativePath": "lib/src/rule.dart"
             },
             {
+                "name": "CompositeRule",
+                "isDeprecated": false,
+                "isExperimental": false,
+                "isSealed": false,
+                "isRequired": false,
+                "typeParameterNames": [
+                    "TContext"
+                ],
+                "superTypeNames": [
+                    "Object",
+                    "Rule<TContext>"
+                ],
+                "executableDeclarations": [
+                    {
+                        "returnTypeName": "CompositeRule<TContext>",
+                        "name": "new",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "parameters": [],
+                        "typeParameterNames": [],
+                        "type": "constructor",
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/rule.dart"
+                    },
+                    {
+                        "returnTypeName": "Future<RuleResult>",
+                        "name": "evaluate",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "parameters": [
+                            {
+                                "isRequired": true,
+                                "isNamed": false,
+                                "name": "context",
+                                "isDeprecated": false,
+                                "isExperimental": false,
+                                "typeName": "TContext",
+                                "relativePath": "lib/src/rule.dart"
+                            }
+                        ],
+                        "typeParameterNames": [],
+                        "type": "method",
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/rule.dart"
+                    }
+                ],
+                "fieldDeclarations": [
+                    {
+                        "typeName": "List<Rule<TContext>>",
+                        "name": "subRules",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/rule.dart",
+                        "isReadable": true,
+                        "isWriteable": false
+                    },
+                    {
+                        "typeName": "String",
+                        "name": "name",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/rule.dart",
+                        "isReadable": true,
+                        "isWriteable": false
+                    },
+                    {
+                        "typeName": "String?",
+                        "name": "group",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/rule.dart",
+                        "isReadable": true,
+                        "isWriteable": false
+                    }
+                ],
+                "entryPoints": [
+                    "verdict_rules.dart"
+                ],
+                "relativePath": "lib/src/rule.dart"
+            },
+            {
                 "name": "PredicateOutcome",
                 "isDeprecated": false,
                 "isExperimental": false,
@@ -1027,6 +1116,7 @@
                 ],
                 "superTypeNames": [
                     "Object",
+                    "CompositeRule<TContext>",
                     "Rule<TContext>"
                 ],
                 "executableDeclarations": [
@@ -1106,6 +1196,17 @@
                         "isWriteable": false
                     },
                     {
+                        "typeName": "List<Rule<TContext>>",
+                        "name": "subRules",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/rule.dart",
+                        "isReadable": true,
+                        "isWriteable": false
+                    },
+                    {
                         "typeName": "String",
                         "name": "name",
                         "isDeprecated": false,
@@ -1144,6 +1245,7 @@
                 ],
                 "superTypeNames": [
                     "Object",
+                    "CompositeRule<TContext>",
                     "Rule<TContext>"
                 ],
                 "executableDeclarations": [
@@ -1223,6 +1325,17 @@
                         "isWriteable": false
                     },
                     {
+                        "typeName": "List<Rule<TContext>>",
+                        "name": "subRules",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/rule.dart",
+                        "isReadable": true,
+                        "isWriteable": false
+                    },
+                    {
                         "typeName": "String",
                         "name": "name",
                         "isDeprecated": false,
@@ -1261,6 +1374,7 @@
                 ],
                 "superTypeNames": [
                     "Object",
+                    "CompositeRule<TContext>",
                     "Rule<TContext>"
                 ],
                 "executableDeclarations": [
@@ -1328,6 +1442,17 @@
                     }
                 ],
                 "fieldDeclarations": [
+                    {
+                        "typeName": "List<Rule<TContext>>",
+                        "name": "subRules",
+                        "isDeprecated": false,
+                        "isExperimental": false,
+                        "isStatic": false,
+                        "entryPoints": [],
+                        "relativePath": "lib/src/rule.dart",
+                        "isReadable": true,
+                        "isWriteable": false
+                    },
                     {
                         "typeName": "String",
                         "name": "name",

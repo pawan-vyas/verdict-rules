@@ -55,6 +55,42 @@ class Rule(Protocol[TContext]):
         ...
 
 
+@runtime_checkable
+class CompositeRule(Protocol[TContext]):
+    """A rule built from other rules, whose parts are readable un-evaluated.
+
+    Satisfied by :class:`AndRule`, :class:`OrRule` and :class:`NotRule` — and,
+    deliberately, by a consumer's own composite. That is the point of putting
+    this on a protocol rather than on the three built-in types: one walk
+    reaches a combinator this package never saw, where ``isinstance`` checks
+    against concrete types silently walk past it and report the rules inside
+    it as absent.
+
+    A leaf rule does not satisfy this, so "is this structure, or a terminal
+    check" is answerable without naming concrete types::
+
+        def leaf_names(rule: Rule[TContext]) -> list[str]:
+            if isinstance(rule, CompositeRule):
+                return [n for part in rule.sub_rules for n in leaf_names(part)]
+            return [rule.name]
+
+    This describes a rule tree, before anything is evaluated. It makes no
+    claim about what ran — that is
+    :attr:`~verdict.result.RuleResult.sub_results`' job, and the two differ
+    precisely because a composite short-circuits.
+
+    Attributes:
+        sub_rules: The rules this composite is built from, in evaluation
+            order: exactly one for a negation, and empty for a vacuous
+            ``AndRule``/``OrRule``, which is a valid composite with no parts.
+    """
+
+    @property
+    def sub_rules(self) -> Sequence[Rule[TContext]]:
+        """See :class:`CompositeRule`."""
+        ...
+
+
 @dataclass(frozen=True)
 class PredicateOutcome:
     """What a predicate reports back to the :class:`FunctionRule` wrapping it.
@@ -360,6 +396,15 @@ class AndRule(Generic[TContext]):
         # after construction.
         self._rules = tuple(rules)
 
+    @property
+    def sub_rules(self) -> Sequence[Rule[TContext]]:
+        """The sub-rules this composite evaluates, in order.
+
+        The stored tuple, already a copy taken at construction, so handing it
+        out cannot let a caller reach the list they passed.
+        """
+        return self._rules
+
     async def evaluate(self, context: TContext) -> RuleResult:
         """Evaluate sub-rules in order, stopping at the first failure.
 
@@ -413,6 +458,15 @@ class OrRule(Generic[TContext]):
         # after construction.
         self._rules = tuple(rules)
 
+    @property
+    def sub_rules(self) -> Sequence[Rule[TContext]]:
+        """The sub-rules this composite evaluates, in order.
+
+        The stored tuple, already a copy taken at construction, so handing it
+        out cannot let a caller reach the list they passed.
+        """
+        return self._rules
+
     async def evaluate(self, context: TContext) -> RuleResult:
         """Evaluate sub-rules in order, stopping at the first pass.
 
@@ -455,6 +509,17 @@ class NotRule(Generic[TContext]):
         self.name = name
         self.group = group
         self._rule = rule
+        self._sub_rules: tuple[Rule[TContext], ...] = (rule,)
+
+    @property
+    def sub_rules(self) -> Sequence[Rule[TContext]]:
+        """The one negated rule, as a sequence.
+
+        Exactly one part, always, and named the same as every other
+        composite's so a walk over a rule tree needs no knowledge of which
+        composite it is holding.
+        """
+        return self._sub_rules
 
     async def evaluate(self, context: TContext) -> RuleResult:
         """Evaluate the wrapped rule and invert its verdict.

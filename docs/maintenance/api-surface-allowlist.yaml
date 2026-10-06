@@ -103,3 +103,13 @@
     keyword arguments, Dart's named parameters and C#'s named/optional
     arguments express on the constructor directly -- those three need no
     such type.
+
+- symbol: { dart: "CompositeRule.evaluate,CompositeRule.group,CompositeRule.name" }
+  reason: >
+    Dart alone reports these. CompositeRule extends Rule, and dart_apitool
+    lists an interface's inherited members as members of the interface
+    itself, so Rule's own three re-appear under CompositeRule. The concepts
+    Rule.name/Rule.group/Rule.evaluate already cover them in all four
+    languages on the Rule row; the other three extractors report an
+    interface's own declarations only, so nothing equivalent appears for
+    them. A tool artifact, not surface this package chose to add.

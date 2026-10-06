@@ -105,9 +105,8 @@ void main() {
 
     // Mirrors test_data_carries_sub_results_up_to_failure -- renamed from
     // `data` to `subResults`: `AndRule` stopped writing its sub-results
-    // into `RuleResult.data` as part of this redesign (see
-    // `.agents/plans/composite-rule-and-leaves-redesign/README.md`); `data`
-    // itself is genuinely opaque now.
+    // into `RuleResult.data`; a composite's children live in `subResults`, and
+    // `data` itself is genuinely opaque.
     test('subResults carries sub-results up to failure', () async {
       final rule =
           AndRule<Context>('and1', [pass('a'), failing('b'), pass('c')]);

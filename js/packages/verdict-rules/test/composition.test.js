@@ -9,8 +9,8 @@ import { counting, fail, pass } from "./helpers.js";
  * new shipped NotRule: SequentialEvaluator, ShortCircuitEvaluator, and
  * RuleResult.decidedBy. A 1:1 port of Python's `test_composition.py`.
  *
- * See .agents/plans/composite-rule-and-leaves-redesign/README.md §3-§3d for
- * the design this pins down.
+ * Each type's own doc comment in `src/rule.ts` states the contract these pin
+ * down case by case.
  */
 
 describe("SequentialEvaluator", () => {
