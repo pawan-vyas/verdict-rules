@@ -1,11 +1,11 @@
 ---
 kind: session-handoff
 handoff_schema: 1
-updated_utc: 2026-10-06T16:39:33Z
-updated_local: 2026-10-06T22:09:42+05:30
+updated_utc: 2026-10-07T04:57:12Z
+updated_local: 2026-10-07T10:27:12+05:30
 branch: diagnostics/debugger-display-all-languages
-state_at_commit: a164acf99f13acedbf9d344abcdad18abfb32488
-state_at_commit_short: a164acf
+state_at_commit: 706c181378391b94f51222c1fb07f9f0cecb3c9e
+state_at_commit_short: 706c181
 # Freshness: run `git log --oneline "$(git log -1 --format=%H -- HANDOFF.md)"..HEAD`. Empty (+ clean
 # tree) = current. Non-empty = stale — reconcile per §0.1 before trusting §2–§3. (Comparing against
 # state_at_commit directly always shows the handoff commit itself as "drift" — see §0.1.)
@@ -146,11 +146,21 @@ minor bump with one changelog entry and no intermediate versions.
     commit's message for what each turned out to be. The marketplace example moving onto a shared
     `thresholds.json` was the substantial one: verified by changing the file and watching all four
     suites fail.
+14. **A threshold composite was declined, and the recorded reason was corrected.** An adopter asked
+    whether `AtLeastNRule` should be a built-in. It stays a documented example, declined on the
+    demand bar -- `future_plan.md` had claimed it lacked subtlety, which is false: its stopping rule
+    must decide both when the threshold is reached and when it becomes unreachable. The trigger for
+    reopening it (a second, unrelated consumer) is recorded, and the reasoning also sits on
+    `extending/new-rule-shape/`, which is the page a reader looking for the feature opens.
+15. **Two durable facts sweep into `.agents/memory/`**: an adopter's needs are input rather than
+    requirements, with what running a file-based channel taught; and when you decline a candidate,
+    record *which* of the two questions it failed, because the reason rots faster than the verdict
+    and has now been wrong twice.
 
 ### Current green state
 
 Python 1435 · JS 159 core + 1765 graduation + 33 marketplace · Dart 153 core + 1271 + 32 ·
-C# 183 core + 1744 + 32. Every gate in §5 passes, markdownlint is clean across 178 files, the skill
+C# 183 core + 1744 + 32. Every gate in §5 passes, markdownlint is clean across 180 files, the skill
 bundle is internally consistent, 34 evals assemble, and 288 exported symbols across four languages
 are accounted for in the concept map.
 
@@ -298,8 +308,13 @@ bash scripts/build.sh && ls dist/   # verdict-plugin.zip  verdict-tools.zip  ver
 - [`docs/maintenance/releases/`](docs/maintenance/releases/README.md) — the shared release pipeline
   plus each registry's own real mechanics.
 - [`docs/future_plan.md`](docs/future_plan.md) — exploratory candidates, explicitly not a roadmap,
-  including the one verdict it records as overturned.
+  including the one verdict it records as overturned. Read
+  [`when-you-decline-record-which-question-failed.md`](.agents/memory/when-you-decline-record-which-question-failed.md)
+  before adding or changing an entry there: its recorded *reasons* have been wrong twice, in
+  opposite directions, while the verdicts stood.
 - [`.agents/README.md`](.agents/README.md) — the agent working-material layout, and
   [`.agents/memory/`](.agents/memory/) — durable facts worth not re-deriving. Start with
   [`doc-hygiene-audit-protocol.md`](.agents/memory/doc-hygiene-audit-protocol.md) before any
-  documentation sweep.
+  documentation sweep, and
+  [`an-adopters-needs-are-input-not-requirements.md`](.agents/memory/an-adopters-needs-are-input-not-requirements.md)
+  before answering a consumer's report or feature request.
