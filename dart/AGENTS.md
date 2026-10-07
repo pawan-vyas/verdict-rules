@@ -5,10 +5,13 @@ Read that first; this file only adds what is particular to this language.
 
 ## The guarantees, in Dart terms
 
-- **Sequential evaluation.** `AndRule`/`OrRule` use a plain `for` loop with
-  `await`. **Never `Future.wait`.** Short-circuiting only means something if
-  later work never *starts*, and the returned boolean is identical either way
-  — so this is the one mistake here that passes its own tests.
+- **Sequential evaluation.** `AndRule`/`OrRule` delegate to a
+  `ShortCircuitEvaluator`, itself wrapping `SequentialEvaluator`'s plain
+  `for` loop with `await`. **Never `Future.wait`.** A custom composite
+  composes the same evaluator rather than hand-rolling the loop.
+  Short-circuiting only means something if later work never *starts*, and the
+  returned boolean is identical either way — so this is the one mistake here
+  that passes its own tests.
 - **Vacuous truth.** `AndRule([])` passes, `OrRule([])` fails.
 - **Emptiness is not absence.** Empty composites fold to their identity;
   unknown rule names and unknown groups throw `ArgumentError` from
@@ -20,8 +23,25 @@ Read that first; this file only adds what is particular to this language.
   fallback can never mask a failure. When testing code that uses one, cover the
   *present but failing* case — testing only the absent one looks complete and
   misses the direction where a bug is silent.
-- **`RuleResult.data`** holds only what actually ran. Never padded to the full
-  sub-rule list, never flattened into the parent's level.
+- **A predicate returns a `PredicateOutcome`.** `PredicateOutcome(true)` —
+  `passed` is positional — plus an optional `detail`/`data`, never a
+  `RuleResult`. The `FunctionRule` wrapping it owns the name and builds the
+  result, so a predicate cannot name itself something the rule disagrees
+  with.
+- **`RuleResult.data` is opaque.** Never read or written by verdict — it
+  carries whatever a predicate attached, unchanged. A composite's children
+  live in `subResults`, which holds only what actually ran: never padded to
+  the full sub-rule list, never flattened into the parent's level.
+  `decidedByIndices` stores the *positions* of the children explaining the
+  verdict — positions, not the children themselves, so the stored graph stays
+  a tree and a result stays serializable. Everything else is a getter computed
+  on access: `decidedBy` indexes those positions into `subResults` and stops
+  after one level; `leaves` and `failingLeaves` recurse. `failingLeaves` is an
+  **independent recursion, never a filter over `leaves`** — a passing result
+  has none, even when a short-circuited branch failed on the way to that pass.
+  An out-of-range index is rejected by the constructor with an
+  `ArgumentError`. `toJson()` emits the stored fields only — Dart alone needs
+  it spelled out, since `jsonEncode` looks for a `toJson()` by convention.
 
 ## Be precise about structural typing
 
@@ -68,7 +88,8 @@ from `dart/`.
 ## This package ships full, real source — same category as Python
 
 Worth recording for the day this language has its own evals (see
-`csharp/AGENTS.md` for the full context): a Python eval was seen opening the
+[`csharp/AGENTS.md` — no local source to peek at](../csharp/AGENTS.md#worth-watching-once-evals-exist-here-no-local-source-to-peek-at)
+for the full context): a Python eval was seen opening the
 installed package's own source to double-check a signature already fully
 documented in
 [`references/python/agent-notes.md`](../skills/verdict/references/python/agent-notes.md),
@@ -79,8 +100,11 @@ default applies: `lib/` is exactly what a consumer's pub cache holds, real
 and commented, never a compiled artifact. Dart has no compiled-distribution
 stage for libraries at all, so this is not a choice this package made — it's
 true of every package on pub.dev. Sits at the same end of the spectrum as
-Python; contrast `js/AGENTS.md` (bundled, not raw) and `csharp/AGENTS.md` (no
-local source at all).
+[`python/AGENTS.md`](../python/AGENTS.md); contrast
+[`js/AGENTS.md` — distribution shape](../js/AGENTS.md#distribution-shape-is-effectively-permanent)
+(bundled, not raw) and
+[`csharp/AGENTS.md` — no local source to peek at](../csharp/AGENTS.md#worth-watching-once-evals-exist-here-no-local-source-to-peek-at)
+(no local source at all).
 
 ## Before calling a change done
 

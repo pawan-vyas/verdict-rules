@@ -11,7 +11,7 @@
 
 `graduation_verdict` is both a worked sample and a cross-language
 parity fixture. The instinct, once its design narrative moved to
-[`docs/samples/graduation-requirement-verdict/`](../../docs/samples/graduation-requirement-verdict/README.md)
+[`../../fixtures/graduation_verdict/README.md`](../../fixtures/graduation_verdict/README.md)
 and its data contract stayed at
 [`fixtures/graduation_verdict/`](../../fixtures/graduation_verdict/README.md),
 was to also move the Python *implementation* under
@@ -26,15 +26,14 @@ triggering CI at all, with no error, just silence.
 
 - **Docs and data** — a spec, a fixture's JSON files, a `README.md`
   describing what each expectation proves — depend on nothing but being
-  readable. These consolidate freely: `docs/samples/<scenario>/`,
+  readable. These consolidate freely:
   `fixtures/<name>/`.
 - **Code** — depends on that language's own build/test tooling
   discovering it from inside that language's own conventional root
   (`pytest`'s rootdir, an npm workspace's `package.json`, a cargo
   workspace's `Cargo.toml`). It stays inside that language's own
-  top-level directory (`python/examples/graduation_verdict/` today),
-  reading the shared fixture via a relative path — exactly as it
-  already did before any of this session's restructuring.
+  top-level directory, at `<language>/examples/<name>/`, reading the
+  shared fixture via a relative path.
 
 ## The real-world precedent
 

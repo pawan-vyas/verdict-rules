@@ -27,12 +27,26 @@ void main() {
       expect(result.detail, 'nope');
     });
 
+    // Mirrors test_a_leaf_result_names_nothing_in_decided_by. A bare leaf
+    // result -- FunctionRule.evaluate's own output, never built by
+    // SequentialEvaluator/ShortCircuitEvaluator/NotRule -- has no subResults
+    // to point into, so decidedBy must be empty for both a passing and a
+    // failing outcome. Nothing previously read decidedBy on a leaf at all;
+    // every other decidedBy test in this suite exercises a composite built
+    // on top of one.
+    test('a leaf result names nothing in decidedBy', () async {
+      final passingResult = await pass('r1').evaluate({});
+      final failingResult = await failing('r1').evaluate({});
+      expect(passingResult.decidedBy, isEmpty);
+      expect(failingResult.decidedBy, isEmpty);
+    });
+
     // Mirrors test_predicate_receives_the_context.
     test('predicate receives the context', () async {
       Context? seen;
       final rule = FunctionRule<Context>('r1', (ctx) async {
         seen = ctx;
-        return RuleResult(ruleName: 'r1', passed: true);
+        return PredicateOutcome(true);
       });
       await rule.evaluate({'user_id': 42});
       expect(seen, {'user_id': 42});
@@ -61,14 +75,18 @@ void main() {
       expect(result.ruleName, 'and1');
     });
 
-    // Mirrors test_one_failure_yields_fail.
+    // Mirrors test_one_failure_yields_fail. AndRule's own `detail` is
+    // always empty now (composing ShortCircuitEvaluator leaves no channel
+    // to build one from) -- `failingLeaves` is the replacement for "which
+    // sub-rule, and why".
     test('one failure yields fail', () async {
       final rule =
           AndRule<Context>('and1', [pass('a'), failing('b', detail: 'bad')]);
       final result = await rule.evaluate({});
       expect(result.passed, isFalse);
-      expect(result.detail, contains('b'));
-      expect(result.detail, contains('bad'));
+      expect(result.detail, isEmpty);
+      expect(result.failingLeaves.map((l) => l.ruleName), ['b']);
+      expect(result.failingLeaves.single.detail, 'bad');
     });
 
     // Mirrors test_short_circuits_after_first_failure.
@@ -78,20 +96,22 @@ void main() {
         failing('a'),
         FunctionRule<Context>('c', (ctx) async {
           log.add('c');
-          return RuleResult(ruleName: 'c', passed: true);
+          return PredicateOutcome(true);
         }),
       ]);
       await rule.evaluate({});
       expect(log, isEmpty); // never reached -- 'a' already failed
     });
 
-    // Mirrors test_data_carries_sub_results_up_to_failure.
-    test('data carries sub-results up to failure', () async {
+    // Mirrors test_data_carries_sub_results_up_to_failure -- renamed from
+    // `data` to `subResults`: `AndRule` stopped writing its sub-results
+    // into `RuleResult.data`; a composite's children live in `subResults`, and
+    // `data` itself is genuinely opaque.
+    test('subResults carries sub-results up to failure', () async {
       final rule =
           AndRule<Context>('and1', [pass('a'), failing('b'), pass('c')]);
       final result = await rule.evaluate({});
-      final data = result.data! as List<RuleResult>;
-      expect(data.map((r) => r.ruleName), ['a', 'b']);
+      expect(result.subResults.map((r) => r.ruleName), ['a', 'b']);
     });
 
     // Mirrors test_empty_rule_list_vacuously_passes.
@@ -109,12 +129,15 @@ void main() {
       expect(result.passed, isTrue);
     });
 
-    // Mirrors test_all_fail_yields_fail.
+    // Mirrors test_all_fail_yields_fail. OrRule's own `detail` is always
+    // empty now, same reason as AndRule's above -- `failingLeaves` reports
+    // every sub-rule that failed instead of one hand-built sentence.
     test('all fail yields fail', () async {
       final rule = OrRule<Context>('or1', [failing('a'), failing('b')]);
       final result = await rule.evaluate({});
       expect(result.passed, isFalse);
-      expect(result.detail, 'no sub-rule passed');
+      expect(result.detail, isEmpty);
+      expect(result.failingLeaves.map((l) => l.ruleName), ['a', 'b']);
     });
 
     // Mirrors test_short_circuits_after_first_pass.
@@ -124,7 +147,7 @@ void main() {
         pass('a'),
         FunctionRule<Context>('c', (ctx) async {
           log.add('c');
-          return RuleResult(ruleName: 'c', passed: false);
+          return PredicateOutcome(false);
         }),
       ]);
       await rule.evaluate({});
@@ -135,6 +158,20 @@ void main() {
     test('empty rule list vacuously fails', () async {
       final result = await OrRule<Context>('or1', []).evaluate({});
       expect(result.passed, isFalse);
+    });
+
+    // No Python counterpart yet (found via this package's own mutation
+    // testing run, which flagged the sibling `AndRule` test above as the
+    // only one of the pair actually proving `subResults` is populated).
+    // Proves the same thing `AndRule`'s "subResults carries sub-results up
+    // to failure" does, mirrored for the success path: `subResults` must
+    // carry every sub-result seen before -- and including -- the one that
+    // ended the loop, not just an empty list a dropped `soFar.add` would
+    // also satisfy for `passed`/`detail` alone.
+    test('subResults carries sub-results up to success', () async {
+      final rule = OrRule<Context>('or1', [failing('a'), pass('b'), pass('c')]);
+      final result = await rule.evaluate({});
+      expect(result.subResults.map((r) => r.ruleName), ['a', 'b']);
     });
   });
 

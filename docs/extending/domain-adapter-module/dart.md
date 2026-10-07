@@ -12,7 +12,7 @@
 import 'package:verdict_rules/verdict_rules.dart';
 
 /// This adapter's own domain type -- verdict never sees it directly,
-/// only hands it back as RuleResult.data's opaque payload.
+/// only carries it through as the result's opaque payload.
 class RateLimitStatus {
   final String window;
   final int used;
@@ -45,22 +45,21 @@ class VerdictRateLimiter implements RateLimiter {
           '${window}_under_quota',
           (ctx) async {
             final used = ctx['${window}_used']! as int;
-            final status = RateLimitStatus(window: window, used: used, quota: quota);
-            return RuleResult(
-              ruleName: '${window}_under_quota',
-              passed: used < quota,
-              data: status,
-            );
+            final status =
+                RateLimitStatus(window: window, used: used, quota: quota);
+            return PredicateOutcome(used < quota, data: status);
           },
         );
 
-    final combined = AndRule(
-      'rate_limits',
+    // runAll, not a composite: the contract promises one status per window,
+    // and a composite short-circuits -- the first window over quota would
+    // end evaluation and the rest would be missing from the returned list,
+    // silently.
+    final engine = RulesEngine(
       windows.entries.map((e) => ruleFor(e.key, e.value)).toList(),
     );
-    final result = await combined.evaluate(context);
-    final subResults = result.data! as List<RuleResult>;
-    return subResults.map((r) => r.data! as RateLimitStatus).toList();
+    final run = await engine.runAll(context);
+    return run.results.map((r) => r.data! as RateLimitStatus).toList();
   }
 }
 
@@ -83,6 +82,10 @@ class SimpleRateLimiter implements RateLimiter {
   }
 }
 ```
+
+The domain type rides through on the predicate's own `data`, which
+`FunctionRule` copies onto the result it builds. Verdict never reads it —
+reading it back out is this adapter's business and nobody else's.
 
 The composition root — the one place that decides which implementation
 is actually running — is a single line:

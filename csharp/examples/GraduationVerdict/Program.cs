@@ -27,6 +27,15 @@ foreach (var (studentId, record) in students)
 {
     var verdict = await graduates.EvaluateAsync(record.Context);
     var status = verdict.Passed ? "GRADUATES" : "DOES NOT GRADUATE";
-    var reason = verdict.Passed ? "" : $"  ({verdict.Detail})";
+    // `graduates` is a composite, and a composite leaves its own `Detail`
+    // empty: composing a ShortCircuitEvaluator gives it no channel richer
+    // than a boolean to build a descriptive string from. The reason lives in
+    // the failing leaves instead, flattened from wherever in the tree the
+    // short-circuit actually stopped.
+    var reasons = string.Join(
+        "; ",
+        verdict.GetFailingLeaves()
+            .Select(leaf => string.IsNullOrEmpty(leaf.Detail) ? leaf.RuleName : $"{leaf.RuleName}: {leaf.Detail}"));
+    var reason = verdict.Passed ? "" : $"  ({reasons})";
     Console.WriteLine($"{studentId,-10}: {status}{reason}");
 }

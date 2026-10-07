@@ -57,6 +57,8 @@ jobs:
         working-directory: dart/packages/verdict_rules
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # git describe (last published version, below) needs tag history
 
       - uses: dart-lang/setup-dart@v1
 
@@ -71,6 +73,61 @@ jobs:
 
       - name: Run tests
         run: dart test
+
+      # dart_apitool is a dev-only tool used exclusively from CI (and by hand
+      # when regenerating api-snapshot.json) -- not a pubspec.yaml
+      # dev_dependency. Its own README documents global activation as the
+      # install method, and the package pulls in a full `analyzer` toolchain
+      # this package's own `dart pub get`/`dart test` has no reason to carry
+      # for every contributor and every consumer resolving this package's
+      # dependency tree. Pinned, not left to float, so a dart_apitool release
+      # can't silently change what either check below reports.
+      - name: Install dart_apitool
+        run: |
+          dart pub global activate dart_apitool 0.23.2
+          echo "$HOME/.pub-cache/bin" >> "$GITHUB_PATH"
+
+      # Fails if dart/packages/verdict_rules/api-snapshot.json (the committed
+      # Dart snapshot scripts/api_snapshot_dart.py parses for the
+      # cross-language concept map) no longer matches what `dart-apitool
+      # extract` sees in the live source -- a declared public symbol that
+      # disappeared, or a new one nobody acknowledged. See
+      # docs/maintenance/api-snapshots.md and
+      # scripts/check_api_snapshot_dart.py's own module docstring for why
+      # this can't be `dart-apitool diff` directly (its --old/--new only
+      # accept a package ref, never a bare JSON file).
+      - name: Check committed API snapshot is current
+        run: python3 ../../../scripts/check_api_snapshot_dart.py
+
+      - name: Find the last published Dart version
+        id: last-published
+        run: |
+          set -euo pipefail
+          tag="$(git describe --tags --abbrev=0 --match 'dart-v*' 2>/dev/null || true)"
+          if [ -z "$tag" ]; then
+            echo "No dart-v* tag found yet -- nothing published to diff against."
+            echo "version=" >> "$GITHUB_OUTPUT"
+          else
+            echo "Last published tag: $tag"
+            echo "version=${tag#dart-v}" >> "$GITHUB_OUTPUT"
+          fi
+
+      # dart_apitool's OWN documented CI convention (its README's
+      # "Integration" section) is diffing the live package against the last
+      # *published* pub.dev version via a git tag, not against a committed
+      # file -- `dart-apitool diff` has no file-based mode at all, only
+      # package refs (directory/pub/git). This is a different, complementary
+      # check from the one above: it catches a public-surface change that
+      # shipped without the version bump semver requires, which a stale-
+      # snapshot check alone would not. Caveat worth knowing before trusting
+      # this check's silence: dart_apitool's own element collector drops
+      # every @override member from its model (confirmed against this
+      # package's issue #98 toString() additions -- see
+      # scripts/api_snapshot_dart.py's module docstring), so it cannot
+      # detect a toString()-only change either.
+      - name: Check public API against the last published version
+        if: steps.last-published.outputs.version != ''
+        run: dart-apitool diff --old "pub://verdict_rules/${{ steps.last-published.outputs.version }}" --new .
 
   # THE JOB TO MARK REQUIRED IN BRANCH PROTECTION. See test-python.yml for why
   # it must distinguish success/skipped from failure/cancelled, and why an

@@ -9,10 +9,10 @@
 > contract that doesn't use `verdict-rules` at all.
 
 ```ts
-import { AndRule, FunctionRule, type Context, type RuleResult } from "verdict-rules";
+import { FunctionRule, RulesEngine, type Context, type PredicateOutcome } from "verdict-rules";
 
 /** This adapter's own domain type -- verdict-rules never sees it
- * directly, only hands it back as RuleResult.data's opaque payload. */
+ * directly, only carries it through as the result's opaque payload. */
 interface RateLimitStatus {
   window: string;
   used: number;
@@ -30,22 +30,21 @@ interface RateLimiter {
 class VerdictRateLimiter implements RateLimiter {
   async check(context: Context, windows: Record<string, number>): Promise<RateLimitStatus[]> {
     const ruleFor = (window: string, quota: number) =>
-      new FunctionRule(`${window}_under_quota`, async (ctx: Context): Promise<RuleResult> => {
+      new FunctionRule(`${window}_under_quota`, async (ctx: Context): Promise<PredicateOutcome> => {
         const used = ctx[`${window}_used`] as number;
         const status: RateLimitStatus = { window, used, quota };
-        return {
-          ruleName: `${window}_under_quota`,
-          passed: used < quota,
-          data: status,
-        };
+        return { passed: used < quota, data: status };
       });
 
-    const combined = new AndRule(
-      "rate_limits",
+    // runAll, not a composite: the contract promises one status per window,
+    // and a composite short-circuits -- the first window over quota would
+    // end evaluation and the rest would be missing from the returned list,
+    // silently.
+    const engine = new RulesEngine(
       Object.entries(windows).map(([w, q]) => ruleFor(w, q)),
     );
-    const result = await combined.evaluate(context);
-    return (result.data as RuleResult[]).map((r) => r.data as RateLimitStatus);
+    const run = await engine.runAll(context);
+    return run.results.map((r) => r.data as RateLimitStatus);
   }
 }
 
@@ -62,6 +61,10 @@ class SimpleRateLimiter implements RateLimiter {
   }
 }
 ```
+
+The domain type rides through on the predicate's own `data`, which
+`FunctionRule` copies onto the result it builds. Verdict never reads it —
+reading it back out is this adapter's business and nobody else's.
 
 The composition root — the one place that decides which implementation
 is actually running — is a single line:

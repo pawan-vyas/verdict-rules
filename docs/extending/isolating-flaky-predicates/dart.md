@@ -14,17 +14,17 @@ class PromoContext {
   PromoContext({required this.promoCode, this.simulateTimeout = false});
 }
 
-/// Turn a predicate's own exception into a failing RuleResult, instead
-/// of letting it propagate out of the run that contains it.
+/// Turn a predicate's own exception into a failing outcome, instead of
+/// letting it propagate out of the run that contains it.
 FunctionRule<TContext> defensive<TContext>(
   String name,
   RulePredicate<TContext> predicate,
 ) {
-  Future<RuleResult> wrapped(TContext context) async {
+  Future<PredicateOutcome> wrapped(TContext context) async {
     try {
       return await predicate(context);
     } catch (exc) {
-      return RuleResult(ruleName: name, passed: false, detail: '$exc');
+      return PredicateOutcome(false, detail: '$exc');
     }
   }
 
@@ -32,16 +32,13 @@ FunctionRule<TContext> defensive<TContext>(
 }
 
 /// Stands in for a real network call that can time out.
-Future<RuleResult> checkPromoCodeAgainstExternalService(
+Future<PredicateOutcome> checkPromoCodeAgainstExternalService(
   PromoContext context,
 ) async {
   if (context.simulateTimeout) {
     throw Exception('promo-validation service did not respond');
   }
-  return RuleResult(
-    ruleName: 'promo_code_valid',
-    passed: context.promoCode == 'SAVE10',
-  );
+  return PredicateOutcome(context.promoCode == 'SAVE10');
 }
 
 final rule = defensive<PromoContext>(
@@ -49,6 +46,9 @@ final rule = defensive<PromoContext>(
   checkPromoCodeAgainstExternalService,
 );
 ```
+
+The wrapper returns an outcome, not a named result — `name` is passed to
+`FunctionRule`, which is the only thing that names the result either way:
 
 ```dart
 await rule.evaluate(PromoContext(promoCode: 'SAVE10'));
@@ -74,8 +74,8 @@ await unwrapped.evaluate(
 // throws Exception: promo-validation service did not respond
 ```
 
-Now a timeout in the wrapped check reports as `passed: false, detail:
-"..."` — one entry in `RunResult.results`, same as any other failing
+Now a timeout in the wrapped check reports as a failing result with that
+detail — one entry in `RunResult.results`, same as any other failing
 rule — and every other rule in that `runAll`/`runGroup` still runs and
 still reports.
 

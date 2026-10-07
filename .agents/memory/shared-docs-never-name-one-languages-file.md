@@ -1,13 +1,12 @@
 <!-- Title: Shared Docs Never Name One Language's File -->
 # A shared doc naming one language's file is a forced edit waiting to happen
 
-> Eighteen files — seven sample specs, seven extending scenarios, both
-> authoring templates, and `docs/architecture/README.md`'s own opening
-> blockquote — all repeated a version of "Each language's own file in
-> this directory — [`python.md`](python.md) today — is the actual
-> code." Every one of them looked like a stable structural fact and was
-> actually a forced edit the day a second language's file landed
-> beside it.
+> Eighteen files — every scenario and spec directory, both authoring
+> templates, and `docs/architecture/README.md`'s own opening blockquote —
+> repeated a version of "Each language's own file in this directory —
+> `python.md` today — is the actual code." Every one looked like a stable
+> structural fact and was actually a forced edit the day a second
+> language's file landed beside it.
 
 ## How it happened
 
@@ -30,9 +29,8 @@ copy-pasted with only the scenario name changed, 18 times.
 
 Would this sentence need editing the day a second language's file
 exists beside the one it names? If naming the file is required for the
-sentence to be true (`"see [`python.md`](python.md) for the actual
-code"` when `python.md` is the *only* implementation the spec is aware
-of), the sentence is temporary narration wearing the voice of a
+sentence to be true ("see `python.md` for the actual code", when `python.md` is the
+*only* implementation the spec is aware of), the sentence is temporary narration wearing the voice of a
 structural fact. If the sentence would stay word-for-word true with
 two, three, or ten language files in the same directory, it's durable
 and the file's own directory listing can carry the naming instead — not
@@ -54,8 +52,8 @@ sentence outright, not rephrase it into something equally dated but
 vaguer.
 
 The one legitimate exception is a maintainer-facing *template*
-document (`doc-authoring/samples.md`, `doc-authoring/extending.md`)
-teaching the pattern with a concrete example — `` "python.md, for
+document — [`doc-authoring/extending.md`](../../docs/maintenance/doc-authoring/extending.md)
+and its siblings — teaching the pattern with a concrete example: `` "python.md, for
 instance" `` is fine there, because the reader is being shown what the
 pattern looks like, not handed a doc that must itself stay accurate to
 every language forever. Even there, "today" still comes out — the

@@ -25,7 +25,7 @@
 
   <PropertyGroup>
     <PackageId>VerdictRules</PackageId>
-    <Version>0.3.2</Version>
+    <Version>0.4.0</Version>
     <Authors>Pawan Vyas</Authors>
     <Description>A small, zero-dependency, async-native rule-evaluation engine. Compose conditions into one explainable pass/fail verdict, with sequential evaluation and real short-circuiting as a guarantee.</Description>
     <PackageTags>rules-engine;rule-evaluation;eligibility;decision;decision-engine;async</PackageTags>
@@ -37,7 +37,7 @@
     <!-- NuGet surfaces release notes from metadata rather than from a file, so
          this points at the changelog instead of duplicating it. A copy here
          would drift the moment either side changed. -->
-    <PackageReleaseNotes>https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.3.2/csharp/src/VerdictRules/CHANGELOG.md</PackageReleaseNotes>
+    <PackageReleaseNotes>https://github.com/pawan-vyas/verdict-rules/blob/csharp-v0.4.0/csharp/src/VerdictRules/CHANGELOG.md</PackageReleaseNotes>
   </PropertyGroup>
 
   <!-- A consumer stepping into this package should land on real source, not a
@@ -54,10 +54,22 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.401" PrivateAssets="All" />
+    <!-- Analyzer-only: fails the build (RS0016/RS0017) if the compiled public
+         surface drifts from PublicAPI.Shipped.txt/PublicAPI.Unshipped.txt
+         without either file being updated to match. See
+         docs/maintenance/api-snapshots.md for how this feeds the
+         cross-language public-API-surface snapshot mechanism. -->
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="5.6.0" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="" />
   </ItemGroup>
+
+  <!-- PublicAPI.Shipped.txt / PublicAPI.Unshipped.txt are picked up as
+       AdditionalFiles automatically by Microsoft.CodeAnalysis.PublicApiAnalyzers's
+       own targets (a workaround for https://github.com/dotnet/roslyn/issues/4655)
+       whenever they exist next to this csproj. No explicit ItemGroup is needed,
+       and adding one double-includes them. -->
 
 </Project>

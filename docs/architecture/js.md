@@ -38,6 +38,12 @@ classDiagram
         +group?: string
         +evaluate(context: TContext)* Promise~RuleResult~
     }
+    class PredicateOutcome {
+        <<Interface>>
+        +passed: boolean
+        +detail?: string
+        +data?: unknown
+    }
     class FunctionRule~TContext~ {
         -predicate: RulePredicate~TContext~
         +evaluate(context: TContext) Promise~RuleResult~
@@ -48,6 +54,10 @@ classDiagram
     }
     class OrRule~TContext~ {
         -rules: readonly Rule~TContext~[]
+        +evaluate(context: TContext) Promise~RuleResult~
+    }
+    class NotRule~TContext~ {
+        -rule: Rule~TContext~
         +evaluate(context: TContext) Promise~RuleResult~
     }
     class RulesEngine~TContext~ {
@@ -64,12 +74,19 @@ classDiagram
     class RuleResult {
         +ruleName: string
         +passed: boolean
-        +detail?: string
-        +data?: unknown
+        +detail: string
+        +data: unknown
+        +subResults: readonly RuleResult[]
+        +decidedByIndices: readonly number[]
+        +decidedBy: readonly RuleResult[]
+        +leaves: readonly RuleResult[]
+        +failingLeaves: readonly RuleResult[]
     }
     class RunResult {
         +passed: boolean
         +results: readonly RuleResult[]
+        +leaves: readonly RuleResult[]
+        +failingLeaves: readonly RuleResult[]
     }
     class UnknownLookupError {
         +kind: "rule"|"group"
@@ -79,13 +96,17 @@ classDiagram
     Rule <|.. FunctionRule
     Rule <|.. AndRule
     Rule <|.. OrRule
+    Rule <|.. NotRule
+    FunctionRule ..> PredicateOutcome : its predicate reports
     AndRule o-- Rule : sub-rules
     OrRule o-- Rule : sub-rules
+    NotRule o-- Rule : the one negated rule
     RulesEngine o-- Rule : holds
     RulesEngine ..> RuleResult : produces
     RulesEngine ..> RunResult : produces
     RulesEngine ..> UnknownLookupError : throws
     RunResult --> RuleResult : contains
+    RuleResult --> RuleResult : subResults
 ```
 
 See [`README.md`](README.md)'s "Type structure" section for why each of
@@ -99,6 +120,37 @@ If code genuinely needs to confirm an unknown value is rule-shaped at
 runtime, that's a plain duck-typed check
 (`typeof x.evaluate === "function"`), not a language feature this
 package can hand over.
+
+`RuleResult` and `RunResult` are the exception: those two are classes
+with public constructors, not interfaces. A structural result shape
+would let a caller hand-build one whose `leaves`/`failingLeaves`
+disagreed with its own `subResults`, and the type checker would accept
+it; deriving them on a real class leaves nothing to disagree with. A
+custom composite therefore constructs its result — `{ ...result }`
+yields a plain object without the accessors, which is not a
+`RuleResult`.
+
+`leaves`/`failingLeaves`/`decidedBy` are prototype getters computed on
+access. Being accessors they are non-enumerable, so `JSON.stringify`
+emits the stored fields only — `subResults` plus `decidedByIndices`, an
+array of positions — and that stored half is a finite tree. The
+constructor throws `RangeError` on a position naming a child the result
+does not have. `README.md`'s "Inspecting a composite's own decision"
+section covers what each of the three answers, and why only `subResults`
+can be the stored one.
+
+One JS-specific encoding quirk worth knowing before reading a payload:
+`JSON.stringify` omits an `undefined`-valued property entirely rather
+than emitting `null`, so an unset `data` produces no `data` key at all —
+where Python's `asdict` emits `"data": null`.
+
+`AndRule`/`OrRule` share two module-level `ShortCircuitEvaluator`
+instances rather than holding one each: `TContext` is erased at runtime
+and `evaluate` is generic per call, so nothing about evaluation depends
+on the type argument. `NotRule` composes neither — one child has no
+sequence to iterate. `SequentialEvaluator` is the general form a custom
+composite composes directly, taking a `StepDecider` that returns
+`true`/`false` to stop or `undefined` to continue.
 
 ## Generic context, concretely
 

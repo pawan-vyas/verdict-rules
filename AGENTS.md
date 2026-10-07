@@ -8,14 +8,22 @@ model given this file as raw context.
 ## What this repo is
 
 `verdict` is a small, zero-dependency, async-native rule-evaluation
-engine — the same `Rule`/`FunctionRule`/`AndRule`/`OrRule`/
-`RulesEngine`/`RuleResult`/`RunResult` design and execution-model
-guarantees, meant to exist in more than one language. **Only Python
-ships today** — see [`python/README.md`](python/packages/verdict-rules/README.md) and its own
-[`python/AGENTS.md`](python/AGENTS.md) for everything Python-specific. A second language
-lands as a new top-level directory alongside `python/`, with its own
-`AGENTS.md` for that language's own conventions — check which
-directories actually exist before assuming a language has an SDK yet.
+engine — the same `Rule`/`FunctionRule`/`AndRule`/`OrRule`/`NotRule`/
+`RulesEngine`/`PredicateOutcome`/`RuleResult`/`RunResult` design and
+execution-model guarantees, in more than one language. **Four SDKs ship
+today**, each a top-level directory with its own `AGENTS.md` for that
+language's conventions and its own package docs:
+
+| Language | Standing instructions | Package |
+| :-- | :-- | :-- |
+| Python | [`python/AGENTS.md`](python/AGENTS.md) | [`python/packages/verdict-rules/`](python/packages/verdict-rules/README.md) |
+| JS/TS | [`js/AGENTS.md`](js/AGENTS.md) | [`js/packages/verdict-rules/`](js/packages/verdict-rules/README.md) |
+| Dart | [`dart/AGENTS.md`](dart/AGENTS.md) | [`dart/packages/verdict_rules/`](dart/packages/verdict_rules/README.md) |
+| C# | [`csharp/AGENTS.md`](csharp/AGENTS.md) | [`csharp/src/VerdictRules/`](csharp/src/VerdictRules/README.md) |
+
+A fifth language lands the same way, adding a directory and nothing
+else — check which directories actually exist before assuming a
+language has an SDK.
 [`skills/verdict/`](skills/verdict/SKILL.md) is the AI-agent skill for
 building with verdict, vendored back into consuming projects via
 `scripts/install.sh`.
@@ -302,10 +310,13 @@ they do** — the tests pass and CI stays green while the wrong answer
 sits there. Sweep outward from the code every time: source docstrings,
 [`docs/architecture/`](docs/architecture/README.md) **and its diagrams**, [`docs/extending/`](docs/extending/README.md) (does
 this enable a scenario, or invalidate one?), [`docs/testing/`](docs/testing/README.md) (it names
-specific tests by name), [`docs/maintenance/`](docs/maintenance/README.md), each language's
-quickstart and samples, the shared fixture if the change is behavioural,
-`skills/verdict/references/` with a `plugin.json` bump, that package's own
-`CHANGELOG.md`, and the [root `README.md`](README.md).
+specific tests by name), [`docs/maintenance/`](docs/maintenance/README.md), **each language's own
+`AGENTS.md`** (they restate the guarantees in that language's own terms,
+so a contract change leaves all of them wrong at once), each language's
+quickstart, the shared fixture if the change is behavioural,
+`skills/verdict/SKILL.md` and `skills/verdict/references/` with a
+`plugin.json` bump, that package's own `CHANGELOG.md`, and the
+[root `README.md`](README.md).
 
 A behavioural change usually also means the skill's evals no longer
 measure the current skill. If the change introduced a way to be *subtly*

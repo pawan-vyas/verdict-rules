@@ -14,6 +14,7 @@ import { fileURLToPath } from "node:url";
 import { AndRule, FunctionRule, OrRule } from "verdict-rules";
 
 import {
+  AtLeastNRule,
   buildGraduationCheck,
   contextFromObject,
   curriculumFromObject,
@@ -36,7 +37,7 @@ function policy(subjectId) {
 }
 
 describe("rule shape dispatch", () => {
-  // See docs/samples/graduation-requirement-verdict/README.md.
+  // See fixtures/graduation_verdict/README.md.
 
   it("an academic subject is a plain FunctionRule", () => {
     const rule = ruleForSubject(policy("MATH101"));
@@ -124,9 +125,62 @@ describe("language OrRule", () => {
   });
 });
 
+/** A FunctionRule that records its own name to `calls` when run. */
+function tracked(name, passed, calls) {
+  return new FunctionRule(name, async () => {
+    calls.push(name);
+    return { passed };
+  });
+}
+
+describe("AtLeastNRule short-circuits", () => {
+  // AtLeastNRule stops calling sub-rules as soon as `minimum` is
+  // mathematically decided either way -- it does not wait for every
+  // sub-rule to run once the answer can no longer change.
+
+  it("stops once the minimum is already met", async () => {
+    const calls = [];
+    const rule = new AtLeastNRule(
+      "elective_requirement",
+      [tracked("a", true, calls), tracked("b", true, calls), tracked("c", true, calls)],
+      2,
+    );
+    const result = await rule.evaluate({});
+    assert.equal(result.passed, true);
+    assert.deepEqual(calls, ["a", "b"]); // 'c' must never run -- 2 passes already met minimum=2
+  });
+
+  it("stops once the minimum can no longer be reached", async () => {
+    const calls = [];
+    const rule = new AtLeastNRule(
+      "elective_requirement",
+      [tracked("a", false, calls), tracked("b", false, calls), tracked("c", true, calls)],
+      2,
+    );
+    const result = await rule.evaluate({});
+    assert.equal(result.passed, false);
+    // 'c' must never run -- two failures already make minimum=2 unreachable
+    // with only one sub-rule left.
+    assert.deepEqual(calls, ["a", "b"]);
+  });
+
+  it("runs every sub-rule when the minimum is decided only at the end", async () => {
+    const calls = [];
+    const rule = new AtLeastNRule(
+      "elective_requirement",
+      [tracked("a", true, calls), tracked("b", false, calls), tracked("c", true, calls)],
+      2,
+    );
+    const result = await rule.evaluate({});
+    assert.equal(result.passed, true);
+    // exactly 2 of 3 passing is only decidable at the last sub-rule.
+    assert.deepEqual(calls, ["a", "b", "c"]);
+  });
+});
+
 describe("engine run modes", () => {
   // runNamed/runGroup/runAll each serve the specific job the sample spec
-  // claims. See docs/samples/graduation-requirement-verdict/README.md.
+  // claims. See fixtures/graduation_verdict/README.md.
 
   it("runNamed looks up one subject", async () => {
     const { engine } = buildGraduationCheck(POLICIES, ELECTIVE_MINIMUM);
@@ -171,14 +225,14 @@ describe("engine run modes", () => {
 /**
  * Walk the first failing branch down, collecting rule names.
  *
- * A nested failure is reachable by following `data` downward; a result's
- * `data` is never flattened.
+ * A nested failure is reachable by following `subResults` downward; a
+ * result's `data` plays no role here -- composites never write to it.
  */
 function failingChain(result) {
   const chain = [];
   let node = result;
-  while (Array.isArray(node.data) && node.data.length > 0) {
-    const next = node.data.find((sub) => !sub.passed);
+  while (node.subResults.length > 0) {
+    const next = node.subResults.find((sub) => !sub.passed);
     if (next === undefined) break;
     chain.push(next.ruleName);
     node = next;
@@ -212,9 +266,9 @@ describe("shared fixture contract", () => {
       const expected = context.expected;
       const result = await graduates.evaluate(context);
       assert.equal(
-        result.data.length,
+        result.subResults.length,
         expected.rules_evaluated,
-        `${studentId}: expected ${expected.rules_evaluated} sub-rules to run, got ${result.data.length}`,
+        `${studentId}: expected ${expected.rules_evaluated} sub-rules to run, got ${result.subResults.length}`,
       );
     });
 
@@ -229,6 +283,44 @@ describe("shared fixture contract", () => {
       assert.equal(chain.length > 0 ? chain[0] : null, expected.failing_rule);
     });
 
+    it(`${studentId}: leaves match`, async () => {
+      const { graduates } = buildGraduationCheck(POLICIES, ELECTIVE_MINIMUM);
+      const context = STUDENTS[studentId];
+      const expected = context.expected;
+      const result = await graduates.evaluate(context);
+      const leaves = result.leaves.map((leaf) => leaf.ruleName);
+      assert.deepEqual(leaves, expected.leaves, `${studentId}: expected leaves ${expected.leaves}, got ${leaves}`);
+    });
+
+    it(`${studentId}: failing leaves match`, async () => {
+      const { graduates } = buildGraduationCheck(POLICIES, ELECTIVE_MINIMUM);
+      const context = STUDENTS[studentId];
+      const expected = context.expected;
+      const result = await graduates.evaluate(context);
+      const failingLeaves = result.failingLeaves.map((leaf) => leaf.ruleName);
+      assert.deepEqual(
+        failingLeaves,
+        expected.failing_leaves,
+        `${studentId}: expected failing leaves ${expected.failing_leaves}, got ${failingLeaves}`,
+      );
+    });
+
+    it(`${studentId}: decided_by matches`, async () => {
+      // One-level explanation for the top-level composite's own verdict --
+      // exactly the decisive member regardless of position (gita fails on
+      // the *last* of four), or every member on a full pass.
+      const { graduates } = buildGraduationCheck(POLICIES, ELECTIVE_MINIMUM);
+      const context = STUDENTS[studentId];
+      const expected = context.expected;
+      const result = await graduates.evaluate(context);
+      const decidedBy = result.decidedBy.map((r) => r.ruleName);
+      assert.deepEqual(
+        decidedBy,
+        expected.decided_by,
+        `${studentId}: expected decided_by ${expected.decided_by}, got ${decidedBy}`,
+      );
+    });
+
     it(`${studentId}: runAll never short-circuits`, async () => {
       const { engine } = buildGraduationCheck(POLICIES, ELECTIVE_MINIMUM);
       const context = STUDENTS[studentId];
@@ -236,6 +328,15 @@ describe("shared fixture contract", () => {
       const result = await engine.runAll(context);
       assert.equal(result.results.length, expected.evaluated);
       assert.equal(result.passed, expected.passed);
+      // The run's own view, not the composite's. elena is why this is
+      // asserted separately: she passes every registered subject, so the run
+      // has no failing leaves -- even though FRENCH101's written paper failed
+      // before her exemption carried it. A filter over `leaves` would surface
+      // that paper and report a failure on a passing run.
+      assert.deepEqual(
+        result.failingLeaves.map((l) => l.ruleName),
+        expected.failing_leaves,
+      );
     });
 
     it(`${studentId}: group results match`, async () => {
@@ -269,13 +370,18 @@ describe("vacuous-truth edge cases", () => {
       const result = await graduates.evaluate(student);
 
       assert.equal(result.passed, expected.passed, `${caseName}: ${testCase.note}`);
-      assert.equal(result.data.length, expected.rules_evaluated, caseName);
+      assert.equal(result.subResults.length, expected.rules_evaluated, caseName);
       const chain = failingChain(result);
       assert.deepEqual(chain, expected.failing_chain, caseName);
 
       const runAll = await engine.runAll(student);
       assert.equal(runAll.results.length, expected.run_all.evaluated, caseName);
       assert.equal(runAll.passed, expected.run_all.passed, caseName);
+      assert.deepEqual(
+        runAll.failingLeaves.map((l) => l.ruleName),
+        expected.run_all.failing_leaves,
+        caseName,
+      );
 
       // The strict form throws; the try-prefixed form returns undefined.
       const lookups = expected.lookups;

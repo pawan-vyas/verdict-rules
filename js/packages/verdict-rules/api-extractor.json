@@ -1,0 +1,76 @@
+/**
+ * Config file for API Extractor. See docs/maintenance/api-snapshots.md for
+ * why this package snapshots its public surface, and
+ * https://api-extractor.com/ for what every field here means.
+ */
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+
+  // The committed .d.ts rollup (dist/index.d.ts) is the single entry point
+  // every consumer resolves through "exports" in package.json -- analyzing
+  // it, rather than a source file, is what makes the report describe the
+  // actual shipped surface.
+  "mainEntryPointFilePath": "<projectFolder>/dist/index.d.ts",
+
+  "bundledPackages": [],
+
+  "compiler": {
+    "tsconfigFilePath": "<projectFolder>/tsconfig.build.json"
+  },
+
+  // The committed report both CI and a human reviewer read -- a PR that
+  // changes the public surface without updating this file fails the
+  // production-mode "api-extractor run" step added to the JS/TS test
+  // workflow. reportTempFolder is nested under dist/ deliberately: dist/ is
+  // already gitignored repo-wide (build output for every language), so the
+  // scratch copy api-extractor diffs against never needs its own ignore
+  // rule or risks a stray commit.
+  "apiReport": {
+    "enabled": true,
+    "reportFolder": "<projectFolder>/etc/",
+    "reportTempFolder": "<projectFolder>/dist/temp/"
+  },
+
+  // No published doc-model/API-reference site for this package yet, so
+  // there is nothing to consume a .api.json for -- skip generating one
+  // rather than committing an artifact nothing reads.
+  "docModel": {
+    "enabled": false
+  },
+
+  // The build already produces dist/index.d.ts via tsc; a second rollup
+  // from API Extractor would just be a duplicate of the same file.
+  "dtsRollup": {
+    "enabled": false
+  },
+
+  "tsdocMetadata": {
+    "enabled": false
+  },
+
+  "messages": {
+    "compilerMessageReporting": {
+      "default": {
+        "logLevel": "warning"
+      }
+    },
+    "extractorMessageReporting": {
+      "default": {
+        "logLevel": "warning"
+      },
+      // This package exports every public symbol with no @public/@internal
+      // split (see docs/maintenance/api-snapshots.md -- the snapshot tracks
+      // the whole surface, not a release-tagged subset), so a missing
+      // release tag is expected on every export, not a signal worth a
+      // warning on every run.
+      "ae-missing-release-tag": {
+        "logLevel": "none"
+      }
+    },
+    "tsdocMessageReporting": {
+      "default": {
+        "logLevel": "warning"
+      }
+    }
+  }
+}

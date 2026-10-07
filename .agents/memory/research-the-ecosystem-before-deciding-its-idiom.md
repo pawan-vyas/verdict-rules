@@ -37,9 +37,12 @@ simpler than the version it replaced.
 
 Before deciding any per-language convention — naming, versioning, packaging
 layout, error types, documentation format — read **that ecosystem's own docs**,
-and record what they actually say in the language's plan or in
-[`docs/maintenance/adding-a-language.md`](../../docs/maintenance/adding-a-language.md). Cite it, so the next person can check whether it
-has changed rather than re-deriving it.
+and record what they actually say somewhere durable —
+[`docs/maintenance/adding-a-language.md`](../../docs/maintenance/adding-a-language.md),
+or a file here. Not in that language's plan: a plan is deleted once
+executed, and an ecosystem fact outlives the work that discovered it.
+Cite the source, so the next person can check whether it has changed
+rather than re-deriving it.
 
 Where a convention genuinely has no ecosystem answer, say so and pick a
 sensible default. The verdict skill's own changelog is an example: nothing

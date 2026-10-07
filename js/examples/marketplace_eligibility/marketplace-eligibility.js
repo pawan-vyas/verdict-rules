@@ -1,8 +1,8 @@
 /**
  * Marketplace eligibility, implemented with verdict-rules.
  *
- * See docs/samples/marketplace-eligibility/README.md for the design and
- * fixtures/marketplace_eligibility/README.md for the fixture contract.
+ * See fixtures/marketplace_eligibility/README.md for the design and the fixture
+ * contract.
  */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -15,12 +15,27 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // this example -- see fixtures/marketplace_eligibility/README.md for the contract.
 const FIXTURES = join(__dirname, "..", "..", "..", "fixtures", "marketplace_eligibility");
 
-export const PRICE_FLOOR_CENTS = 100;
-export const ALLOWED_CATEGORIES = ["books", "electronics", "home"];
-export const PURCHASE_LIMIT_CENTS = 100_000;
-export const HIGH_VALUE_THRESHOLD_CENTS = 50_000;
-export const BLOCKED_COUNTRIES = ["ir", "nk"];
-export const NEW_SELLER_THRESHOLD_DAYS = 30;
+/**
+ * Read the shared policy numbers this example evaluates against.
+ *
+ * Read from the fixture rather than written as literals here, so the four
+ * ports cannot drift from each other or from the data their suites assert
+ * against -- changing a number in one place changes every port at once.
+ *
+ * @param {string} path
+ */
+export function loadThresholds(path) {
+  return JSON.parse(readFileSync(path, "utf8"));
+}
+
+const THRESHOLDS = loadThresholds(join(FIXTURES, "thresholds.json"));
+
+export const PRICE_FLOOR_CENTS = THRESHOLDS.price_floor_cents;
+export const ALLOWED_CATEGORIES = THRESHOLDS.allowed_categories;
+export const PURCHASE_LIMIT_CENTS = THRESHOLDS.purchase_limit_cents;
+export const HIGH_VALUE_THRESHOLD_CENTS = THRESHOLDS.high_value_threshold_cents;
+export const BLOCKED_COUNTRIES = THRESHOLDS.blocked_countries;
+export const NEW_SELLER_THRESHOLD_DAYS = THRESHOLDS.new_seller_threshold_days;
 
 /** @typedef {{ verified: boolean }} IdentityFlag */
 /** @typedef {{ sellerId: string, sellerVerified: boolean, listingPriceCents: number, category: string }} SellerListingContext */
@@ -51,7 +66,7 @@ export class ProjectingRule {
 
 /** Reused on both sides via ProjectingRule. */
 async function isVerifiedIdentity(context) {
-  return { ruleName: "is_verified_identity", passed: context.verified };
+  return { passed: context.verified };
 }
 
 function sellerIdentityRule() {
@@ -66,31 +81,21 @@ function buyerIdentityRule() {
 
 async function priceFloorMet(context) {
   return {
-    ruleName: "price_floor_met",
     passed: context.listingPriceCents >= PRICE_FLOOR_CENTS,
     detail: `${context.listingPriceCents} vs ${PRICE_FLOOR_CENTS}`,
   };
 }
 
 async function categoryAllowed(context) {
-  return {
-    ruleName: "category_allowed",
-    passed: ALLOWED_CATEGORIES.includes(context.category),
-  };
+  return { passed: ALLOWED_CATEGORIES.includes(context.category) };
 }
 
 async function sufficientBalance(context) {
-  return {
-    ruleName: "sufficient_balance",
-    passed: context.buyerBalanceCents >= context.purchaseAmountCents,
-  };
+  return { passed: context.buyerBalanceCents >= context.purchaseAmountCents };
 }
 
 async function purchaseLimitNotExceeded(context) {
-  return {
-    ruleName: "purchase_limit_not_exceeded",
-    passed: context.purchaseAmountCents <= PURCHASE_LIMIT_CENTS,
-  };
+  return { passed: context.purchaseAmountCents <= PURCHASE_LIMIT_CENTS };
 }
 
 /**
@@ -125,15 +130,15 @@ export function buildBuyerCheck() {
 }
 
 async function highValueFlag(context) {
-  return { ruleName: "high_value_flag", passed: context.amount_cents > HIGH_VALUE_THRESHOLD_CENTS };
+  return { passed: context.amount_cents > HIGH_VALUE_THRESHOLD_CENTS };
 }
 
 async function blockedCountryFlag(context) {
-  return { ruleName: "blocked_country_flag", passed: BLOCKED_COUNTRIES.includes(context.country) };
+  return { passed: BLOCKED_COUNTRIES.includes(context.country) };
 }
 
 async function newSellerFlag(context) {
-  return { ruleName: "new_seller_flag", passed: context.seller_age_days < NEW_SELLER_THRESHOLD_DAYS };
+  return { passed: context.seller_age_days < NEW_SELLER_THRESHOLD_DAYS };
 }
 
 /**

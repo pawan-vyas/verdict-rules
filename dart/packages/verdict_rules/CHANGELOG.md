@@ -11,6 +11,140 @@ than that convention's bracketed, dated one.
 
 Tagged `dart-vX.Y.Z`.
 
+## 0.4.0
+
+- **The `marketplace_eligibility` example reads its policy thresholds from
+  `fixtures/marketplace_eligibility/thresholds.json`** rather than declaring
+  its own literals, so the four ports cannot drift from each other or from
+  the data their suites assert against.
+- **Doc comments in this package's own source state current behaviour only.**
+  `FunctionRule.evaluate` explained itself by contrast with an earlier design,
+  which ships into rendered API docs where a reader has no context for it. It
+  keeps its rationale in present tense.
+- **Added `CompositeRule<TContext>`** — an `abstract interface class` a rule
+  built from other rules implements, exposing `subRules`: the parts it was
+  built from, readable before anything is evaluated. `AndRule`/`OrRule`/
+  `NotRule` implement it; a `FunctionRule` does not, so "structure or
+  terminal check" is answerable without naming concrete classes. A negation
+  reports a one-element unmodifiable list rather than a differently-named
+  single rule, so a walk needs no knowledge of which composite it holds, and
+  a vacuous composite reports an empty one. Test
+  `rule is CompositeRule<TContext>`, never an `is`-chain over the three
+  built-ins: a chain silently walks past any other composite, a consumer's
+  own included, reporting the rules inside it as absent rather than failing.
+  Implemented, never extended, the same way `Rule` is. `Rule` itself is
+  unchanged.
+- **Added `RuleResult.subResults`** — a composite's own children, in
+  evaluation order, holding exactly what it evaluated: never padded to
+  the full sub-rule list, never flattened into the parent.
+- **Added `RuleResult.leaves`/`failingLeaves`**, and the same pair on
+  `RunResult`, flattened across every rule a run evaluated. A consumer
+  keying an audit trail on the refusing rules can read every `ruleName` in
+  `result.failingLeaves` without knowing the tree's shape -- the whole list,
+  since a failed `AndRule` reports the failing leaves of the one sub-rule
+  that stopped it, which is a single leaf only when that sub-rule is itself
+  a leaf. `failingLeaves` is an independent recursion, not a filter over
+  `leaves`: a passed result contributes none even past an earlier
+  short-circuited branch that failed, and a failed result with no
+  failing children is itself the leaf.
+- **Added `RuleResult.decidedBy`** — which of `subResults` explain
+  *this* result's own verdict. One level, non-recursive; not the same
+  question `failingLeaves` answers. A getter, derived from
+  `decidedByIndices`, which is the stored field a constructor call
+  passes: the positions of the deciding children within `subResults`,
+  not the children themselves. Holding the same results under two fields
+  makes the stored graph a DAG, which every tree-shaped encoder expands
+  once per path — serialized size would double per nesting level,
+  measured at 13 MB for sixteen levels in the sibling SDKs. An index
+  naming a child the result does not have throws `ArgumentError` at
+  construction.
+- **Added `RuleResult.toJson()` and `RunResult.toJson()`**, so
+  `jsonEncode(result)` works. `dart:convert` cannot encode an arbitrary
+  object and looks for a `toJson()` by convention, which is why this SDK
+  needs an explicit method where the other three reach an object's
+  fields through their own standard mechanism. Both emit the stored
+  fields only; the derived getters are recomputable, and one of them
+  cannot be stored at all. `data` remains opaque, so encoding whatever a
+  caller put in it is the caller's own responsibility.
+- **Added `NotRule`** — passes exactly when its one wrapped rule fails.
+- **Added `SequentialEvaluator`/`ShortCircuitEvaluator`** — the
+  sequencing `AndRule`/`OrRule` compose, now public so a custom
+  composite composes the same primitive rather than hand-rolling a loop.
+- **Added**: `FunctionRule`, `AndRule`, `OrRule`, `NotRule` and
+  `RulesEngine` override `toString()`, matching `RuleResult`/`RunResult`:
+  `FunctionRule "name"` (or `"name" (group)`), `AndRule "name" (group) —
+  N sub-rule(s)`, `NotRule "name"`, `RulesEngine — N rule(s), M
+  group(s)`. `PredicateOutcome`, `SequentialEvaluator` and
+  `ShortCircuitEvaluator` override it too, so nothing public prints as a
+  bare instance.
+- **Changed**: a predicate returns a `PredicateOutcome`, not a
+  `RuleResult`. `RulePredicate` is a
+  `Future<PredicateOutcome> Function(TContext)` now. Migration:
+  `RuleResult(ruleName: n, passed: x, detail: d)` becomes
+  `PredicateOutcome(x, detail: d)` — note `passed` is positional. The
+  `FunctionRule` wrapping it owns the name, so a predicate can no longer
+  set a `ruleName` that silently disagrees with the rule it belongs to.
+- **Changed**: a composite's children live in `subResults`, not `data`.
+  Migration: the `result.data as List<RuleResult>` cast every caller
+  wrote becomes `result.subResults`, or `result.failingLeaves` if the
+  goal was the refusing leaf. `data` stays opaque and now carries only
+  what a predicate attached.
+- **Changed**: `AndRule`/`OrRule` leave their own `detail` empty. The
+  failing sub-rule and its own detail are in
+  `subResults`/`decidedBy`/`failingLeaves`. Migration, reproducing 0.3's
+  own `AndRule` text for a flat composite:
+
+  ```dart
+  result.failingLeaves.map((l) => "'${l.ruleName}' failed: ${l.detail}").join(' | ')
+  ```
+
+- **Changed**: `RuleResult`/`RunResult`'s general constructors are no
+  longer `const`. Copying the collections they are handed requires a
+  call, which a const initializer cannot make, and a const result would
+  have to alias the caller's list. Migration: `const RuleResult(...)`
+  becomes `RuleResult(...)`; a `const` *variable* holding one becomes
+  `final`. For a result with no children, `const RuleResult.leaf(...)`
+  below keeps `const` available.
+- **Added `const RuleResult.leaf({ruleName, passed, detail, data})`** —
+  a leaf result as a compile-time constant. A leaf has no children to
+  copy, so both collections are fixed empty, which also means no index
+  can be out of range and the constructor needs no body — the two things
+  that made the general constructor non-`const`. For a fixed result or a
+  test fixture, and for the places Dart requires a constant expression
+  rather than merely allowing one.
+- **Fixed**: `RunResult.failingLeaves` disagreed with
+  `RuleResult.failingLeaves` in both directions. It filtered `leaves` by
+  `!passed` instead of forwarding to each result's own getter, and a
+  result's verdict is not a function of its leaves' verdicts: a failed
+  `NotRule` wraps a child that *passed*, so filtering found a passing
+  leaf and reported no failure on a failed run, while a passed `OrRule`
+  holding a recovered-from failed branch reported that branch as a
+  failure on a passing run. Now
+  `[for (final r in results) ...r.failingLeaves]`. `RunResult.leaves` was
+  always correct and is unchanged. Reported from downstream use; the
+  same defect was present in all four SDKs.
+- **Changed**: a custom rule that put its children in `data` now reads
+  as a *leaf*. The silent one: a hand-rolled composite — a negation
+  written as `RuleResult(ruleName: n, passed: !inner.passed, data:
+  [inner])`, say — still compiles and still evaluates, but its child
+  disappears from `leaves` and `decidedBy`, which report it as a single
+  terminal check. Migration: pass children as `subResults`, with
+  `decidedByIndices` naming the ones that explain the verdict — or wrap
+  `NotRule`, if the custom rule was only ever a negation.
+- **Changed**: `leaves`/`failingLeaves`/`decidedBy` are instance getters
+  now, and an instance member always wins over an extension member in
+  Dart. An extension on `RuleResult` declaring any of those three names
+  is silently shadowed from this version on, with no analyzer warning at
+  the call site.
+- **Fixed**: a composite's sub-rules and a result's children are copied
+  on construction, not aliased. A caller that kept the list it passed
+  could change a composite's sub-rules — and its verdict — after
+  construction, and adding a result to the very list it was built from
+  produced a result containing itself, which every traversal recursed
+  through. The lists a result hands back use `List.unmodifiable`, so
+  `subResults.add(...)` throws rather than silently changing a result a
+  caller already holds.
+
 ## 0.3.1
 
 - **Changed**: every doc comment and inline comment in the package's
@@ -72,7 +206,7 @@ Rule<SomeTypedContext>`. Constructor call sites (`FunctionRule(...)`,
   `decision-engine`, `async` -- pub.dev caps this field at 5 entries,
   so it carries a curated subset of the full keyword set this project
   uses everywhere else (see
-  `docs/maintenance/discoverability-metadata.md`). Dropped `policy`:
+  [`docs/maintenance/discoverability-metadata.md`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.0.2/docs/maintenance/discoverability-metadata.md)). Dropped `policy`:
   it names a rule together with what happens when it's enforced, and
   this package only ever evaluates, never acts on the result.
 - **The structural-typing example swaps `hasQuorum`/`quorum` for
@@ -80,15 +214,15 @@ Rule<SomeTypedContext>`. Constructor call sites (`FunctionRule(...)`,
   [`extending/new-rule-shape/`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.0.2/docs/extending/new-rule-shape/README.md)'s
   own `quorum`/`ThresholdRule` vocabulary now that both ship in the
   same repository.
-- **`doc/quickstart.md`'s complete example now nests a composite**
+- **[`doc/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.0.2/dart/packages/verdict_rules/doc/quickstart.md)'s complete example now nests a composite**
   (`AndRule` containing an `OrRule`, one branch of which is itself a
   further `AndRule`) and demonstrates `runGroup` alongside a passing
   and a failing call, rather than repeating the same flat two-rule
   `AndRule` + `runNamed` shape the package README's own first example
   already covers.
 - This git tag also carries this package's own doc set for the
-  AI-agent skill, for the first time: `docs/testing/dart.md`,
-  `docs/architecture/dart.md`, one file per extending scenario, one
+  AI-agent skill, for the first time: [`docs/testing/dart.md`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.0.2/docs/testing/dart.md),
+  [`docs/architecture/dart.md`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.0.2/docs/architecture/dart.md), one file per extending scenario, one
   per sample -- repo-level content the skill fetches on demand, not
   part of the published `.tar.gz` itself.
 

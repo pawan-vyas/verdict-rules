@@ -20,11 +20,11 @@ class OrderContext {
   const OrderContext({required this.total, required this.isMember});
 }
 
-Future<RuleResult> orderTotalMet(OrderContext context) async =>
-    RuleResult(ruleName: 'order_total_met', passed: context.total >= 50);
+Future<PredicateOutcome> orderTotalMet(OrderContext context) async =>
+    PredicateOutcome(context.total >= 50);
 
-Future<RuleResult> isMember(OrderContext context) async =>
-    RuleResult(ruleName: 'is_member', passed: context.isMember);
+Future<PredicateOutcome> isMember(OrderContext context) async =>
+    PredicateOutcome(context.isMember);
 
 void main() {
   group('a typed, non-dict context runs through every primitive', () {
@@ -49,7 +49,7 @@ void main() {
       final log = <String>[];
       final tracked = FunctionRule<OrderContext>('tracked', (ctx) async {
         log.add('tracked');
-        return RuleResult(ruleName: 'tracked', passed: true);
+        return PredicateOutcome(true);
       });
       final rule = AndRule<OrderContext>('eligible', [
         FunctionRule<OrderContext>('order_total_met', orderTotalMet),

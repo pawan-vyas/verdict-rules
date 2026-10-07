@@ -24,18 +24,17 @@ else.
 Applied here as [`../releases/`](../releases/README.md): a shared
 [`README.md`](../releases/README.md) for whatever is identical across
 every release target, plus one file per target
-([`verdict-agent-skill.md`](../releases/verdict-agent-skill.md),
-[`python.md`](../releases/python.md), a future `<language>.md`) living
-beside it. Adding a target is a new file in that directory — nothing
+([`verdict-agent-skill.md`](../releases/verdict-agent-skill.md), plus one
+per language) living beside it. Adding a target is a new file in that directory — nothing
 existing is touched to make room for it, and the directory's own
 `README.md` never needs another paragraph appended per variant.
 
 The test for whether a doc needs this treatment: would a second
 variant showing up mean editing a file the first variant already owns?
 If yes, it's a directory-with-README from the start, even before a
-second variant actually exists — `releases/` was built this way before
-a second language had shipped, precisely so the first one to ship
-didn't have to restructure anything.
+second variant actually exists. `releases/` was built that way while
+only one language shipped, which is why the three that followed each
+added a file and restructured nothing.
 
 ## Content migrates out of a shared doc as a variant earns its own file
 

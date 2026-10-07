@@ -1,7 +1,7 @@
 {
   "name": "@verdict-rules/workspace",
   "private": true,
-  "description": "Workspace root for this repository's JavaScript/TypeScript distributions. Not published — see packages/ for what ships.",
+  "description": "Workspace root for this repository's JavaScript/TypeScript distributions. Not published -- see packages/ for what ships.",
   "license": "MIT",
   "workspaces": [
     "packages/*",

@@ -1,18 +1,27 @@
 """Graduation requirement verdict, implemented with `verdict`.
 
-See docs/samples/graduation-requirement-verdict/README.md for the
-design and fixtures/graduation_verdict/README.md for the fixture
-contract. Every function is exercised by test_graduation_verdict.py.
+See fixtures/graduation_verdict/README.md for the design and the
+fixture contract. Every function is exercised by test_graduation_verdict.py.
 """
 
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Callable
 
-from verdict import AndRule, FunctionRule, OrRule, Rule, RuleResult, RulesEngine
+from verdict import (
+    AndRule,
+    FunctionRule,
+    OrRule,
+    PredicateOutcome,
+    Rule,
+    RulePredicate,
+    RuleResult,
+    RulesEngine,
+    SequentialEvaluator,
+)
 
 _HERE = Path(__file__).parent
 # Fixture data lives at the repo root, shared by every language's own port of
@@ -50,7 +59,17 @@ class AtLeastNRule:
     """Passes if at least `minimum` of the given sub-rules pass.
 
     Not part of `verdict` itself; see docs/extending/new-rule-shape/.
-    Evaluates every sub-rule unconditionally.
+    Composes `SequentialEvaluator` directly (not `ShortCircuitEvaluator`,
+    whose own decider hardcodes "the trigger value is the result" and
+    doesn't fit this rule's own policy): the decider short-circuits as
+    soon as the minimum is mathematically decided either way -- once
+    enough sub-rules have passed to guarantee the minimum is met, or
+    once too many have failed for the minimum to be reachable even if
+    every remaining sub-rule passed -- so a sub-rule after that point
+    never runs. Deferring (`None`) until every sub-rule had run would
+    return the same boolean while evaluating work the threshold had
+    already settled, which is the short-circuit contract broken
+    silently -- the reason this decides as soon as the answer is known.
     """
 
     def __init__(
@@ -61,33 +80,46 @@ class AtLeastNRule:
         self._rules = rules
         self._minimum = minimum
 
+        def decider(latest: RuleResult, so_far: list[RuleResult], total: int) -> bool | None:
+            passed = sum(1 for r in so_far if r.passed)
+            if passed >= minimum:
+                return True
+            remaining = total - len(so_far)
+            if passed + remaining < minimum:
+                return False
+            return False if len(so_far) == total else None
+
+        self._evaluator: SequentialEvaluator[dict[str, Any]] = SequentialEvaluator(
+            decider=decider, vacuous_result=minimum <= 0
+        )
+
     async def evaluate(self, context: dict[str, Any]) -> RuleResult:
-        sub_results = [await rule.evaluate(context) for rule in self._rules]
-        passed_count = sum(1 for r in sub_results if r.passed)
-        return RuleResult(
-            rule_name=self.name,
-            passed=passed_count >= self._minimum,
+        result = await self._evaluator.evaluate(self.name, self._rules, context)
+        passed_count = sum(1 for r in result.sub_results if r.passed)
+        return replace(
+            result,
             detail=f"{passed_count} of {len(self._rules)} passed, needed {self._minimum}",
-            data=sub_results,
         )
 
 
-def _written_rule(policy: SubjectPolicy, *, name: str) -> FunctionRule[dict[str, Any]]:
-    async def predicate(context: dict[str, Any]) -> RuleResult:
+def _written_predicate(policy: SubjectPolicy) -> RulePredicate[dict[str, Any]]:
+    async def predicate(context: dict[str, Any]) -> PredicateOutcome:
         pct = context["scores"][policy.subject_id]["written_pct"]
-        return RuleResult(
-            rule_name=name,
+        return PredicateOutcome(
             passed=pct >= policy.written_min_pct,
             detail=f"{pct} vs {policy.written_min_pct}",
         )
-    return FunctionRule(name, predicate)
+    return predicate
+
+
+def _written_rule(policy: SubjectPolicy, *, name: str) -> FunctionRule[dict[str, Any]]:
+    return FunctionRule(name, _written_predicate(policy))
 
 
 def _practical_rule(policy: SubjectPolicy, *, name: str) -> FunctionRule[dict[str, Any]]:
-    async def predicate(context: dict[str, Any]) -> RuleResult:
+    async def predicate(context: dict[str, Any]) -> PredicateOutcome:
         pct = context["scores"][policy.subject_id]["practical_pct"]
-        return RuleResult(
-            rule_name=name,
+        return PredicateOutcome(
             passed=pct >= policy.practical_min_pct,
             detail=f"{pct} vs {policy.practical_min_pct}",
         )
@@ -95,9 +127,9 @@ def _practical_rule(policy: SubjectPolicy, *, name: str) -> FunctionRule[dict[st
 
 
 def _exemption_rule(policy: SubjectPolicy, *, name: str) -> FunctionRule[dict[str, Any]]:
-    async def predicate(context: dict[str, Any]) -> RuleResult:
+    async def predicate(context: dict[str, Any]) -> PredicateOutcome:
         exempt = context["scores"][policy.subject_id].get("has_exemption", False)
-        return RuleResult(rule_name=name, passed=exempt)
+        return PredicateOutcome(passed=exempt)
     return FunctionRule(name, predicate)
 
 
@@ -114,11 +146,11 @@ def _language_subject_rule(policy: SubjectPolicy, sid: str, group: str) -> Rule[
             _written_rule(policy, name=f"{sid}:written"),
             _exemption_rule(policy, name=f"{sid}:exemption"),
         ], group=group)
-    return FunctionRule(sid, _written_rule(policy, name=sid)._predicate, group=group)
+    return FunctionRule(sid, _written_predicate(policy), group=group)
 
 
 def _academic_subject_rule(policy: SubjectPolicy, sid: str, group: str) -> Rule[dict[str, Any]]:
-    return FunctionRule(sid, _written_rule(policy, name=sid)._predicate, group=group)
+    return FunctionRule(sid, _written_predicate(policy), group=group)
 
 
 # One builder per subject_type, keyed by the value itself — adding a fifth
@@ -154,15 +186,12 @@ def rule_for_subject(policy: SubjectPolicy) -> Rule[dict[str, Any]]:
     return builder(policy, sid, group)
 
 
-async def cgpa_met(context: dict[str, Any]) -> RuleResult:
-    return RuleResult(rule_name="cgpa_met", passed=context["cgpa"] >= context["cgpa_floor"])
+async def cgpa_met(context: dict[str, Any]) -> PredicateOutcome:
+    return PredicateOutcome(passed=context["cgpa"] >= context["cgpa_floor"])
 
 
-async def attendance_met(context: dict[str, Any]) -> RuleResult:
-    return RuleResult(
-        rule_name="attendance_met",
-        passed=context["attendance_pct"] >= context["attendance_floor"],
-    )
+async def attendance_met(context: dict[str, Any]) -> PredicateOutcome:
+    return PredicateOutcome(passed=context["attendance_pct"] >= context["attendance_floor"])
 
 
 def load_curriculum(path: Path) -> tuple[list[SubjectPolicy], int]:
@@ -260,7 +289,16 @@ async def _demo() -> None:
     for student_id, context in students.items():
         verdict = await graduates.evaluate(context)
         status = "GRADUATES" if verdict.passed else "DOES NOT GRADUATE"
-        reason = "" if verdict.passed else f"  ({verdict.detail})"
+        # `graduates` is a composite -- its own `detail` is always empty,
+        # because a composed ShortCircuitEvaluator has no per-composite
+        # channel richer than a boolean to build a descriptive string from. The
+        # actual reason lives in `failing_leaves` instead, flattened from
+        # wherever in the tree the short-circuit actually stopped.
+        reasons = "; ".join(
+            f"{leaf.rule_name}: {leaf.detail}" if leaf.detail else leaf.rule_name
+            for leaf in verdict.failing_leaves
+        )
+        reason = "" if verdict.passed else f"  ({reasons})"
         print(f"{student_id:10s}: {status}{reason}")
 
 

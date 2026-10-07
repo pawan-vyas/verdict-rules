@@ -23,9 +23,9 @@
   linking to the directory itself.
 - **The implementation** — `docs/testing/<language>.md`, one per
   language that has documented its own concrete realization
-  (`python.md`, for instance). The current-state snapshot (test count,
-  coverage), the concrete file layout, and a table naming which test
-  proves which shared-doc contract.
+  (`python.md`, for instance). The measured totals, the concrete file
+  layout, and a table naming which test proves which shared-doc
+  contract.
 
 A language that hasn't written its own file yet simply has no file
 here; nothing reserves the slot.
@@ -61,19 +61,41 @@ concrete test names, never listing one language's `test_*` names inline.
 
 - **Title + blockquote** pointing back to `README.md` ("read that
   first," with a relative link).
-- **Current state, as of this writing** — the literal test-run output
-  and coverage table. A dated snapshot is expected and correct here,
-  since this file is explicitly that language's own concrete state, not
-  a claim about every language.
+- **`## The suite`** — the run command, then the measured totals: test
+  count, coverage if that language has a tool wired in, and a **per-file
+  table** (file, test count, what it proves). Not a pasted run
+  transcript: a literal block of tool output is the part that rots
+  silently, and every one of these files had drifted by a wide margin
+  before they were rebuilt against measured numbers. State the figures
+  as facts and re-measure them when the suite changes.
+- **The mutation score, named as the stronger measure** — line coverage
+  proves a line ran, not that anything would notice it being wrong, so
+  this section links that language's own survivor list under
+  [`../mutation-survivors-python.md`](../mutation-survivors-python.md)
+  and its siblings. Where the tool's own reach is narrow enough that a
+  high score overstates the guarantee, say so here rather than letting
+  the number speak for itself.
+- **Which files are the portable contract suite** — the subset another
+  language's suite is audited against, and why the rest sit beside it
+  rather than inside it.
+- **The CI workflow** that runs it, and which job is the one to mark
+  required in branch protection.
+- **The second testing layer**, if that language has example projects
+  checked against a shared fixture — their totals, and a link to their
+  own testing doc.
 - **Test layout**, if a diagram earns its place — real file names
-  (`test_rule.py`, `engine.py`), unlike the shared doc's diagrams, which
-  are conceptual, not literal.
+  (`test_rule.py`, `test_engine.py`), unlike the shared doc's diagrams,
+  which are conceptual, not literal.
 - **Which test proves which contract** — a table, one row per
   shared-doc contract, naming the concrete test function(s) and file.
-- **Running tests** — the actual commands for that language's own
-  tooling.
-- **Related** — the shared doc, and the second-layer example project's
-  own testing doc if one exists.
+  **Verify every name against the source before committing**; a
+  hand-written test name that no longer exists is invisible to every
+  checker this repo has.
+- **Confirmed to bite** — at least one worked instance of a contract
+  test actually failing when the behaviour is broken by hand, so the
+  table is evidence rather than an inventory.
+- **Related** — the shared doc, that language's survivor list, and the
+  second-layer example project's own testing doc if one exists.
 
 ## Adding a new language's file
 

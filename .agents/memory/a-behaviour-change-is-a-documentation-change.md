@@ -35,22 +35,50 @@ different altitude, so a change that reaches one usually reaches all.
    breaks this doc silently.
 5. **[`docs/maintenance/`](../../docs/maintenance/README.md)** — release procedure, versioning, where a
    change goes.
-6. **Language quickstarts and samples** — `<lang>/docs/`.
-7. **The shared fixture** — if the change is behavioural, does
-   [`fixtures/graduation_verdict/`](../../fixtures/graduation_verdict/README.md) need to pin it? If it does and you
-   skip it, every future port can get it wrong.
+6. **Each language's quickstart and samples** — beside that package, at
+   whatever path its own ecosystem expects (`docs/` in Python, JS and C#;
+   `doc/` in Dart, which is pub's convention). Plus its `examples/`.
+7. **The shared fixtures** — if the change is behavioural, do
+   [`fixtures/`](../../fixtures/README.md) need to pin it? If they do and
+   you skip it, every future port can get it wrong, and so can all four
+   present ones at once: see
+   [`features-land-in-every-language`](features-land-in-every-language.md)
+   on what a fixture structurally cannot catch.
 8. **`skills/verdict/references/`** — an agent acting on a stale skill
    writes wrong code confidently. Bump `.claude-plugin/plugin.json` in
    the same commit or CI fails.
-9. **That package's own `CHANGELOG.md`**, beside its manifest — the entry
-   is written with the version bump, never backfilled.
-10. **[`README.md`](../../README.md)** — usually untouched, but check: it makes claims too.
+9. **[`skills/verdict-workspace/evals/`](../../skills/verdict-workspace/evals/README.md)**
+   — if the change introduced a new way to be *subtly* wrong (a lookup
+   that fails differently, a polarity, an ordering guarantee), the evals
+   no longer measure the current skill. An expectation is the only thing
+   in the repo that checks whether an agent reading the skill arrives at
+   the right design.
+10. **Every `AGENTS.md`** — the root one and each language's own. These
+    restate the contract in condensed form, which is exactly what makes
+    them easy to miss: nothing imports them, nothing lints their claims,
+    and an agent reads one before touching anything. Four of them went on
+    stating a superseded result contract for a full version because the
+    root sweep list didn't name them.
+11. **That package's own `CHANGELOG.md`**, beside its manifest — the entry
+    is written with the version bump, never backfilled.
+12. **[`README.md`](../../README.md)** — usually untouched, but check: it makes claims too.
 
 ## Checks worth running, since none of this is automatic
 
+A search over the old API name builds the candidate list — nothing more:
+
+```bash
+git grep -n '<the old API or behaviour>' -- docs/ '*/packages/*/doc*/' \
+    csharp/src/VerdictRules/docs/ skills/ '*AGENTS.md' README.md
 ```
-grep -rn '<the old API or behaviour>' docs/ python/packages/*/docs/ skills/ README.md
-```
+
+It tells you where the old name still appears. It cannot tell you a file
+is *correct*, because the stale sentence is usually the one that never
+mentioned the old name — it described the behaviour in prose. Treat a
+clean result as "no obvious remnants," never as "swept," and read the
+ring files whole; see
+[`doc-hygiene-audit-protocol`](doc-hygiene-audit-protocol.md) for why a
+match count is not evidence.
 
 Then: every relative link and anchor still resolves, and every mermaid
 diagram still validates.

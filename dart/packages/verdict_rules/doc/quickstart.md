@@ -1,7 +1,8 @@
 <!-- Title: Verdict Quickstart (Dart) -->
 # Verdict — Quickstart
 
-> The five names you need, and one complete example using all of them.
+> The six names you need, and one complete example wiring the composites
+> and the engine together.
 > See [`../README.md`](../README.md) for this package's own
 > `dart pub add`/first-rule quickstart, the top-level
 > [`../../../../README.md`](../../../../README.md) for what Verdict is in
@@ -17,12 +18,19 @@
   custom rule shape says `implements Rule` explicitly — Dart has no
   free structural typing for a multi-member interface the way Python's
   `Protocol` does.
-- **`FunctionRule`** — wraps a plain function as a `Rule`. The common
-  case: most rules are "run this function against the context."
+- **`FunctionRule`** — wraps a plain async predicate as a `Rule`. The
+  common case: most rules are "run this function against the context."
+  The predicate reports a **`PredicateOutcome`** (`passed` positionally,
+  plus an optional `detail`/`data`) — never a `RuleResult` directly, and
+  never a `ruleName`: `FunctionRule` already owns the name it was
+  constructed with, so the predicate has no legitimate reason to restate
+  it.
 - **`AndRule`** / **`OrRule`** — composite rules that combine other
   rules, short-circuiting the same way a boolean `&&`/`||` expression
   would (`AndRule` stops at the first failure, `OrRule` stops at the
   first pass).
+- **`NotRule`** — wraps exactly one rule and inverts it: it passes when
+  that rule fails. One child, so it has no vacuous case.
 - **`RulesEngine`** — holds a set of rules and runs them three ways:
   `runAll` (every rule, full diagnostic picture — deliberately does
   **not** short-circuit), `runNamed` (one specific rule by name),
@@ -31,10 +39,20 @@
   `null` instead, for callers whose own domain has an answer for
   absence — see
   [`../../../../docs/extending/absence-vs-failure/`](../../../../docs/extending/absence-vs-failure/README.md).
-- **`RuleResult`** / **`RunResult`** — plain, immutable outcome types.
-  `RuleResult.data` is a fully opaque slot for a caller's own domain
-  object to ride through evaluation — Verdict never reads or depends on
-  its shape.
+- **`RuleResult`** / **`RunResult`** — immutable outcome types, each
+  answering three different questions about a composite's decision:
+  `subResults` (what actually ran, one level), `decidedBy` (which of
+  those children explain *this* verdict, one level), and
+  `leaves`/`failingLeaves` (the terminal checks, fully recursive).
+  A result stores only `subResults` plus `decidedByIndices`, the
+  *positions* within it of the deciding children — so building a result
+  by hand means passing positions, and an out-of-range one throws an
+  `ArgumentError` at construction. Every other view is a getter, derived
+  and computed on access, which is what keeps a result a tree and
+  serializable: `toJson()` on both types feeds `jsonEncode`, which looks
+  for that method by convention. `RuleResult.data` is a fully opaque slot
+  for a caller's own domain object to ride through evaluation — Verdict
+  never reads or depends on its shape.
 
 ## One complete example
 
@@ -47,17 +65,17 @@ decision above ever looked at each one:
 ```dart
 import 'package:verdict_rules/verdict_rules.dart';
 
-Future<RuleResult> inputsValid(Map<String, Object?> context) async =>
-    RuleResult(ruleName: 'inputs_valid', passed: context['has_required_fields']! as bool);
+Future<PredicateOutcome> inputsValid(Map<String, Object?> context) async =>
+    PredicateOutcome(context['has_required_fields']! as bool);
 
-Future<RuleResult> autoApproved(Map<String, Object?> context) async =>
-    RuleResult(ruleName: 'auto_approved', passed: context['auto_approved']! as bool);
+Future<PredicateOutcome> autoApproved(Map<String, Object?> context) async =>
+    PredicateOutcome(context['auto_approved']! as bool);
 
-Future<RuleResult> reviewerAssigned(Map<String, Object?> context) async =>
-    RuleResult(ruleName: 'reviewer_assigned', passed: context['reviewer_assigned']! as bool);
+Future<PredicateOutcome> reviewerAssigned(Map<String, Object?> context) async =>
+    PredicateOutcome(context['reviewer_assigned']! as bool);
 
-Future<RuleResult> reviewCompleted(Map<String, Object?> context) async =>
-    RuleResult(ruleName: 'review_completed', passed: context['review_completed']! as bool);
+Future<PredicateOutcome> reviewCompleted(Map<String, Object?> context) async =>
+    PredicateOutcome(context['review_completed']! as bool);
 
 Future<void> main() async {
   final taskApproved = AndRule('task_approved', [
@@ -150,6 +168,50 @@ sequenceDiagram
 >    reports `auto_approved`'s real failure, something the nested
 >    decision above never had to surface once a later branch succeeded.
 
+## A typed context
+
+The example above uses `Context` (a plain `Map<String, Object?>`), which
+stays first-class permanently. But a cohesive family of rules sharing one
+shape can say so, and then a sub-rule expecting a different shape stops
+compiling rather than failing at runtime on a missing key:
+
+```dart
+import 'package:verdict_rules/verdict_rules.dart';
+
+class OrderContext {
+  const OrderContext({required this.total, required this.isMember});
+
+  final num total;
+  final bool isMember;
+}
+
+Future<PredicateOutcome> orderTotalMet(OrderContext ctx) async =>
+    PredicateOutcome(ctx.total >= 50);
+
+Future<PredicateOutcome> isMember(OrderContext ctx) async =>
+    PredicateOutcome(ctx.isMember);
+
+Future<void> main() async {
+  final freeShipping = AndRule<OrderContext>('free_shipping', [
+    FunctionRule('order_total_met', orderTotalMet),
+    FunctionRule('is_member', isMember),
+  ]);
+  final engine = RulesEngine<OrderContext>([freeShipping]);
+
+  final result = await engine.runNamed(
+      'free_shipping', const OrderContext(total: 75, isMember: false));
+  print(result.passed); // false
+  print(result.failingLeaves.first.ruleName); // is_member
+}
+```
+
+`Rule<TContext>` has no default type argument, so dict-context is written
+out as `Rule<Context>` rather than being what you get by forgetting.
+[`../../../../docs/architecture/dart.md`](../../../../docs/architecture/dart.md)
+covers the mechanics;
+[`extending/reusing-a-rule-across-contexts/`](../../../../docs/extending/reusing-a-rule-across-contexts/README.md)
+covers when dict-context is the better answer.
+
 ## Next: build rules from your own configuration, not just hard-coded ones
 
 Because rules are just objects, they're straightforward to build up at
@@ -167,4 +229,4 @@ for the scenario.
   of this package from your own code.
 - [`../../../../docs/testing/`](../../../../docs/testing/README.md) — `dart analyze`
   and `dart test`, and what a test here actually needs to prove.
-- [`../../../../docs/samples/`](../../../../docs/samples/README.md) — more worked examples.
+- [`../../../../fixtures/README.md`](../../../../fixtures/README.md) — more worked examples.

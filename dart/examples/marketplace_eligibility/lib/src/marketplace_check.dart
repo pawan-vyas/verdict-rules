@@ -1,7 +1,7 @@
 /// Marketplace eligibility, implemented with verdict_rules.
 ///
-/// See docs/samples/marketplace-eligibility/README.md for the design and
-/// fixtures/marketplace_eligibility/README.md for the fixture contract.
+/// See fixtures/marketplace_eligibility/README.md for the design and the fixture
+/// contract.
 library;
 
 import 'dart:convert';
@@ -12,15 +12,42 @@ import 'package:verdict_rules/verdict_rules.dart';
 import 'contexts.dart';
 import 'projecting_rule.dart';
 
-const priceFloorCents = 100;
-const allowedCategories = ['books', 'electronics', 'home'];
-const purchaseLimitCents = 100000;
-const highValueThresholdCents = 50000;
-const blockedCountries = ['ir', 'nk'];
-const newSellerThresholdDays = 30;
+/// Read the shared policy numbers this example evaluates against.
+///
+/// Read from the fixture rather than written as literals here, so the four
+/// ports cannot drift from each other or from the data their suites assert
+/// against -- changing a number in one place changes every port at once.
+Map<String, Object?> loadThresholds(String path) =>
+    jsonDecode(File(path).readAsStringSync()) as Map<String, Object?>;
 
-Future<RuleResult> _isVerifiedIdentity(IdentityFlag context) async =>
-    RuleResult(ruleName: 'is_verified_identity', passed: context.verified);
+/// Locate the shared fixture directory by walking up from the working
+/// directory, so this resolves whether the caller is `dart test` (cwd is the
+/// package) or `dart run` from somewhere else entirely.
+String _findFixtures() {
+  for (var dir = Directory.current.absolute;
+      dir.parent.path != dir.path;
+      dir = dir.parent) {
+    final candidate = '${dir.path}/fixtures/marketplace_eligibility';
+    if (File('$candidate/thresholds.json').existsSync()) return candidate;
+  }
+  throw StateError(
+      'fixtures/marketplace_eligibility not found above ${Directory.current.path}');
+}
+
+final _thresholds = loadThresholds('${_findFixtures()}/thresholds.json');
+
+final priceFloorCents = _thresholds['price_floor_cents']! as int;
+final allowedCategories =
+    (_thresholds['allowed_categories']! as List).cast<String>();
+final purchaseLimitCents = _thresholds['purchase_limit_cents']! as int;
+final highValueThresholdCents =
+    _thresholds['high_value_threshold_cents']! as int;
+final blockedCountries =
+    (_thresholds['blocked_countries']! as List).cast<String>();
+final newSellerThresholdDays = _thresholds['new_seller_threshold_days']! as int;
+
+Future<PredicateOutcome> _isVerifiedIdentity(IdentityFlag context) async =>
+    PredicateOutcome(context.verified);
 
 ProjectingRule<SellerListingContext, IdentityFlag> _sellerIdentityRule() =>
     ProjectingRule(
@@ -34,30 +61,19 @@ ProjectingRule<BuyerPurchaseContext, IdentityFlag> _buyerIdentityRule() =>
       (ctx) => IdentityFlag(verified: ctx.buyerVerified),
     );
 
-Future<RuleResult> _priceFloorMet(SellerListingContext context) async =>
-    RuleResult(
-      ruleName: 'price_floor_met',
-      passed: context.listingPriceCents >= priceFloorCents,
-    );
+Future<PredicateOutcome> _priceFloorMet(SellerListingContext context) async =>
+    PredicateOutcome(context.listingPriceCents >= priceFloorCents);
 
-Future<RuleResult> _categoryAllowed(SellerListingContext context) async =>
-    RuleResult(
-      ruleName: 'category_allowed',
-      passed: allowedCategories.contains(context.category),
-    );
+Future<PredicateOutcome> _categoryAllowed(SellerListingContext context) async =>
+    PredicateOutcome(allowedCategories.contains(context.category));
 
-Future<RuleResult> _sufficientBalance(BuyerPurchaseContext context) async =>
-    RuleResult(
-      ruleName: 'sufficient_balance',
-      passed: context.buyerBalanceCents >= context.purchaseAmountCents,
-    );
-
-Future<RuleResult> _purchaseLimitNotExceeded(
+Future<PredicateOutcome> _sufficientBalance(
         BuyerPurchaseContext context) async =>
-    RuleResult(
-      ruleName: 'purchase_limit_not_exceeded',
-      passed: context.purchaseAmountCents <= purchaseLimitCents,
-    );
+    PredicateOutcome(context.buyerBalanceCents >= context.purchaseAmountCents);
+
+Future<PredicateOutcome> _purchaseLimitNotExceeded(
+        BuyerPurchaseContext context) async =>
+    PredicateOutcome(context.purchaseAmountCents <= purchaseLimitCents);
 
 /// Build the typed listing-eligibility composite for one seller.
 ///
@@ -86,20 +102,16 @@ Future<RuleResult> _purchaseLimitNotExceeded(
   return (purchaseEligible, buyerVerified);
 }
 
-Future<RuleResult> _highValueFlag(Context context) async => RuleResult(
-      ruleName: 'high_value_flag',
-      passed: (context['amount_cents'] as int) > highValueThresholdCents,
-    );
+Future<PredicateOutcome> _highValueFlag(Context context) async =>
+    PredicateOutcome(
+        (context['amount_cents'] as int) > highValueThresholdCents);
 
-Future<RuleResult> _blockedCountryFlag(Context context) async => RuleResult(
-      ruleName: 'blocked_country_flag',
-      passed: blockedCountries.contains(context['country'] as String),
-    );
+Future<PredicateOutcome> _blockedCountryFlag(Context context) async =>
+    PredicateOutcome(blockedCountries.contains(context['country'] as String));
 
-Future<RuleResult> _newSellerFlag(Context context) async => RuleResult(
-      ruleName: 'new_seller_flag',
-      passed: (context['seller_age_days'] as int) < newSellerThresholdDays,
-    );
+Future<PredicateOutcome> _newSellerFlag(Context context) async =>
+    PredicateOutcome(
+        (context['seller_age_days'] as int) < newSellerThresholdDays);
 
 /// Build the dict-context compliance catalog.
 ///

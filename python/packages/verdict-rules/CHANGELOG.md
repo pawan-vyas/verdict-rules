@@ -8,6 +8,135 @@ which keeps its own changelog beside its own manifest.
 
 Tagged `python-vX.Y.Z`.
 
+## [0.4.0] - 2026-10-03
+
+### Added
+
+- The `marketplace_eligibility` example reads its policy thresholds from
+  the shared `fixtures/marketplace_eligibility/thresholds.json` rather than
+  declaring its own literals, so the four ports cannot drift from each other
+  or from the data their suites assert against.
+- Doc comments in this package's own source state current behaviour only.
+  `PredicateOutcome`, `FunctionRule.evaluate` and `AndRule` each explained
+  themselves by contrast with an earlier design, which ships into rendered API
+  docs and IDE tooltips where a reader has no context for it. Each keeps its
+  rationale in present tense.
+- **`CompositeRule`** — a runtime-checkable `Protocol` a rule built from
+  other rules satisfies, exposing `sub_rules`: the parts it was built from,
+  readable before anything is evaluated. `AndRule`/`OrRule`/`NotRule`
+  satisfy it; a `FunctionRule` does not, so "structure or terminal check" is
+  answerable without naming concrete types. A negation reports a one-element
+  sequence rather than a differently-named single rule, so a walk needs no
+  knowledge of which composite it holds, and a vacuous composite reports an
+  empty one. Walk a tree with `isinstance(rule, CompositeRule)`, never an
+  `isinstance` chain over the three built-ins: a chain silently walks past
+  any other composite, a consumer's own included, reporting the rules inside
+  it as absent rather than failing. `Rule` is unchanged, so an existing rule
+  keeps satisfying it. This describes what was *built*; `sub_results` and the
+  flattened views describe what *ran*.
+- **`RuleResult.sub_results`** — a composite's own children, in
+  evaluation order, holding exactly what it evaluated: never padded to
+  the full sub-rule list, never flattened into the parent. An empty
+  `sub_results` *is* the leaf signal, structurally.
+- **`RuleResult.leaves` / `RuleResult.failing_leaves`**, and the same
+  pair on `RunResult`, flattened across every rule a run evaluated. A
+  consumer keying an audit trail on the refusing rules can read every
+  `rule_name` in `result.failing_leaves` without knowing the tree's shape --
+  the whole list, since a failed `AndRule` reports the failing leaves of the
+  one sub-rule that stopped it, which is a single leaf only when that
+  sub-rule is itself a leaf.
+  `failing_leaves` is an independent recursion, not a filter over
+  `leaves`: a passed result contributes none even when an earlier
+  short-circuited branch failed on the way to that pass, and a failed
+  result with no failing children is itself the leaf.
+- **`RuleResult.decided_by`** — which of `sub_results` explain *this*
+  result's own verdict. One level, non-recursive; not the same question
+  `failing_leaves` answers. A `@property`, derived from
+  `decided_by_indices`, which is the stored field a constructor call
+  passes: the positions of the deciding children within `sub_results`,
+  not the children themselves. Holding the same results under two fields
+  makes the stored graph a DAG, and `dataclasses.asdict` (and every other
+  tree-shaped walk) expands a shared node once per path — serialized size
+  doubled per nesting level, measured at 13 MB for sixteen levels. An
+  index naming a child the result does not have raises `IndexError` at
+  construction, which the objects form admitted no check for.
+- **`RuleResult` and `RunResult` are serializable.**
+  `json.dumps(dataclasses.asdict(result))` emits the stored fields only;
+  `leaves`/`failing_leaves`/`decided_by` are `@property` accessors,
+  absent from the output and recomputable from what is there. `data`
+  remains opaque, so encoding whatever a caller put in it is the caller's
+  own responsibility.
+- **`NotRule`** — passes exactly when its one wrapped rule fails. No
+  vacuous case, since it wraps exactly one rule.
+- **`SequentialEvaluator` / `ShortCircuitEvaluator`** — the sequencing
+  `AndRule`/`OrRule` compose, now public so a custom composite composes
+  the same primitive rather than hand-rolling a loop.
+  `SequentialEvaluator` takes a `StepDecider` returning `True`/`False`
+  to stop or `None` to continue; `ShortCircuitEvaluator` is the narrower
+  case where one sub-result value ends evaluation.
+- `FunctionRule`, `AndRule`, `OrRule`, `NotRule` and `RulesEngine` define
+  `__repr__`, matching `RuleResult`/`RunResult`'s dataclass-generated
+  ones: `FunctionRule "name"` (or `"name" (group)`), `AndRule "name"
+  (group) — N sub-rule(s)`, `NotRule "name"`, `RulesEngine — N rule(s),
+  M group(s)`.
+
+### Changed
+
+- **A predicate returns a `PredicateOutcome`, not a `RuleResult`.**
+  Migration: `return RuleResult(rule_name=..., passed=x, detail=d)`
+  becomes `return PredicateOutcome(passed=x, detail=d)`. The
+  `FunctionRule` wrapping it owns the name and builds the result, so a
+  predicate can no longer set a `rule_name` that silently disagrees with
+  the rule it belongs to. A predicate still returning a `RuleResult`
+  raises `TypeError` rather than appearing to work.
+- **A composite's children live in `sub_results`, not `data`.**
+  Migration: the `cast(list[RuleResult], result.data)` walk every caller
+  wrote becomes `result.sub_results`, or `result.failing_leaves` if the
+  goal was the refusing leaf. `data` stays opaque and now carries only
+  what a predicate attached.
+- **A custom rule that put its children in `data` now reads as a
+  *leaf*.** The silent one: a hand-rolled composite — a negation written
+  as `RuleResult(name, not inner.passed, data=[inner])`, say — still
+  compiles and still evaluates, but its child disappears from `leaves`
+  and `decided_by`, which report it as a single terminal check.
+  Migration: pass children as `sub_results`, with `decided_by_indices`
+  naming the ones that explain the verdict — or wrap `NotRule`, if the
+  custom rule was only ever a negation.
+- **`AndRule`/`OrRule` leave their own `detail` empty.** Composing a
+  shared evaluator leaves no channel richer than a boolean to build a
+  string from. The failing sub-rule and its own detail are in
+  `sub_results`/`decided_by`/`failing_leaves`. Migration, reproducing
+  0.3's own `AndRule` text for a flat composite:
+
+  ```python
+  " | ".join(f"{leaf.rule_name!r} failed: {leaf.detail}" for leaf in result.failing_leaves)
+  ```
+
+### Fixed
+
+- **`RunResult.failing_leaves` disagreed with
+  `RuleResult.failing_leaves`** in both directions. It filtered the
+  flattened leaves by `not passed` instead of forwarding to each result's
+  own property, and a result's verdict is not a function of its leaves'
+  verdicts: a failed `NotRule` wraps a child that *passed*, so filtering
+  found a passing leaf and reported no failure on a failed run, while a
+  passed `OrRule` holding a recovered-from failed branch reported that
+  branch as a failure on a passing run. Now forwards per result.
+  `RunResult.leaves` was always correct and is unchanged. Reported from
+  downstream use of the Dart package; the same defect was present in all
+  four SDKs.
+- **A composite's sub-rules, a result's children, and an engine's rules
+  are copied on construction, not aliased.** A caller that kept the list
+  it passed could change a composite's sub-rules — and its verdict —
+  after construction, and appending a result to the very list it was
+  built from produced a result containing itself, which every traversal
+  recursed through. `frozen=True` does not help: it stops reassignment
+  of the field, not mutation of the list the field points at.
+- **`RulesEngine`'s own views could disagree.** Its name and group
+  indexes are snapshots taken in the constructor while its iteration
+  list was aliased, so `rule_names` reported what was registered and
+  `run_all` iterated whatever the caller's list held by then.
+
 ## [0.3.1] - 2026-09-18
 
 ### Changed
@@ -29,7 +158,7 @@ Tagged `python-vX.Y.Z`.
 
 ### Changed
 
-- `docs/architecture/python.md` gained a "Generic context, concretely"
+- [`docs/architecture/python.md`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.3.0/docs/architecture/python.md) gained a "Generic context, concretely"
   section.
 
 ## [0.2.9] - 2026-09-17
@@ -62,7 +191,7 @@ Tagged `python-vX.Y.Z`.
 - **The structural-typing example swaps `OverEighteen`/`age` for
   `IsBusinessHours`/`hour`** -- kept distinct from the main example's
   own `age` field now that both live on the same page.
-- **`docs/quickstart.md`'s complete example now nests a composite**
+- **[`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.7/python/packages/verdict-rules/docs/quickstart.md)'s complete example now nests a composite**
   (`AndRule` containing an `OrRule`, one branch of which is itself a
   further `AndRule`) and demonstrates `run_group` alongside a passing
   and a failing call, rather than repeating the same flat two-rule
@@ -122,7 +251,7 @@ Package identical to `0.2.6` otherwise.
 ### Changed
 
 - **The PyPI landing page's structure now matches the new, shared
-  package-README template** (`docs/maintenance/doc-authoring/package-readmes.md`):
+  package-README template** ([`docs/maintenance/doc-authoring/package-readmes.md`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.3/docs/maintenance/doc-authoring/package-readmes.md)):
   gains a **"What it guarantees"** section (short-circuiting, vacuous
   truth's polarity, emptiness-vs-absence, opaque `RuleResult.data`,
   zero runtime dependencies) — the one section a skimming reader most
@@ -155,7 +284,7 @@ corrected by publishing a new one.
 - The **Changelog** link in this package's PyPI metadata pointed at a
   repository-root `CHANGELOG.md` that no longer exists — each package now
   keeps its history beside its own manifest. It points at
-  `python/CHANGELOG.md`.
+  [`python/CHANGELOG.md`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.1/python/CHANGELOG.md).
 
 No code changed; the package itself is identical to `0.2.0`. It is a release
 rather than something left for the next one because PyPI metadata is immutable
@@ -191,7 +320,7 @@ right, which is what a reader lands on.
   `try_run_group(...) or default_pass` is a rule set that silently
   stopped being enforced.
 
-- `docs/extension.md` gains **Recipe 6**, working through the four real
+- [`docs/extension.md`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.0/docs/extension.md) gains **Recipe 6**, working through the four real
   shapes absence takes and why a library default would be wrong for
   three of them.
 
@@ -208,13 +337,13 @@ right, which is what a reader lands on.
   legitimately empty — and a misspelled group name silently passing is
   the worst failure mode for an eligibility or access-control caller.
   Released as a patch under the pre-1.0 carve-out documented in
-  `docs/maintenance.md`.
+  [`docs/maintenance.md`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.1.1/docs/maintenance.md).
 - **Added `RulesEngine.rule_names` and `RulesEngine.group_names`.**
   Read-only tuples of the registered names, so a caller who cannot know
   in advance whether a name exists can check rather than catch.
 - Empty composites are unchanged and deliberately so: `AndRule([])`
   still passes and `OrRule([])` still fails, being the identities of the
-  folds they perform. `docs/architecture.md` now states the distinction
+  folds they perform. [`docs/architecture.md`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.1.1/docs/architecture.md) now states the distinction
   as a design position — this package is permissive about emptiness and
   strict about absence.
 
@@ -227,7 +356,7 @@ Initial public release.
   Sequential (never concurrent) evaluation, real short-circuiting,
   vacuous-truth polarities decided explicitly per composite shape.
 - Zero external dependencies; `requires-python = ">=3.10"`.
-- Full doc suite (`docs/architecture.md`, `extension.md`,
+- Full doc suite ([`docs/architecture.md`](https://github.com/pawan-vyas/verdict-rules/blob/python-v0.1.0/docs/architecture.md), `extension.md`,
   `maintenance.md`, `testing.md`, `future_plan.md`), worked samples
   (`python/docs/samples/`), and a full tested example project
   (`python/examples/graduation_verdict/`, including a 500-case

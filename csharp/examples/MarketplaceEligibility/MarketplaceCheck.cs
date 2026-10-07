@@ -7,20 +7,60 @@ namespace MarketplaceEligibility;
 /// Marketplace eligibility, implemented with verdict-rules.
 /// </summary>
 /// <remarks>
-/// See docs/samples/marketplace-eligibility/README.md for the design and
-/// fixtures/marketplace_eligibility/README.md for the fixture contract.
+/// See fixtures/marketplace_eligibility/README.md for the design and the fixture
+/// contract.
 /// </remarks>
 public static class MarketplaceCheck
 {
-    public const int PriceFloorCents = 100;
-    public static readonly string[] AllowedCategories = ["books", "electronics", "home"];
-    public const int PurchaseLimitCents = 100_000;
-    public const int HighValueThresholdCents = 50_000;
-    public static readonly string[] BlockedCountries = ["ir", "nk"];
-    public const int NewSellerThresholdDays = 30;
+    /// <summary>
+    /// Locate the shared fixture directory by walking up from this assembly's
+    /// own location, so it resolves under `dotnet run` and `dotnet test` alike
+    /// without either caller hardcoding a depth.
+    /// </summary>
+    internal static string FindFixtures()
+    {
+        for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir is not null; dir = dir.Parent)
+        {
+            var candidate = Path.Combine(dir.FullName, "fixtures", "marketplace_eligibility");
+            if (File.Exists(Path.Combine(candidate, "thresholds.json")))
+            {
+                return candidate;
+            }
+        }
 
-    private static Task<RuleResult> IsVerifiedIdentity(IdentityFlag context, CancellationToken ct = default) =>
-        Task.FromResult(new RuleResult("is_verified_identity", context.Verified));
+        throw new InvalidOperationException(
+            $"fixtures/marketplace_eligibility not found above {AppContext.BaseDirectory}");
+    }
+
+    /// <summary>
+    /// The shared policy numbers this example evaluates against.
+    /// </summary>
+    /// <remarks>
+    /// Read from the fixture rather than written as literals here, so the four
+    /// ports cannot drift from each other or from the data their suites assert
+    /// against -- changing a number in one place changes every port at once.
+    /// That is also why these are <c>static readonly</c> rather than
+    /// <c>const</c>: a <c>const</c> cannot be read from a file.
+    /// </remarks>
+    private static readonly Dictionary<string, JsonElement> Thresholds =
+        LoadJson(Path.Combine(FindFixtures(), "thresholds.json"));
+
+    public static readonly int PriceFloorCents = Thresholds["price_floor_cents"].GetInt32();
+
+    public static readonly string[] AllowedCategories =
+        [.. Thresholds["allowed_categories"].EnumerateArray().Select(e => e.GetString()!)];
+
+    public static readonly int PurchaseLimitCents = Thresholds["purchase_limit_cents"].GetInt32();
+
+    public static readonly int HighValueThresholdCents = Thresholds["high_value_threshold_cents"].GetInt32();
+
+    public static readonly string[] BlockedCountries =
+        [.. Thresholds["blocked_countries"].EnumerateArray().Select(e => e.GetString()!)];
+
+    public static readonly int NewSellerThresholdDays = Thresholds["new_seller_threshold_days"].GetInt32();
+
+    private static Task<PredicateOutcome> IsVerifiedIdentity(IdentityFlag context, CancellationToken ct = default) =>
+        Task.FromResult(new PredicateOutcome(context.Verified));
 
     private static ProjectingRule<SellerListingContext, IdentityFlag> SellerIdentityRule() =>
         new(new FunctionRule<IdentityFlag>("is_verified_identity", IsVerifiedIdentity),
@@ -30,17 +70,17 @@ public static class MarketplaceCheck
         new(new FunctionRule<IdentityFlag>("is_verified_identity", IsVerifiedIdentity),
             ctx => new IdentityFlag(ctx.BuyerVerified));
 
-    private static Task<RuleResult> PriceFloorMet(SellerListingContext context, CancellationToken ct = default) =>
-        Task.FromResult(new RuleResult("price_floor_met", context.ListingPriceCents >= PriceFloorCents));
+    private static Task<PredicateOutcome> PriceFloorMet(SellerListingContext context, CancellationToken ct = default) =>
+        Task.FromResult(new PredicateOutcome(context.ListingPriceCents >= PriceFloorCents));
 
-    private static Task<RuleResult> CategoryAllowed(SellerListingContext context, CancellationToken ct = default) =>
-        Task.FromResult(new RuleResult("category_allowed", AllowedCategories.Contains(context.Category)));
+    private static Task<PredicateOutcome> CategoryAllowed(SellerListingContext context, CancellationToken ct = default) =>
+        Task.FromResult(new PredicateOutcome(AllowedCategories.Contains(context.Category)));
 
-    private static Task<RuleResult> SufficientBalance(BuyerPurchaseContext context, CancellationToken ct = default) =>
-        Task.FromResult(new RuleResult("sufficient_balance", context.BuyerBalanceCents >= context.PurchaseAmountCents));
+    private static Task<PredicateOutcome> SufficientBalance(BuyerPurchaseContext context, CancellationToken ct = default) =>
+        Task.FromResult(new PredicateOutcome(context.BuyerBalanceCents >= context.PurchaseAmountCents));
 
-    private static Task<RuleResult> PurchaseLimitNotExceeded(BuyerPurchaseContext context, CancellationToken ct = default) =>
-        Task.FromResult(new RuleResult("purchase_limit_not_exceeded", context.PurchaseAmountCents <= PurchaseLimitCents));
+    private static Task<PredicateOutcome> PurchaseLimitNotExceeded(BuyerPurchaseContext context, CancellationToken ct = default) =>
+        Task.FromResult(new PredicateOutcome(context.PurchaseAmountCents <= PurchaseLimitCents));
 
     /// <summary>
     /// Build the typed listing-eligibility composite for one seller.
@@ -77,14 +117,14 @@ public static class MarketplaceCheck
         return (purchaseEligible, buyerVerified);
     }
 
-    private static Task<RuleResult> HighValueFlag(IReadOnlyDictionary<string, object?> context, CancellationToken ct = default) =>
-        Task.FromResult(new RuleResult("high_value_flag", (int)context["amount_cents"]! > HighValueThresholdCents));
+    private static Task<PredicateOutcome> HighValueFlag(IReadOnlyDictionary<string, object?> context, CancellationToken ct = default) =>
+        Task.FromResult(new PredicateOutcome((int)context["amount_cents"]! > HighValueThresholdCents));
 
-    private static Task<RuleResult> BlockedCountryFlag(IReadOnlyDictionary<string, object?> context, CancellationToken ct = default) =>
-        Task.FromResult(new RuleResult("blocked_country_flag", BlockedCountries.Contains((string)context["country"]!)));
+    private static Task<PredicateOutcome> BlockedCountryFlag(IReadOnlyDictionary<string, object?> context, CancellationToken ct = default) =>
+        Task.FromResult(new PredicateOutcome(BlockedCountries.Contains((string)context["country"]!)));
 
-    private static Task<RuleResult> NewSellerFlag(IReadOnlyDictionary<string, object?> context, CancellationToken ct = default) =>
-        Task.FromResult(new RuleResult("new_seller_flag", (int)context["seller_age_days"]! < NewSellerThresholdDays));
+    private static Task<PredicateOutcome> NewSellerFlag(IReadOnlyDictionary<string, object?> context, CancellationToken ct = default) =>
+        Task.FromResult(new PredicateOutcome((int)context["seller_age_days"]! < NewSellerThresholdDays));
 
     /// <summary>
     /// Build the dict-context compliance catalog.

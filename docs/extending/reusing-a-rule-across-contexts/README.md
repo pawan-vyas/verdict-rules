@@ -71,12 +71,9 @@ graph LR
   without weakening that constraint, via a small, additive adapter — the
   same "new capability, new file, nothing existing moves" shape as
   [`new-rule-shape/`](../new-rule-shape/README.md)'s own combinator.
-- The adapter is invisible to everything downstream: an engine or a
-  composite holding a `ProjectingRule` cannot tell it apart from a leaf
-  rule written natively against that context.
-- This is a real, additive escape valve from "generics forced me to
-  duplicate my rule" — not a sign that typed contexts were the wrong
-  choice.
+- The adapter is invisible downstream: an engine or composite holding a
+  `ProjectingRule` cannot tell it apart from a leaf rule written natively
+  against that context.
 
 ## Related
 

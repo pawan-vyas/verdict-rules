@@ -25,7 +25,12 @@ class RulesEngine(Generic[TContext]):
                 within this list — a duplicate name shadows the earlier
                 one in :meth:`run_named`'s lookup.
         """
-        self._rules = rules
+        # Copied, not aliased. The name and group indexes below are already
+        # snapshots taken here, so aliasing this one left the engine
+        # internally inconsistent: ``rule_names`` reported what was
+        # registered while ``run_all`` iterated whatever the caller's list
+        # held by then.
+        self._rules = tuple(rules)
         self._by_name: dict[str, Rule[TContext]] = {r.name: r for r in rules}
         self._by_group: dict[str, list[Rule[TContext]]] = defaultdict(list)
         for rule in rules:
@@ -134,3 +139,6 @@ class RulesEngine(Generic[TContext]):
     def group_names(self) -> tuple[str, ...]:
         """Every group label carried by at least one rule on this engine."""
         return tuple(self._by_group)
+
+    def __repr__(self) -> str:
+        return f"RulesEngine — {len(self._rules)} rule(s), {len(self._by_group)} group(s)"

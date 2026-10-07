@@ -1,239 +1,146 @@
 <!-- Title: Package README Authoring Template -->
 # Package README authoring template
 
-> The structure every package's own `README.md` follows. This builds on
-> the general standard in [`README.md`](README.md) — read that first.
-> Unlike a sample or extending scenario, these files don't consolidate
-> under `docs/`: each lives inside its own language's package
-> directory, because that language's own packaging tool expects to
-> find it there and renders it as that registry's own package
-> description. Same reasoning as
-> [`adding-a-fixture.md`](../adding-a-fixture.md)'s "why code stays in
-> each language's own tree."
+> The structure every package's own `README.md` follows. Builds on the
+> general standard in [`README.md`](README.md) — read that first. These
+> files don't consolidate under `docs/`: each lives in its own language's
+> package directory because that language's packaging tool expects it
+> there and renders it as the registry's package description. Same
+> reasoning as [`adding-a-fixture.md`](../adding-a-fixture.md)'s "why code
+> stays in each language's own tree."
 
-## Why one template across files that never sit next to each other
+A reader comparing two packages of one polyglot project reads them
+minutes apart on two registry pages and forms a single impression. Having
+to relearn where the install command is, or whether there's a deeper-docs
+table at all, makes them N unrelated projects sharing a name. Packaging
+tooling forbids a shared file, so the shape is shared instead — enforced
+by review, not by a file two language branches would conflict over.
 
-A person comparing two packages of the same polyglot project reads them
-minutes apart, on two different registry pages, and forms one
-impression of the project either way. A reader who has to relearn the
-shape — where the install command is, where the guarantees are stated,
-whether there's a deeper-docs table at all — on every package is
-reading N unrelated projects that happen to share a name, not one
-project in N languages. The fix isn't a shared file (packaging tooling
-forbids that — see the blockquote above); it's a shared shape, enforced
-by review rather than by any single file two branches could conflict
-over.
+## The skeleton — seven sections, in order
 
-## The shared skeleton, in order
+| # | Section | Contents, and the constraint that is easy to get wrong |
+| :-- | :-- | :-- |
+| 1 | **Title** | `# Verdict — <Language>`. Never the bare distribution name: the registry's own chrome already shows it in the title bar and the URL, so repeating it spends the first line a reader sees on a fact they have. A language name ending in a character `MD020` reads as a stray closed-heading marker (C#'s `#`) takes one more word — `# Verdict — C# SDK` — rather than dropping the language name to dodge the lint. |
+| 2 | **Blockquote** | One line naming what this package is. Not a pointer to the top-level `README.md`'s narrative "why" (section 7's `docs/architecture/` row covers it in more depth), and not an explanation of why the registry renders this file — both are the document talking about itself to someone who landed here to install something. |
+| 3 | **`## Install`** | Install command, then the real import statement. A note on a distribution-name/import-name split *only* where the registry forced one (`pip install verdict-rules` → `import verdict`); never manufacture one. |
+| 4 | **One first-example section** | A single runnable example with real output — build a rule or two, wrap them in a `RulesEngine`, run one **by name**. Stopping at a bare composite's `.evaluate()` never introduces the one primitive that holds a whole rule set, which is what the reader came for. Heading in that language's own idiom ("A first rule"), never a generic "Usage". |
+| 5 | **Highlight sections** | Zero or more, per the table below. Not required, not capped at one. |
+| 6 | **`## What it guarantees`** | The execution-model contracts, identical in substance everywhere, each bullet in that language's real type and method names: sequential evaluation, vacuous truth's polarity, emptiness-is-not-absence, opaque `data`, zero runtime dependencies. This is the value proposition and the section a skimmer most needs — it never gets cut for space. |
+| 7 | **`## Where to go next`** | A table linking the deeper docs (quickstart, architecture, extending, maintenance, testing, the worked fixtures). No row for the top-level `README.md` — `docs/architecture/` already carries "why it's shaped this way." |
 
-1. **Title** — `# Verdict — <Language>` (`# Verdict — Python`,
-   `# Verdict — JS/TS`), never the bare distribution name as the H1. The
-   registry's own page chrome already shows the package name in the
-   title bar and the URL; repeating it as the H1 wastes the one line
-   every reader sees first on a fact they already know, instead of using
-   it to say what this actually is. A language whose own name ends in a
-   character markdownlint's `MD020` reads as a stray closed-heading
-   marker (C#'s `#`) needs one more word after it — `# Verdict — C# SDK`
-   — rather than dropping the language name to dodge the lint failure.
-2. **Blockquote** — one line naming what this package is, nothing else.
-   Neither a pointer to the top-level `README.md`'s narrative "why" nor
-   an explanation of why the registry renders this file belongs here —
-   both read as the document talking about itself on a page a consumer
-   landed on to install something, the same failure "No narration about
-   the document itself" already names for every other doc in this repo.
-   `## Where to go next`'s own `docs/architecture/` row already covers
-   the "why," in more depth than a narrative pointer would — a second
-   row saying it again would be dead weight next to it, not a
-   different fact. Every link in the file still has to be an
-   absolute GitHub URL rather than a relative path — none of this
-   file's sibling files travel with an install, so a relative link that
-   resolves on GitHub 404s the moment a reader is looking at it from
-   PyPI, npm, or wherever else — but that's a fact for whoever authors
-   this file, not something the file needs to explain to its own reader.
-3. **`## Install`** — the install command, the import/require statement,
-   and — only where the registry actually has one — a note on a naming
-   split between the distribution name and the import name (Python's
-   `pip install verdict-rules` → `import verdict`, because the plain
-   name was already taken). Skip the note entirely where there's no
-   split to explain; don't manufacture one.
-4. **One first-example section** — a single runnable example with real
-   output shown, not a fragment, that demonstrates the whole path: build
-   a rule or two, wrap them in a `RulesEngine`, and run one by name —
-   never stop at a bare composite's own `.evaluate()`. `RulesEngine` is
-   one of the five named primitives this package is built around; an
-   example that skips straight from `AndRule` to `.evaluate()` shows
-   four of the five and never introduces the one that holds a whole rule
-   set. `docs/quickstart.md`'s own "one complete example" follows the
-   identical shape one level deeper — the same primitives, the same
-   run-by-name pattern, a second worked scenario rather than a
-   restatement of this one; the two should never demonstrate a different
-   subset of the API from each other. Heading text is that language's
-   own idiom for "here's the whole thing" (Python's "A first rule," for
-   instance) rather than a generic "Usage" — see
-   [`README.md`](README.md)'s rule against narrating the document
-   instead of showing the thing.
-5. **Zero or more package/language-specific highlight sections** — see
-   "What's genuinely package-manager and language specific" below. Not
-   required, not capped at one; add exactly as many as that language's
-   own idiom has something real to show that isn't true everywhere.
-6. **`## What it guarantees`** — the execution-model contracts, stated
-   in substance identically everywhere (sequential evaluation, vacuous
-   truth's polarity, emptiness-is-not-absence, opaque `data`, zero
-   runtime dependencies), each bullet using that language's own real
-   type and method names. This is the actual value proposition — the
-   one section a skimming reader most needs, so it never gets cut for
-   space the way a "nice to have" section would.
-7. **`## Where to go next`** — a table linking the deeper docs
-   (quickstart, architecture, extending, maintenance, testing, samples,
-   examples), every link an absolute GitHub URL pinned to that
-   package's own release tag — see
-   [`versioned-links.md`](../versioned-links.md) and
-   `scripts/check_shipped_links.py`, which enforces this mechanically.
-   No row for the top-level `README.md` itself: `docs/architecture/`
-   already covers "why it's shaped this way," so a second row pointing
-   at the same fact in narrative form is redundant next to it, not a
-   different one.
-License is deliberately not a mandated section: every registry this
-project ships to already surfaces it from that package's own manifest
-metadata (PyPI's `license` field, npm's `license` field, and so on), so
-a `## Licence` heading repeats what the registry's own page chrome
-already shows. Add one only if a package's own registry doesn't surface
-license metadata on its page.
+**Every link is an absolute GitHub URL pinned to that package's own
+release tag.** No sibling file travels with an install, so a relative link
+that resolves on GitHub 404s from PyPI, npm, or anywhere else, and an
+unpinned one shows a reader docs for an API their version lacks. See
+[`versioned-links.md`](../versioned-links.md);
+`scripts/check_shipped_links.py` enforces it.
 
-**`## Development` is deliberately not a mandated section either** —
-dropped, not just unmandated, after it turned out to fail this
-template's own three-leaks test below: `CONTRIBUTING.md`'s own
-per-language section already carries the same commands, plus the
-actual testing/PR bar around them, and a subset of that repeated here
-is contributor-facing content on a page a consumer landed on to
-install the package, not to change it. `## Where to go next` already
-links `docs/maintenance/` for "changing this package itself," so
-nothing is lost by dropping it — the skeleton is seven sections, not
-eight.
+`scripts/check_package_readmes.py` discovers packages rather than listing
+them, and enforces the mechanically-checkable subset: the order of
+sections 3, 4, 6 and 7, an install snippet naming the real registry
+command for the package's actual name as read from its own manifest, and
+section 4's example executed against the real built artifact — a wheel, a
+packed tarball, a `.nupkg` — installed into a fresh scratch directory.
+That last one is the only check that catches a README describing an API
+the shipped package doesn't have, so a fragment that cannot run on its own
+fails the gate rather than shipping. Sections 2 and 5 are free-form by
+design and no script checks them. That example and the language's own
+`quickstart.md` (`doc/quickstart.md` in Dart, `docs/` elsewhere) follow
+the identical shape one level apart — same primitives, same run-by-name
+pattern, the quickstart a *second* worked scenario rather than a
+restatement. The two must never demonstrate a different subset of the API.
 
-## What's genuinely package-manager and language specific
+### Two sections deliberately not mandated
 
-The skeleton above is fixed; these are the legitimate places a single
-package's README earns a section none of the others need, because the
-fact itself is genuinely true of that one registry or that one
-language — not because a writer felt like adding color:
+- **License** — every registry this project ships to surfaces it from the
+  package manifest (PyPI's and npm's `license` fields, and so on), so the
+  heading repeats the page's own chrome. Add one only for a registry that
+  doesn't.
+- **`## Development`** — dropped, not merely unmandated: it failed the
+  three-leaks test below. Setup commands live in that language's own
+  `AGENTS.md`, which
+  [`../../../CONTRIBUTING.md`](../../../CONTRIBUTING.md) routes to along
+  with the testing and PR bar around them; a subset of that here is
+  contributor-facing content on a page someone opened to install the
+  package. Section 7 already links `docs/maintenance/` for changing the
+  package itself.
 
-- **A naming-split note** (Install, step 3) — only where the registry
-  actually forced one.
-- **A browser/CDN distribution section** — only where the registry
-  actually serves a browser-loadable artifact (npm, via unpkg/jsDelivr/
-  esm.sh). A registry with no browser story has nothing to write here.
-- **A structural-vs-nominal-typing highlight** — worth its own section
-  where the language's own type system makes the "no base class, no
-  registration" property notable (TypeScript's `interface`, Python's
-  `Protocol`); skip it where the language doesn't have an equivalent
-  worth demonstrating.
-- **A custom-type callout** — only where the language's own standard
-  library has no built-in equivalent worth reusing (JS/TS's
-  `UnknownLookupError`, filling the gap where Python has `KeyError`,
-  C# has `KeyNotFoundException`, Dart has `ArgumentError` — see the next
-  section for why that comparison itself doesn't belong on this page).
-- **A debugger/tooling-integration highlight** — only where the
-  language's own ecosystem has a real, standard mechanism for it (C#'s
-  `[DebuggerDisplay]`/`[DebuggerTypeProxy]` plus SourceLink, both
-  genuinely .NET-specific conventions with no equivalent this package
-  could show in a language without one). Skip it where the language has
-  nothing comparable — this is not a section every package needs to
-  find something to say for.
+## What's genuinely registry- or language-specific
 
-If a future package's own registry or language has a comparable, real
-fact none of the others share, it earns its own highlight section the
-same way — this list is illustrative, not closed.
+A package earns a highlight section none of the others need only when the
+fact is true of that one registry or language — not because a writer
+wanted color. Illustrative, not closed: a future language with a
+comparable real fact earns one the same way.
 
-## Three leaks to check for before calling a package README done
+| Highlight | Earned only when |
+| :-- | :-- |
+| Naming-split note (in Install) | the registry actually forced one |
+| Browser/CDN distribution | the registry serves a browser-loadable artifact (npm, via unpkg/jsDelivr/esm.sh) |
+| Structural-vs-nominal typing | the language's type system makes "no base class, no registration" notable (TypeScript's `interface`, Python's `Protocol`) |
+| Custom-type callout | the standard library has no equivalent worth reusing (JS/TS's `UnknownLookupError`) |
+| Debugger/tooling integration | the ecosystem has a real standard mechanism (C#'s `[DebuggerDisplay]`/`[DebuggerTypeProxy]` plus SourceLink) |
 
-Each reads as legitimately helpful in isolation, which is exactly why
-none of them are caught by skimming — the test is never "is this
-sentence true," it's "does this sentence help someone using *this*
-package":
+## Three leaks to check before calling one done
 
-- **No comparison to a sibling language's SDK.** A sentence like "the
-  Dart and C# SDKs have nominal typing and require an explicit
-  `implements`," or naming what Python/C#/Dart each raise where this
-  package throws its own error type, is dead weight on this page: a
-  reader who just installed this package is not choosing between it and
-  a sibling they haven't installed, and the claim itself can go stale
-  silently the moment that sibling's own design changes, since nothing
-  about editing *that* sibling's code re-checks *this* package's
-  registry page. State the fact about this language on its own terms.
-  The comparison, if it's worth making at all, belongs in
+Each reads as helpful in isolation, which is why skimming misses them.
+The test is never "is this sentence true" but "does it help someone using
+*this* package":
+
+- **No comparison to a sibling language's SDK.** "The Dart and C# SDKs
+  have nominal typing and require an explicit `implements`," or naming
+  what the other three raise where this one throws its own error type, is
+  dead weight: a reader who just installed this is not choosing between it
+  and a sibling they haven't installed, and the claim goes stale silently
+  — editing *that* sibling re-checks nothing on *this* registry page.
+  State the fact about this language on its own terms. A genuine
+  comparison belongs in
   [`../../architecture/`](../../architecture/README.md) or
-  [`../../extending/`](../../extending/README.md) — a repo doc a reader
-  chose to open because they wanted the comparison, not one handed to
-  every installer whether they asked or not.
-- **No self-narration about this package's own maturity or roadmap.** A
-  sentence like "this is `0.0.1` — correct, but minimal, the rest
-  arrives before `0.1.0`" is a promise with an expiry date wired into a
-  page that is effectively permanent: registries don't retroactively
-  edit an old version's rendered page, mirrors cache it, and a local
-  install's own copy on disk never updates itself. The day the promised
-  version ships, every one of those copies is quietly lying. State what
-  the package does; let the version number the registry already
-  displays carry "how far along this is."
-- **No internal maintainer-workflow leaking through.** A sentence
-  describing how this repository generates or CI-enforces something
-  about its own docs (a script that regenerates a hash, a test that
-  fails if a tag drifts) describes *this repository's own* tooling to a
-  reader who doesn't have it checked out and has no reason to run its
-  scripts. It's dead information in the one place attention is
-  scarcest, and if the maintainer workflow is ever renamed or removed,
-  the shipped page is permanently wrong with no mechanism ever catching
-  it — unlike a repo doc, which a link checker or a reader filing an
-  issue can catch. State what a consumer does; the "how we keep it
-  correct" belongs in
-  [`../../../CONTRIBUTING.md`](../../../CONTRIBUTING.md) or that
-  package's own dev-tooling docs, not its landing page.
+  [`../../extending/`](../../extending/README.md), which a reader opened
+  because they wanted it.
+- **No self-narration about maturity or roadmap.** "This is `0.0.1` —
+  correct, but minimal, the rest arrives before `0.1.0`" is a promise with
+  an expiry date on an effectively permanent page: registries don't
+  retroactively edit a published version's rendered page, mirrors cache
+  it, and an install's own copy on disk never updates. The day the
+  promised version ships, every copy is quietly lying. State what the
+  package does; the version number the registry already displays carries
+  how far along it is.
+- **No internal maintainer workflow.** Describing a script that
+  regenerates a hash or a test that fails when a tag drifts addresses a
+  reader who doesn't have this repository checked out, in the one place
+  attention is scarcest — and if that workflow is renamed or removed, the
+  shipped page is permanently wrong with nothing to catch it, unlike a
+  repo doc a link checker or an issue-filer can. State what a consumer
+  does.
 
-## The same discipline extends to a language's first CHANGELOG entry
+### The same three apply to two other permanent surfaces
 
-A package's `CHANGELOG.md` isn't the registry's own rendered page, but it
-is the same kind of artifact for this purpose: pinned to a release tag,
-permanently public, read by someone with no way to know it was ever
-edited. A language's very first entry is where the self-narration leak
-above is most tempting, because a first release genuinely is minimal in
-substance — but the entry should still say only what shipped, in the
-same past-tense, no-promise voice as every later entry. State what's in
-this version; never a sentence about why this particular version is
-minimal, what it's a placeholder for, or when the rest is expected to
-arrive. An expiring promise is exactly as wrong here as on the README,
-for the identical reason: the day the promised version actually ships,
-every already-tagged copy of the entry that named it is quietly wrong.
-
-## The same discipline extends to shipped code comments
-
-A language whose doc comments compile into the package itself — C#'s
-XML docs, TypeScript's JSDoc surfaced through `.d.ts`, any format a
-language server or IntelliSense reads straight out of the installed
-package — carries the identical permanence problem the README has,
-just in a place easier to forget to check: a comment on a public type
-ships with every version, is read by an IDE without a reader ever
-opening a browser, and is exactly as unfixable-after-the-fact as
-anything rendered on a registry page. The sibling-comparison leak in
-particular is tempting here, because explaining *why* a type is shaped
-the way it is often invites reaching for how another language's
-equivalent works — reach for the fact about this language on its own
-terms instead, the same rule as the README, checked against the same
-three leaks above.
+- **A language's first `CHANGELOG.md` entry.** Pinned to a tag, public,
+  read by someone with no way to know it was edited. A first release
+  genuinely *is* minimal, which is what makes the self-narration leak
+  tempting — the entry still says only what shipped, in the same
+  past-tense, no-promise voice as every later one. Never why this version
+  is minimal, what it's a placeholder for, or when the rest arrives.
+- **Doc comments that compile into the package.** C#'s XML docs,
+  TypeScript's JSDoc surfaced through `.d.ts`, anything a language server
+  reads out of the installed package: shipped with every version, read
+  without a browser, exactly as unfixable after the fact as a registry
+  page — and easier to forget to check. The sibling-comparison leak is
+  most tempting here, since explaining *why* a type is shaped a certain
+  way invites reaching for another language's equivalent. Reach for the
+  fact about this language instead.
 
 ## Adding a new package's README
 
-Follow the skeleton above exactly for the shared sections; add only the
-package/language-specific highlight sections that language's own idiom
-genuinely earns, per the list above. Check the result against the three
-leaks before calling it done — including any doc comment that ships
-compiled into the package itself, not just the README's own prose.
+Follow the skeleton exactly for the shared sections; add only the
+highlights that language genuinely earns. Check the result against the
+three leaks before calling it done — including any doc comment shipping
+compiled into the package, not just the README's prose.
 
 ## Related
 
-- [`README.md`](README.md) — the general standard this template builds
-  on.
+- [`README.md`](README.md) — the general standard this builds on.
 - [`versioned-links.md`](../versioned-links.md) — why every link in a
-  shipped package README is pinned to a release tag, never `main`.
-- [`../../architecture/`](../../architecture/README.md) — where a
-  genuine cross-language design comparison belongs instead of a
-  package's own landing page.
+  shipped README is pinned to a release tag, never `main`.
+- [`../../architecture/`](../../architecture/README.md) — where a genuine
+  cross-language design comparison belongs instead.

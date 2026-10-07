@@ -5,10 +5,11 @@
 > independently on its own cadence to its own registry. There is **no**
 > repo-wide `vX.Y.Z` tag and there should never be one.
 
-Tags are `python-vX.Y.Z` today; `js-vX.Y.Z`/`csharp-vX.Y.Z` once those
-SDKs exist. Each package keeps its own `CHANGELOG.md` beside its own
-manifest for the same reason — one writer per track, so two releases can
-never contend for one file.
+Tags are `<target>-vX.Y.Z`: `python-`, `js-`, `dart-`, `csharp-`, and
+`skill-` for the agent skill, which releases on its own track too. Each
+package keeps its own `CHANGELOG.md` beside its own manifest for the same
+reason — one writer per track, so two releases can never contend for one
+file.
 
 ## Why, so it doesn't get "simplified" later
 
@@ -25,8 +26,10 @@ file**, never an edit to an existing one. Its own header comment says
 so. Carry that default forward rather than reaching for a matrix runner
 that installs every language's toolchain in one job.
 
-Within a language, that language's own manifest version is the single
-source of truth — `python/pyproject.toml` for Python. Semver, `0.x`
+Within a language, that language's own **package** manifest version is
+the single source of truth — `python/packages/verdict-rules/pyproject.toml`
+for Python, not `python/`'s workspace-root file, which declares no version
+at all. Semver, `0.x`
 while that language's public API is still settling, so a breaking
 change bumps `MINOR` pre-1.0 and `MAJOR` after, independently per
 language.

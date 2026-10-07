@@ -25,8 +25,18 @@ Python-specific conventions for this directory. See the repo-root
   uses one, cover the *present but failing* case — testing only the
   absent one looks complete and misses the direction where a bug is
   silent.
-- **`RuleResult.data`** holds only what actually ran. Never padded,
-  never flattened into the parent's level.
+- **A predicate returns a `PredicateOutcome`.** `PredicateOutcome(passed=...)`
+  plus an optional `detail`/`data` — never a `RuleResult`, which raises
+  `TypeError`. The `FunctionRule` wrapping it owns the name and builds the
+  result, so a predicate cannot name itself something the rule disagrees
+  with.
+- **`RuleResult.data` is opaque.** Never read or written by verdict — it
+  carries whatever a predicate attached, unchanged. A composite's children
+  live in `sub_results`, which holds only what actually ran: never padded
+  to the full sub-rule list, never flattened into the parent's level.
+  `decided_by_indices` stores the positions of the children explaining the
+  verdict; `decided_by`, `leaves` and `failing_leaves` are derived from
+  those two.
 
 ## Layout
 
@@ -39,7 +49,7 @@ python/
   AGENTS.md                 this file
   examples/                 worked examples, may use any package
   packages/verdict-rules/   the distribution: manifest, README, CHANGELOG,
-                            docs/, src/verdict/, tests/
+                            docs/, src/verdict/, tests/, api-snapshot.json
 ```
 
 Three things the workspace changes, all easy to get wrong:

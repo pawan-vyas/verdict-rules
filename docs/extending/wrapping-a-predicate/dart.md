@@ -8,12 +8,11 @@
 ```dart
 import 'package:verdict_rules/verdict_rules.dart';
 
-Future<RuleResult> cartMeetsMinimum(Map<String, Object?> context) async {
+Future<PredicateOutcome> cartMeetsMinimum(Map<String, Object?> context) async {
   final total = context['cartTotal']! as num;
   final minimum = context['minimumForOffer']! as num;
-  return RuleResult(
-    ruleName: 'cart_meets_minimum',
-    passed: total >= minimum,
+  return PredicateOutcome(
+    total >= minimum,
     detail: '$total vs minimum $minimum',
   );
 }
@@ -32,10 +31,9 @@ class CartContext {
   const CartContext({required this.cartTotal, required this.minimumForOffer});
 }
 
-Future<RuleResult> cartMeetsMinimumTyped(CartContext context) async =>
-    RuleResult(
-      ruleName: 'cart_meets_minimum',
-      passed: context.cartTotal >= context.minimumForOffer,
+Future<PredicateOutcome> cartMeetsMinimumTyped(CartContext context) async =>
+    PredicateOutcome(
+      context.cartTotal >= context.minimumForOffer,
       detail: '${context.cartTotal} vs minimum ${context.minimumForOffer}',
     );
 

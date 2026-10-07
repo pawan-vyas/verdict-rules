@@ -6,6 +6,81 @@ Release history for the verdict AI-agent skill. Format follows
 This versions **the guidance**, not any language's API, so it moves on its own
 cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skill-vX.Y.Z`.
 
+## [0.8.0] - 2026-10-03
+
+- **Walking a rule tree is documented, and the trap named.** A composite now
+  exposes the rules it was built from, before anything is evaluated, under a
+  contract separate from `Rule` -- so `SKILL.md` states it as a guarantee and
+  each language's notes carry the walk in its own idiom, with the narrowing
+  spelling that language uses (`isinstance`, a type guard, `is`, a pattern
+  match). The trap is the reason it is written down: a type switch over
+  `AndRule`/`OrRule`/`NotRule` silently walks past any other composite,
+  including the reader's own, and reports the rules inside it as absent rather
+  than failing. The notes say to test for the contract instead.
+- **The predicate contract is corrected in every language's notes.** A
+  predicate returns a `PredicateOutcome` — `passed` plus an optional
+  detail and payload — and the `FunctionRule` wrapping it owns the rule's
+  name and builds the `RuleResult`. All four `agent-notes.md` previously
+  showed a predicate constructing a `RuleResult` directly, which the
+  library rejects; code written from that guidance raised immediately.
+  Each language's notes now carry a worked predicate, and `SKILL.md`
+  states the contract as a cross-language guarantee.
+- **The result-inspection surface is documented.** `subResults`,
+  `decidedBy`, and the flattened `leaves`/`failingLeaves` views, in each
+  language's own spelling, with the short-circuit caveat beside them: a
+  passing `OrRule` has no failing leaves even when an earlier branch
+  failed on the way to that pass, and a failed `AndRule` reports the
+  failing leaves of the one sub-rule that stopped it -- a single leaf only
+  when that sub-rule is itself a leaf. Each language's worked snippet
+  reads the whole list rather than indexing the first entry.
+  C#'s notes spell `GetLeaves()`/`GetFailingLeaves()`/`GetDecidedBy()`
+  as methods, which is that SDK alone.
+- **Which views are stored and which are derived is now stated.** A
+  result holds its children and the *positions* of the deciding ones;
+  everything else is computed on access. Every constructor example
+  passes `decidedByIndices` (in each language's spelling) rather than
+  child results, and each language's notes name the error type a
+  position outside the children raises. Guidance that built a result by
+  handing it the deciding children produces code that no longer
+  compiles.
+- **Serializing a result is documented per language**, including that
+  the derived views are absent from the output and that the opaque
+  `data` slot is the one part that can fail to encode. Dart's notes
+  carry `toJson()`, which that SDK needs and no other does —
+  `jsonEncode` cannot encode an arbitrary object.
+- **JS's notes state that result instances are frozen**, since
+  `readonly` is a compile-time claim erased at runtime.
+- **How to resolve which version's documentation to read now covers a
+  local pin, not only a registry version.** `SKILL.md` previously gave one
+  path: derive a `<language>-v<version>` tag from the installed version. A
+  project consuming verdict by local path, project reference or checked-out
+  clone has no version to derive from, so an agent following that
+  instruction had no documented option left and would either read the
+  default branch — the one thing the instruction forbids — or skip the
+  deeper documents entirely. That is the mode every current adopter uses.
+  Four cases now, branching on what the manifest from Step 1 already said:
+  read the files on disk for a local pin (the most reliable case, with no
+  resolution step to get wrong), the matching tag for a registry version,
+  the same ref for a commit SHA or branch, and read nothing while saying so
+  when none of those resolve.
+- **Keying an audit trail on a leaf's own rule name** — never a
+  composite's, whose name says only that something in the group failed
+  and which changes when its children are renamed or reordered — is
+  stated in `SKILL.md` and shown per language.
+- **`NotRule` is documented**, in every type list, every constructor
+  table, and the vacuous-truth guarantee (it wraps one rule, so it has
+  no vacuous case).
+- **`SKILL.md` no longer implies a composite's children live in a
+  result's `data`.** `data` is opaque and carries only what a predicate
+  attached; children live in the result's sub-results.
+- JS/TS's notes record that `RuleResult`/`RunResult` are classes, so they
+  are value imports rather than `import type`, and that a custom
+  composite constructs its result rather than spreading one. Dart's drop
+  a `const constructors` claim the types no longer have. C#'s drop a
+  version-gated parenthetical.
+- Every code sample in all four languages was executed against the real
+  package before this entry was written.
+
 ## [0.7.0] - 2026-10-01
 
 - **New: `references/issue-reporting.md`.** Tells an agent using verdict
@@ -308,6 +383,12 @@ cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skil
   tag exists.
 
 ## [0.5.2] - 2026-09-15
+
+> **No `skill-v0.5.2` tag exists, and that is correct.** The bump to `0.5.2`
+> was superseded by the bump to `0.5.3` before the release workflow next ran,
+> so everything below shipped inside `skill-v0.5.3` -- the commit that set
+> `0.5.2` is first contained by that tag. The entry is kept rather than folded
+> in, because `0.5.2` really was the manifest version for a while.
 
 - **The skill routes to JS/TS for the first time.** Adds
   `references/js/agent-notes.md`, matching Python's own depth: install

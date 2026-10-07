@@ -1,4 +1,4 @@
-import type { RuleResult } from "./result.js";
+import { RuleResult } from "./result.js";
 
 /**
  * The contract every rule satisfies.
@@ -14,7 +14,7 @@ import type { RuleResult } from "./result.js";
  * const overEighteen: Rule<Context> = {
  *   name: "over_18",
  *   async evaluate(ctx) {
- *     return { ruleName: "over_18", passed: (ctx.age as number) >= 18 };
+ *     return new RuleResult("over_18", (ctx.age as number) >= 18);
  *   },
  * };
  * ```
@@ -33,8 +33,111 @@ export interface Rule<TContext> {
   evaluate(context: TContext): Promise<RuleResult>;
 }
 
+/**
+ * A rule built from other rules, whose parts can be read without evaluating it.
+ *
+ * Satisfied by {@link AndRule}, {@link OrRule} and {@link NotRule} — and,
+ * deliberately, by a consumer's own composite. That is the point of putting
+ * this on an interface rather than on the three built-in classes: one walk
+ * reaches a combinator this package never saw, where an `instanceof` chain
+ * over concrete classes silently walks past it and reports the rules inside it
+ * as absent.
+ *
+ * This matters more here than in the other SDKs: every built-in composite
+ * stores its parts in a `#private` field, so there is no back door at all —
+ * `subRules` is the only way to read them.
+ *
+ * A leaf rule does not satisfy this, so "is this structure, or a terminal
+ * check" is answerable without naming concrete classes. Use
+ * {@link isCompositeRule} to narrow.
+ *
+ * Describes a rule tree, before anything is evaluated. It makes no claim about
+ * what ran — that is {@link RuleResult.subResults}' job, and the two differ
+ * precisely because a composite short-circuits.
+ */
+export interface CompositeRule<TContext> extends Rule<TContext> {
+  /**
+   * The rules this composite is built from, in evaluation order: exactly one
+   * for a negation, and empty for a vacuous {@link AndRule}/{@link OrRule},
+   * which is a valid composite with no parts.
+   */
+  readonly subRules: readonly Rule<TContext>[];
+}
+
+/**
+ * Narrow a rule to a {@link CompositeRule}.
+ *
+ * A structural check on `subRules`, not an `instanceof` chain, so a consumer's
+ * own composite narrows exactly as a built-in one does:
+ *
+ * ```ts
+ * function leafNames<T>(rule: Rule<T>): string[] {
+ *   return isCompositeRule(rule)
+ *     ? rule.subRules.flatMap(leafNames)
+ *     : [rule.name];
+ * }
+ * ```
+ */
+export function isCompositeRule<TContext>(rule: Rule<TContext>): rule is CompositeRule<TContext> {
+  return Array.isArray((rule as CompositeRule<TContext>).subRules);
+}
+
+/**
+ * What a predicate reports back to the {@link FunctionRule} wrapping it.
+ *
+ * A predicate reports an outcome and never builds a {@link RuleResult}
+ * itself. That separation is structural rather than a runtime convention:
+ * only {@link FunctionRule.evaluate} builds the final `RuleResult`, from the
+ * one name fixed at construction, so a predicate has no way to report a
+ * `ruleName` that disagrees with the rule it belongs to.
+ *
+ * Deliberately has **no** `ruleName` field — restating a name that's
+ * already fixed on the wrapping `FunctionRule` is never legitimate, not
+ * just inconvenient, so the capability doesn't exist. **No `group` field
+ * either, permanently** — `RuleResult` doesn't carry a `group` today; if
+ * that ever changes, `group` stays exclusively sourced from
+ * `FunctionRule.group`, the same way `name` already is, never from the
+ * predicate.
+ */
+export interface PredicateOutcome {
+  /** Whether the predicate's condition was satisfied. */
+  readonly passed: boolean;
+
+  /** Optional human-readable explanation. Empty when there's nothing to say. */
+  readonly detail?: string;
+
+  /** Optional payload a caller can attach; opaque to this package. */
+  readonly data?: unknown;
+}
+
 /** Signature of the predicate {@link FunctionRule} wraps. */
-export type RulePredicate<TContext> = (context: TContext) => Promise<RuleResult>;
+export type RulePredicate<TContext> = (context: TContext) => Promise<PredicateOutcome>;
+
+/**
+ * Guards the one externally-authored boundary this package has: a
+ * predicate's own return value. `RulePredicate`'s type annotation is only
+ * ever checked by a type checker, never enforced at runtime, and a stale
+ * predicate still built against the pre-`PredicateOutcome` calling
+ * convention (returning a `RuleResult` directly) duck-types close enough —
+ * both shapes carry `passed`/`detail`/`data` — to otherwise silently
+ * "work" by accident instead of surfacing the mismatch. Rejects that shape
+ * explicitly by checking for `ruleName`, the one field a `RuleResult` always
+ * carries and a `PredicateOutcome` never does.
+ */
+function assertPredicateOutcome(outcome: unknown, ruleName: string): PredicateOutcome {
+  if (
+    typeof outcome !== "object" ||
+    outcome === null ||
+    typeof (outcome as { passed?: unknown }).passed !== "boolean" ||
+    "ruleName" in outcome
+  ) {
+    throw new TypeError(
+      `FunctionRule "${ruleName}": predicate must return a PredicateOutcome ` +
+        `({ passed, detail?, data? }), not a RuleResult or any other shape`,
+    );
+  }
+  return outcome as PredicateOutcome;
+}
 
 /**
  * Wraps a plain async predicate as a {@link Rule}.
@@ -52,22 +155,220 @@ export class FunctionRule<TContext> implements Rule<TContext> {
     this.#predicate = predicate;
   }
 
-  /** Runs the wrapped predicate and returns whatever it returns, unchanged. */
-  evaluate(context: TContext): Promise<RuleResult> {
-    return this.#predicate(context);
+  /**
+   * Runs the wrapped predicate and builds the {@link RuleResult} from
+   * whatever it reports — this is the one place that owns `name`, never
+   * the predicate itself.
+   */
+  async evaluate(context: TContext): Promise<RuleResult> {
+    const outcome = assertPredicateOutcome(await this.#predicate(context), this.name);
+    return new RuleResult(this.name, outcome.passed, { detail: outcome.detail, data: outcome.data });
+  }
+
+  /** @returns A one-line summary -- the name, and the group when set. */
+  toString(): string {
+    return `FunctionRule "${this.name}"` + (this.group ? ` (${this.group})` : "");
+  }
+
+  /** So `console.log`/the Node REPL show the same summary as {@link toString}. */
+  [Symbol.for("nodejs.util.inspect.custom")](): string {
+    return this.toString();
   }
 }
 
 /**
+ * Signature of the decision a {@link SequentialEvaluator} delegates to:
+ * given the latest sub-result, every sub-result gathered so far (including
+ * the latest), and the total number of sub-rules, return `true`/`false` to
+ * stop evaluating right now with that verdict, or `undefined` to keep
+ * going. Invoked once per step (per sub-rule evaluated), not a one-shot
+ * classifier of the whole run.
+ *
+ * Not parameterized by `TContext` — it only ever touches `RuleResult`/
+ * counts, never the evaluation context itself; {@link SequentialEvaluator.evaluate}
+ * carries its own `TContext` type parameter instead.
+ */
+export type StepDecider = (
+  latest: RuleResult,
+  soFar: readonly RuleResult[],
+  total: number,
+) => boolean | undefined;
+
+/**
+ * Evaluates a list of sub-rules sequentially against one context, letting
+ * `decider` choose when to stop. Composable -- hold one as a field and
+ * delegate to it, the same way {@link FunctionRule} holds a predicate.
+ *
+ * No base class anywhere in this package's composite support: every
+ * dependency here is a visible, local constructor argument, and this piece
+ * is unit-testable in isolation, independent of `AndRule`/`OrRule`/any
+ * specific composite existing at all.
+ */
+export class SequentialEvaluator {
+  readonly #decider: StepDecider;
+  readonly #vacuousResult: boolean;
+
+  /**
+   * @param decider - Called once per sub-rule evaluated — see {@link StepDecider}.
+   * @param vacuousResult - What to report when `rules` is empty, or when
+   *   `decider` never resolves to anything but `undefined` even after
+   *   every sub-rule has been evaluated.
+   */
+  constructor(decider: StepDecider, vacuousResult: boolean) {
+    this.#decider = decider;
+    this.#vacuousResult = vacuousResult;
+  }
+
+  /**
+   * Evaluate `rules` in order against `context`, stopping when `decider`
+   * says to.
+   *
+   * @param name - The name the resulting `RuleResult` carries — the
+   *   composite's own name, not any sub-rule's.
+   * @param rules - Sub-rules evaluated in order until `decider` decides, or
+   *   the list is exhausted.
+   */
+  async evaluate<TContext>(
+    name: string,
+    rules: readonly Rule<TContext>[],
+    context: TContext,
+  ): Promise<RuleResult> {
+    // Checked before the loop, not derived from a post-loop fallback
+    // indexing the last evaluated result -- an empty list has no last
+    // element, so this must be an independent branch, not a special case
+    // of the one below.
+    if (rules.length === 0) {
+      return new RuleResult(name, this.#vacuousResult, { subResults: [] });
+    }
+
+    const soFar: RuleResult[] = [];
+    for (const rule of rules) {
+      const latest = await rule.evaluate(context);
+      soFar.push(latest);
+      const early = this.#decider(latest, soFar, rules.length);
+      if (early !== undefined) {
+        // Generic default, correct for a custom decider with no simpler
+        // shortcut available: decided with items still unevaluated ->
+        // just the one sub-result that flipped it; decided only once
+        // every item has been seen -> all of them. Provably wrong for
+        // ShortCircuitEvaluator specifically, which overrides this below
+        // using the one extra fact (its own stopOn) a fully generic
+        // decider doesn't have access to -- see ShortCircuitEvaluator.evaluate.
+        const decidedByIndices =
+          soFar.length === rules.length ? soFar.map((_, index) => index) : [soFar.length - 1];
+        return new RuleResult(name, early, { subResults: soFar, decidedByIndices });
+      }
+    }
+    // Non-null: `rules.length === 0` already returned above, so the loop
+    // ran at least once and `soFar` is never empty here.
+    const lastEvaluated = soFar[soFar.length - 1]!;
+    const final = this.#decider(lastEvaluated, soFar, rules.length);
+    return new RuleResult(name, final ?? this.#vacuousResult, {
+      subResults: soFar,
+      decidedByIndices: soFar.map((_, index) => index),
+    });
+  }
+}
+
+/**
+ * Stops at the first sub-rule whose own `passed` equals `stopOn` -- the
+ * shape {@link AndRule} and {@link OrRule} both are. Wraps
+ * {@link SequentialEvaluator} internally; callers never need to know that
+ * type exists unless they need more than this covers.
+ */
+export class ShortCircuitEvaluator {
+  readonly #inner: SequentialEvaluator;
+  readonly #stopOn: boolean;
+
+  /**
+   * @param stopOn - The sub-result `passed` value that ends evaluation
+   *   immediately with that same verdict -- `false` for `AndRule` (stop on
+   *   the first failure), `true` for `OrRule` (stop on the first pass).
+   *
+   * Only `stopOn` -- unlike `SequentialEvaluator`, where `vacuousResult` is
+   * a genuinely independent fact, here the exhaustion case already
+   * resolves to `!stopOn`, and an empty list is just that same exhaustion
+   * with zero iterations; a second, independently-set argument could only
+   * ever restate that fact correctly or contradict it, never add real
+   * information.
+   */
+  constructor(stopOn: boolean) {
+    this.#stopOn = stopOn;
+    this.#inner = new SequentialEvaluator(
+      (latest, soFar, total) => {
+        if (latest.passed === stopOn) return stopOn;
+        if (soFar.length === total) return !stopOn;
+        return undefined;
+      },
+      !stopOn,
+    );
+  }
+
+  /**
+   * See {@link SequentialEvaluator.evaluate} -- same result, except
+   * `decidedBy` is recomputed here rather than trusting
+   * {@link SequentialEvaluator}'s own generic rule.
+   *
+   * That generic rule can't distinguish "found the trigger, which
+   * happened to be the last item evaluated" from "genuinely exhausted
+   * every item without ever finding it" using count alone -- an `AndRule`
+   * failing on its *last* sub-rule has `subResults.length === total`
+   * exactly like a genuine full pass does. `stopOn` is the one extra fact
+   * that tells them apart: the trigger was found if and only if the last
+   * evaluated sub-result's own `passed` equals `stopOn`, regardless of
+   * where in the list it landed.
+   */
+  async evaluate<TContext>(
+    name: string,
+    rules: readonly Rule<TContext>[],
+    context: TContext,
+  ): Promise<RuleResult> {
+    const result = await this.#inner.evaluate(name, rules, context);
+    const total = result.subResults.length;
+    const last = total > 0 ? result.subResults[total - 1] : undefined;
+    const triggered = last !== undefined && last.passed === this.#stopOn;
+    const decidedByIndices = triggered ? [total - 1] : result.subResults.map((_, index) => index);
+    // Constructed, not spread: a spread of a `RuleResult` produces a plain
+    // object, which is neither frozen nor a `RuleResult`.
+    return new RuleResult(result.ruleName, result.passed, {
+      detail: result.detail,
+      data: result.data,
+      subResults: result.subResults,
+      decidedByIndices,
+    });
+  }
+}
+
+// One shared instance each -- TContext is erased at runtime, and
+// ShortCircuitEvaluator/SequentialEvaluator's own `evaluate` is generic per
+// call, not per instance, so every AndRule/OrRule regardless of its own
+// TContext safely shares these two. (C#'s reference sketch gives each
+// concrete `AndRule<TContext>` instantiation its own `private static
+// readonly` evaluator field -- TypeScript's generics are erased, and a
+// `static` class member can never reference the class's own type
+// parameter, so that per-instantiation-static trick has no TS equivalent;
+// a single module-level instance is both the closest match and, since
+// nothing about evaluation actually depends on TContext, strictly cheaper.)
+const AND_EVALUATOR = new ShortCircuitEvaluator(false);
+const OR_EVALUATOR = new ShortCircuitEvaluator(true);
+
+/**
  * Composite that passes only if every sub-rule passes.
  *
- * Short-circuits on the first failing sub-rule.
+ * Short-circuits on the first failing sub-rule, by composing a single,
+ * shared {@link ShortCircuitEvaluator} rather than hand-rolling its own loop,
+ * so the sequencing lives in one place a custom composite can reuse. The
+ * evaluator is an implementation detail, not part of this class's own
+ * construction syntax or identity.
  *
  * An empty list passes vacuously.
  *
  * Every sub-rule must share the exact same `TContext`.
  */
-export class AndRule<TContext> implements Rule<TContext> {
+export class AndRule<TContext> implements CompositeRule<TContext> {
+  /** Pinned fact: `new AndRule("x", []).evaluate(...)` always passes. */
+  static readonly VACUOUS_RESULT = true;
+
   readonly name: string;
   readonly group: string | undefined;
   readonly #rules: readonly Rule<TContext>[];
@@ -75,35 +376,55 @@ export class AndRule<TContext> implements Rule<TContext> {
   constructor(name: string, rules: readonly Rule<TContext>[], group?: string) {
     this.name = name;
     this.group = group;
-    this.#rules = rules;
+    // Copied, not aliased: a caller retaining the array it passed could
+    // otherwise change this composite's sub-rules, and its verdict,
+    // after construction.
+    this.#rules = [...rules];
   }
 
-  async evaluate(context: TContext): Promise<RuleResult> {
-    const subResults: RuleResult[] = [];
-    // Sequential, not Promise.all.
-    for (const rule of this.#rules) {
-      const result = await rule.evaluate(context);
-      subResults.push(result);
-      if (!result.passed) {
-        const detail = result.detail
-          ? `'${rule.name}' failed: ${result.detail}`
-          : `'${rule.name}' failed`;
-        return { ruleName: this.name, passed: false, detail, data: subResults };
-      }
-    }
-    return { ruleName: this.name, passed: true, data: subResults };
+
+  /**
+   * The sub-rules this composite evaluates, in order.
+   *
+   * The stored array, already a copy taken at construction, so handing it out
+   * cannot let a caller reach the one they passed.
+   */
+  get subRules(): readonly Rule<TContext>[] {
+    return this.#rules;
+  }
+
+  evaluate(context: TContext): Promise<RuleResult> {
+    return AND_EVALUATOR.evaluate(this.name, this.#rules, context);
+  }
+
+  /** @returns A one-line summary -- the name, group, and sub-rule count. */
+  toString(): string {
+    return (
+      `AndRule "${this.name}"` +
+      (this.group ? ` (${this.group})` : "") +
+      ` — ${this.#rules.length} sub-rule(s)`
+    );
+  }
+
+  /** So `console.log`/the Node REPL show the same summary as {@link toString}. */
+  [Symbol.for("nodejs.util.inspect.custom")](): string {
+    return this.toString();
   }
 }
 
 /**
  * Composite that passes as soon as any sub-rule passes.
  *
- * Short-circuits on the first passing sub-rule.
+ * Short-circuits on the first passing sub-rule, by composing a single,
+ * shared {@link ShortCircuitEvaluator}.
  *
  * An empty list fails vacuously. The same same-`TContext` requirement
  * across sub-rules applies here too.
  */
-export class OrRule<TContext> implements Rule<TContext> {
+export class OrRule<TContext> implements CompositeRule<TContext> {
+  /** Pinned fact: `new OrRule("x", []).evaluate(...)` always fails. */
+  static readonly VACUOUS_RESULT = false;
+
   readonly name: string;
   readonly group: string | undefined;
   readonly #rules: readonly Rule<TContext>[];
@@ -111,24 +432,99 @@ export class OrRule<TContext> implements Rule<TContext> {
   constructor(name: string, rules: readonly Rule<TContext>[], group?: string) {
     this.name = name;
     this.group = group;
-    this.#rules = rules;
+    // Copied, not aliased: a caller retaining the array it passed could
+    // otherwise change this composite's sub-rules, and its verdict,
+    // after construction.
+    this.#rules = [...rules];
   }
 
+
+  /**
+   * The sub-rules this composite evaluates, in order.
+   *
+   * The stored array, already a copy taken at construction, so handing it out
+   * cannot let a caller reach the one they passed.
+   */
+  get subRules(): readonly Rule<TContext>[] {
+    return this.#rules;
+  }
+
+  evaluate(context: TContext): Promise<RuleResult> {
+    return OR_EVALUATOR.evaluate(this.name, this.#rules, context);
+  }
+
+  /** @returns A one-line summary -- the name, group, and sub-rule count. */
+  toString(): string {
+    return (
+      `OrRule "${this.name}"` +
+      (this.group ? ` (${this.group})` : "") +
+      ` — ${this.#rules.length} sub-rule(s)`
+    );
+  }
+
+  /** So `console.log`/the Node REPL show the same summary as {@link toString}. */
+  [Symbol.for("nodejs.util.inspect.custom")](): string {
+    return this.toString();
+  }
+}
+
+/**
+ * Composite that passes exactly when its one wrapped rule fails.
+ *
+ * No `SequentialEvaluator`/`ShortCircuitEvaluator` composed in -- one
+ * child, no sequence to iterate, so that machinery would be indirection for
+ * nothing it uses.
+ */
+export class NotRule<TContext> implements CompositeRule<TContext> {
+  readonly name: string;
+  readonly group: string | undefined;
+  readonly #rule: Rule<TContext>;
+  readonly #subRules: readonly Rule<TContext>[];
+
+  constructor(name: string, rule: Rule<TContext>, group?: string) {
+    this.name = name;
+    this.group = group;
+    this.#rule = rule;
+    this.#subRules = [rule];
+  }
+
+  /**
+   * The one negated rule, as an array.
+   *
+   * Exactly one part, always, built once at construction. Named the same as
+   * every other composite's, so a walk over a rule tree needs no knowledge of
+   * which composite it is holding.
+   */
+  get subRules(): readonly Rule<TContext>[] {
+    return this.#subRules;
+  }
+
+  /**
+   * Evaluate the wrapped rule and invert its verdict.
+   *
+   * `subResults` is the one-element `[inner]`, truthfully -- never
+   * flattened away. An empty `subResults` has to mean *only* "this is a
+   * leaf," never also "this is a composite hiding its own structure" --
+   * that guarantee is what makes `leaves`/`failingLeaves` safe to call on
+   * any `RuleResult` at all, so `NotRule` doesn't get to special-case it
+   * away just because a failed `NotRule`'s own `failingLeaves` can
+   * otherwise read as misleadingly empty (the cause is a pass, not a
+   * failure). `decidedBy` is the one inner result unconditionally, in both
+   * directions -- correct either way, since "inner passed" is genuinely
+   * why a failing `NotRule` failed, not an inconsistency.
+   */
   async evaluate(context: TContext): Promise<RuleResult> {
-    const subResults: RuleResult[] = [];
-    // Sequential, not Promise.all.
-    for (const rule of this.#rules) {
-      const result = await rule.evaluate(context);
-      subResults.push(result);
-      if (result.passed) {
-        return { ruleName: this.name, passed: true, data: subResults };
-      }
-    }
-    return {
-      ruleName: this.name,
-      passed: false,
-      detail: "no sub-rule passed",
-      data: subResults,
-    };
+    const inner = await this.#rule.evaluate(context);
+    return new RuleResult(this.name, !inner.passed, { subResults: [inner], decidedByIndices: [0] });
+  }
+
+  /** @returns A one-line summary -- the name, and the group when set. */
+  toString(): string {
+    return `NotRule "${this.name}"` + (this.group ? ` (${this.group})` : "");
+  }
+
+  /** So `console.log`/the Node REPL show the same summary as {@link toString}. */
+  [Symbol.for("nodejs.util.inspect.custom")](): string {
+    return this.toString();
   }
 }

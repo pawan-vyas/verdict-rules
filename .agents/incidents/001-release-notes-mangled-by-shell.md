@@ -1,4 +1,4 @@
-<!-- Title: Incident 001 — Release Notes Mangled By Shell -->
+<!-- Title: Incident 001 -- Release Notes Mangled By Shell -->
 # 001 · Release notes published with every code span empty
 
 > **2026-09-11 · shipped in `python-v0.1.1` · GitHub release body only**
@@ -9,7 +9,7 @@ The release workflow was changed to build its body from `CHANGELOG.md` rather
 than GitHub's auto-generated commit list. It published successfully. The body
 read:
 
-```
+```text
 - ** now raises  for an unknown group**, matching .
 ```
 
@@ -46,7 +46,9 @@ interpolation of untrusted-shaped text is the general form.
 ## The fix
 
 Write the notes to a file in the generating step and pass `--notes-file`, so
-the bytes reach `gh` untouched. Applied to both release workflows.
+the bytes reach `gh` untouched. Every release path does this: GitHub release
+creation is shared in `release-github.yml`, which each language's release
+workflow calls, and it passes `--notes-file`.
 
 ## Recurrence, 2026-09-12 — same cause, different tool
 

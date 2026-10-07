@@ -24,11 +24,7 @@ FunctionRule atLeast(String name, String field, num floor) => FunctionRule(
       name,
       (ctx) async {
         final value = ctx[field]! as num;
-        return RuleResult(
-          ruleName: name,
-          passed: value >= floor,
-          detail: '$value vs $floor',
-        );
+        return PredicateOutcome(value >= floor, detail: '$value vs $floor');
       },
     );
 
@@ -41,7 +37,11 @@ Future<void> main() async {
   final engine = RulesEngine([eligible]);
   final verdict = await engine.runNamed('eligible', {'age': 21, 'score': 55});
   print(verdict.passed); // false
-  print(verdict.detail); // 'score_ok' failed: 55 vs 60
+  // `eligible` is an AndRule -- its own `detail` is always empty (composing
+  // ShortCircuitEvaluator leaves no channel to build one from). The actual
+  // reason lives in `failingLeaves`, the flattened leaf results that
+  // explain the failure.
+  print(verdict.failingLeaves.map((l) => '${l.ruleName}: ${l.detail}')); // (score_ok: 55 vs 60)
 }
 ```
 
@@ -52,11 +52,8 @@ the predicate signature is a rule through `FunctionRule`, with nothing declared
 and no type to name. A tear-off works directly:
 
 ```dart
-Future<RuleResult> isBusinessHours(Map<String, Object?> ctx) async =>
-    RuleResult(
-      ruleName: 'is_business_hours',
-      passed: (ctx['hour']! as int) >= 9 && (ctx['hour']! as int) < 17,
-    );
+Future<PredicateOutcome> isBusinessHours(Map<String, Object?> ctx) async =>
+    PredicateOutcome((ctx['hour']! as int) >= 9 && (ctx['hour']! as int) < 17);
 
 final rule = FunctionRule('is_business_hours', isBusinessHours);
 ```
@@ -108,17 +105,21 @@ one everybody thinks of first.
   can have. Use `ruleNames` / `groupNames` to check membership, or
   `tryRunNamed` / `tryRunGroup` where your own domain has an answer for
   absence — both return null instead of throwing.
-- **`RuleResult.data` is opaque** — only what actually ran, never padded, never
-  flattened.
+- **`RuleResult.data` is opaque** — never read or written by this package.
+  `AndRule`/`OrRule`/`NotRule` carry their own children in
+  `RuleResult.subResults` instead — only what actually ran, never padded,
+  never flattened. `RuleResult.leaves` / `RuleResult.failingLeaves` give the
+  flattened view across any depth.
 - **Zero runtime dependencies.**
 
 ## Where to go next
 
 | Doc | For |
 | --- | --- |
-| [`doc/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.3.1/dart/packages/verdict_rules/doc/quickstart.md) | The quickstart — core concepts and a full worked example |
-| [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.3.1/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
-| [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.3.1/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
-| [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.3.1/docs/maintenance/README.md) | Changing this package itself |
-| [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.3.1/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
-| [`docs/samples/`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.3.1/docs/samples/README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
+| [`doc/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.4.0/dart/packages/verdict_rules/doc/quickstart.md) | The quickstart — core concepts and a full worked example |
+| [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.4.0/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
+| [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.4.0/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
+| [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.4.0/docs/maintenance/README.md) | Changing this package itself |
+| [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.4.0/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
+| [`fixtures/`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.4.0/fixtures/README.md) | The two worked scenarios — each one's problem, design, and the cross-language data contract every port reproduces |
+| [`examples/`](https://github.com/pawan-vyas/verdict-rules/blob/dart-v0.4.0/dart/examples/README.md) | Full, tested mini-projects behind the fixtures — real code, real tests, real docs |

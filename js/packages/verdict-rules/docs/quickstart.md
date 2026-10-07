@@ -1,7 +1,8 @@
 <!-- Title: Verdict Quickstart (JS/TS) -->
 # Verdict — Quickstart
 
-> The five names you need, and one complete example using all of them.
+> The six names you need, and one complete example wiring the composites
+> and the engine together.
 > See [`../README.md`](../README.md) for this package's own
 > `npm install`/first-rule quickstart, the top-level
 > [`../../../../README.md`](../../../../README.md) for what Verdict is in
@@ -18,10 +19,16 @@
   same property Python's `Protocol` gives.
 - **`FunctionRule`** — wraps a plain async predicate as a `Rule`. The
   common case: most rules are "run this function against the context."
+  The predicate reports a **`PredicateOutcome`** (`{ passed, detail?,
+  data? }`) — never a `RuleResult` directly, and never a `ruleName`:
+  `FunctionRule` already owns the name it was constructed with, so the
+  predicate has no legitimate reason to restate it.
 - **`AndRule`** / **`OrRule`** — composite rules that combine other
   rules, short-circuiting the same way a boolean `&&`/`||` expression
   would (`AndRule` stops at the first failure, `OrRule` stops at the
   first pass).
+- **`NotRule`** — wraps exactly one rule and inverts it: it passes when
+  that rule fails. One child, so it has no vacuous case.
 - **`RulesEngine`** — holds a set of rules and runs them three ways:
   `runAll` (every rule, full diagnostic picture — deliberately does
   **not** short-circuit), `runNamed` (one specific rule by name),
@@ -30,10 +37,20 @@
   `undefined` instead, for callers whose own domain has an answer for
   absence — see
   [`../../../../docs/extending/absence-vs-failure/`](../../../../docs/extending/absence-vs-failure/README.md).
-- **`RuleResult`** / **`RunResult`** — plain, readonly interfaces, not
-  classes — construct them as object literals. `RuleResult.data` is a
-  fully opaque slot for a caller's own domain object to ride through
-  evaluation — Verdict never reads or depends on its shape.
+- **`RuleResult`** / **`RunResult`** — frozen classes with public
+  constructors, so a custom rule builds one rather than returning an
+  object literal. Each answers three different questions about a
+  composite's decision: `subResults` (what actually ran, one level),
+  `decidedBy` (which of those children explain *this* verdict, one
+  level), and `leaves`/`failingLeaves` (the terminal checks, fully
+  recursive). A result stores only `subResults` plus `decidedByIndices`,
+  the *positions* within it of the deciding children — so building a
+  result by hand means passing positions, and an out-of-range one throws
+  a `RangeError` at construction. Every other view is a getter, derived
+  and computed on access, which is what keeps a result a tree and
+  `JSON.stringify`-able. `RuleResult.data` is a fully opaque slot for a
+  caller's own domain object to ride through evaluation — Verdict never
+  reads or depends on its shape.
 
 ## One complete example
 
@@ -44,22 +61,22 @@ also get registered on a `RulesEngine` under one shared group label, so
 decision above ever looked at each one:
 
 ```ts
-import { AndRule, OrRule, FunctionRule, RulesEngine, type Context, type RuleResult } from "verdict-rules";
+import { AndRule, OrRule, FunctionRule, RulesEngine, type Context, type PredicateOutcome } from "verdict-rules";
 
-async function inputsValid(context: Context): Promise<RuleResult> {
-  return { ruleName: "inputs_valid", passed: context.has_required_fields as boolean };
+async function inputsValid(context: Context): Promise<PredicateOutcome> {
+  return { passed: context.has_required_fields as boolean };
 }
 
-async function autoApproved(context: Context): Promise<RuleResult> {
-  return { ruleName: "auto_approved", passed: context.auto_approved as boolean };
+async function autoApproved(context: Context): Promise<PredicateOutcome> {
+  return { passed: context.auto_approved as boolean };
 }
 
-async function reviewerAssigned(context: Context): Promise<RuleResult> {
-  return { ruleName: "reviewer_assigned", passed: context.reviewer_assigned as boolean };
+async function reviewerAssigned(context: Context): Promise<PredicateOutcome> {
+  return { passed: context.reviewer_assigned as boolean };
 }
 
-async function reviewCompleted(context: Context): Promise<RuleResult> {
-  return { ruleName: "review_completed", passed: context.review_completed as boolean };
+async function reviewCompleted(context: Context): Promise<PredicateOutcome> {
+  return { passed: context.review_completed as boolean };
 }
 
 const taskApproved = new AndRule("task_approved", [
@@ -151,15 +168,55 @@ sequenceDiagram
 >    reports `auto_approved`'s real failure, something the nested
 >    decision above never had to surface once a later branch succeeded.
 
+## A typed context
+
+The example above uses `Context` (a plain `Record<string, unknown>`),
+which stays first-class permanently. But a cohesive family of rules
+sharing one shape can say so, and then a sub-rule expecting a different
+shape stops compiling rather than failing at runtime on a missing
+property:
+
+```ts
+import { AndRule, FunctionRule, RulesEngine } from "verdict-rules";
+
+interface OrderContext {
+  total: number;
+  isMember: boolean;
+}
+
+const orderTotalMet = async (ctx: OrderContext) => ({ passed: ctx.total >= 50 });
+const isMember = async (ctx: OrderContext) => ({ passed: ctx.isMember });
+
+// TContext is inferred from each predicate's own parameter type -- no
+// explicit type argument at any constructor call site.
+const freeShipping = new AndRule("free_shipping", [
+  new FunctionRule("order_total_met", orderTotalMet),
+  new FunctionRule("is_member", isMember),
+]);
+
+const engine = new RulesEngine([freeShipping]);
+const result = await engine.runNamed("free_shipping", { total: 75, isMember: false });
+console.log(result.passed);                       // false
+console.log(result.failingLeaves[0]?.ruleName);   // is_member
+```
+
+`Rule<TContext>` has **no default type parameter**, so dict-context is
+written out as `Rule<Context>` rather than being what you get by
+forgetting. `AndRule`/`OrRule` require every sub-rule to share the exact
+same `TContext`, which `tsc` enforces at compile time — the real
+guarantee a typed composite buys.
+[`../../../../docs/architecture/js.md`](../../../../docs/architecture/js.md)
+covers the mechanics;
+[`extending/reusing-a-rule-across-contexts/`](../../../../docs/extending/reusing-a-rule-across-contexts/README.md)
+covers when dict-context is the better answer.
+
 ## Next: build rules from your own configuration, not just hard-coded ones
 
 Because rules are just objects, they're straightforward to build up at
 runtime from whatever configuration a caller already has, rather than
 hand-writing one `FunctionRule` per case — see
 [`../../../../docs/extending/data-driven-rule-construction/`](../../../../docs/extending/data-driven-rule-construction/README.md)
-for the scenario and
-[`../../../../docs/samples/data-driven-rule-sets/js.md`](../../../../docs/samples/data-driven-rule-sets/js.md)
-for a fuller worked version of the same pattern.
+for the scenario.
 
 ## Related docs
 
@@ -170,4 +227,4 @@ for a fuller worked version of the same pattern.
   of this package from your own code.
 - [`../../../../docs/testing/`](../../../../docs/testing/README.md) — `npm run build
   && npm test`, and what a test here actually needs to prove.
-- [`../../../../docs/samples/`](../../../../docs/samples/README.md) — more worked examples.
+- [`../../../../fixtures/README.md`](../../../../fixtures/README.md) — more worked examples.

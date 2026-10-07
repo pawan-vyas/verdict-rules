@@ -6,12 +6,18 @@ import 'package:verdict_rules/verdict_rules.dart';
 FunctionRule<Context> atLeast(String name, String field, num floor) =>
     FunctionRule(name, (Context ctx) async {
       final value = ctx[field]! as num;
-      return RuleResult(
-        ruleName: name,
-        passed: value >= floor,
-        detail: '$value vs $floor',
-      );
+      return PredicateOutcome(value >= floor, detail: '$value vs $floor');
     });
+
+/// `eligible` below is an AndRule, so its own `detail` is always empty --
+/// composing ShortCircuitEvaluator leaves no channel to build a descriptive
+/// string from. `failingLeaves` is the replacement: the flattened set of
+/// leaf results that actually explain a failure.
+String _reason(RuleResult result) => result.failingLeaves
+    .map((leaf) => leaf.detail.isEmpty
+        ? leaf.ruleName
+        : '${leaf.ruleName}: ${leaf.detail}')
+    .join('; ');
 
 Future<void> main() async {
   final eligible = AndRule<Context>('eligible', [
@@ -21,12 +27,12 @@ Future<void> main() async {
 
   // Short-circuits: score_ok is never reached when age_ok fails.
   final tooYoung = await eligible.evaluate({'age': 16, 'score': 90});
-  print('${tooYoung.passed} — ${tooYoung.detail}');
-  print('rules actually evaluated: ${(tooYoung.data! as List).length}\n');
+  print('${tooYoung.passed} — ${_reason(tooYoung)}');
+  print('rules actually evaluated: ${tooYoung.subResults.length}\n');
 
   final failedScore = await eligible.evaluate({'age': 21, 'score': 55});
-  print('${failedScore.passed} — ${failedScore.detail}');
-  print('rules actually evaluated: ${(failedScore.data! as List).length}\n');
+  print('${failedScore.passed} — ${_reason(failedScore)}');
+  print('rules actually evaluated: ${failedScore.subResults.length}\n');
 
   // The engine is diagnostic: it never short-circuits.
   final engine = RulesEngine<Context>([

@@ -8,7 +8,7 @@
 ```python
 from dataclasses import dataclass
 
-from verdict import FunctionRule, RuleResult, RulesEngine
+from verdict import FunctionRule, PredicateOutcome, RulesEngine
 
 
 @dataclass(frozen=True)
@@ -16,14 +16,15 @@ class UserContext:
     beta_tester: bool = False
 
 
-async def is_beta_tester(context: UserContext) -> RuleResult:
-    return RuleResult(rule_name="is_beta_tester", passed=context.beta_tester)
+async def is_beta_tester(context: UserContext) -> PredicateOutcome:
+    return PredicateOutcome(passed=context.beta_tester)
 
 
 engine: RulesEngine[UserContext] = RulesEngine([FunctionRule("is_beta_tester", is_beta_tester, group="beta_checks")])
 
 result = await engine.try_run_group("beta_checks", UserContext(beta_tester=True))
 # RunResult(passed=True, results=[RuleResult(rule_name='is_beta_tester', passed=True, ...)])
+# -- the one entry's own rule_name is the FunctionRule's, not anything the predicate set
 
 await engine.try_run_group("no_such_group", UserContext())
 # None — the group was never registered
@@ -33,6 +34,8 @@ The four situations from the spec, as four different ways to consume
 that same `None`:
 
 ```python
+group, context = "beta_checks", UserContext(beta_tester=True)
+
 # 1. Absence means "no constraint applies"
 result = await engine.try_run_group(group, context)
 allowed = result.passed if result is not None else True
@@ -44,7 +47,7 @@ allowed = result.passed if result is not None else False
 checks = [r for r in (result,) if r is not None]
 
 # 4. Absence is genuinely unexpected — say so immediately
-result = await engine.run_group(group, context)  # raises
+result = await engine.run_group(group, context)  # raises KeyError if absent
 ```
 
 `try_run_group` is the primitive `run_group` is built on, not the other
