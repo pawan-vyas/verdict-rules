@@ -144,6 +144,29 @@ go in [`HANDOFF.md`](HANDOFF.md) §3; anything longer-lived goes in `.agents/pla
 as a named plan. A second "notes" or "TODO" file at the repo root is
 how context gets lost, not how it gets organized.
 
+## Durable context
+
+**Facts** — [`.agents/memory/`](.agents/memory/README.md) · 6 shown, [+18 more](.agents/memory/README.md#index)
+
+- [public-surfaces-stay-professional](.agents/memory/public-surfaces-stay-professional.md) — no competitive analysis or narration in public text
+- [publish-over-oidc-not-tokens](.agents/memory/publish-over-oidc-not-tokens.md) — provenance depends on OIDC publishing
+- [adding-a-variant-is-a-new-file](.agents/memory/adding-a-variant-is-a-new-file.md) — never edit a file the other variants share
+- [a-behaviour-change-is-a-documentation-change](.agents/memory/a-behaviour-change-is-a-documentation-change.md) — sweep every doc the change falsifies
+- [when-you-decline-record-which-question-failed](.agents/memory/when-you-decline-record-which-question-failed.md) — record the right reason, not just "no"
+- [run-costly-subagent-batches-sequentially](.agents/memory/run-costly-subagent-batches-sequentially.md) — one at a time, never parallel
+
+**Incidents** — [`.agents/incidents/`](.agents/incidents/README.md) · read this list before anything irreversible
+
+- [001](.agents/incidents/001-release-notes-mangled-by-shell.md) — backticks in a shell string emptied release notes
+- [003](.agents/incidents/003-pushed-mid-rebase.md) — pushed while a rebase was unresolved
+- [006](.agents/incidents/006-deleting-a-base-branch-closes-a-stacked-pr.md) — `--delete-branch` closed a stacked PR
+- [007](.agents/incidents/007-edited-on-the-wrong-branch.md) — check the branch before the first edit
+- 002, 004, 005, 008, 009 — [see the index](.agents/incidents/README.md#index)
+
+**Plans** — [`.agents/plans/`](.agents/plans/README.md)
+
+- [composite-sub-rules-convention](.agents/plans/composite-sub-rules-convention.md) — composite parts readable by convention, not type
+
 ## Asking the user
 
 When you have a question, a doubt, or a decision that is genuinely the
