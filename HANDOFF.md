@@ -2,11 +2,11 @@
 kind: session-handoff
 handoff_schema: 2
 sealed: true
-updated_utc: 2026-10-17T10:13:07Z
-updated_local: 2026-10-17T15:43:07+05:30
-branch: diagnostics/debugger-display-all-languages
-state_at_commit: 0042e4ea06cd916861da61f5b5545ed55eb17fd7
-state_at_commit_short: 0042e4e
+updated_utc: 2026-10-17T10:55:05Z
+updated_local: 2026-10-17T16:25:05+05:30
+branch: skill/0.8.1-eval-findings
+state_at_commit: 2e8c436f23c62cb24f6a2d1a57e37a8417acaa56
+state_at_commit_short: 2e8c436
 # Freshness: run `git log --oneline "$(git log -1 --format=%H -- HANDOFF.md)"..HEAD`. Empty (+ clean
 # tree) = current. Non-empty = stale — reconcile per §0.1 before trusting §2–§3. (Comparing against
 # state_at_commit directly always shows the handoff commit itself as "drift" — see §0.1.)
@@ -25,10 +25,9 @@ state_at_commit_short: 0042e4e
 You (the next agent) are continuing work on **verdict**. Read §1 for what it is, §2 for where we
 are, §3 for what to do next, §4 for known issues, §5 for how to verify.
 
-**One PR is open and is the whole of the current work**: #103 on branch
-`diagnostics/debugger-display-all-languages`, covering issues #98/#100/#101. It carries unreleased
-`0.4.0` for all four SDKs and unreleased `0.8.0` for the skill. **Release tags are deliberately on
-hold** — see §2.
+**PR #103 is merged and released**: `0.4.0` for all four SDKs (`<language>-v0.4.0` tags, live on
+PyPI, npm, NuGet and pub.dev) and skill `0.8.0`. The current work is a follow-up PR carrying skill
+`0.8.1` and the eval fixture pins, from the first full eval run against the published packages.
 
 ## 0.1 · Freshness & alignment protocol (read before trusting §2–§3)
 
@@ -80,20 +79,11 @@ are in-tree copies, so no network, plugin install, or sibling checkout is needed
 
 ## 2 · Where we are (this session's work)
 
-Branch `diagnostics/debugger-display-all-languages`, PR #103 (open, not draft), covering
-issues #98, #100 and #101. Everything is committed; nothing is released.
+PR #103 (branch `diagnostics/debugger-display-all-languages`) is merged to `main` and every release
+workflow passed. The follow-up branch `skill/0.8.1-eval-findings` holds skill `0.8.1` and the eval
+fixture pins moved to `0.4.0`.
 
-**Release tags are on hold by explicit decision.** Every adopter is running a locally cloned, pinned
-working tree so they can read the source and suggest changes, so there is no pressure to publish —
-and `skills/verdict/SKILL.md` now documents that case as the first branch of its version-resolution
-instruction. Merging this branch *is* the release for all four SDKs and the skill, so do not merge
-until the release decision is actually made.
-
-Version state: all four SDKs at **`0.4.0`, unreleased** (no `<language>-v0.4.0` tag exists). The
-skill is at **`0.8.0`, unreleased**; the last released skill is `skill-v0.7.0`, so that is a single
-minor bump with one changelog entry and no intermediate versions.
-
-### What the branch did, in order
+### What the merged branch did, in order
 
 1. **Diagnostics/inspection surface** (the original scope): rules, composites and engines print as
    more than an opaque object, in each language's own idiom.
@@ -178,33 +168,32 @@ are accounted for in the concept map.
 
 ## 3 · What to do next (prioritized)
 
-1. **Decide on the release.** Nothing else is open -- §4 is clear. Merging releases all four SDKs
-   *and* the skill, since each `release-<lang>.yml` and `release-skill.yml` triggers on a version
-   bump landing on `main` and creates its own tag; there is no hand-tagging step. Until then the
-   eight evals that test `0.4`-only surface are unrunnable (not merely unrun), because an eval
-   fixture must pin a version that is actually published. (`origin` was current at this handoff;
-   confirm with `git log --oneline origin/HEAD..HEAD` before assuming it still is.)
-2. **Update the PR description** if it has not been replaced: a draft reflecting the final state
-   is in `.agents/scratch/pr-103-body.md` (gitignored; apply with `gh pr edit 103 --body-file`).
-   Re-run mutation testing only if library source changes again, one language at a time.
+1. **Merge the follow-up PR** (skill `0.8.1`); merging releases the skill, since
+   `release-skill.yml` triggers on the `plugin.json` bump. Confirm `skill-v0.8.1` exists after.
+2. **Redesign two evals whose premise the library now disproves** (see §4), then re-run only those
+   two, one at a time.
+3. Re-run mutation testing only if library source changes again, one language at a time.
 
 ## 4 · Known issues / open decisions
 
-**The eight decisions this section carried are all resolved**, in `f4b3850` --
-source doc comments reworded, `NotRule` added to the quickstarts and the
-changelog display bullets, the marketplace example moved onto a shared
-`thresholds.json`, changelog mentions tag-pinned with the rule written down,
-`skill-v0.5.2`'s missing tag explained rather than created, the Kiro and
-OpenHands drop-ins made always-on, examples indexes added for JS/Dart/C#, and
-incident Title comments converted to ASCII.
+The first full run of all 34 evals against the published `0.4.0` packages (each as its own subagent,
+one at a time, graded by hand) found the skill sound, with these exceptions:
 
-Nothing is open. The adopter request that was pending (`G-004`, whether `AtLeastNRule` should be a
-built-in) is answered and recorded: it stays a documented example, declined on the demand bar rather
-than on subtlety, with the trigger for reopening it -- a second, unrelated consumer -- written into
-[`future_plan.md`](docs/future_plan.md#declined-so-far-xor-and-at-least-n-of-m-on-demand-alone) and
-the reasoning onto
-[`extending/new-rule-shape/`](docs/extending/new-rule-shape/README.md), which is the page someone
-lands on when they want it.
+- **`cross-language/02-redacted-defect-report` and `03-recurring-pattern-evidence-report` need a new
+  premise.** 02 asserts a `KeyError` from `AndRule` that does not exist; the agent tried to
+  reproduce it, could not, and asked for the script, which is the correct behaviour and fails the
+  eval's expectations. 03 describes a recursive-walk helper that `failing_leaves` now replaces, so
+  the agent correctly said there was nothing to report. Both need a real defect or a genuinely
+  missing capability to test the reporting path.
+- Fixed in skill `0.8.1`: the repository map did not say where an extending page's language file
+  lives (two agents guessed a 404 path), a JS agent hand-wrote an early-stop loop instead of
+  composing `SequentialEvaluator`, the JS notes had no no-bundler CDN guidance, and the Python notes
+  did not forbid a hand-written serializer.
+- Minor, not fixed: C#, Dart and Python evals mostly suggest tests rather than write them when the
+  prompt does not ask for tests, so the call-counter expectations are met in prose only; Dart
+  `14-discount-eligibility` gave support the full breakdown but no separate fast pass/fail path.
+- Eval staging note: `cross-language/06-local-pin-resolution` needs a vendored checkout that includes
+  `docs/`; copying only the package directory made the docs unavailable and the agent said so.
 
 ## 5 · Verify (gate / test commands)
 
