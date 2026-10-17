@@ -26,8 +26,8 @@ You (the next agent) are continuing work on **verdict**. Read §1 for what it is
 are, §3 for what to do next, §4 for known issues, §5 for how to verify.
 
 **PR #103 is merged and released**: `0.4.0` for all four SDKs (`<language>-v0.4.0` tags, live on
-PyPI, npm, NuGet and pub.dev) and skill `0.8.0`. The current work is a follow-up PR carrying skill
-`0.8.1` and the eval fixture pins, from the first full eval run against the published packages.
+PyPI, npm, NuGet and pub.dev) and skill `0.8.0`. Skill `0.8.1` is also released. The
+current work is a PR redesigning evals 02 and 03.
 
 ## 0.1 · Freshness & alignment protocol (read before trusting §2–§3)
 
@@ -80,8 +80,7 @@ are in-tree copies, so no network, plugin install, or sibling checkout is needed
 ## 2 · Where we are (this session's work)
 
 PR #103 (branch `diagnostics/debugger-display-all-languages`) is merged to `main` and every release
-workflow passed. The follow-up branch `skill/0.8.1-eval-findings` holds skill `0.8.1` and the eval
-fixture pins moved to `0.4.0`.
+workflow passed. Skill `0.8.1` (from the first full eval run) and the eval fixture pins at `0.4.0` are on `main`.
 
 ### What the merged branch did, in order
 
@@ -168,23 +167,22 @@ are accounted for in the concept map.
 
 ## 3 · What to do next (prioritized)
 
-1. **Merge the follow-up PR** (skill `0.8.1`); merging releases the skill, since
-   `release-skill.yml` triggers on the `plugin.json` bump. Confirm `skill-v0.8.1` exists after.
-2. **Redesign two evals whose premise the library now disproves** (see §4), then re-run only those
-   two, one at a time.
-3. Re-run mutation testing only if library source changes again, one language at a time.
+1. **Merge the eval-redesign PR** (evals only, no release).
+2. Re-run mutation testing only if library source changes again, one language at a time.
 
 ## 4 · Known issues / open decisions
 
 The first full run of all 34 evals against the published `0.4.0` packages (each as its own subagent,
 one at a time, graded by hand) found the skill sound, with these exceptions:
 
-- **`cross-language/02-redacted-defect-report` and `03-recurring-pattern-evidence-report` need a new
-  premise.** 02 asserts a `KeyError` from `AndRule` that does not exist; the agent tried to
-  reproduce it, could not, and asked for the script, which is the correct behaviour and fails the
-  eval's expectations. 03 describes a recursive-walk helper that `failing_leaves` now replaces, so
-  the agent correctly said there was nothing to report. Both need a real defect or a genuinely
-  missing capability to test the reporting path.
+- **Evals 02 and 03 were redesigned and re-run, both pass every expectation.** The old 02 asserted a
+  `KeyError` from `AndRule` that does not exist, and the old 03 described a helper `failing_leaves`
+  replaced. 02 is now `claimed-defect-is-documented-behaviour` (a nested group is not an engine
+  group; the agent reproduces, recognises documented behaviour and files nothing). 03 is now
+  `recurring-nested-lookup-evidence-report` (a nested rule cannot be run by name; the agent files it
+  as an `enhancement` evidence report). **Coverage gap:** with the old 02 gone, nothing exercises
+  the redaction of a genuine defect report, because verdict has no known defect to point it at;
+  add one when a real defect appears.
 - Fixed in skill `0.8.1`: the repository map did not say where an extending page's language file
   lives (two agents guessed a 404 path), a JS agent hand-wrote an early-stop loop instead of
   composing `SequentialEvaluator`, the JS notes had no no-bundler CDN guidance, and the Python notes

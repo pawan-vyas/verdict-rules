@@ -109,8 +109,8 @@ Each of the four language targets carries the same core set, and
 | `walking-a-rule-tree` | `cross-language/` | inspecting what a decision was built from before running it, by testing for the composite contract rather than switching on concrete composite types |
 | `local-pin-resolution` | `cross-language/` | a dependency pinned to a local checkout is read on disk, in place, with no tag resolved and no fallback to the default branch |
 | `unsupported-language` | `cross-language/` | a language with no SDK produces a plain statement of that, not an invented import path |
-| `redacted-defect-report` | `cross-language/` | a defect report carrying no domain names, context values, or application stack frames |
-| `recurring-pattern-evidence-report` | `cross-language/` | a recurring-gap report filed as evidence, not as an argument for a specific design |
+| `claimed-defect-is-documented-behaviour` | `cross-language/` | a reported 'defect' that is the documented strict group lookup is reproduced, recognised as expected behaviour, and not filed |
+| `recurring-nested-lookup-evidence-report` | `cross-language/` | a recurring helper around a genuinely missing capability is filed as evidence, not as a demand |
 
 **Numbering is per-target and does not line up across targets.** The same
 eval is `06` in Python and C# and `07` in Dart and JS, because each target
