@@ -2,11 +2,11 @@
 kind: session-handoff
 handoff_schema: 2
 sealed: true
-updated_utc: 2026-10-17T10:55:05Z
-updated_local: 2026-10-17T16:25:05+05:30
-branch: skill/0.8.1-eval-findings
-state_at_commit: 2e8c436f23c62cb24f6a2d1a57e37a8417acaa56
-state_at_commit_short: 2e8c436
+updated_utc: 2026-10-17T14:02:56Z
+updated_local: 2026-10-17T19:32:56+05:30
+branch: chore/sweep-and-handoff
+state_at_commit: 59a2572036b61eaa66aec2f7ea7cb6b31f970f96
+state_at_commit_short: 59a2572
 # Freshness: run `git log --oneline "$(git log -1 --format=%H -- HANDOFF.md)"..HEAD`. Empty (+ clean
 # tree) = current. Non-empty = stale — reconcile per §0.1 before trusting §2–§3. (Comparing against
 # state_at_commit directly always shows the handoff commit itself as "drift" — see §0.1.)
