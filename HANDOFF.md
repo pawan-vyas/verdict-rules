@@ -25,9 +25,9 @@ state_at_commit_short: 2e8c436
 You (the next agent) are continuing work on **verdict**. Read §1 for what it is, §2 for where we
 are, §3 for what to do next, §4 for known issues, §5 for how to verify.
 
-**PR #103 is merged and released**: `0.4.0` for all four SDKs (`<language>-v0.4.0` tags, live on
-PyPI, npm, NuGet and pub.dev) and skill `0.8.0`. Skill `0.8.1` is also released. The
-current work is a PR redesigning evals 02 and 03.
+**Nothing is in flight.** `0.4.0` is released for all four SDKs (live on PyPI, npm, NuGet and
+pub.dev) and the skill is at `0.8.1` (`skill-v0.8.1`); PRs #103, #104 and #105 are merged. The
+first full eval run against the published packages is done and recorded in §4.
 
 ## 0.1 · Freshness & alignment protocol (read before trusting §2–§3)
 
@@ -79,8 +79,8 @@ are in-tree copies, so no network, plugin install, or sibling checkout is needed
 
 ## 2 · Where we are (this session's work)
 
-PR #103 (branch `diagnostics/debugger-display-all-languages`) is merged to `main` and every release
-workflow passed. Skill `0.8.1` (from the first full eval run) and the eval fixture pins at `0.4.0` are on `main`.
+`main` holds everything. Releases: SDKs `0.4.0` (PR #103), skill `0.8.0` (PR #103) and `0.8.1` (PR
+#104, from the eval findings). PR #105 redesigned two evals and released nothing.
 
 ### What the merged branch did, in order
 
@@ -167,8 +167,14 @@ are accounted for in the concept map.
 
 ## 3 · What to do next (prioritized)
 
-1. **Merge the eval-redesign PR** (evals only, no release).
-2. Re-run mutation testing only if library source changes again, one language at a time.
+Nothing is open. Candidates, none urgent:
+
+1. **Re-run the evals against skill `0.8.1`** to confirm the four fixes did what they were meant to
+   (the repository-map layout, the evaluator pointer, the CDN note, the `asdict` note). Recipe:
+   [`how-to-run-the-full-skill-eval`](.agents/memory/how-to-run-the-full-skill-eval.md).
+2. **Re-run mutation testing** only if library source changes again. A full four-language run took
+   under a minute on this machine, so it is cheap; one language at a time still.
+3. **Add a defect-report eval** the day verdict has a real defect to point it at; none exists now.
 
 ## 4 · Known issues / open decisions
 
@@ -310,6 +316,9 @@ bash scripts/build.sh && ls dist/   # verdict-plugin.zip  verdict-tools.zip  ver
   [`when-you-decline-record-which-question-failed.md`](.agents/memory/when-you-decline-record-which-question-failed.md)
   before adding or changing an entry there: its recorded *reasons* have been wrong twice, in
   opposite directions, while the verdicts stood.
+- [`how-to-run-the-full-skill-eval.md`](.agents/memory/how-to-run-the-full-skill-eval.md) and
+  [`main-requires-review-so-merges-use-admin.md`](.agents/memory/main-requires-review-so-merges-use-admin.md)
+  cover running the evals and merging.
 - [`.agents/README.md`](.agents/README.md) — the agent working-material layout, and
   [`.agents/memory/`](.agents/memory/) — durable facts worth not re-deriving. Start with
   [`doc-hygiene-audit-protocol.md`](.agents/memory/doc-hygiene-audit-protocol.md) before any
