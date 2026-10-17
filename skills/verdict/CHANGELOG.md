@@ -6,6 +6,24 @@ Release history for the verdict AI-agent skill. Format follows
 This versions **the guidance**, not any language's API, so it moves on its own
 cadence — see `docs/maintenance/releases/verdict-agent-skill.md`. Tagged `skill-vX.Y.Z`.
 
+## [0.8.1] - 2026-10-17
+
+- **The repository map says where an extending page's language code lives.**
+  Each `docs/extending/<name>/` directory holds a language-neutral
+  `README.md` and a `<language>.md` per SDK, but the map named only the
+  directory, so agents guessed a path, received a 404 and worked from the
+  installed types instead. The map now states the layout.
+- **A rule shape that stops early points at the public evaluators.**
+  `SKILL.md` now says to compose `SequentialEvaluator` (or
+  `ShortCircuitEvaluator`) with a stop rule rather than hand-write an
+  evaluation loop, which a JS agent without the extending page had done.
+- **The JS notes cover a page with no bundler.** Load the global bundle from
+  a CDN with the version pinned in the URL and an integrity hash for that
+  exact version.
+- **The Python notes say to use `dataclasses.asdict` to serialize a
+  result**, not a hand-written tree walker.
+- **The version-resolution example names the current release tag.**
+
 ## [0.8.0] - 2026-10-03
 
 - **Walking a rule tree is documented, and the trap named.** A composite now

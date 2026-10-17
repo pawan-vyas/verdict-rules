@@ -106,6 +106,11 @@ An index naming a child the result does not have throws `RangeError` at
 construction. Instances are `Object.freeze`d -- `readonly` alone is erased
 at runtime.
 
+A page with no bundler loads the package's global bundle from a CDN: pin the
+version in the URL (`.../verdict-rules@X.Y.Z/dist/verdict-rules.global.js`),
+add an `integrity` hash for that exact version, and use the `VerdictRules`
+global. The package README's CDN section has the current form.
+
 Key an audit trail on a leaf's own `ruleName`, never a composite's:
 
 ```ts

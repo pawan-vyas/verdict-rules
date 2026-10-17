@@ -27,4 +27,4 @@ environment:
   sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
-  verdict_rules: ^0.0.2
+  verdict_rules: ^0.4.0

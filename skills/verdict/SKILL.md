@@ -111,6 +111,11 @@ automatically, with no registration and no change needed on verdict's
 own side. When `FunctionRule`/`AndRule`/`OrRule` don't directly fit,
 build whatever does, rather than contorting them to cover it.
 
+A requirement that stops early, such as "at least N of these", composes the
+public `SequentialEvaluator` (or `ShortCircuitEvaluator`) with its own
+stop rule instead of hand-writing an evaluation loop; the language page of
+`new-rule-shape` shows the shape.
+
 `references/REPOSITORY-MAP.md` names real, worked instances of this —
 read one that matches, or use the same structural fit to write a new,
 unnamed pattern when none of them do.
@@ -136,7 +141,7 @@ in:
   cannot disagree.
 - **A registry version** (`verdict-rules==0.4.0`, a `PackageReference`) —
   repository tags are `<language>-v<version>`, for example
-  `python-v0.3.1`. Read at the tag matching that version.
+  `python-v0.4.0`. Read at the tag matching that version.
 - **A git ref** (a commit SHA, a branch) — read at that same ref; file
   contents resolve at a SHA exactly as they do at a tag.
 - **Nothing resolvable** — say so and read nothing, rather than falling

@@ -20,7 +20,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  verdict_rules: ^0.0.2
+  verdict_rules: ^0.4.0
 
 dev_dependencies:
   flutter_test:
