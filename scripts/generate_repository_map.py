@@ -79,6 +79,11 @@ def main() -> int:
         "",
         "## Extending (docs/extending/)",
         "",
+        "Each entry is a directory: `docs/extending/<name>/README.md` is the",
+        "language-neutral page and `docs/extending/<name>/<language>.md`",
+        "(`python.md`, `js.md`, `dart.md`, `csharp.md`) carries that language's",
+        "code. Fetch the language page at the project's tag.",
+        "",
     ]
     for d in extending:
         lines.append(f"- `{d.name}` — {_extending_entry(d / 'README.md')}")

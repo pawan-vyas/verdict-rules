@@ -73,7 +73,8 @@ branch it recovered from).
 
 **Only `sub_results` and `decided_by_indices` are stored.** The other three
 are `@property` accessors computed on access, so a result is a finite tree
-and `json.dumps(dataclasses.asdict(result))` works. Build one by passing
+and `json.dumps(dataclasses.asdict(result))` works -- use that, not a
+hand-written tree walker. Build one by passing
 positions, not children:
 
 ```python

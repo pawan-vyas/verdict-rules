@@ -13,5 +13,5 @@ name = "ledger-service"
 version = "2.1.0"
 requires-python = ">=3.10"
 dependencies = [
-    "verdict-rules==0.3.1",
+    "verdict-rules==0.4.0",
 ]
