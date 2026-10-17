@@ -146,13 +146,14 @@ how context gets lost, not how it gets organized.
 
 ## Durable context
 
-**Facts** — [`.agents/memory/`](.agents/memory/README.md) · 6 shown, [+18 more](.agents/memory/README.md#index)
+**Facts** — [`.agents/memory/`](.agents/memory/README.md) · 7 shown, [+19 more](.agents/memory/README.md#index)
 
 - [public-surfaces-stay-professional](.agents/memory/public-surfaces-stay-professional.md) — no competitive analysis or narration in public text
 - [publish-over-oidc-not-tokens](.agents/memory/publish-over-oidc-not-tokens.md) — provenance depends on OIDC publishing
 - [adding-a-variant-is-a-new-file](.agents/memory/adding-a-variant-is-a-new-file.md) — never edit a file the other variants share
 - [a-behaviour-change-is-a-documentation-change](.agents/memory/a-behaviour-change-is-a-documentation-change.md) — sweep every doc the change falsifies
 - [when-you-decline-record-which-question-failed](.agents/memory/when-you-decline-record-which-question-failed.md) — record the right reason, not just "no"
+- [main-requires-review-so-merges-use-admin](.agents/memory/main-requires-review-so-merges-use-admin.md) — the maintainer merges with `--admin`; a version bump merged is the release
 - [run-costly-subagent-batches-sequentially](.agents/memory/run-costly-subagent-batches-sequentially.md) — one at a time, never parallel
 
 **Incidents** — [`.agents/incidents/`](.agents/incidents/README.md) · read this list before anything irreversible

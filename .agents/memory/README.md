@@ -48,6 +48,8 @@ blockquote framing every doc in this repo uses.
 | [docs-consolidate-code-stays-in-its-own-tree](docs-consolidate-code-stays-in-its-own-tree.md) | A fixture's docs and data can consolidate centrally; its code cannot |
 | [features-land-in-every-language](features-land-in-every-language.md) | A capability goes into every language, or into none |
 | [first-party-dependencies-are-permitted](first-party-dependencies-are-permitted.md) | The dependency rule is "no third-party", not literally zero |
+| [how-to-run-the-full-skill-eval](how-to-run-the-full-skill-eval.md) | Running all the skill evals: stage, one agent each, grade by hand |
+| [main-requires-review-so-merges-use-admin](main-requires-review-so-merges-use-admin.md) | `main` requires an approving review; the maintainer merges with `--admin` |
 | [no-organizations-individual-forever](no-organizations-individual-forever.md) | This package is published by an individual, on every registry |
 | [public-surfaces-stay-professional](public-surfaces-stay-professional.md) | Nothing public carries competitive analysis or working narration |
 | [publish-over-oidc-not-tokens](publish-over-oidc-not-tokens.md) | Publish over OIDC on every registry — provenance depends on it |
