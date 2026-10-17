@@ -8,7 +8,7 @@
 > the run itself is
 > [`../../scripts/run_mutation_js.sh`](../../scripts/run_mutation_js.sh).
 
-## Score: 238/243 killed (97.9%), five equivalent mutants, zero real gaps
+## Score: 241/246 killed (97.9%), five equivalent mutants, zero real gaps
 
 [StrykerJS](https://stryker-mutator.io/docs/stryker-js/guides/nodejs/) against
 [`js/packages/verdict-rules/src/`](../../js/packages/verdict-rules/src/),

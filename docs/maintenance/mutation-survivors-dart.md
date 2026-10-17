@@ -9,7 +9,7 @@
 > the run itself is
 > [`../../scripts/run_mutation_dart.sh`](../../scripts/run_mutation_dart.sh).
 
-## Score: 57/57 detected (100%), zero survivors
+## Score: 58/58 detected (100%), zero survivors
 
 `mutation_test` 1.8.1 against
 [`dart/packages/verdict_rules/lib/`](../../dart/packages/verdict_rules/lib/),

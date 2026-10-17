@@ -9,7 +9,7 @@
 > the run itself is
 > [`../../scripts/run_mutation_python.sh`](../../scripts/run_mutation_python.sh).
 
-## Score: 241/242 killed (99.6%), one equivalent mutant, zero real gaps
+## Score: 242/243 killed (99.6%), one equivalent mutant, zero real gaps
 
 mutmut 3.8.0, against `python/packages/verdict-rules/src/verdict/`:
 

@@ -8,7 +8,7 @@
 > the run itself is
 > [`../../scripts/run_mutation_csharp.sh`](../../scripts/run_mutation_csharp.sh).
 
-## Score: 174/176 killed (98.9%), two survivors, zero real gaps
+## Score: 173/175 killed (98.9%), two survivors, zero real gaps
 
 [Stryker.NET](https://stryker-mutator.io/docs/stryker-net/introduction/)
 against [`csharp/src/VerdictRules/`](../../csharp/src/VerdictRules/), through
