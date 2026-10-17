@@ -94,6 +94,43 @@ jobs:
         working-directory: python
         run: uv run --python ${{ matrix.python-version }} pytest --cov=verdict --cov-report=term-missing
 
+      # One matrix leg is enough -- the public surface griffe sees does not
+      # change across interpreter versions, so running this on every leg
+      # would only repeat the same comparison five times.
+      - name: Check committed API snapshot is current
+        if: matrix.python-version == '3.14'
+        run: |
+          set -euo pipefail
+          uv run --project python --python ${{ matrix.python-version }} griffe dump verdict -o /tmp/fresh-api-snapshot.json
+
+          uv run --project python --python ${{ matrix.python-version }} python3 - <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          sys.path.insert(0, "scripts")
+          from api_snapshot_python import SNAPSHOT_PATH, _extract_from_dump  # noqa: E402
+
+          committed = _extract_from_dump(json.loads(SNAPSHOT_PATH.read_text()))
+          fresh = _extract_from_dump(json.loads(Path("/tmp/fresh-api-snapshot.json").read_text()))
+
+          if committed != fresh:
+              print(
+                  "::error::python/packages/verdict-rules/api-snapshot.json is stale -- "
+                  "regenerate it (uv run griffe dump verdict -o api-snapshot.json, run from "
+                  "python/) and commit the result."
+              )
+              committed_set = {tuple(sorted(r.items())) for r in committed}
+              fresh_set = {tuple(sorted(r.items())) for r in fresh}
+              for row in sorted(fresh_set - committed_set, key=str):
+                  print("  + added:  ", dict(row))
+              for row in sorted(committed_set - fresh_set, key=str):
+                  print("  - removed:", dict(row))
+              sys.exit(1)
+
+          print(f"OK -- committed snapshot matches the live public surface ({len(committed)} symbol rows).")
+          PY
+
   # THE JOB TO MARK REQUIRED IN BRANCH PROTECTION.
   #
   # It runs unconditionally so a result always exists, and it must distinguish

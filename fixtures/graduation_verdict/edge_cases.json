@@ -19,7 +19,8 @@
       "failing_chain": [],
       "run_all": {
         "evaluated": 0,
-        "passed": true
+        "passed": true,
+        "failing_leaves": []
       },
       "lookups": {
         "unknown_group": {
@@ -57,7 +58,8 @@
       ],
       "run_all": {
         "evaluated": 0,
-        "passed": true
+        "passed": true,
+        "failing_leaves": []
       },
       "lookups": {
         "unknown_group": {

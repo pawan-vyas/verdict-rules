@@ -4,7 +4,7 @@
  * This project exercises Rule<TContext> end to end: two typed contexts
  * sharing no fields, a rule reused across both via ProjectingRule, and a
  * dict-context catalog coexisting in the same codebase. See
- * docs/samples/marketplace-eligibility/README.md for the design and
+ * fixtures/marketplace_eligibility/README.md for the design and
  * fixtures/marketplace_eligibility/README.md for the shared contract this
  * suite reproduces.
  */
@@ -135,12 +135,10 @@ describe("compliance catalog is dict-context and heterogeneous", () => {
     // alongside the existing three, reading the same event shape with no
     // adapter needed.
     const weekendFlag = new FunctionRule("weekend_flag", async (ctx) => ({
-      ruleName: "weekend_flag",
       passed: ctx.is_weekend ?? false,
     }));
     const extended = new RulesEngine([
       new FunctionRule("high_value_flag", async (ctx) => ({
-        ruleName: "high_value_flag",
         passed: ctx.amount_cents > 50_000,
       })),
       weekendFlag,

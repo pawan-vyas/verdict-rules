@@ -2,7 +2,7 @@
 # Extending verdict: keep your own domain out of it, in one adapter module
 
 > An architectural boundary, not a rule shape — every sample in
-> [`../../samples/`](../../samples/README.md) is already a full-scale
+> [`../../../fixtures/README.md`](../../../fixtures/README.md) is already a full-scale
 > instance of it in practice.
 
 Build **one** module that translates your domain's own vocabulary into
@@ -12,10 +12,13 @@ sites.
 
 - **A rate-limiting adapter** — the *only* place your codebase's
   rate-limiting logic imports `verdict` directly. It builds one
-  `FunctionRule` per configured rate-limit window, combines them under
-  an `AndRule`, and packages its own rate-limit status object as each
-  rule's opaque `RuleResult.data` — everything above this one adapter
-  talks in its own rate-limit vocabulary, never in `Rule`/`RuleResult`.
+  `FunctionRule` per configured rate-limit window, runs them through the
+  engine's run-everything mode, and packages its own rate-limit status
+  object as each rule's opaque `RuleResult.data` — everything above this
+  one adapter talks in its own rate-limit vocabulary, never in
+  `Rule`/`RuleResult`. Run-everything, not a composite, because the
+  adapter's own contract promises one status per window and a composite
+  stops at the first failure.
 - **A second, independent adapter in that same codebase** — for an
   entirely unrelated domain (category/group-based access control),
   reusing the identical engine with **zero changes to `verdict`
@@ -79,32 +82,29 @@ could be added here with no engine-side changes at all.
 
 ## What this demonstrates
 
-- Domain vocabulary never crosses into a `Rule`/`RuleResult` shape
-  directly — one adapter module owns that translation both ways.
+- One adapter module owns the translation both ways; domain vocabulary
+  never crosses into a `Rule`/`RuleResult` shape directly.
 - A second, unrelated domain in the same codebase is a second adapter
   module, not a change to the first one or to verdict itself.
-- `RuleResult.data` is deliberately opaque to verdict, which is what
-  makes it a safe channel for a domain-specific payload.
+- The adapter's own contract determines which run mode it reaches for —
+  a promise of one result per input rules out a short-circuiting
+  composite.
 
 ## Related
 
-- [`../../samples/README.md`](../../samples/README.md) — every worked
+- [`../../../fixtures/README.md`](../../../fixtures/README.md) — every worked
   sample is, underneath, an instance of this boundary.
 - [`../new-rule-shape/README.md`](../new-rule-shape/README.md) — the
   other place a domain-specific need becomes consumer code rather than
   a request against this package.
 
----
+## This is an option, not a mandate
 
-> **A note from the author**: I hold `verdict` to this same standard
-> for itself, not just as advice — this is what keeps a consumer from
-> being locked into `verdict` at all. If it ever needs replacing, the
-> adapter module is the only thing that changes; every call site
-> speaking your own domain's language stays exactly as it is.
->
-> That's a preference, not a requirement this package imposes or
-> expects a skill-driven agent to enforce. Coupling your domain logic
-> straight to `Rule`/`RuleResult` throughout your codebase is a
-> legitimate choice too, if you don't want the indirection. Decide it
-> for your own code — this scenario documents the option, not a
-> mandate.
+The boundary is what keeps a consumer from being locked into `verdict`
+at all: if it ever needs replacing, the adapter module is the only thing
+that changes. Each language's page below demonstrates exactly that, with
+a second implementation of the same contract that does not use `verdict`.
+
+Coupling domain logic straight to `Rule`/`RuleResult` throughout a
+codebase is a legitimate choice too, if the indirection is not worth it.
+Nothing in this package enforces either way.

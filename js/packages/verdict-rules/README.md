@@ -10,7 +10,7 @@ npm install verdict-rules
 ```
 
 ```ts
-import { AndRule, FunctionRule, RulesEngine } from "verdict-rules";
+import { AndRule, FunctionRule, RuleResult, RulesEngine } from "verdict-rules";
 ```
 
 ## A first rule
@@ -21,7 +21,7 @@ import { AndRule, FunctionRule, RulesEngine, type Context } from "verdict-rules"
 const atLeast = (name: string, field: string, floor: number) =>
   new FunctionRule(name, async (ctx: Context) => {
     const value = ctx[field] as number;
-    return { ruleName: name, passed: value >= floor, detail: `${value} vs ${floor}` };
+    return { passed: value >= floor, detail: `${value} vs ${floor}` };
   });
 
 const eligible = new AndRule("eligible", [
@@ -32,7 +32,10 @@ const eligible = new AndRule("eligible", [
 const engine = new RulesEngine([eligible]);
 const verdict = await engine.runNamed("eligible", { age: 21, score: 55 });
 console.log(verdict.passed); // false
-console.log(verdict.detail); // 'score_ok' failed: 55 vs 60
+// AndRule's own `detail` is always empty -- `failingLeaves` is where the
+// reason actually lives: the sub-rule(s) that caused the failure, flattened.
+console.log(verdict.failingLeaves.map((leaf) => `${leaf.ruleName}: ${leaf.detail}`));
+// [ 'score_ok: 55 vs 60' ]
 ```
 
 ## If it has the shape, it is a rule
@@ -42,15 +45,23 @@ any object of the right shape already *is* a `Rule`. No `implements`, no base
 class, no registration:
 
 ```ts
+import { RuleResult } from "verdict-rules";
+
 const isBusinessHours = {
   name: "is_business_hours",
   async evaluate(ctx: Context) {
-    return { ruleName: "is_business_hours", passed: (ctx.hour as number) >= 9 && (ctx.hour as number) < 17 };
+    const passed = (ctx.hour as number) >= 9 && (ctx.hour as number) < 17;
+    return new RuleResult("is_business_hours", passed);
   },
 };
 
 await new AndRule("open", [isBusinessHours]).evaluate({ hour: 21 });
 ```
+
+`Rule` is structural, but a result is not: `RuleResult` is a class, so a
+custom rule constructs one rather than returning an object literal. That
+is what makes `leaves`/`failingLeaves` derived from `subResults` rather
+than fields a caller could set to disagree with them.
 
 Most rules need no object literal either: `FunctionRule` wraps a plain async
 predicate.
@@ -94,7 +105,6 @@ being able to break it.
   crossorigin="anonymous"></script>
 <script>
   const rule = new VerdictRules.FunctionRule("ok", async () => ({
-    ruleName: "ok",
     passed: true,
   }));
   new VerdictRules.AndRule("all", [rule]).evaluate({}).then((v) => console.log(v.passed));
@@ -158,17 +168,21 @@ one everybody thinks of first.
   declared it, so a lookup matching nothing can only be a mistake — and a
   misspelled group silently approving is the worst failure an eligibility check
   can have. Use `ruleNames` / `groupNames` to check rather than catch.
-- **`RuleResult.data` is opaque** — only what actually ran, never padded, never
-  flattened.
+- **`RuleResult.data` is opaque** — never read or written by this package.
+  `AndRule`/`OrRule`/`NotRule` carry their own children in
+  `RuleResult.subResults` instead, in evaluation order, never padded; `leaves`/
+  `failingLeaves` flatten the whole tree for you when you just want the
+  reason, not the shape.
 - **Zero runtime dependencies.**
 
 ## Where to go next
 
 | Doc | For |
 | --- | --- |
-| [`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.3.1/js/packages/verdict-rules/docs/quickstart.md) | The quickstart — core concepts and a full worked example |
-| [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.3.1/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
-| [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.3.1/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
-| [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.3.1/docs/maintenance/README.md) | Changing this package itself |
-| [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.3.1/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
-| [`docs/samples/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.3.1/docs/samples/README.md) | Worked examples — dynamic discounts, fee waivers, tier promotions, moderation routing, data-driven rule sets |
+| [`docs/quickstart.md`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.4.0/js/packages/verdict-rules/docs/quickstart.md) | The quickstart — core concepts and a full worked example |
+| [`docs/architecture/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.4.0/docs/architecture/README.md) | Why it's shaped this way, in depth — type structure, the execution model |
+| [`docs/extending/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.4.0/docs/extending/README.md) | Building on top of it from your own code, with no changes here |
+| [`docs/maintenance/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.4.0/docs/maintenance/README.md) | Changing this package itself |
+| [`docs/testing/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.4.0/docs/testing/README.md) | How the test suite is organized, and what a change needs to prove |
+| [`fixtures/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.4.0/fixtures/README.md) | The two worked scenarios — each one's problem, design, and the cross-language data contract every port reproduces |
+| [`examples/`](https://github.com/pawan-vyas/verdict-rules/blob/js-v0.4.0/js/examples/README.md) | Full, tested mini-projects behind the fixtures — real code, real tests, real docs |

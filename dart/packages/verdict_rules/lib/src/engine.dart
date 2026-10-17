@@ -90,4 +90,8 @@ class RulesEngine<TContext> {
     }
     return result;
   }
+
+  @override
+  String toString() =>
+      'RulesEngine — ${_rules.length} rule(s), ${_byGroup.length} group(s)';
 }

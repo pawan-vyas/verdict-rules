@@ -2,8 +2,8 @@ import 'package:test/test.dart';
 import 'package:verdict_rules/verdict_rules.dart';
 
 /// A plain top-level function, declared as nothing in particular.
-Future<RuleResult> hasQuorum(Context ctx) async =>
-    RuleResult(ruleName: 'quorum', passed: ctx.length >= 3);
+Future<PredicateOutcome> hasQuorum(Context ctx) async =>
+    PredicateOutcome(ctx.length >= 3);
 
 /// Coverage for Dart-specific idioms, not universal contracts.
 /// `rule_test.dart` and `engine_test.dart` together are this package's 1:1

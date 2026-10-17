@@ -1,0 +1,16 @@
+{
+  "eval_name": "custom-composite-reporting-its-decision",
+  "prompt": "We need a rule shape verdict doesn't ship: \"at least N of these must pass\". Concretely, a vendor is approved if at least 2 of 4 compliance attestations are on file. It should stop as soon as the threshold is met, carry the attestations it actually evaluated, and report which of them drove the decision so our review screen can highlight exactly those. We also write the whole result to our audit store as JSON. Can you build the custom composite?",
+  "expected_output": "A custom Rule implementation composing SequentialEvaluator with its own StepDecider rather than hand-rolling a loop, building a RuleResult that carries the evaluated sub-results and identifies the deciding ones via decidedByIndices. The Dart-specific correctness bar: jsonEncode cannot encode an arbitrary object, so serialization goes through RuleResult.toJson() -- which this SDK provides and which has no counterpart in the other three. A response that calls jsonEncode on a result while assuming it just works, or that hand-writes a mapping because it believes none exists, has it wrong in opposite directions.",
+  "files": [
+    "files/pubspec.yaml"
+  ],
+  "expectations": [
+    "The composite declares `implements Rule<TContext>` and composes SequentialEvaluator with its own StepDecider rather than writing its own evaluation loop",
+    "The decider stops as soon as the threshold is met, and the result's subResults hold only the attestations actually evaluated -- never padded to all four",
+    "The deciding children are passed to the RuleResult constructor as decidedByIndices -- positions within subResults -- not as RuleResult objects",
+    "Serialization goes through toJson(), either called directly or relied on by jsonEncode, rather than a hand-written map built field by field",
+    "The response does not claim a Dart result cannot be encoded, nor that jsonEncode handles an arbitrary object without toJson()",
+    "The vacuous case is addressed explicitly: what the composite does when the threshold is zero, or when it is handed no sub-rules at all"
+  ]
+}

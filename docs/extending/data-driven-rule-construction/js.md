@@ -6,7 +6,7 @@
 > JS/TS code.
 
 ```ts
-import { AndRule, FunctionRule, type Context, type RuleResult } from "verdict-rules";
+import { AndRule, FunctionRule, type Context, type PredicateOutcome } from "verdict-rules";
 
 interface RuleConfig {
   name: string;
@@ -14,11 +14,10 @@ interface RuleConfig {
   expected: unknown;
 }
 
-function makeRule(ruleConfig: RuleConfig): FunctionRule {
-  return new FunctionRule(ruleConfig.name, async (context: Context): Promise<RuleResult> => {
+function makeRule(ruleConfig: RuleConfig): FunctionRule<Context> {
+  return new FunctionRule(ruleConfig.name, async (context: Context): Promise<PredicateOutcome> => {
     const actual = context[ruleConfig.field];
-    const passed = actual === ruleConfig.expected;
-    return { ruleName: ruleConfig.name, passed };
+    return { passed: actual === ruleConfig.expected };
   });
 }
 
@@ -36,11 +35,16 @@ const combinedRule = new AndRule("combined", configuredRules);
 
 ```ts
 await combinedRule.evaluate({ role: "manager", office: "HQ" });
-// { ruleName: 'combined', passed: true, ... }
+// passed: true
 
-await combinedRule.evaluate({ role: "manager", office: "Remote" });
-// { ruleName: 'combined', passed: false, ... } -- in_headquarters fails
+const refused = await combinedRule.evaluate({ role: "manager", office: "Remote" });
+refused.failingLeaves[0]?.ruleName;
+// 'in_headquarters' -- the config-driven name, carried through
 ```
+
+The rule name comes from the config once, at the `FunctionRule` call —
+the predicate no longer repeats it, so a config whose name changes cannot
+leave a result labelled with the old one.
 
 An empty `loadRuleConfigs()` produces an empty `AndRule`, which
 vacuously passes.
@@ -49,5 +53,3 @@ vacuously passes.
 
 - [`README.md`](README.md) — the language-agnostic scenario this page
   implements.
-- [`../../samples/data-driven-rule-sets/js.md`](../../samples/data-driven-rule-sets/js.md) —
-  the fuller worked version, in JS/TS.

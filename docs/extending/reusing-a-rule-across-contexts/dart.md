@@ -44,8 +44,8 @@ class UserFlag {
   const UserFlag({required this.isVerified});
 }
 
-Future<RuleResult> isVerifiedUser(UserFlag ctx) async =>
-    RuleResult(ruleName: 'is_verified_user', passed: ctx.isVerified);
+Future<PredicateOutcome> isVerifiedUser(UserFlag ctx) async =>
+    PredicateOutcome(ctx.isVerified);
 
 class OrderContext {
   final double total;
@@ -82,6 +82,11 @@ explicit `implements` clause — Dart has no structural typing for a
 multi-member interface like `Rule` — the same way every other rule
 shape in this package does. Nothing about `AndRule<TContext>` or
 `RulesEngine<TContext>` needed to change to accept it.
+
+Note which of the two returns what: `ProjectingRule.evaluate` returns a
+`RuleResult`, because it *is* a rule and that is a rule's contract.
+`isVerifiedUser` returns a `PredicateOutcome`, because it is a predicate
+and the `FunctionRule` wrapping it owns the name.
 
 ## Related
 

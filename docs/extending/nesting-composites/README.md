@@ -52,17 +52,34 @@ graph TB
 > a fixed type hierarchy — see
 > [`../../architecture/README.md`](../../architecture/README.md#type-structure).
 
-`qualifies` reads exactly like a plain rule to anything holding it — a
-`RulesEngine`, another `AndRule`, or a direct call to its own
-`evaluate` — since a composite rule is structurally indistinguishable
-from a plain one from the outside.
+## Reading a result of this shape
+
+Depth is where the three result views stop being interchangeable, so it
+is worth knowing which answers what before walking a nested result:
+
+| View | Answers | Depth |
+| :-- | :-- | :-- |
+| sub-results | What this node actually evaluated | One level |
+| decided-by | Which of those children explain *this* node's verdict | One level |
+| leaves / failing-leaves | The terminal checks the whole tree bottoms out in | Fully recursive |
+
+On the tree above, the outer composite's decided-by names both its own
+children, while the inner one's names only the sub-rule that stopped it —
+same tree, two levels, two different answers. Each language's page below
+shows all three against this exact shape.
+
+A composite's children are in its sub-results, never in `data`, which is
+an opaque slot for a caller's own payload and is never written to by a
+composite.
 
 ## What this demonstrates
 
-- A composite rule nested inside another composite is structurally
-  indistinguishable from a plain leaf rule to whatever holds it.
-- Nesting has no built-in depth limit — the tree's shape is entirely a
-  consumer decision, not a constraint this package imposes.
+- A composite nested inside another is structurally indistinguishable
+  from a plain leaf to whatever holds it.
+- Nesting has no built-in depth limit — the tree's shape is a consumer
+  decision, not a constraint this package imposes.
+- Reading a nested result means picking the view that matches the
+  question; depth is what makes choosing wrong easy.
 
 ## Related
 

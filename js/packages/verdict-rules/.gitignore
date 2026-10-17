@@ -1,0 +1,4 @@
+# StrykerJS working directory and generated mutation reports -- regenerated
+# by `npm run mutation` (scripts/run_mutation_js.sh), never hand-edited.
+.stryker-tmp/
+reports/

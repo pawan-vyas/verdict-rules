@@ -1,0 +1,18 @@
+{
+  "eval_name": "walking-a-rule-tree",
+  "prompt": "We have an admin screen that needs to show, for a given approval decision, every individual check it could consult -- before anything runs, because the screen renders when the page loads and nothing has been submitted yet. The decision is assembled from verdict rules, and some of it uses a custom 'at least N of these' combinator we wrote ourselves for the elective-style checks. We also want to refuse to start up if two different checks were ever registered under the same name. Can you write the inspection code?",
+  "expected_output": "A response that walks the rule tree by testing for verdict's composite contract -- the one a composite satisfies alongside Rule, exposing the rules it was built from -- rather than by switching or branching on the concrete AndRule/OrRule/NotRule types. The critical point is that the consumer's own 'at least N' combinator must be reached by the same walk: a type switch falls through to the leaf case on it and silently reports the rules inside it as absent, which is exactly the under-reporting the admin screen must not do. The response should either note that the custom combinator needs to satisfy the contract (expose its parts) or write it that way. It should read the rule tree, not evaluate the rules, since nothing has been submitted. A response that branches on concrete composite types, or that evaluates the decision to discover its shape, has it wrong.",
+  "files": [
+    "files/pyproject.toml"
+  ],
+  "expectations": [
+    "The tree is walked by testing for the composite contract, not by branching or switching on the concrete AndRule/OrRule/NotRule types",
+    "The response identifies that a type-based branch would silently skip the consumer's own combinator and report the checks inside it as absent, rather than failing",
+    "The consumer's own 'at least N' combinator is made walkable by satisfying the same contract -- exposing its parts -- rather than being special-cased in the walk",
+    "A leaf rule is distinguished from a composite by whether it satisfies the composite contract, not by a type test against FunctionRule",
+    "The rules are read rather than evaluated: no predicate is run to discover the tree's shape, consistent with nothing having been submitted yet",
+    "A negation is handled without a special case, since its parts are reported as a one-element list under the same member name as every other composite",
+    "The duplicate-name check compares rule identity, not just names, so the same rule object appearing once is not reported as a duplicate",
+    "The response does not claim a composite can be rebuilt with one part replaced through the contract, which it cannot"
+  ]
+}

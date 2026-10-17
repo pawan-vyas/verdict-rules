@@ -1,4 +1,4 @@
-<!-- Title: Incident 003 — Pushed Mid-Rebase -->
+<!-- Title: Incident 003 -- Pushed Mid-Rebase -->
 # 003 · Pushed while a rebase was still unresolved
 
 > **2026-09-12 · no damage, recorded for the process failure**

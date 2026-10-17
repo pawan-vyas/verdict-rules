@@ -34,8 +34,13 @@ classDiagram
         +group: str|None
         +evaluate(context: TContext)* RuleResult
     }
+    class PredicateOutcome {
+        +passed: bool
+        +detail: str
+        +data: object|None
+    }
     class FunctionRule~TContext~ {
-        -predicate: Callable~TContext, Awaitable~RuleResult~~
+        -predicate: Callable~TContext, Awaitable~PredicateOutcome~~
         +evaluate(context: TContext) RuleResult
     }
     class AndRule~TContext~ {
@@ -44,6 +49,10 @@ classDiagram
     }
     class OrRule~TContext~ {
         -rules: list~Rule~TContext~~
+        +evaluate(context: TContext) RuleResult
+    }
+    class NotRule~TContext~ {
+        -rule: Rule~TContext~
         +evaluate(context: TContext) RuleResult
     }
     class RulesEngine~TContext~ {
@@ -62,29 +71,57 @@ classDiagram
         +passed: bool
         +detail: str
         +data: object|None
+        +sub_results: Sequence~RuleResult~
+        +decided_by_indices: Sequence~int~
+        +decided_by: list~RuleResult~
+        +leaves: list~RuleResult~
+        +failing_leaves: list~RuleResult~
     }
     class RunResult {
         +passed: bool
         +results: list~RuleResult~
+        +leaves: list~RuleResult~
+        +failing_leaves: list~RuleResult~
     }
 
     Rule <|.. FunctionRule
     Rule <|.. AndRule
     Rule <|.. OrRule
+    Rule <|.. NotRule
+    FunctionRule ..> PredicateOutcome : its predicate reports
     AndRule o-- Rule : sub-rules
     OrRule o-- Rule : sub-rules
+    NotRule o-- Rule : the one negated rule
     RulesEngine o-- Rule : holds
     RulesEngine ..> RuleResult : produces
     RulesEngine ..> RunResult : produces
     RunResult --> RuleResult : contains
+    RuleResult --> RuleResult : sub_results
 ```
 
 See [`README.md`](README.md)'s "Type structure" section for why each of
 these relationships is shaped the way it is — the reasoning applies
 here unchanged; this diagram is just Python's own type syntax for it.
 `RuleResult`/`RunResult` are deliberately not generic — see "Generic
-context, concretely" below for why `Data`/`data` stays opaque rather
-than following `TContext`.
+context, concretely" below for why `data` stays opaque rather than
+following `TContext`.
+
+`leaves`/`failing_leaves`/`decided_by` are all `@property` methods
+computed on access, not stored fields — which is why
+`dataclasses.asdict()` returns the stored fields only, and why a result's
+own object graph stays a finite tree. The stored half is `sub_results`
+plus `decided_by_indices`, a tuple of positions; `__post_init__` rejects
+a position naming a child the result does not have, which the
+objects-valued form admitted no check for at all. `README.md`'s
+"Inspecting a composite's own decision" section covers what each of the
+three answers, and why only `sub_results` can be the stored one.
+
+`AndRule`/`OrRule` hold a class-level `ShortCircuitEvaluator` rather
+than a loop of their own, and `NotRule` holds none — one child has no
+sequence to iterate. `SequentialEvaluator` is the general form a custom
+composite composes directly, taking a `StepDecider` that returns
+`True`/`False` to stop or `None` to continue; `ShortCircuitEvaluator`
+is the narrower case where a single sub-result value ends evaluation.
 
 ## Generic context, concretely
 
@@ -96,15 +133,15 @@ unconditionally whether or not it names a type argument:
 
 ```python
 from dataclasses import dataclass
-from verdict import AndRule, FunctionRule, Rule, RuleResult, RulesEngine
+from verdict import AndRule, FunctionRule, PredicateOutcome, Rule, RulesEngine
 
 @dataclass(frozen=True)
 class OrderContext:
     total: float
     is_member: bool
 
-async def order_total_met(context: OrderContext) -> RuleResult:
-    return RuleResult(rule_name="order_total_met", passed=context.total >= 50.0)
+async def order_total_met(context: OrderContext) -> PredicateOutcome:
+    return PredicateOutcome(passed=context.total >= 50.0)
 
 # TContext is inferred from order_total_met's own annotation -- no
 # explicit type argument needed at the call site.

@@ -73,7 +73,10 @@ placeholder with no further manual `npm publish` needed.
 npm publishes provenance attestations (`dist.attestations`) automatically
 for a public repository publishing a public package under Trusted
 Publishing — nothing extra to configure beyond publishing over OIDC
-rather than a stored token, the same shape as PyPI's PEP 740.
+rather than a stored token, the same shape as PyPI's PEP 740. The
+`--provenance` flag is obsolete; passing it is neither needed nor what
+produces the attestation. A release using a long-lived token instead would
+publish successfully and silently carry no provenance at all.
 `release-js.yml`'s `verify-published` job asserts
 `dist.attestations.provenance.predicateType` is present on the
 version-specific registry endpoint after publishing, rather than

@@ -37,14 +37,16 @@ that predates the convergence into the same shape.
    to this language. Never restate a repo-root rule here — see
    [`README.md`](README.md)'s rule against narrating a document instead
    of saying the thing once.
-3. **`## The guarantees, in <Language> terms`** — the same four
+3. **`## The guarantees, in <Language> terms`** — the same five
    execution-model guarantees stated in every language's `AGENTS.md`,
    each restated with that language's own real type and method names:
    sequential evaluation (naming the concurrency primitive to never
    reach for), vacuous truth's polarity, emptiness-vs-absence (naming
-   the throw/raise type and the `try`-prefixed primitive), and
-   `RuleResult.data`/`.Data` staying opaque. This is the fast-context
-   version for an agent about to write code, distinct from
+   the throw/raise type and the `try`-prefixed primitive), what a
+   predicate returns (and what happens if it returns a result instead),
+   and the opaque payload slot versus where a composite's children
+   actually live. This is the fast-context version for an agent about to
+   write code, distinct from
    [`../../architecture/`](../../architecture/README.md)'s own deeper
    "why" — an agent needs this restated here so it doesn't have to open
    a second document before writing a single line.
@@ -90,7 +92,11 @@ that predates the convergence into the same shape.
 ## Adding a new language's `AGENTS.md`
 
 Follow the skeleton above; add only the language-specific highlight
-sections that language's own situation genuinely earns. A comparison to
+sections that language's own situation genuinely earns. **A change to
+what the engine guarantees means editing all of these files**, which is
+why the repo-root sweep list names them — they state the contract in
+each language's own terms, so a contract change leaves every one of them
+wrong at once. A comparison to
 a sibling language's own behavior is fine here — unlike a package's own
 landing page (see [`package-readmes.md`](package-readmes.md)'s three
 leaks), this file is read by someone who opened it because they are

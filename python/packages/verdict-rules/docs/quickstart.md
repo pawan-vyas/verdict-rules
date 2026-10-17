@@ -1,11 +1,13 @@
 <!-- Title: Verdict Quickstart -->
 # Verdict — Quickstart
 
-> The five names you need, and one complete example using all of them.
+> The six names you need, and one complete example wiring the composites
+> and the engine together.
 > See [`../README.md`](../README.md) for this package's own
 > pip-install/first-rule quickstart, the top-level
-> [`../../README.md`](../../../../README.md) for what Verdict is in narrative
-> form, and [`../../docs/architecture/`](../../../../docs/architecture/README.md)
+> [`../../../../README.md`](../../../../README.md) for what Verdict is in
+> narrative form, and
+> [`../../../../docs/architecture/`](../../../../docs/architecture/README.md)
 > for the full design reasoning — this doc is just "how do I start."
 
 ## Core concepts
@@ -20,6 +22,8 @@
   rules, short-circuiting the same way a boolean `and`/`or` expression
   would (`AndRule` stops at the first failure, `OrRule` stops at the
   first pass).
+- **`NotRule`** — wraps exactly one rule and inverts it: it passes when
+  that rule fails. One child, so it has no vacuous case.
 - **`RulesEngine`** — holds a set of rules and runs them three ways:
   `run_all` (every rule, full diagnostic picture — deliberately does
   **not** short-circuit), `run_named` (one specific rule by name),
@@ -27,7 +31,16 @@
   label raises; `try_run_named`/`try_run_group` return `None` instead,
   for callers whose own domain has an answer for absence — see
   [`extending/absence-vs-failure/`](../../../../docs/extending/absence-vs-failure/README.md).
-- **`RuleResult`** / **`RunResult`** — plain, immutable outcome types.
+- **`RuleResult`** / **`RunResult`** — immutable outcome types, each
+  answering three different questions about a composite's decision:
+  `sub_results` (what actually ran, one level), `decided_by` (which of
+  those children explain *this* verdict, one level), and
+  `leaves`/`failing_leaves` (the terminal checks, fully recursive).
+  A result stores only `sub_results` plus `decided_by_indices`, the
+  *positions* within it of the deciding children — so building a result
+  by hand means passing positions, and an out-of-range one raises
+  `IndexError` at construction. Every other view is derived and computed
+  on access, which is what keeps a result a tree and serializable.
   `RuleResult.data` is a fully opaque slot for a caller's own domain
   object to ride through evaluation — Verdict never reads or depends on
   its shape.
@@ -42,23 +55,23 @@ decision above ever looked at each one:
 
 ```python
 import asyncio
-from verdict import AndRule, OrRule, FunctionRule, RuleResult, RulesEngine
+from verdict import AndRule, FunctionRule, OrRule, PredicateOutcome, RulesEngine
 
 
-async def inputs_valid(context: dict) -> RuleResult:
-    return RuleResult(rule_name="inputs_valid", passed=context["has_required_fields"])
+async def inputs_valid(context: dict) -> PredicateOutcome:
+    return PredicateOutcome(passed=context["has_required_fields"])
 
 
-async def auto_approved(context: dict) -> RuleResult:
-    return RuleResult(rule_name="auto_approved", passed=context["auto_approved"])
+async def auto_approved(context: dict) -> PredicateOutcome:
+    return PredicateOutcome(passed=context["auto_approved"])
 
 
-async def reviewer_assigned(context: dict) -> RuleResult:
-    return RuleResult(rule_name="reviewer_assigned", passed=context["reviewer_assigned"])
+async def reviewer_assigned(context: dict) -> PredicateOutcome:
+    return PredicateOutcome(passed=context["reviewer_assigned"])
 
 
-async def review_completed(context: dict) -> RuleResult:
-    return RuleResult(rule_name="review_completed", passed=context["review_completed"])
+async def review_completed(context: dict) -> PredicateOutcome:
+    return PredicateOutcome(passed=context["review_completed"])
 
 
 async def main() -> None:
@@ -163,23 +176,78 @@ sequenceDiagram
 >    reports `auto_approved`'s real failure, something the nested
 >    decision above never had to surface once a later branch succeeded.
 
+## A typed context
+
+The example above uses a `dict`, which stays first-class permanently — a
+rule reused across genuinely different aggregate shapes is naturally
+served by it. But a cohesive family of rules sharing one shape can say
+so, and then a sub-rule expecting a different shape stops being a
+runtime `KeyError` and becomes something a type checker catches:
+
+```python
+import asyncio
+from dataclasses import dataclass
+
+from verdict import AndRule, FunctionRule, PredicateOutcome, RulesEngine
+
+
+@dataclass(frozen=True)
+class OrderContext:
+    total: float
+    is_member: bool
+
+
+async def order_total_met(ctx: OrderContext) -> PredicateOutcome:
+    return PredicateOutcome(passed=ctx.total >= 50)
+
+
+async def is_member(ctx: OrderContext) -> PredicateOutcome:
+    return PredicateOutcome(passed=ctx.is_member)
+
+
+async def main() -> None:
+    free_shipping = AndRule(
+        "free_shipping",
+        [
+            FunctionRule("order_total_met", order_total_met),
+            FunctionRule("is_member", is_member),
+        ],
+    )
+    engine: RulesEngine[OrderContext] = RulesEngine([free_shipping])
+
+    result = await engine.run_named("free_shipping", OrderContext(total=75.0, is_member=False))
+    print(result.passed)                          # False
+    print(result.failing_leaves[0].rule_name)     # is_member
+
+
+asyncio.run(main())
+```
+
+`Rule` is generic over the context it reads from, with no default type
+parameter, so dict-context is written out explicitly as
+`Rule[dict[str, Any]]` rather than being what you get by forgetting.
+[`../../../../docs/architecture/python.md`](../../../../docs/architecture/python.md)
+covers the mechanics;
+[`extending/reusing-a-rule-across-contexts/`](../../../../docs/extending/reusing-a-rule-across-contexts/README.md)
+covers when dict-context is the better answer.
+
 ## Next: build rules from your own configuration, not just hard-coded ones
 
 Because rules are just objects, they're straightforward to build up at
 runtime from whatever configuration a caller already has, rather than
 hand-writing one `FunctionRule` per case — see
 [`extending/data-driven-rule-construction/`](../../../../docs/extending/data-driven-rule-construction/README.md)
-for the scenario and
-[`docs/samples/data-driven-rule-sets/`](../../../../docs/samples/data-driven-rule-sets/python.md)
-for a fuller worked version of the same pattern.
+for the scenario.
 
 ## Related docs
 
-- [`../../README.md`](../../../../README.md) — the narrative front door.
-- [`../../docs/architecture/`](../../../../docs/architecture/README.md) — the full
-  design reasoning.
-- [`../../docs/extending/`](../../../../docs/extending/README.md) — building on top
-  of this package from your own code.
-- [`../../docs/testing/`](../../../../docs/testing/README.md) — `uv sync && uv run
-  pytest`, and what a test here actually needs to prove.
-- [`../../../../docs/samples/`](../../../../docs/samples/README.md) — more worked examples.
+- [`../../../../README.md`](../../../../README.md) — the narrative front
+  door.
+- [`../../../../docs/architecture/`](../../../../docs/architecture/README.md)
+  — the full design reasoning.
+- [`../../../../docs/extending/`](../../../../docs/extending/README.md) —
+  building on top of this package from your own code.
+- [`../../../../docs/testing/`](../../../../docs/testing/README.md) —
+  `uv sync && uv run pytest`, and what a test here actually needs to
+  prove.
+- [`../../../../fixtures/README.md`](../../../../fixtures/README.md) — more worked examples.

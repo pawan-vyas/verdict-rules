@@ -28,15 +28,13 @@ SubjectPolicy _policy(String subjectId) =>
 
 /// Walk the first failing branch down, collecting rule names.
 ///
-/// A nested failure is reachable by following data downward; a result's
-/// data is never flattened.
+/// A nested failure is reachable by following subResults downward;
+/// `RuleResult.data` plays no role here -- composites never write to it.
 List<String> _failingChain(RuleResult result) {
   final chain = <String>[];
   var node = result;
-  while (node.data is List<RuleResult> &&
-      (node.data as List<RuleResult>).isNotEmpty) {
-    final subs = node.data as List<RuleResult>;
-    final failing = subs.where((sub) => !sub.passed);
+  while (node.subResults.isNotEmpty) {
+    final failing = node.subResults.where((sub) => !sub.passed);
     if (failing.isEmpty) break;
     final next = failing.first;
     chain.add(next.ruleName);
@@ -47,7 +45,7 @@ List<String> _failingChain(RuleResult result) {
 
 void main() {
   group('rule shape dispatch', () {
-    // See docs/samples/graduation-requirement-verdict/README.md.
+    // See fixtures/graduation_verdict/README.md.
 
     test('an academic subject is a plain FunctionRule', () {
       final rule = ruleForSubject(_policy('MATH101'));
@@ -145,7 +143,7 @@ void main() {
 
   group('engine run modes', () {
     // runNamed/runGroup/runAll each serve the specific job the sample spec
-    // claims. See docs/samples/graduation-requirement-verdict/README.md.
+    // claims. See fixtures/graduation_verdict/README.md.
 
     test('runNamed looks up one subject', () async {
       final (engine, _) = buildGraduationCheck(_policies, _electiveMinimum);
@@ -201,8 +199,8 @@ void main() {
         expect(
           result.passed,
           expected['passed'],
-          reason:
-              '$studentId: expected passed=${expected['passed']}, got ${result.passed} (${result.detail})',
+          reason: '$studentId: expected passed=${expected['passed']}, got '
+              '${result.passed} (failing: ${result.failingLeaves.map((l) => l.ruleName).join(', ')})',
         );
       });
 
@@ -214,8 +212,7 @@ void main() {
         final record = _students[studentId]!;
         final expected = record.expected;
         final result = await graduates.evaluate(record.context);
-        final data = result.data as List<RuleResult>;
-        expect(data.length, expected['rules_evaluated']);
+        expect(result.subResults.length, expected['rules_evaluated']);
       });
 
       test('$studentId: failing chain matches', () async {
@@ -230,6 +227,40 @@ void main() {
         expect(chain.isNotEmpty ? chain.first : null, expected['failing_rule']);
       });
 
+      test('$studentId: leaves match', () async {
+        final (_, graduates) =
+            buildGraduationCheck(_policies, _electiveMinimum);
+        final record = _students[studentId]!;
+        final expected = record.expected;
+        final result = await graduates.evaluate(record.context);
+        final leaves = result.leaves.map((l) => l.ruleName).toList();
+        expect(leaves, expected['leaves']);
+      });
+
+      test('$studentId: failing leaves match', () async {
+        final (_, graduates) =
+            buildGraduationCheck(_policies, _electiveMinimum);
+        final record = _students[studentId]!;
+        final expected = record.expected;
+        final result = await graduates.evaluate(record.context);
+        final failingLeaves =
+            result.failingLeaves.map((l) => l.ruleName).toList();
+        expect(failingLeaves, expected['failing_leaves']);
+      });
+
+      test('$studentId: decidedBy matches', () async {
+        // One-level explanation for the top-level composite's own verdict
+        // -- exactly the decisive member regardless of position (gita
+        // fails on the *last* of four), or every member on a full pass.
+        final (_, graduates) =
+            buildGraduationCheck(_policies, _electiveMinimum);
+        final record = _students[studentId]!;
+        final expected = record.expected;
+        final result = await graduates.evaluate(record.context);
+        final decidedBy = result.decidedBy.map((r) => r.ruleName).toList();
+        expect(decidedBy, expected['decided_by']);
+      });
+
       test('$studentId: runAll never short-circuits', () async {
         final (engine, _) = buildGraduationCheck(_policies, _electiveMinimum);
         final record = _students[studentId]!;
@@ -237,6 +268,13 @@ void main() {
         final result = await engine.runAll(record.context);
         expect(result.results.length, expected['evaluated']);
         expect(result.passed, expected['passed']);
+        // The run's own view, not the composite's. elena is why this is
+        // asserted separately: she passes every registered subject, so the
+        // run has no failing leaves -- even though FRENCH101's written paper
+        // failed before her exemption carried it. A filter over `leaves`
+        // would surface that paper and report a failure on a passing run.
+        expect(result.failingLeaves.map((l) => l.ruleName).toList(),
+            expected['failing_leaves']);
       });
 
       test('$studentId: group results match', () async {
@@ -278,8 +316,8 @@ void main() {
         final result = await graduates.evaluate(student);
 
         expect(result.passed, expected['passed'], reason: caseName);
-        final data = result.data as List<RuleResult>;
-        expect(data.length, expected['rules_evaluated'], reason: caseName);
+        expect(result.subResults.length, expected['rules_evaluated'],
+            reason: caseName);
         final chain = _failingChain(result);
         expect(chain, expected['failing_chain'], reason: caseName);
 
@@ -288,6 +326,9 @@ void main() {
         expect(runAll.results.length, expectedRunAll['evaluated'],
             reason: caseName);
         expect(runAll.passed, expectedRunAll['passed'], reason: caseName);
+        expect(runAll.failingLeaves.map((l) => l.ruleName).toList(),
+            expectedRunAll['failing_leaves'],
+            reason: caseName);
 
         // The strict form throws; the try-prefixed form returns null.
         final lookups = expected['lookups'] as Map<String, Object?>;

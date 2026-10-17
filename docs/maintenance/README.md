@@ -14,15 +14,25 @@
 
 ## Where to make a change
 
-| I want to... | Touch this file |
-| --- | --- |
-| Add a new concrete `Rule` shape (a new composite, a weighted combinator) | `python/packages/verdict-rules/src/verdict/rule.py` — or a new module if it doesn't naturally fit alongside `FunctionRule`/`AndRule`/`OrRule`; export it from `python/packages/verdict-rules/src/verdict/__init__.py`'s `__all__` either way |
-| Change what `RuleResult`/`RunResult` carries | `python/packages/verdict-rules/src/verdict/result.py` — both are frozen dataclasses, so adding a *required* field breaks every construction site in `rule.py` and `engine.py`, and in every consumer's own adapter (see [`before-merging-checklists.md`](before-merging-checklists.md)) |
-| Add a new `RulesEngine` run mode (a new selection axis beyond "by name"/"by group") | `python/packages/verdict-rules/src/verdict/engine.py` — needs its own index built in `__init__`, the same way `_by_name`/`_by_group` already are |
-| Change the `Rule` `Protocol` itself (its required attributes/method signature) | `python/packages/verdict-rules/src/verdict/rule.py` — the highest-blast-radius change this package can make; every existing `Rule` implementation anywhere (including in consumers) must still satisfy the new shape |
-| Update *why* something is built this way | [`../architecture/`](../architecture/README.md) |
-| Update the quickstart's concepts/example | [`python/packages/verdict-rules/docs/quickstart.md`](../../python/packages/verdict-rules/docs/quickstart.md) |
-| Update the narrative front door | the [root `README.md`](../../README.md) — a distinct doc from [`python/packages/verdict-rules/docs/quickstart.md`](../../python/packages/verdict-rules/docs/quickstart.md), not a copy of it |
+Named by what the module *is*, not by one language's path — every SDK has
+all four, and each language's own `AGENTS.md` carries its real layout
+([Python](../../python/AGENTS.md#layout),
+[JS/TS](../../js/AGENTS.md#layout),
+[Dart](../../dart/AGENTS.md#layout),
+[C#](../../csharp/AGENTS.md#layout)). A fifth language needs no edit here.
+
+| I want to... | Touch | Ripples? |
+| --- | --- | --- |
+| Add a concrete rule shape (a new composite, a weighted combinator) | The rule module, or a new module beside it; export it from that language's own public surface | No — purely additive |
+| Add a run mode (a selection axis beyond by-name/by-group) | The engine module; it needs its own index built at construction, the way the name and group indexes already are | No — purely additive |
+| Change what a result carries | The result module | **Yes** — see [`before-merging-checklists.md`](before-merging-checklists.md) |
+| Change the rule contract itself (required members, the evaluate signature) | The rule module — the highest-blast-radius change this package can make | **Yes** — every rule implementation anywhere, including a consumer's own |
+| Change *why* something is built this way | [`../architecture/`](../architecture/README.md) | — |
+| Change the concepts or worked example a newcomer reads | That language's own quickstart, and the [root `README.md`](../../README.md) if the landing example changes — two distinct docs, not copies | — |
+
+A change in either **Yes** row also needs the public-API snapshot
+regenerated and, if the concept is shared, a row in the concept map —
+see [`api-snapshots.md`](api-snapshots.md).
 
 ```mermaid
 graph TB
@@ -34,7 +44,7 @@ graph TB
     Additive("✅ Additive —<br/>ship it")
     Blast{"⚠️ Blast-radius change?"}
     Checklist[["🔍 Consumer-impact checklist"]]
-    Consumers["📦 Every real<br/>production adapter"]
+    Consumers["📦 Every real<br/>consumer adapter"]
 
     %% Link 0: Change -> RuleShape
     Change -->|"[1]<br/>a new rule shape"| RuleShape
@@ -55,7 +65,7 @@ graph TB
     %% Link 8: Blast -> Checklist
     Blast -->|"[9]<br/>before merging"| Checklist
     %% Link 9: Checklist -> Consumers
-    Checklist -->|"[10]<br/>grep + re-run both suites"| Consumers
+    Checklist -->|"[10]<br/>re-run every suite"| Consumers
 
     style Change fill:#B47EFF,stroke:#9654E8,stroke-width:2px,color:#000
     style RuleShape fill:#D0D0D0,stroke:#999999,stroke-width:2px,color:#000
@@ -77,7 +87,7 @@ graph TB
     %% 6: a result-shape change is a blast-radius change
     %% 7: a Protocol change is a blast-radius change
     %% 8: every blast-radius change goes through the checklist first
-    %% 9: the checklist means grepping and re-testing every consumer's adapter
+    %% 9: the checklist means finding and re-testing every consumer's adapter
     linkStyle 0 stroke:#C9B3FF,stroke-width:2px
     linkStyle 1 stroke:#C9B3FF,stroke-width:2px
     linkStyle 2 stroke:#C9B3FF,stroke-width:2px
@@ -99,12 +109,12 @@ graph TB
 > 2. **Two specific changes are not additive**: touching `RuleResult`/
 >    `RunResult`'s shape, or the `Rule` `Protocol` itself, ripples into
 >    every consumer that already depends on the old shape.
-> 3. **The checklist is the gate, not a suggestion**: grep every real
->    adapter you know about and re-run their own test suites before
->    merging either kind of blast-radius change — an editable-path
->    consumption model (see
->    [`before-merging-checklists.md`](before-merging-checklists.md)) means
->    there's often no version pin to catch a mistake here later.
+> 3. **The checklist is the gate, not a suggestion**: find every real
+>    adapter you know about and re-run its own test suite before merging
+>    either kind of blast-radius change. A consumer vendoring this
+>    package by local path (see
+>    [`before-merging-checklists.md`](before-merging-checklists.md)) has
+>    no version pin to catch a mistake here later.
 
 ### When `architecture/` needs updating, and when it doesn't
 
@@ -134,7 +144,9 @@ graph TB
 | [`import-name-and-second-distribution.md`](import-name-and-second-distribution.md) | The Python import-name decision, and what a second distribution or a promoted [`extending/`](../extending/README.md) scenario would look like |
 | [`before-merging-checklists.md`](before-merging-checklists.md) | The consumer-impact checklist for a shape change, and what a change needs tested |
 | [`discoverability-metadata.md`](discoverability-metadata.md) | Why every package's keywords/topics/tags stay in sync across registries, and pub.dev's one real structural exception |
-| [`doc-authoring/`](doc-authoring/README.md) | The standard every doc in this repo follows, the per-category templates built on top of it, and [how to add a new sample](doc-authoring/samples.md#adding-a-new-sample) |
+| [`api-snapshots.md`](api-snapshots.md) | The committed public-API surface per package, and the cross-language concept map that catches drift between them |
+| [`mutation-testing.md`](mutation-testing.md) | Why line coverage proves little, which tool each language uses, and what a surviving mutant obliges. Each language's own survivor list sits beside it |
+| [`doc-authoring/`](doc-authoring/README.md) | The standard every doc in this repo follows, plus one template per doc category built on top of it |
 
 ## A doc category that will grow per-variant is a directory, not a flat file family
 
@@ -171,7 +183,7 @@ already owns, that doc is a directory-with-README, not a flat file.
 - [`../extending/`](../extending/README.md) — building on top of this
   package from a consumer's own code, without changing anything here.
 - [`../testing/`](../testing/README.md) — the full testing checklist.
-- [`../samples/`](../samples/README.md) —
+- [`../../fixtures/README.md`](../../fixtures/README.md) —
   worked, domain-flavored examples of where a rule engine like this
   earns its keep.
 - [`../future_plan.md`](../future_plan.md) — exploratory, not-yet-decided

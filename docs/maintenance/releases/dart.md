@@ -67,6 +67,10 @@ version's own API endpoint
 (`pub.dev/api/packages/verdict_rules/versions/<version>`).
 `release-dart.yml`'s `verify-published` job asserts that field is
 present after publishing, which is the closest this registry offers to
-confirming what actually shipped. See
+confirming what actually shipped. The gap is on the consumer side too:
+there is no `pypi attestation` or `npm audit signatures` equivalent a Dart
+consumer can run. Publishing over OIDC is still worth it — no long-lived
+credential exists to steal — but that is a property of the ecosystem, not
+something to design around. See
 [`../supply-chain-and-ownership.md`](../supply-chain-and-ownership.md)
 for how this compares across every registry this project targets.

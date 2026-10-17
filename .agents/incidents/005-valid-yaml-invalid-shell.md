@@ -1,4 +1,4 @@
-<!-- Title: Incident 005 — Valid YAML, Invalid Shell -->
+<!-- Title: Incident 005 -- Valid YAML, Invalid Shell -->
 # 005 · A release workflow shipped with an unterminated quote
 
 > **2026-09-12 · caught on `main`, no release lost**

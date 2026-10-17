@@ -93,6 +93,16 @@ describe("RunGroup", () => {
     await assert.rejects(() => engine.runGroup("g1", {}), UnknownLookupError);
   });
 
+  // Not Python-mirrored -- added to kill a mutation-testing survivor. An
+  // empty-string group is treated the same as no group at all, the same
+  // falsy check Python's own `if rule.group:` already applies; this was
+  // simply never asserted on the JS side.
+  it("a rule with an empty-string group is treated as ungrouped", async () => {
+    const engine = new RulesEngine([pass("a", "")]);
+    assert.ok(!engine.groupNames.includes(""));
+    assert.equal(await engine.tryRunGroup("", {}), undefined);
+  });
+
   // Mirrors test_empty_composite_still_passes_vacuously.
   it("empty composite still passes/fails vacuously", async () => {
     assert.equal((await new AndRule("none", []).evaluate({})).passed, true);

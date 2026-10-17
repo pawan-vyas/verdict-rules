@@ -22,16 +22,20 @@ public interface IRule<TContext> {                   // nominal -- must `: IRule
     Task<RuleResult> EvaluateAsync(TContext context, CancellationToken cancellationToken = default);
 }
 public interface IRule : IRule<IReadOnlyDictionary<string, object?>> { }  // the dict-context closure
-public delegate Task<RuleResult> RulePredicate<TContext>(TContext context, CancellationToken cancellationToken = default);
+public delegate Task<PredicateOutcome> RulePredicate<TContext>(TContext context, CancellationToken cancellationToken = default);
 
 // cancellationToken is checked before any rule runs and again between rules, on every
-// composite and engine run method; an already-cancelled token evaluates nothing at all
-// (0.3.2+). Pass a real token when the caller has one.
+// composite and engine run method; an already-cancelled token evaluates nothing at all.
+// Pass a real token when the caller has one.
 
 // Dict-context (IRule's own closure) -- non-generic specializations of the generic forms below:
 new FunctionRule(name, predicate, group: null)       // wraps a plain async predicate (dict-context)
 new AndRule(name, rules, group: null)                // passes only if every sub-rule passes
 new OrRule(name, rules, group: null)                 // passes as soon as one does
+new NotRule(name, rule, group: null)                 // passes exactly when the one wrapped rule fails
+
+rule.SubRules                                        // a composite's parts, un-evaluated; one element for NotRule
+rule is ICompositeRule<TContext> composite           // is it a composite? a leaf is not one
 var engine = new RulesEngine(rules);
 await engine.RunAllAsync(context, cancellationToken);          // every rule, never short-circuits
 await engine.RunNamedAsync(name, context, cancellationToken);  // one rule; throws KeyNotFoundException if absent
@@ -46,12 +50,103 @@ engine.RuleNames, engine.GroupNames                   // IReadOnlyCollection<str
 new FunctionRule<OrderContext>(name, predicate, group: null)
 new AndRule<OrderContext>(name, rules, group: null)
 new OrRule<OrderContext>(name, rules, group: null)
+new NotRule<OrderContext>(name, rule, group: null)
 var typedEngine = new RulesEngine<OrderContext>(rules);
 await typedEngine.RunAllAsync(context, cancellationToken);  // same run methods as above, TContext in place of the dictionary
 
-new RuleResult(ruleName, passed, detail: "", data: null)   // immutable classes, construct directly
-new RunResult(passed, results)
+new PredicateOutcome(passed, detail: "", data: null)  // what a predicate returns; no RuleName on it
+new RuleResult(ruleName, passed, detail: "", data: null, subResults: null, decidedByIndices: null)
+new RunResult(passed, results)                       // all three are immutable
 ```
+
+A predicate reports a `PredicateOutcome`; the `FunctionRule` wrapping it
+owns the name and builds the `RuleResult`:
+
+```csharp
+static Task<PredicateOutcome> OverEighteen(
+    IReadOnlyDictionary<string, object?> ctx, CancellationToken ct = default) =>
+    Task.FromResult(new PredicateOutcome((int)ctx["age"]! >= 18, $"age {ctx["age"]}"));
+
+var rule = new FunctionRule("over_18", OverEighteen);
+```
+
+## Reading a result
+
+**`Leaves`/`FailingLeaves`/`DecidedBy` are methods here, not properties**
+-- this SDK is the only one that spells them that way. A get-only
+collection property would be traversed by any reflection-based serializer
+or structured logger, which is what a result has to stay serializable
+through, and `[JsonIgnore]` is not in-box for `netstandard2.1`:
+
+```csharp
+result.SubResults            // this result's own children, exactly what it evaluated
+result.GetDecidedBy()        // which of those explain this result's own verdict
+result.GetLeaves()           // every leaf reachable from here, flattened
+result.GetFailingLeaves()    // the leaves explaining a failure
+```
+
+`RunResult` exposes `GetLeaves()`/`GetFailingLeaves()` too, flattened
+across every rule the run evaluated. Both forward to each result's own
+view -- in particular `GetFailingLeaves()` is **not** a filter over
+`GetLeaves()`, because a result's verdict is not a function of its
+leaves' verdicts (a failed `NotRule` is its own failing leaf; a passed
+`OrRule` may hold a failed branch it recovered from).
+
+**Only `SubResults` and `DecidedByIndices` are stored**, which is what
+keeps `JsonSerializer.Serialize(result)` a finite tree. Build a result by
+passing positions, not children:
+
+```csharp
+new RuleResult("pair", false, subResults: [a, b], decidedByIndices: [1]);
+```
+
+An index naming a child the result does not have throws
+`ArgumentOutOfRangeException` at construction.
+
+Key an audit trail on a leaf's own `RuleName`, never a composite's:
+
+```csharp
+var verdict = await graduates.EvaluateAsync(student, cancellationToken);
+if (!verdict.Passed)
+{
+    logger.LogWarning(
+        "refused by {Rules}",
+        string.Join(", ", verdict.GetFailingLeaves().Select(leaf => leaf.RuleName)));
+}
+```
+
+Composites short-circuit, so these hold only what was evaluated: a passing
+`OrRule` has no failing leaves even when an earlier branch failed on the
+way to that pass. **A failed `AndRule` reports the failing leaves of the
+one sub-rule that stopped it** -- a single leaf only when that sub-rule is
+itself a leaf, and several when it is a composite that failed on more than
+one of its own. Read the whole list; indexing `[0]` names one of several
+causes without saying so.
+
+## Walking a rule tree
+
+A composite exposes the rules it was built from, before anything is
+evaluated. Pattern-match `ICompositeRule<TContext>`, never a `switch` over
+concrete types — a type switch silently walks past any other composite, your
+own included, and reports the rules inside it as absent rather than failing:
+
+```csharp
+static void Walk<T>(IRule<T> rule, Action<IRule<T>> visit)
+{
+    visit(rule);
+    if (rule is ICompositeRule<T> composite)
+        foreach (var part in composite.SubRules)
+            Walk(part, visit);
+}
+```
+
+`SubRules` is a property, not a method, unlike a result's own derived views:
+those are methods because a get-only collection property gets serialized, and
+a rule is never serialized. The non-generic arity implements
+`ICompositeRule<IReadOnlyDictionary<string, object?>>`, whose element type is
+`IRule<TContext>` rather than `IRule`, so a walk written against the generic
+contract reaches both. `SubRules` is what was *built*; the result views are
+what *ran*.
 
 ## Which run mode
 

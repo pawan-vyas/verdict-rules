@@ -1,0 +1,16 @@
+{
+  "eval_name": "custom-composite-reporting-its-decision",
+  "prompt": "We need a rule shape verdict doesn't ship: \"at least N of these must pass\". Concretely, a vendor is approved if at least 2 of 4 compliance attestations are on file. It should stop as soon as the threshold is met, carry the attestations it actually evaluated, and report which of them drove the decision so our review screen can highlight exactly those. We also write the whole result to our audit store as JSON. Can you build the custom composite?",
+  "expected_output": "A custom Rule satisfying the structural Protocol, composing SequentialEvaluator with its own StepDecider rather than hand-rolling a loop, building a RuleResult with decided_by_indices. The Python-specific correctness bar: RuleResult is a frozen dataclass, so serialization goes through dataclasses.asdict before json.dumps -- json.dumps does not accept a dataclass directly -- and the derived properties are absent from that output.",
+  "files": [
+    "files/pyproject.toml"
+  ],
+  "expectations": [
+    "The composite satisfies the Rule Protocol structurally, without inheriting from anything, and composes SequentialEvaluator with its own StepDecider rather than writing its own evaluation loop",
+    "The decider stops as soon as the threshold is met, and the result's sub_results hold only the attestations actually evaluated -- never padded to all four",
+    "The deciding children are passed to the RuleResult constructor as decided_by_indices -- positions within sub_results -- not as RuleResult objects",
+    "Serialization converts the dataclass first (dataclasses.asdict or equivalent) rather than passing the result to json.dumps directly, which would fail",
+    "The response does not expect the leaves, failing-leaves or decided-by views in the serialized output, since all three are properties",
+    "The vacuous case is addressed explicitly: what the composite does when the threshold is zero, or when it is handed no sub-rules at all"
+  ]
+}

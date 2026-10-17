@@ -1,0 +1,33 @@
+{
+  "fence_schema": 1,
+  "fence_version": "0.4.1",
+  "applied_utc": "2026-10-17T09:44:41Z",
+  "homes": {
+    "memory": ".agents/memory",
+    "plans": ".agents/plans",
+    "incidents": ".agents/incidents",
+    "scratch": ".agents/scratch"
+  },
+  "decisions": {
+    "agents-home": {
+      "decision": "accepted",
+      "at_version": "0.4.1"
+    },
+    "plans-home": {
+      "decision": "accepted",
+      "at_version": "0.4.1"
+    },
+    "incidents-home": {
+      "decision": "accepted",
+      "at_version": "0.4.1"
+    },
+    "durable-index": {
+      "decision": "accepted",
+      "at_version": "0.4.1"
+    },
+    "harness-stores": {
+      "decision": "accepted",
+      "at_version": "0.4.1"
+    }
+  }
+}

@@ -51,10 +51,15 @@ targets lets you take a version back.
 So the checks are spread across three moments rather than gathered into one:
 
 **Before merging** — `check-release-readiness.yml`, on every pull request.
-Every manifest version has a matching section in *its own* changelog, each
-changelog is ordered newest-first, and `scripts/build.sh` produces all three
-skill artifacts with an intact payload.
-A missing changelog section fails here, while the change is still a proposal.
+Its step list is the authoritative inventory; don't restate it here, because a
+new gate would then mean editing this file too. What the stage is *for* is the
+class of defect that leaves every other signal green: a manifest version with no
+matching section in its own changelog, a changelog out of order, a shipped link
+pointing at the wrong version, a public API symbol nothing classified, a link
+label naming a path that does not exist, an em-dash in a value a registry page
+will render, or `scripts/build.sh` producing an artifact with a hollow payload.
+None of those fail a test suite. All of them fail here, while the change is
+still a proposal.
 
 **Before publishing** — the `detect` job re-checks the changelog section, so
 anything that reached `main` another way still cannot publish. Without it, a

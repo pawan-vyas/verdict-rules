@@ -1,6 +1,6 @@
 [project]
 name = "verdict-rules"
-version = "0.3.1"
+version = "0.4.0"
 description = "A small, zero-dependency, async-native rule-evaluation engine for Python."
 readme = "README.md"
 authors = [
@@ -39,7 +39,7 @@ classifiers = [
 Homepage = "https://github.com/pawan-vyas/verdict-rules"
 Repository = "https://github.com/pawan-vyas/verdict-rules"
 Issues = "https://github.com/pawan-vyas/verdict-rules/issues"
-Changelog = "https://github.com/pawan-vyas/verdict-rules/blob/python-v0.3.1/python/packages/verdict-rules/CHANGELOG.md"
+Changelog = "https://github.com/pawan-vyas/verdict-rules/blob/python-v0.4.0/python/packages/verdict-rules/CHANGELOG.md"
 
 [build-system]
 requires = ["uv_build>=0.11.14,<0.13.0"]
@@ -52,3 +52,12 @@ build-backend = "uv_build"
 # beautifulsoup4 -> bs4. Without this, uv_build looks for
 # src/verdict_rules/ (the normalized project name) instead of src/verdict/.
 module-name = "verdict"
+
+[tool.mutmut]
+# See ../../../docs/maintenance/mutation-testing.md for why this exists and
+# what a surviving mutant requires. Scoped to the library source only --
+# never examples/, never the tests themselves -- so a mutant always lands
+# in code a test is supposed to be exercising, not in the harness that
+# exercises it.
+source_paths = ["src/verdict"]
+pytest_add_cli_args_test_selection = ["tests"]

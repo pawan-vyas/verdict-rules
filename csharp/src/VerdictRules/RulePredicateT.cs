@@ -12,4 +12,4 @@ namespace VerdictRules;
 /// composite triggered this evaluation.
 /// </param>
 /// <returns>The outcome of the one condition this predicate decides.</returns>
-public delegate Task<RuleResult> RulePredicate<TContext>(TContext context, CancellationToken cancellationToken = default);
+public delegate Task<PredicateOutcome> RulePredicate<TContext>(TContext context, CancellationToken cancellationToken = default);

@@ -38,3 +38,9 @@ plans directory nobody trusts.
   like every other file. Generalize a consumer's vocabulary out before
   a plan lands here.
 - **Transient working notes** → `.agents/scratch/` (gitignored).
+
+## Index
+
+| Plan | Hook |
+| :-- | :-- |
+| [composite-sub-rules-convention](composite-sub-rules-convention.md) | A composite's parts become readable, by convention rather than by type |

@@ -4,7 +4,7 @@ import { FunctionRule } from "../dist/index.js";
 export function pass(name, group, data) {
   return new FunctionRule(
     name,
-    async () => ({ ruleName: name, passed: true, ...(data !== undefined ? { data } : {}) }),
+    async () => ({ passed: true, ...(data !== undefined ? { data } : {}) }),
     group,
   );
 }
@@ -13,7 +13,7 @@ export function pass(name, group, data) {
 export function fail(name, group, detail) {
   return new FunctionRule(
     name,
-    async () => ({ ruleName: name, passed: false, ...(detail !== undefined ? { detail } : {}) }),
+    async () => ({ passed: false, ...(detail !== undefined ? { detail } : {}) }),
     group,
   );
 }
@@ -28,7 +28,7 @@ export function counting(name, passes, log, group) {
     name,
     async () => {
       log.push(name);
-      return { ruleName: name, passed: passes };
+      return { passed: passes };
     },
     group,
   );

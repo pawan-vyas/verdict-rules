@@ -1,4 +1,4 @@
-<!-- Title: Incident 004 — Research Published To Public Surfaces -->
+<!-- Title: Incident 004 -- Research Published To Public Surfaces -->
 # 004 · Competitive research written into public issues and PRs
 
 > **2026-09-11 · required force-pushing three branches**

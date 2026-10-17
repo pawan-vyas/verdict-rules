@@ -6,20 +6,21 @@
 > JS/TS code.
 
 ```ts
-import { FunctionRule, RulesEngine, type RuleResult } from "verdict-rules";
+import { FunctionRule, RulesEngine, type PredicateOutcome } from "verdict-rules";
 
 interface UserContext {
   betaTester?: boolean;
 }
 
-async function isBetaTester(context: UserContext): Promise<RuleResult> {
-  return { ruleName: "is_beta_tester", passed: context.betaTester ?? false };
+async function isBetaTester(context: UserContext): Promise<PredicateOutcome> {
+  return { passed: context.betaTester ?? false };
 }
 
 const engine = new RulesEngine<UserContext>([new FunctionRule("is_beta_tester", isBetaTester, "beta_checks")]);
 
 const result = await engine.tryRunGroup("beta_checks", { betaTester: true });
-// { passed: true, results: [ { ruleName: 'is_beta_tester', passed: true } ] }
+// result.passed === true, result.results[0].ruleName === "is_beta_tester"
+// -- that name is the FunctionRule's; the predicate never sets one.
 
 await engine.tryRunGroup("no_such_group", {});
 // undefined -- the group was never registered
@@ -29,6 +30,9 @@ The four situations from the spec, as four different ways to consume
 that same `undefined`:
 
 ```ts
+const group = "beta_checks";
+const context: UserContext = { betaTester: true };
+
 // 1. Absence means "no constraint applies"
 const result1 = await engine.tryRunGroup(group, context);
 const allowed1 = result1 !== undefined ? result1.passed : true;
@@ -41,14 +45,14 @@ const allowed2 = result2 !== undefined ? result2.passed : false;
 const checks = [await engine.tryRunGroup(group, context)].filter((r) => r !== undefined);
 
 // 4. Absence is genuinely unexpected -- say so immediately
-const result4 = await engine.runGroup(group, context); // throws UnknownLookupError
+const result4 = await engine.runGroup(group, context); // throws UnknownLookupError if absent
 ```
 
 `tryRunGroup` is the primitive `runGroup` is built on, not the other way
 around:
 
-```ts
-async runGroup(group: string, context: Context): Promise<RunResult> {
+```text
+async runGroup(group: string, context: TContext): Promise<RunResult> {
   const result = await this.tryRunGroup(group, context);
   if (result === undefined) {
     throw new UnknownLookupError("group", group);

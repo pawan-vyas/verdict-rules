@@ -11,13 +11,14 @@
 ```python
 from dataclasses import dataclass
 from typing import Protocol
-from verdict import AndRule, FunctionRule, RuleResult
+
+from verdict import FunctionRule, PredicateOutcome, RulesEngine
 
 
 @dataclass
 class RateLimitStatus:
     """This adapter's own domain type — verdict never sees it directly,
-    only hands it back as RuleResult.data's opaque payload."""
+    only carries it through as the result's opaque payload."""
     window: str
     used: int
     quota: int
@@ -36,18 +37,21 @@ class VerdictRateLimiter:
 
     async def check(self, context: dict, windows: dict[str, int]) -> list[RateLimitStatus]:
         def rule_for(window: str, quota: int) -> FunctionRule:
-            async def predicate(ctx: dict) -> RuleResult:
+            async def predicate(ctx: dict) -> PredicateOutcome:
                 used = ctx[f"{window}_used"]
-                return RuleResult(
-                    rule_name=f"{window}_under_quota",
+                return PredicateOutcome(
                     passed=used < quota,
                     data=RateLimitStatus(window, used, quota),
                 )
             return FunctionRule(f"{window}_under_quota", predicate)
 
-        combined = AndRule("rate_limits", [rule_for(w, q) for w, q in windows.items()])
-        result = await combined.evaluate(context)
-        return [r.data for r in result.data]
+        # run_all, not a composite: the contract promises one status per
+        # window, and a composite short-circuits — the first window over
+        # quota would end evaluation and the rest would be missing from the
+        # returned list, silently.
+        engine = RulesEngine([rule_for(w, q) for w, q in windows.items()])
+        run = await engine.run_all(context)
+        return [r.data for r in run.results]
 
 
 class SimpleRateLimiter:
@@ -61,6 +65,10 @@ class SimpleRateLimiter:
             for window, quota in windows.items()
         ]
 ```
+
+The domain type rides through on the predicate's own `data`, which
+`FunctionRule` copies onto the result it builds. Verdict never reads it —
+reading it back out is this adapter's business and nobody else's.
 
 The composition root — the one place that decides which implementation
 is actually running — is a single line:

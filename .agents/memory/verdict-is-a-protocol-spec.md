@@ -12,7 +12,7 @@
 Sequential never-concurrent evaluation, real short-circuiting, vacuous-truth
 polarity per composite shape, emptiness-is-not-absence, opaque result data,
 the one-adapter-module boundary. This is the spec. It is enforced mechanically
-by `fixtures/graduation_verdict/`, not by anyone remembering.
+by [`fixtures/`](../../fixtures/README.md), not by anyone remembering.
 
 **2. The idiomatic surface — expected to differ, and should.**
 Naming conventions, error types, the async shape, cancellation, ownership,
@@ -46,10 +46,11 @@ own conventions decide.
 
 ## Why this framing is the right one
 
-It makes the project honest about what it is. "The same seven types in four
+It makes the project honest about what it is. "The same list of types in four
 languages" is a weaker and less useful claim than "the same guarantees,
 expressed natively in four languages." The first invites a port that reads like
-a translation; the second invites one that reads like it was written there.
+a translation; the second invites one that reads like it was written there —
+and it goes stale the moment the list grows, which it has.
 
 Confirmed with the maintainer, 2026-09-12, while deciding whether C# should
 take a `CancellationToken` that no other SDK has.

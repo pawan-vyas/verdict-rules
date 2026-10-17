@@ -1,0 +1,16 @@
+{
+  "eval_name": "which-result-view-to-read",
+  "prompt": "Our loan pre-approval check is already built with verdict and works. The rule tree is nested a few levels deep -- a top-level AndRule over identity, affordability and risk, each of which is itself a composite, and the risk branch wraps a negation (applicant is NOT on the exclusion list). Two things need to read the result now. (1) Our compliance log needs one line per refusal naming the specific check that refused, and auditors will query on that name, so it has to be stable. (2) The underwriter's screen needs to show, for the top-level decision, which of its three immediate branches actually drove the outcome -- not the whole tree. Can you wire both up?",
+  "expected_output": "A response that reaches for two different views, because these are two different questions. The compliance log keys on the terminal failing check -- the failing-leaves view, and specifically a leaf's own rule name rather than the top-level composite's. The underwriter screen uses the one-level decided-by view on the top-level result. The response should not use the plain leaves view for the compliance line (it includes passing checks), should not chain decided-by downward to try to reach the terminal failure, and should not key the audit log on a composite's name.",
+  "files": [
+    "files/pyproject.toml"
+  ],
+  "expectations": [
+    "The compliance log reads the failing-leaves view, not the plain leaves view -- the latter includes checks that passed",
+    "The compliance log keys on a leaf result's own rule name, not the top-level composite's name, with the reason given being that a composite's name only says something in the group failed",
+    "The underwriter screen reads the one-level decided-by view on the top-level result, not a flattened or recursive view",
+    "The response treats these as two genuinely different questions rather than deriving one from the other, and does not chain decided-by downward expecting it to converge on the terminal failure",
+    "If the negation branch is discussed, the response gets its direction right: a failed negation is explained by its inner rule having *passed*, so decided-by there names a passing child",
+    "The response does not claim that the failing-leaves view is a filter over the leaves view -- a passing result contributes no failing leaves even when an earlier short-circuited branch failed on the way to that pass"
+  ]
+}

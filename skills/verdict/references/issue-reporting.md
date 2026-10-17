@@ -26,6 +26,9 @@ Checked for a duplicate first (see above)? Then write the report body,
 one defect per issue, title stating the observed fault in one line:
 
 1. **Environment** — language, verdict package version, runtime version.
+   A project on a local path or a checked-out clone has no published
+   version to name: give the commit SHA instead, and say the working tree
+   is local, since it may hold changes no tag contains.
 2. **Reproduction** — the smallest self-contained, deterministic program
    that shows the fault, using neutral names and fixed inputs.
 3. **Expected behavior** — citing the documented contract (`SKILL.md`,
@@ -81,7 +84,9 @@ Label the issue `enhancement`.
 ## What never goes in either report
 
 - **No domain names.** Replace rule, group, and context names with
-  neutral ones (`rule_a`, `always_true`, `checkout_group`).
+  neutral ones (`rule_a`, `always_true`, `group_one`) — neutral means
+  carrying no trace of what the application does, so a name like
+  `checkout_group` or `kyc_rule` has not been redacted.
 - **No context values, entity ids, user data, credentials, or internal
   hostnames.**
 - **No application logs or stack frames.** Keep only verdict's own

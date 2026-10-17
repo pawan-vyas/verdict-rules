@@ -1,6 +1,7 @@
 ---
 kind: session-handoff
-handoff_schema: 1
+handoff_schema: 2
+sealed: true
 updated_utc: <FILL: 2026-01-01T00:00:00Z>
 updated_local: <FILL: 2026-01-01T05:30:00+05:30>
 branch: <FILL: main>

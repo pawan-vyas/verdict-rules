@@ -36,7 +36,7 @@ into two unrelated composites:
 
 ```python
 from dataclasses import dataclass
-from verdict import AndRule, FunctionRule
+from verdict import AndRule, FunctionRule, PredicateOutcome
 
 
 @dataclass(frozen=True)
@@ -44,8 +44,8 @@ class UserFlag:
     is_verified: bool
 
 
-async def is_verified_user(context: UserFlag) -> RuleResult:
-    return RuleResult(rule_name="is_verified_user", passed=context.is_verified)
+async def is_verified_user(context: UserFlag) -> PredicateOutcome:
+    return PredicateOutcome(passed=context.is_verified)
 
 
 @dataclass(frozen=True)
@@ -75,6 +75,11 @@ result.passed  # True -- delegated straight through to is_verified_user
 `ProjectingRule` satisfies `Rule[TOuter]` structurally, the same way
 every other rule in this package does — nothing about `AndRule` or
 `RulesEngine` needed to change to accept it.
+
+Note which of the two returns what: `ProjectingRule.evaluate` returns a
+`RuleResult`, because it *is* a rule and that is a rule's contract.
+`is_verified_user` returns a `PredicateOutcome`, because it is a
+predicate and the `FunctionRule` wrapping it owns the name.
 
 ## Related
 

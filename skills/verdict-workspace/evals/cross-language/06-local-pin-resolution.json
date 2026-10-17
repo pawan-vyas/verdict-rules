@@ -1,0 +1,18 @@
+{
+  "eval_name": "local-pin-resolution",
+  "prompt": "We have a settlement service that decides whether a payout can be released. Right now that decision is a long if/else chain and we want it rebuilt on verdict as named rules. One of the conditions has to be reusable against a second, differently-shaped context we already have elsewhere in the service, so I'd like whatever the documented approach for that is rather than something improvised. We vendor verdict as a local checkout under vendor/verdict-rules and pin to it, so we can read the source and send fixes upstream. Can you put the rule set together?",
+  "expected_output": "A response that reads the manifest, sees the dependency is a local path checkout rather than a registry version, and therefore reads the vendored source and the docs sitting beside it on disk, in place -- the source and its documentation are already present at exactly the version in use, so there is nothing to resolve and nothing to fetch. It should not resolve a <language>-v<version> tag, because a path pin names no published version and the working tree may carry changes no tag contains, and it should not fall back to the default branch. On the design itself, reusing one rule against a second context shape goes through an explicit projecting adapter rather than by loosening a composite's own context type, since every sub-rule inside one composite shares the same context type. A response that fetches from main, that invents a version to resolve a tag from, or that widens a composite's context type to fit both shapes, has it wrong.",
+  "files": [
+    "files/local-pin/pyproject.toml"
+  ],
+  "expectations": [
+    "The language is established by reading the project's own manifest before any API is written",
+    "The response recognises the verdict dependency as a local path checkout rather than a registry version, and says so",
+    "Deeper documentation is read from the vendored checkout already on disk, in place, rather than fetched from anywhere",
+    "The response does not attempt to resolve a release tag such as python-v0.4.0, and does not treat the project version (4.3.0) as verdict's version",
+    "The response does not read or fetch from the repository's default branch as a fallback",
+    "If the response states why reading on disk is correct here, it is because the code and the documentation beside it are at the same version and cannot disagree -- not merely because it is faster or more convenient",
+    "Reusing one rule across two differently-shaped contexts is done with an explicit projecting adapter, never by widening a composite's own context type or by making the shared context a union of both shapes",
+    "The rule set is assembled from named rules on an engine, with the payout decision runnable by name, rather than a single composite evaluated directly"
+  ]
+}

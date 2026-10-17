@@ -1,0 +1,9 @@
+{
+  "note": "The policy numbers every language's port reads rather than hardcodes. Changing one here changes all four ports and their suites at once, which is the point -- see README.md.",
+  "price_floor_cents": 100,
+  "allowed_categories": ["books", "electronics", "home"],
+  "purchase_limit_cents": 100000,
+  "high_value_threshold_cents": 50000,
+  "blocked_countries": ["ir", "nk"],
+  "new_seller_threshold_days": 30
+}

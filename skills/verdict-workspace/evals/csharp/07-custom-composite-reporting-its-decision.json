@@ -1,0 +1,17 @@
+{
+  "eval_name": "custom-composite-reporting-its-decision",
+  "prompt": "We need a rule shape verdict doesn't ship: \"at least N of these must pass\". Concretely, a vendor is approved if at least 2 of 4 compliance attestations are on file. It should stop as soon as the threshold is met, carry the attestations it actually evaluated, and report which of them drove the decision so our review screen can highlight exactly those. We also write the whole result to our audit store as JSON. Can you build the custom composite?",
+  "expected_output": "A custom IRule implementation composing SequentialEvaluator with its own StepDecider rather than hand-rolling a loop, building a RuleResult that carries the evaluated sub-results and identifies the deciding ones. The C#-specific correctness bar: the deciding children are supplied to the constructor as DecidedByIndices (positions within SubResults), and read back via the GetDecidedBy() method -- DecidedBy is not a property on this type, and neither are Leaves or FailingLeaves. Serialization uses JsonSerializer on the result directly.",
+  "files": [
+    "files/StorefrontApi.csproj"
+  ],
+  "expectations": [
+    "The composite implements IRule (or IRule<TContext>) and composes SequentialEvaluator with its own StepDecider rather than writing its own evaluation loop",
+    "The decider stops as soon as the threshold is met, and the result's sub-results hold only the attestations actually evaluated -- never padded to all four",
+    "The deciding children are passed to the RuleResult constructor as DecidedByIndices -- positions within SubResults -- not as RuleResult objects",
+    "The deciding children are read back with GetDecidedBy(), not a DecidedBy property, and leaves are read with GetLeaves()/GetFailingLeaves() rather than properties",
+    "Code that accesses any of those three as a property is not presented as working, since it does not compile",
+    "The result is serialized with JsonSerializer directly rather than a hand-written walk, and the response does not expect the derived views in the output",
+    "The vacuous case is addressed explicitly: what the composite does when the threshold is zero, or when it is handed no sub-rules at all"
+  ]
+}

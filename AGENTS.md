@@ -8,14 +8,22 @@ model given this file as raw context.
 ## What this repo is
 
 `verdict` is a small, zero-dependency, async-native rule-evaluation
-engine — the same `Rule`/`FunctionRule`/`AndRule`/`OrRule`/
-`RulesEngine`/`RuleResult`/`RunResult` design and execution-model
-guarantees, meant to exist in more than one language. **Only Python
-ships today** — see [`python/README.md`](python/packages/verdict-rules/README.md) and its own
-[`python/AGENTS.md`](python/AGENTS.md) for everything Python-specific. A second language
-lands as a new top-level directory alongside `python/`, with its own
-`AGENTS.md` for that language's own conventions — check which
-directories actually exist before assuming a language has an SDK yet.
+engine — the same `Rule`/`FunctionRule`/`AndRule`/`OrRule`/`NotRule`/
+`RulesEngine`/`PredicateOutcome`/`RuleResult`/`RunResult` design and
+execution-model guarantees, in more than one language. **Four SDKs ship
+today**, each a top-level directory with its own `AGENTS.md` for that
+language's conventions and its own package docs:
+
+| Language | Standing instructions | Package |
+| :-- | :-- | :-- |
+| Python | [`python/AGENTS.md`](python/AGENTS.md) | [`python/packages/verdict-rules/`](python/packages/verdict-rules/README.md) |
+| JS/TS | [`js/AGENTS.md`](js/AGENTS.md) | [`js/packages/verdict-rules/`](js/packages/verdict-rules/README.md) |
+| Dart | [`dart/AGENTS.md`](dart/AGENTS.md) | [`dart/packages/verdict_rules/`](dart/packages/verdict_rules/README.md) |
+| C# | [`csharp/AGENTS.md`](csharp/AGENTS.md) | [`csharp/src/VerdictRules/`](csharp/src/VerdictRules/README.md) |
+
+A fifth language lands the same way, adding a directory and nothing
+else — check which directories actually exist before assuming a
+language has an SDK.
 [`skills/verdict/`](skills/verdict/SKILL.md) is the AI-agent skill for
 building with verdict, vendored back into consuming projects via
 `scripts/install.sh`.
@@ -135,6 +143,29 @@ with what prevents a repeat, which is the part that makes it worth writing.
 go in [`HANDOFF.md`](HANDOFF.md) §3; anything longer-lived goes in `.agents/plans/`
 as a named plan. A second "notes" or "TODO" file at the repo root is
 how context gets lost, not how it gets organized.
+
+## Durable context
+
+**Facts** — [`.agents/memory/`](.agents/memory/README.md) · 6 shown, [+18 more](.agents/memory/README.md#index)
+
+- [public-surfaces-stay-professional](.agents/memory/public-surfaces-stay-professional.md) — no competitive analysis or narration in public text
+- [publish-over-oidc-not-tokens](.agents/memory/publish-over-oidc-not-tokens.md) — provenance depends on OIDC publishing
+- [adding-a-variant-is-a-new-file](.agents/memory/adding-a-variant-is-a-new-file.md) — never edit a file the other variants share
+- [a-behaviour-change-is-a-documentation-change](.agents/memory/a-behaviour-change-is-a-documentation-change.md) — sweep every doc the change falsifies
+- [when-you-decline-record-which-question-failed](.agents/memory/when-you-decline-record-which-question-failed.md) — record the right reason, not just "no"
+- [run-costly-subagent-batches-sequentially](.agents/memory/run-costly-subagent-batches-sequentially.md) — one at a time, never parallel
+
+**Incidents** — [`.agents/incidents/`](.agents/incidents/README.md) · read this list before anything irreversible
+
+- [001](.agents/incidents/001-release-notes-mangled-by-shell.md) — backticks in a shell string emptied release notes
+- [003](.agents/incidents/003-pushed-mid-rebase.md) — pushed while a rebase was unresolved
+- [006](.agents/incidents/006-deleting-a-base-branch-closes-a-stacked-pr.md) — `--delete-branch` closed a stacked PR
+- [007](.agents/incidents/007-edited-on-the-wrong-branch.md) — check the branch before the first edit
+- 002, 004, 005, 008, 009 — [see the index](.agents/incidents/README.md#index)
+
+**Plans** — [`.agents/plans/`](.agents/plans/README.md)
+
+- [composite-sub-rules-convention](.agents/plans/composite-sub-rules-convention.md) — composite parts readable by convention, not type
 
 ## Asking the user
 
@@ -302,10 +333,13 @@ they do** — the tests pass and CI stays green while the wrong answer
 sits there. Sweep outward from the code every time: source docstrings,
 [`docs/architecture/`](docs/architecture/README.md) **and its diagrams**, [`docs/extending/`](docs/extending/README.md) (does
 this enable a scenario, or invalidate one?), [`docs/testing/`](docs/testing/README.md) (it names
-specific tests by name), [`docs/maintenance/`](docs/maintenance/README.md), each language's
-quickstart and samples, the shared fixture if the change is behavioural,
-`skills/verdict/references/` with a `plugin.json` bump, that package's own
-`CHANGELOG.md`, and the [root `README.md`](README.md).
+specific tests by name), [`docs/maintenance/`](docs/maintenance/README.md), **each language's own
+`AGENTS.md`** (they restate the guarantees in that language's own terms,
+so a contract change leaves all of them wrong at once), each language's
+quickstart, the shared fixture if the change is behavioural,
+`skills/verdict/SKILL.md` and `skills/verdict/references/` with a
+`plugin.json` bump, that package's own `CHANGELOG.md`, and the
+[root `README.md`](README.md).
 
 A behavioural change usually also means the skill's evals no longer
 measure the current skill. If the change introduced a way to be *subtly*

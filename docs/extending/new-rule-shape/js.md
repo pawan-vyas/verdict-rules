@@ -6,7 +6,7 @@
 > JS/TS code.
 
 ```ts
-import { FunctionRule, type Rule, type RuleResult } from "verdict-rules";
+import { FunctionRule, RuleResult, type Rule } from "verdict-rules";
 
 /**
  * Passes if at least `minimum` of the given sub-rules pass.
@@ -34,12 +34,13 @@ class ThresholdRule<TContext> implements Rule<TContext> {
       subResults.push(await rule.evaluate(context));
     }
     const passedCount = subResults.filter((r) => r.passed).length;
-    return {
-      ruleName: this.name,
-      passed: passedCount >= this.#minimum,
+    return new RuleResult(this.name, passedCount >= this.#minimum, {
       detail: `${passedCount} of ${this.#rules.length} passed, needed ${this.#minimum}`,
-      data: subResults,
-    };
+      subResults,
+      // Which children explain this verdict: the ones that passed. Given as
+      // positions within subResults, not as the results themselves.
+      decidedByIndices: subResults.flatMap((r, i) => (r.passed ? [i] : [])),
+    });
   }
 }
 ```
@@ -58,9 +59,9 @@ sub-rule fails:
 const atLeastTwo = new ThresholdRule<Record<string, unknown>>(
   "at_least_two",
   [
-    new FunctionRule("rule_1", async () => ({ ruleName: "rule_1", passed: true })),
-    new FunctionRule("rule_2", async () => ({ ruleName: "rule_2", passed: true })),
-    new FunctionRule("rule_3", async () => ({ ruleName: "rule_3", passed: false })),
+    new FunctionRule("rule_1", async () => ({ passed: true })),
+    new FunctionRule("rule_2", async () => ({ passed: true })),
+    new FunctionRule("rule_3", async () => ({ passed: false })),
   ],
   2,
 );
@@ -98,9 +99,8 @@ const qualifies = new ThresholdRule<OrderContext>(
 
 - [`README.md`](README.md) — the language-agnostic scenario this page
   implements.
-- [`../../samples/graduation-requirement-verdict/`](../../samples/graduation-requirement-verdict/README.md) —
-  `AtLeastNRule`, the design this exact pattern would back, once this
-  SDK has its own tested instance.
+- [`../../../fixtures/graduation_verdict/README.md`](../../../fixtures/graduation_verdict/README.md) —
+  `AtLeastNRule`, a real, tested instance of this exact pattern.
 - [`../reusing-a-rule-across-contexts/js.md`](../reusing-a-rule-across-contexts/js.md) —
   `ProjectingRule` itself, used above to mix a sub-rule reading a
   narrower context into a `ThresholdRule<TContext>` bound to a wider

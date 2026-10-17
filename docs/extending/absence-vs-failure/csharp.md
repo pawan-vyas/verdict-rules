@@ -10,8 +10,8 @@ using VerdictRules;
 
 record UserContext(bool BetaTester = false);
 
-static Task<RuleResult> IsBetaTester(UserContext context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult("is_beta_tester", context.BetaTester));
+static Task<PredicateOutcome> IsBetaTester(UserContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome(context.BetaTester));
 
 var engine = new RulesEngine<UserContext>(new IRule<UserContext>[]
 {

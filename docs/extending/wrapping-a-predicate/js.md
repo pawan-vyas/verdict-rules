@@ -6,13 +6,12 @@
 > JS/TS code.
 
 ```ts
-import { FunctionRule, type Context, type RuleResult } from "verdict-rules";
+import { FunctionRule, type Context, type PredicateOutcome } from "verdict-rules";
 
-async function cartMeetsMinimum(context: Context): Promise<RuleResult> {
+async function cartMeetsMinimum(context: Context): Promise<PredicateOutcome> {
   const total = context.cartTotal as number;
   const minimum = context.minimumForOffer as number;
   return {
-    ruleName: "cart_meets_minimum",
     passed: total >= minimum,
     detail: `${total} vs minimum ${minimum}`,
   };
@@ -31,9 +30,8 @@ interface CartContext {
   minimumForOffer: number;
 }
 
-async function cartMeetsMinimumTyped(context: CartContext): Promise<RuleResult> {
+async function cartMeetsMinimumTyped(context: CartContext): Promise<PredicateOutcome> {
   return {
-    ruleName: "cart_meets_minimum",
     passed: context.cartTotal >= context.minimumForOffer,
     detail: `${context.cartTotal} vs minimum ${context.minimumForOffer}`,
   };

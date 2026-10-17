@@ -1,0 +1,23 @@
+# A minimal, deliberately ordinary project manifest whose verdict dependency is
+# a LOCAL CHECKOUT rather than a registry version. It needs its own copy, not
+# the shared files/pyproject.toml beside it, because the whole point of this
+# fixture is the dependency form: a path pin has no published version to resolve
+# and no tag to read documentation at, which is a different branch of the
+# skill's own "read the version this project actually has" instruction.
+#
+# This is how every current adopter actually runs -- a cloned, pinned working
+# tree they can read and suggest changes against -- so it is the branch most
+# worth measuring.
+#
+# Python is just the concrete instance; the behaviour under test belongs to no
+# single SDK, which is why this eval lives in cross-language/.
+[project]
+name = "settlement-service"
+version = "4.3.0"
+requires-python = ">=3.10"
+dependencies = [
+    "verdict-rules",
+]
+
+[tool.uv.sources]
+verdict-rules = { path = "vendor/verdict-rules", editable = true }

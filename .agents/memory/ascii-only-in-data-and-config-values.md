@@ -26,10 +26,10 @@ a diagram node, restricted everywhere dispatch/parsing actually happens
 — applied to punctuation instead of emoji.
 
 **Why draw the line there and not at "anywhere in the repo"**: the repo
-has roughly 2000 em-dashes across 137 markdown files, all of it
+has thousands of em-dashes across every markdown file, all of it
 deliberate prose voice with zero evidence of causing any actual parsing
-failure — audited directly (`grep` across every source extension) and
-found no leaked escape sequence, no mojibake, nothing broken. Purging
+failure — audited directly across every source extension and found no
+leaked escape sequence, no mojibake, nothing broken. Purging
 those would reverse an established, working style for no real defect
 found. The actual, verified risk is narrower: a value serialized by one
 language's JSON/YAML library and consumed or re-serialized by another's,
@@ -49,3 +49,16 @@ than the character it represents.
   file that also contains ordinary comments in the house prose style —
   judge by whether the string is consumed by tooling, not by the file
   extension it sits in.
+- **`scripts/check_ascii_values.py` enforces this**, run by
+  `check-release-readiness.yml` on every pull request. The exemptions it
+  encodes are the line this file draws, so they are worth knowing: a
+  whole-line *or trailing* `#` comment in YAML/TOML, a `//` comment in a
+  tsconfig (which is JSONC — TypeScript's own parser accepts them), an
+  XML comment in a `.csproj`, and every line of a shell `run:` block in a
+  workflow, since an `echo` there is written for a person reading a CI
+  log. A plain `.json` file gets no exemption at all, because it has no
+  comment syntax, so *every* em-dash in one is in a value by definition.
+- The case that cannot be taken back is a manifest's `description`: it
+  renders straight onto a registry page, and no registry retroactively
+  edits the page of an already-published version. All four published
+  descriptions are clean; the gate exists so they stay that way.

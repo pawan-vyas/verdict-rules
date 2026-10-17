@@ -1,16 +1,16 @@
-<!-- Title: Incident 006 — Deleting a Base Branch Closes a Stacked PR -->
+<!-- Title: Incident 006 -- Deleting a Base Branch Closes a Stacked PR -->
 # 006 · Deleting a merged PR's branch permanently closed a PR stacked on it
 
 > **2026-09-12 · recoverable, but the PR object could not be reopened**
 
 ## What happened
 
-PR #31 was merged with `gh pr merge --rebase --delete-branch --admin`. PR
-#32 was stacked on it — based on `refactor/per-package-changelogs` (#31's
+PR #31 was merged with `gh pr merge --rebase --delete-branch --admin`. PR #32
+was stacked on it — based on `refactor/per-package-changelogs` (#31's
 branch), not `main` — as part of a deliberate PR chain: #31 → #32 → #3/#5/#7.
 Deleting #31's branch as part of its own merge left #32 pointed at a base ref
-that no longer existed. GitHub responded by auto-closing #32 outright, with no
-comment explaining why.
+that no longer existed. GitHub responded by auto-closing #32 outright, with
+no comment explaining why.
 
 ## How it surfaced
 

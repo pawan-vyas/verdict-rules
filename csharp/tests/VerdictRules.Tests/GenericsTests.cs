@@ -32,7 +32,7 @@ public class ArityCoexistenceTests
     [Fact]
     public void ARuleIsDirectlyAssignableToItsClosedGenericInterface()
     {
-        IRule dictRule = new FunctionRule("r1", (_, _) => Task.FromResult(new RuleResult("r1", true)));
+        IRule dictRule = new FunctionRule("r1", (_, _) => Task.FromResult(new PredicateOutcome(true)));
         IRule<IReadOnlyDictionary<string, object?>> asGeneric = dictRule;
         Assert.Same(dictRule, asGeneric);
     }
@@ -63,11 +63,11 @@ public class ArityCoexistenceTests
 /// <summary>A typed, non-dict context runs through every generic primitive.</summary>
 public class TypedContextEndToEndTests
 {
-    private static Task<RuleResult> OrderTotalMet(OrderContext context, CancellationToken ct = default) =>
-        Task.FromResult(new RuleResult("order_total_met", context.Total >= 50.0));
+    private static Task<PredicateOutcome> OrderTotalMet(OrderContext context, CancellationToken ct = default) =>
+        Task.FromResult(new PredicateOutcome(context.Total >= 50.0));
 
-    private static Task<RuleResult> IsMember(OrderContext context, CancellationToken ct = default) =>
-        Task.FromResult(new RuleResult("is_member", context.IsMember));
+    private static Task<PredicateOutcome> IsMember(OrderContext context, CancellationToken ct = default) =>
+        Task.FromResult(new PredicateOutcome(context.IsMember));
 
     [Fact]
     public async Task FunctionRuleOfTEvaluatesATypedContext()
@@ -96,7 +96,7 @@ public class TypedContextEndToEndTests
         var tracked = new FunctionRule<OrderContext>("tracked", (_, _) =>
         {
             log.Add("tracked");
-            return Task.FromResult(new RuleResult("tracked", true));
+            return Task.FromResult(new PredicateOutcome(true));
         });
         var rule = new AndRule<OrderContext>("eligible", new IRule<OrderContext>[]
         {
@@ -177,7 +177,55 @@ public class TypedContextEndToEndTests
         {
             new FunctionRule<OrderContext>("order_total_met", OrderTotalMet),
         });
-        await Assert.ThrowsAsync<KeyNotFoundException>(() => engine.RunNamedAsync("missing", new OrderContext(0, false)));
+        var ex = await Assert.ThrowsAsync<KeyNotFoundException>(() => engine.RunNamedAsync("missing", new OrderContext(0, false)));
+        Assert.Equal("No rule named 'missing' in this engine", ex.Message);
+    }
+
+    [Fact]
+    public async Task RulesEngineOfTUnknownGroupRaisesKeyNotFound()
+    {
+        var engine = new RulesEngine<OrderContext>(new IRule<OrderContext>[]
+        {
+            new FunctionRule<OrderContext>("order_total_met", OrderTotalMet, "checkout"),
+        });
+        var ex = await Assert.ThrowsAsync<KeyNotFoundException>(() => engine.RunGroupAsync("missing-group", new OrderContext(0, false)));
+        Assert.Equal("No rules in group 'missing-group' in this engine", ex.Message);
+    }
+
+    /// <summary>
+    /// An <see cref="AndRule{TContext}"/>'s own <see cref="RuleResult.Detail"/>
+    /// is never synthesized from the failing sub-rule's name -- "why" lives in
+    /// <see cref="RuleResult.SubResults"/>/<see cref="RuleResult.GetFailingLeaves"/>
+    /// instead, reachable at any depth, not just one hand-formatted sentence
+    /// at the top.
+    /// </summary>
+    [Fact]
+    public async Task AndRuleOfTLeavesItsOwnDetailEmptyAndReportsWhyThroughFailingLeaves()
+    {
+        var rule = new AndRule<OrderContext>("eligible", new IRule<OrderContext>[]
+        {
+            new FunctionRule<OrderContext>("order_total_met", (_, _) => Task.FromResult(new PredicateOutcome(false))),
+        });
+        var result = await rule.EvaluateAsync(new OrderContext(0, false));
+
+        Assert.False(result.Passed);
+        Assert.Equal(string.Empty, result.Detail);
+        Assert.Equal(new[] { "order_total_met" }, result.GetFailingLeaves().Select(r => r.RuleName));
+    }
+
+    [Fact]
+    public async Task OrRuleOfTAccumulatesEverySubResultEvenWhenAllFail()
+    {
+        var rule = new OrRule<OrderContext>("any", new IRule<OrderContext>[]
+        {
+            new FunctionRule<OrderContext>("a", (_, _) => Task.FromResult(new PredicateOutcome(false))),
+            new FunctionRule<OrderContext>("b", (_, _) => Task.FromResult(new PredicateOutcome(false))),
+        });
+
+        var result = await rule.EvaluateAsync(new OrderContext(0, false));
+
+        Assert.False(result.Passed);
+        Assert.Equal(new[] { "a", "b" }, result.SubResults.Select(r => r.RuleName));
     }
 }
 
@@ -203,12 +251,12 @@ public class GenericCancellationTests
             {
                 log.Add("a");
                 cts.Cancel();
-                return Task.FromResult(new RuleResult("a", true));
+                return Task.FromResult(new PredicateOutcome(true));
             }),
             new FunctionRule<OrderContext>("b", (_, _) =>
             {
                 log.Add("b");
-                return Task.FromResult(new RuleResult("b", true));
+                return Task.FromResult(new PredicateOutcome(true));
             }),
         });
 
@@ -230,12 +278,12 @@ public class GenericCancellationTests
             {
                 log.Add("a");
                 cts.Cancel();
-                return Task.FromResult(new RuleResult("a", true));
+                return Task.FromResult(new PredicateOutcome(true));
             }),
             new FunctionRule<OrderContext>("b", (_, _) =>
             {
                 log.Add("b");
-                return Task.FromResult(new RuleResult("b", true));
+                return Task.FromResult(new PredicateOutcome(true));
             }),
         });
 
@@ -243,5 +291,128 @@ public class GenericCancellationTests
             () => engine.RunAllAsync(new OrderContext(0, false), cts.Token));
 
         Assert.Equal(new[] { "a" }, log);
+    }
+
+    /// <summary>
+    /// Proves the composite's own per-iteration check, not a side effect of
+    /// every sub-rule happening to check for itself — see
+    /// <see cref="NonCheckingRule{TContext}"/>.
+    /// </summary>
+    [Fact]
+    public async Task AndRuleOfTChecksCancellationBetweenSubRulesEvenWhenASubRuleDoesNotCheckItself()
+    {
+        using var cts = new CancellationTokenSource();
+        var log = new List<string>();
+
+        var rule = new AndRule<OrderContext>("and1", new IRule<OrderContext>[]
+        {
+            new FunctionRule<OrderContext>("a", (_, _) =>
+            {
+                log.Add("a");
+                cts.Cancel();
+                return Task.FromResult(new PredicateOutcome(true));
+            }),
+            new NonCheckingRule<OrderContext>("b", true, log),
+        });
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => rule.EvaluateAsync(new OrderContext(0, false), cts.Token));
+
+        Assert.Equal(new[] { "a" }, log); // 'b' never reached, even though it would not have stopped itself
+    }
+
+    /// <inheritdoc cref="AndRuleOfTChecksCancellationBetweenSubRulesEvenWhenASubRuleDoesNotCheckItself" />
+    [Fact]
+    public async Task OrRuleOfTChecksCancellationBetweenSubRulesEvenWhenASubRuleDoesNotCheckItself()
+    {
+        using var cts = new CancellationTokenSource();
+        var log = new List<string>();
+
+        var rule = new OrRule<OrderContext>("or1", new IRule<OrderContext>[]
+        {
+            new FunctionRule<OrderContext>("a", (_, _) =>
+            {
+                log.Add("a");
+                cts.Cancel();
+                return Task.FromResult(new PredicateOutcome(false)); // fails, so the loop keeps going
+            }),
+            new NonCheckingRule<OrderContext>("b", true, log),
+        });
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => rule.EvaluateAsync(new OrderContext(0, false), cts.Token));
+
+        Assert.Equal(new[] { "a" }, log);
+    }
+
+    /// <inheritdoc cref="AndRuleOfTChecksCancellationBetweenSubRulesEvenWhenASubRuleDoesNotCheckItself" />
+    [Fact]
+    public async Task RulesEngineOfTRunAllChecksCancellationBetweenRulesEvenWhenARuleDoesNotCheckItself()
+    {
+        using var cts = new CancellationTokenSource();
+        var log = new List<string>();
+
+        var engine = new RulesEngine<OrderContext>(new IRule<OrderContext>[]
+        {
+            new FunctionRule<OrderContext>("a", (_, _) =>
+            {
+                log.Add("a");
+                cts.Cancel();
+                return Task.FromResult(new PredicateOutcome(true));
+            }),
+            new NonCheckingRule<OrderContext>("b", true, log),
+        });
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => engine.RunAllAsync(new OrderContext(0, false), cts.Token));
+
+        Assert.Equal(new[] { "a" }, log);
+    }
+
+    /// <inheritdoc cref="AndRuleOfTChecksCancellationBetweenSubRulesEvenWhenASubRuleDoesNotCheckItself" />
+    [Fact]
+    public async Task RulesEngineOfTRunGroupChecksCancellationBetweenRulesEvenWhenARuleDoesNotCheckItself()
+    {
+        using var cts = new CancellationTokenSource();
+        var log = new List<string>();
+
+        var engine = new RulesEngine<OrderContext>(new IRule<OrderContext>[]
+        {
+            new FunctionRule<OrderContext>("a", (_, _) =>
+            {
+                log.Add("a");
+                cts.Cancel();
+                return Task.FromResult(new PredicateOutcome(true));
+            }, "g"),
+            new NonCheckingRule<OrderContext>("b", true, log, "g"),
+        });
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => engine.RunGroupAsync("g", new OrderContext(0, false), cts.Token));
+
+        Assert.Equal(new[] { "a" }, log);
+    }
+
+    /// <summary>
+    /// Proves <see cref="NotRule{TContext}"/>'s own check on entry, not a side
+    /// effect of the wrapped rule happening to check for itself -- see
+    /// <see cref="NonCheckingRule{TContext}"/>. Unlike the composites above,
+    /// there is only one child to reach, so an already-cancelled token must
+    /// stop before that single <see cref="IRule{TContext}.EvaluateAsync"/>
+    /// call ever runs.
+    /// </summary>
+    [Fact]
+    public async Task NotRuleOfTChecksCancellationBeforeEvaluatingEvenWhenTheWrappedRuleDoesNotCheckItself()
+    {
+        using var cts = new CancellationTokenSource();
+        var log = new List<string>();
+        cts.Cancel();
+
+        var rule = new NotRule<OrderContext>("not1", new NonCheckingRule<OrderContext>("inner", true, log));
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => rule.EvaluateAsync(new OrderContext(0, false), cts.Token));
+
+        Assert.Empty(log); // the wrapped rule never ran -- NotRule's own check stopped it first
     }
 }

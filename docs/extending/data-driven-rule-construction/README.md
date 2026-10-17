@@ -12,17 +12,14 @@ empty configuration source produces an empty composite, which vacuously
 passes: "nothing configured" and "nothing to enforce" fall out of the
 same rule, with no special-casing needed at the call site.
 
-See [`../../samples/data-driven-rule-sets/README.md`](../../samples/data-driven-rule-sets/README.md)
-for a fuller worked version of this, carried through for both
-rate-limit windows and access-control conditions.
-
 This is exactly the shape where testing has to scale with the rule set:
 as the configuration source grows more varied, a handful of hand-picked
-fixtures stops being enough coverage, the same way it stopped being
-enough for the sample above. Reach for property-based testing or an
-oracle/differential approach — an independent reference implementation
-checked against many randomly-generated configurations — rather than
-adding fixtures one at a time as bugs are found.
+cases stops being enough coverage. Reach for property-based testing or
+an oracle/differential approach — an independent reference
+implementation checked against many randomly-generated configurations —
+rather than adding cases one at a time as bugs are found. The
+[`graduation_verdict`](../../../fixtures/graduation_verdict/README.md)
+scenario is a worked instance of exactly that, in every language.
 
 A builder that constructs a leaf differently from how it constructs a
 composite is the shape where a shared per-rule field — a group label,
@@ -44,8 +41,6 @@ than two independent ones that happen to agree today.
 
 ## Related
 
-- [`../../samples/data-driven-rule-sets/README.md`](../../samples/data-driven-rule-sets/README.md) —
-  the full worked version of this scenario.
 - [`../../testing/`](../../testing/README.md) — the contracts verdict's
   own primitives guarantee (short-circuiting, vacuous truth) that a
   dynamically-built rule set still inherits and still needs proving;

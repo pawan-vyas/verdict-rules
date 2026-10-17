@@ -10,6 +10,10 @@ if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   exit 1
 fi
 
+printf 'handoff_schema: %s\n'         '2'
+# Anything this script's output is used to write is a handoff being sealed by hand or by an agent,
+# so `sealed` is always true here. install.sh writes its own scaffolded stub with sealed: false.
+printf 'sealed: %s\n'                 'true'
 printf 'state_at_commit: %s\n'        "$(git rev-parse HEAD)"
 printf 'state_at_commit_short: %s\n'  "$(git rev-parse --short HEAD)"
 printf 'branch: %s\n'                 "$(git rev-parse --abbrev-ref HEAD)"

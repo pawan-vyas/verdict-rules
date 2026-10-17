@@ -1,0 +1,18 @@
+{
+  "_comment": "Mutates src/ only (not test/) and runs the existing node:test suite via its own TAP reporter -- see docs/maintenance/mutation-testing.md for why this exists and is not a CI gate.",
+  "packageManager": "npm",
+  "mutate": ["src/**/*.ts"],
+  "testRunner": "tap",
+  "tap": {
+    "testFiles": ["test/*.test.js"],
+    "nodeArgs": ["--test-reporter=tap"]
+  },
+  "buildCommand": "npm run build:bundles",
+  "coverageAnalysis": "perTest",
+  "reporters": ["clear-text", "progress", "html"],
+  "thresholds": {
+    "high": 80,
+    "low": 60,
+    "break": null
+  }
+}

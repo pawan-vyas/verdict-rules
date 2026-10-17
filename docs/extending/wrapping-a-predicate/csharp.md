@@ -8,12 +8,11 @@
 ```csharp
 using VerdictRules;
 
-static Task<RuleResult> CartMeetsMinimum(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
+static Task<PredicateOutcome> CartMeetsMinimum(IReadOnlyDictionary<string, object?> context, CancellationToken cancellationToken = default)
 {
     var total = (double)context["cart_total"]!;
     var minimum = (double)context["minimum_for_offer"]!;
-    return Task.FromResult(new RuleResult(
-        "cart_meets_minimum",
+    return Task.FromResult(new PredicateOutcome(
         total >= minimum,
         $"{total} vs minimum {minimum}"));
 }
@@ -28,9 +27,8 @@ exactly the same way:
 ```csharp
 record CartContext(double CartTotal, double MinimumForOffer);
 
-static Task<RuleResult> CartMeetsMinimumTyped(CartContext context, CancellationToken cancellationToken = default) =>
-    Task.FromResult(new RuleResult(
-        "cart_meets_minimum",
+static Task<PredicateOutcome> CartMeetsMinimumTyped(CartContext context, CancellationToken cancellationToken = default) =>
+    Task.FromResult(new PredicateOutcome(
         context.CartTotal >= context.MinimumForOffer,
         $"{context.CartTotal} vs minimum {context.MinimumForOffer}"));
 

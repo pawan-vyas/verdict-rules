@@ -1,26 +1,29 @@
 <!-- Title: Graduation Verdict — Testing -->
 # Graduation Verdict — Testing
 
-> How this project is tested, and why its two test files serve two
-> different purposes rather than being one bigger suite of the same
+> How this project is tested, and why its four test files each serve a
+> different purpose rather than being one bigger suite of the same
 > kind. See
-> [`../../../../docs/samples/graduation-requirement-verdict/`](../../../../docs/samples/graduation-requirement-verdict/README.md)
+> [`fixtures/graduation_verdict/`](../../../../fixtures/graduation_verdict/README.md)
 > for why it's built the way it is, and
-> [`../../../../fixtures/graduation_verdict/README.md`](../../../../fixtures/graduation_verdict/README.md)
+> [its own extending section](../../../../fixtures/graduation_verdict/README.md#extending-the-curriculum)
 > for how to extend the curriculum.
 
-## Two suites, two different jobs
+## Four suites, four different jobs
 
 | File | Style | Proves |
 | --- | --- | --- |
 | `test_graduation_verdict.py` | Curated scenarios | Each subject type builds the right `Rule` shape; `run_named`/`run_group`/`run_all` each behave as documented; all 8 hand-picked, hand-verified students get exactly the verdict their own `expected_passed` says. |
 | `test_chaos.py` | Differential/property-based | The real engine agrees with an independent oracle across 500 deterministically-generated, schema-valid random curricula and students — a much wider space than anyone would hand-curate. |
+| `test_chaos_structural.py` | Structural, over the same cases | Every generated case's result *tree* — not just its top-level boolean — has the short-circuit shape its rule tree implies; see [below](#the-structural-suite-walking-the-result-tree-not-just-its-boolean). |
+| `test_fuzz_curriculum.py` | Fuzzing | `load_curriculum` never crashes with an undocumented error on malformed `policies.json` input; see [below](#fuzzing-load_curriculum). |
 
-`uv run pytest examples/graduation_verdict/` runs both (547 tests
-across the whole package as of this writing — 24 in `verdict`'s own
-core suite, 23 curated scenarios here, 500 chaos cases). Also
-auto-discovered by the package's own bare `uv run pytest`, no
-configuration needed.
+`uv run pytest examples/graduation_verdict/` runs all four (1244 tests
+— 84 curated scenarios, 500 chaos cases, 510 structural cases, 150
+fuzz cases). Also auto-discovered by the package's own bare
+`uv run pytest` (1423 tests — this project's 1244 plus `verdict`'s own
+146-test core suite and the sibling `marketplace_eligibility` example's
+33), no configuration needed.
 
 ## Why this project is a regression net for `verdict` itself, not just a sample
 
@@ -79,7 +82,7 @@ graph LR
 > project alongside `tests/` with no extra configuration) is the
 > concrete action — run it after any change to `src/verdict/`, not just
 > a change to this project. This is also cross-linked from verdict's
-> own [`maintenance.md`](../../../../docs/maintenance/before-merging-checklists.md#consumer-impact-checklist-for-a-shape-change)
+> own [`before-merging-checklists.md`](../../../../docs/maintenance/before-merging-checklists.md#before-merging-one-of-those)
 > consumer-impact checklist as one of the things to re-run, alongside
 > any external consumer's own suite.
 
@@ -89,11 +92,11 @@ graph LR
 scenarios come out right. `test_chaos.py` checks a much wider space,
 using a different technique than fixture matching: **differential
 testing** against `oracle.py`, a second, deliberately dumb,
-`verdict`-free re-implementation of the same decision (the "naive way"
-from the [sample spec](../../../../docs/samples/graduation-requirement-verdict/README.md),
-generalized to score *any* policy list). If the real engine and the oracle ever disagree on a
-generated case, one of them is wrong — that disagreement is the signal,
-not a fixed expected value.
+`verdict`-free re-implementation of the same decision (the
+[naive way from the scenario spec](../../../../fixtures/graduation_verdict/README.md#what-the-naive-approach-gets-wrong),
+generalized to score *any* policy list). If the real engine and the
+oracle ever disagree on a generated case, one of them is wrong — that
+disagreement is the signal, not a fixed expected value.
 
 ```mermaid
 graph LR
@@ -169,6 +172,88 @@ graph LR
 > reshuffles every case's data, which trades away coverage rather than
 > adding to it; raise `NUM_CASES` instead to test more.
 
+## The structural suite: walking the result tree, not just its boolean
+
+`test_chaos.py` only ever compares the final `passed` boolean against
+the oracle. `test_chaos_structural.py` reuses the exact same
+`CHAOS_SEED + case_index` generation — the same 500 cases, not a new
+generator — and instead walks the real `(Rule, RuleResult)` tree
+together, recursively, asserting a shape invariant that depends on the
+rule's own concrete type:
+
+- `AndRule`: a failing result ran every sub-rule up to and including
+  the first failure, and no further; a passing result ran — and
+  passed — every sub-rule.
+- `OrRule`: the mirror image — a passing result ran, and failed, every
+  sub-rule up to the one that passed; a failing result ran every
+  sub-rule, since only a pass stops it early.
+- `AtLeastNRule`: short-circuits on a running *count* rather than on a
+  single sub-result, so `result.sub_results` stops exactly where the
+  minimum became mathematically decided — once enough sub-rules have
+  passed to guarantee it, or once too many have failed for it to be
+  reachable — never one sub-rule earlier (it wasn't decidable yet) and
+  never one later (an already-decided rule kept evaluating). This is the
+  deliberate contrast case; applying the `AndRule`/`OrRule` invariant to
+  it would be wrong.
+- `FunctionRule`: a leaf — no further recursion, and its own
+  `result.sub_results` is empty.
+
+Dispatch on the rule's concrete type is a lookup table
+(`_RULE_RESULT_CHECKERS`) keyed by `type(rule)`, not an `isinstance`
+ladder — adding a fifth `Rule` shape to this example is a new checker
+function plus a new row, never a new branch in the walker itself.
+
+The same file also proves two properties `test_chaos.py` doesn't touch:
+`run_all` returns exactly one result per registered subject rule (a
+structural count, not a verdict), and evaluating the same built rule
+tree against the same context twice produces two result trees that are
+`==` — `RuleResult` is a frozen dataclass, so equality already recurses
+through `sub_results` field by field, so no separate deep-equality
+helper is needed to prove purity.
+
+## Fuzzing `load_curriculum`
+
+`load_curriculum` does no schema validation beyond the key accesses it
+needs to build each `SubjectPolicy` — see its own docstring in
+`graduation_verdict.py`. `test_fuzz_curriculum.py` generates 150
+deliberately malformed `policies.json` documents from a seeded RNG (a
+wrong-typed field, a dropped required key, an unexpected extra key,
+deeply nested junk in place of a scalar, a truncated document, an
+empty `subjects` array, `null` in place of an object) and asserts the
+reader only ever does one of two things: parses into a valid policy
+list, or raises one of the errors its own dict/list access and
+`json.loads` naturally produce (`json.JSONDecodeError`, `KeyError`,
+`TypeError`) — never an unrelated crash, and never a silently wrong
+policy list. Fuzzing has found no genuine reader bug: the reader's own
+narrow contract holds across all 150 malformed documents.
+
+## Shrinking a failing case to a minimal fixture
+
+[`shrinking.py`](../shrinking.py) is a shrinking *mechanism*, not a
+test by itself: given a `(policies, context, elective_minimum)` case
+that reproduces some failure and a `still_reproduces` predicate, `shrink_case`
+greedily drops subjects and pushes scalar fields toward their simplest
+value — re-checking the same predicate after each change — until no
+further simplification keeps the failure reproducing, then
+`write_shrunk_fixture` serializes the result to
+[`testdata/shrunk_failures/`](../testdata/shrunk_failures/README.md),
+a per-language debugging aid, not the shared cross-language fixture
+contract.
+
+The chaos suite, the structural invariants, and the oracle comparison
+all pass on every generated case, so there is no real failure to
+shrink. The mechanism is validated against a deliberately injected bug
+instead: an intentionally-wrong oracle variant that skips the
+attendance check entirely, searched across the 500 generated cases for
+a disagreement with the real engine, and that disagreement fed to
+`shrink_case`. It reduces a 7-subject, fully-populated case down to
+zero subjects — exactly the `attendance_floor`/`attendance_pct` pair
+the injected bug is blind to, with every other field simplified away —
+which is the evidence that the shrinker finds the actually-relevant
+difference rather than an arbitrary smaller case. That injection lives
+in a scratch script, never in this repo's tracked files, so nothing
+from it runs as part of the shipped suite.
+
 ## Running the tests
 
 ```bash
@@ -178,11 +263,11 @@ uv run pytest examples/graduation_verdict/
 
 ## Related
 
-- [`../../../../docs/samples/graduation-requirement-verdict/`](../../../../docs/samples/graduation-requirement-verdict/README.md) —
-  the language-agnostic spec, why it's built the way it is.
-- [`../../../../fixtures/graduation_verdict/README.md`](../../../../fixtures/graduation_verdict/README.md) —
-  how to extend the curriculum, and the shared cross-language fixture
-  contract.
+- [`fixtures/graduation_verdict/`](../../../../fixtures/graduation_verdict/README.md) —
+  the language-agnostic spec, why it's built the way it is, and the
+  shared cross-language fixture contract.
+- [`fixtures/graduation_verdict/` — extending the curriculum](../../../../fixtures/graduation_verdict/README.md#extending-the-curriculum) —
+  how to add a subject, a student scenario, or a new subject type.
 - [`../README.md`](../README.md) — how to run the demo.
 - [`../../../../docs/maintenance/`](../../../../docs/maintenance/README.md) —
   verdict's own maintenance guide, whose consumer-impact checklist

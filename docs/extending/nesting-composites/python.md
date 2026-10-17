@@ -7,7 +7,7 @@
 ```python
 from dataclasses import dataclass
 
-from verdict import AndRule, FunctionRule, OrRule, RuleResult
+from verdict import AndRule, FunctionRule, OrRule, PredicateOutcome
 
 
 @dataclass(frozen=True)
@@ -19,20 +19,20 @@ class AccountContext:
     spend_threshold: float
 
 
-async def is_active_account(context: AccountContext) -> RuleResult:
-    return RuleResult(rule_name="is_active_account", passed=context.account_status == "active")
+async def is_active_account(context: AccountContext) -> PredicateOutcome:
+    return PredicateOutcome(passed=context.account_status == "active")
 
 
-async def is_premium_member(context: AccountContext) -> RuleResult:
-    return RuleResult(rule_name="is_premium_member", passed=context.is_premium_member)
+async def is_premium_member(context: AccountContext) -> PredicateOutcome:
+    return PredicateOutcome(passed=context.is_premium_member)
 
 
-async def has_promo_code(context: AccountContext) -> RuleResult:
-    return RuleResult(rule_name="has_promo_code", passed=bool(context.promo_code))
+async def has_promo_code(context: AccountContext) -> PredicateOutcome:
+    return PredicateOutcome(passed=bool(context.promo_code))
 
 
-async def meets_spend_threshold(context: AccountContext) -> RuleResult:
-    return RuleResult(rule_name="meets_spend_threshold", passed=context.spend >= context.spend_threshold)
+async def meets_spend_threshold(context: AccountContext) -> PredicateOutcome:
+    return PredicateOutcome(passed=context.spend >= context.spend_threshold)
 
 
 # Nesting doesn't care what built its sub-rules — each of the four leaves
@@ -48,6 +48,9 @@ qualifies: AndRule[AccountContext] = AndRule("qualifies", [
 ])
 ```
 
+A nested result is read the same way at every level — `sub_results` holds
+one level, and never the whole tree:
+
 ```python
 context = AccountContext(
     account_status="active",
@@ -57,16 +60,45 @@ context = AccountContext(
     spend_threshold=100,
 )
 result = await qualifies.evaluate(context)
+
 result.passed
 # True
-result.data
-# [RuleResult(rule_name='is_active_account', passed=True, ...),
-#  RuleResult(rule_name='has_a_valid_reason', passed=True, ...,
-#             data=[RuleResult(rule_name='is_premium_member', passed=False, ...),
-#                   RuleResult(rule_name='has_promo_code', passed=True, ...)])]
+
+[r.rule_name for r in result.sub_results]
+# ['is_active_account', 'has_a_valid_reason']
+
+inner = result.sub_results[1]
+[r.rule_name for r in inner.sub_results]
+# ['is_premium_member', 'has_promo_code']
 # meets_spend_threshold never ran — has_a_valid_reason short-circuited
 # once has_promo_code passed, exactly as a plain, unnested OrRule would
 ```
+
+Three views answer three different questions about the same tree:
+
+```python
+[r.rule_name for r in result.leaves]
+# ['is_active_account', 'is_premium_member', 'has_promo_code']
+# fully recursive — the terminal checks, however deep
+
+result.failing_leaves
+# [] — a passing result has none, even though is_premium_member failed
+# on the way to the inner OrRule's pass
+
+[r.rule_name for r in result.decided_by]
+# ['is_active_account', 'has_a_valid_reason']
+# one level: an AndRule that had to evaluate everything is explained by
+# everything
+
+[r.rule_name for r in inner.decided_by]
+# ['has_promo_code']
+# one level again, but an OrRule that stopped early is explained by just
+# the sub-rule that stopped it
+```
+
+`data` is not part of this. It is an opaque slot for a caller's own
+payload, never written to by a composite — a composite's children are in
+`sub_results`.
 
 ## Related
 

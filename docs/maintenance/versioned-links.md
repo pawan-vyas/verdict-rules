@@ -7,15 +7,15 @@
 A README bundled into a package is rendered on **every version's** registry
 page, permanently. A link in it pointing at `main` therefore shows someone
 reading an old version the *current* documentation — describing APIs that
-version does not have, with no way for them to tell. It is the same failure the
-skill's fetch tier avoids by pinning, and worse here because there is no
-warning.
+version does not have, with no way for them to tell. The skill avoids the same failure the same way -- it tells an agent to
+resolve the installed version and fetch at that tag, never the default
+branch. It is worse here, because there is no warning at all.
 
 So every GitHub link in content that ships — a package README, package metadata
 — points at that release's own tag:
 
 ```text
-https://github.com/pawan-vyas/verdict-rules/blob/python-v0.2.1/docs/architecture.md
+https://github.com/pawan-vyas/verdict-rules/blob/python-v0.3.1/docs/architecture/README.md
 ```
 
 Tags are immutable, so such a link resolves forever and always describes what

@@ -6,7 +6,7 @@
 > builds on the general standard in [`README.md`](README.md) — read
 > that first, especially the durable-shared-doc rule this template
 > exists to keep `docs/architecture/README.md` honest against. Flatter
-> than [`samples.md`](samples.md) or [`extending.md`](extending.md):
+> than [`extending.md`](extending.md):
 > one directory, not one per scenario, since there is exactly one
 > architecture to document, not a growing set of worked examples or
 > extension points.

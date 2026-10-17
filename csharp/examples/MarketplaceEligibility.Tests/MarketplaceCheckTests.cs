@@ -11,7 +11,7 @@ namespace MarketplaceEligibility.Tests;
 /// This project exercises IRule&lt;TContext&gt; end to end: two typed
 /// contexts sharing no fields, a rule reused across both via
 /// ProjectingRule, and a dict-context catalog coexisting in the same
-/// codebase. See docs/samples/marketplace-eligibility/README.md for the
+/// codebase. See fixtures/marketplace_eligibility/README.md for the
 /// design and fixtures/marketplace_eligibility/README.md for the shared
 /// contract this suite reproduces.
 /// </remarks>
@@ -166,9 +166,9 @@ public class ComplianceCatalogTests
         var extended = new RulesEngine(
         [
             new FunctionRule("high_value_flag", (ctx, _) =>
-                Task.FromResult(new RuleResult("high_value_flag", (int)ctx["amount_cents"]! > 50_000))),
+                Task.FromResult(new PredicateOutcome((int)ctx["amount_cents"]! > 50_000))),
             new FunctionRule("weekend_flag", (ctx, _) =>
-                Task.FromResult(new RuleResult("weekend_flag", (bool)ctx["is_weekend"]!))),
+                Task.FromResult(new PredicateOutcome((bool)ctx["is_weekend"]!))),
         ]);
         var result = await extended.RunNamedAsync("weekend_flag", new Dictionary<string, object?>
         {

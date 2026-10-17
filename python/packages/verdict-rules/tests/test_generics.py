@@ -20,7 +20,7 @@ from typing import Any
 
 import pytest
 
-from verdict import AndRule, FunctionRule, OrRule, Rule, RuleResult, RulesEngine, TContext
+from verdict import AndRule, FunctionRule, OrRule, PredicateOutcome, Rule, RulesEngine, TContext
 
 
 @dataclass(frozen=True)
@@ -31,12 +31,12 @@ class OrderContext:
     is_member: bool
 
 
-async def _order_total_met(context: OrderContext) -> RuleResult:
-    return RuleResult(rule_name="order_total_met", passed=context.total >= 50.0)
+async def _order_total_met(context: OrderContext) -> PredicateOutcome:
+    return PredicateOutcome(passed=context.total >= 50.0)
 
 
-async def _is_member(context: OrderContext) -> RuleResult:
-    return RuleResult(rule_name="is_member", passed=context.is_member)
+async def _is_member(context: OrderContext) -> PredicateOutcome:
+    return PredicateOutcome(passed=context.is_member)
 
 
 class TestGenericSubscription:
@@ -79,8 +79,8 @@ class TestErasureDoesNotChangeBehavior:
     async def test_an_untyped_predicate_still_works_exactly_as_before(self) -> None:
         # No type argument anywhere — the pre-generics calling convention,
         # which must keep working unconditionally.
-        async def predicate(context: dict) -> RuleResult:
-            return RuleResult(rule_name="r", passed=bool(context.get("ok")))
+        async def predicate(context: dict) -> PredicateOutcome:
+            return PredicateOutcome(passed=bool(context.get("ok")))
 
         rule = FunctionRule("r", predicate)
         result = await rule.evaluate({"ok": True})
@@ -106,9 +106,9 @@ class TestTypedContextEndToEnd:
     async def test_and_rule_short_circuits_on_a_typed_context_too(self) -> None:
         calls: list[str] = []
 
-        async def tracked(context: OrderContext) -> RuleResult:
+        async def tracked(context: OrderContext) -> PredicateOutcome:
             calls.append("tracked")
-            return RuleResult(rule_name="tracked", passed=True)
+            return PredicateOutcome(passed=True)
 
         rule: AndRule[OrderContext] = AndRule(
             "eligible", [FunctionRule("order_total_met", _order_total_met), FunctionRule("tracked", tracked)]

@@ -33,6 +33,27 @@ jobs:
       - name: Shipped links are pinned to the released version
         run: python3 scripts/check_shipped_links.py
 
+      - name: Every package's metadata is complete (description, license, author, repository/keywords)
+        run: python3 scripts/check_package_metadata.py
+
+      - name: Every doc-comment reference resolves
+        run: python3 scripts/check_doc_comment_links.py
+
+      - name: Every link label names a path that exists
+        run: python3 scripts/check_link_labels.py
+
+      - name: Machine-consumed values are plain ASCII
+        run: python3 scripts/check_ascii_values.py
+
+      - name: Every language's public API surface matches the cross-language concept map
+        run: |
+          set -euo pipefail
+          pip install --quiet pyyaml
+          python3 scripts/check_api_snapshots.py
+
+      - name: The graduation_verdict fixture covers what its own README claims
+        run: python3 scripts/check_fixture_coverage.py
+
       - name: The skill artifacts build, and carry what get.sh needs
         run: |
           set -euo pipefail
@@ -52,3 +73,25 @@ jobs:
           unzip -l dist/verdict-tools.zip | grep -q 'install.sh' \
             || { echo "::error::verdict-tools.zip carries no installer."; exit 1; }
           echo "✓ verdict-tools.zip payload intact"
+
+      # The remaining check builds a real artifact per language and installs
+      # it in isolation, so it needs every toolchain — the steps above are
+      # pure Python/text checks and need none of this. Kept last: it is by
+      # far the slowest step in this job, and every cheaper check above gets
+      # a chance to fail first.
+      - uses: astral-sh/setup-uv@v10.0.1
+        with:
+          enable-cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - uses: dart-lang/setup-dart@v1
+
+      - name: Package READMEs follow the template, and their first example runs against the real built artifact
+        run: python3 scripts/check_package_readmes.py

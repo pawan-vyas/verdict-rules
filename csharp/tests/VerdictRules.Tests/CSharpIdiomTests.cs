@@ -13,8 +13,8 @@ namespace VerdictRules.Tests;
 public class FunctionRuleIdiomTests
 {
     /// <summary>A plain static method — no lambda, no type declared.</summary>
-    private static Task<RuleResult> HasQuorum(IReadOnlyDictionary<string, object?> ctx, CancellationToken cancellationToken = default) =>
-        Task.FromResult(new RuleResult("quorum", ctx.Count >= 3));
+    private static Task<PredicateOutcome> HasQuorum(IReadOnlyDictionary<string, object?> ctx, CancellationToken cancellationToken = default) =>
+        Task.FromResult(new PredicateOutcome(ctx.Count >= 3));
 
     [Fact]
     public async Task AMethodGroupIsARuleWithNothingDeclared()
@@ -35,7 +35,7 @@ public class FunctionRuleIdiomTests
     public async Task ReturnsWhateverThePredicateReturnsUnchanged()
     {
         var rule = new FunctionRule("r", (_, _) =>
-            Task.FromResult(new RuleResult("r", true, "why", new { K = 1 })));
+            Task.FromResult(new PredicateOutcome(true, "why", new { K = 1 })));
 
         var result = await rule.EvaluateAsync(Rules.Empty);
 
@@ -63,7 +63,7 @@ public class AndRuleIdiomTests
             {
                 cts.Cancel();
                 log.Add("b");
-                return Task.FromResult(new RuleResult("b", true));
+                return Task.FromResult(new PredicateOutcome(true));
             }),
             Rules.Counting("c", true, log),
         });
@@ -90,7 +90,7 @@ public class OrRuleIdiomTests
             {
                 cts.Cancel();
                 log.Add("b");
-                return Task.FromResult(new RuleResult("b", false));
+                return Task.FromResult(new PredicateOutcome(false));
             }),
             Rules.Counting("c", false, log),
         });
@@ -119,7 +119,7 @@ public class RunModeIdiomTests
             {
                 cts.Cancel();
                 log.Add("b");
-                return Task.FromResult(new RuleResult("b", true));
+                return Task.FromResult(new PredicateOutcome(true));
             }),
             Rules.Counting("c", true, log),
         });
@@ -127,6 +127,106 @@ public class RunModeIdiomTests
         await Assert.ThrowsAsync<OperationCanceledException>(() => engine.RunAllAsync(Rules.Empty, cts.Token));
 
         Assert.Equal(new[] { "a", "b" }, log);
+    }
+}
+
+/// <summary>
+/// Direct coverage of <see cref="SequentialEvaluator{TContext}"/>, composed
+/// on its own rather than through <see cref="ShortCircuitEvaluator{TContext}"/>
+/// -- the shape a custom composite (like <c>AtLeastNRule</c> in
+/// <c>docs/extending/new-rule-shape/</c>) actually uses.
+/// </summary>
+public class SequentialEvaluatorIdiomTests
+{
+    /// <summary>
+    /// <see cref="ShortCircuitEvaluator{TContext}"/>'s own decider always
+    /// resolves by the last sub-rule, so it never reaches
+    /// <see cref="SequentialEvaluator{TContext}"/>'s post-loop fallback
+    /// (<c>decider(...) ?? vacuousResult</c>) -- only a decider that can
+    /// genuinely decline to commit, even when handed the last result, does.
+    /// A decider that counts its own calls proves the fallback actually
+    /// re-invokes <i>decider</i> rather than jumping straight to
+    /// <paramref name="vacuousResult"/>-shaped sentinel: it declines on the
+    /// first (in-loop) call for the only rule, then commits to <c>false</c>
+    /// on the second (fallback) call with the same arguments -- a
+    /// <c>vacuousResult</c> of <see langword="true"/> would be the wrong
+    /// answer if the fallback didn't actually consult <i>decider</i> again.
+    /// </summary>
+    [Fact]
+    public async Task PostLoopFallbackConsultsTheDeciderRatherThanJumpingStraightToVacuousResult()
+    {
+        var callCount = 0;
+        var evaluator = new SequentialEvaluator<IReadOnlyDictionary<string, object?>>(
+            decider: (_, _, _) => ++callCount > 1 ? false : null,
+            vacuousResult: true);
+
+        var result = await evaluator.EvaluateAsync(
+            "never-commits-first-time",
+            new IRule<IReadOnlyDictionary<string, object?>>[] { Rules.Pass("a") },
+            Rules.Empty);
+
+        Assert.False(result.Passed); // decider's own second-call answer, not vacuousResult
+        Assert.Equal(new[] { "a" }, result.SubResults.Select(r => r.RuleName));
+    }
+
+    /// <summary>
+    /// <see cref="SequentialEvaluator{TContext}.EvaluateAsync"/>'s own generic
+    /// <see cref="RuleResult.GetDecidedBy"/> rule, exercised directly rather than
+    /// through <see cref="AndRule{TContext}"/>/<see cref="OrRule{TContext}"/>
+    /// (which override it via <see cref="ShortCircuitEvaluator{TContext}"/>
+    /// instead) -- a custom decider that commits as soon as it has seen two
+    /// passes among four sub-rules, with two left unevaluated: the generic
+    /// rule's own "decided with items still unevaluated" branch names just
+    /// the one sub-result that flipped the verdict, not every sub-result seen
+    /// so far.
+    /// </summary>
+    [Fact]
+    public async Task EarlyDecisionWithItemsStillUnevaluatedNamesOnlyTheTriggeringSubResult()
+    {
+        var passCount = 0;
+        var evaluator = new SequentialEvaluator<IReadOnlyDictionary<string, object?>>(
+            decider: (latest, _, _) => latest.Passed && ++passCount == 2 ? true : null,
+            vacuousResult: false);
+
+        var result = await evaluator.EvaluateAsync(
+            "commits-on-second-pass",
+            new IRule<IReadOnlyDictionary<string, object?>>[]
+            {
+                Rules.Pass("a"), Rules.Pass("b"), Rules.Pass("c"), Rules.Pass("d"),
+            },
+            Rules.Empty);
+
+        Assert.True(result.Passed);
+        Assert.Equal(new[] { "a", "b" }, result.SubResults.Select(r => r.RuleName)); // c, d never evaluated
+        Assert.Equal(new[] { "b" }, result.GetDecidedBy().Select(r => r.RuleName)); // only the trigger, not [a, b]
+    }
+
+    /// <summary>
+    /// The companion case the generic rule's own count-based check (<c>soFar.Count
+    /// == total</c>) cannot distinguish from a post-loop fallback: a decider that
+    /// commits non-null during the loop's own <i>final</i> iteration, rather than
+    /// only once the loop finishes and falls through to the separate fallback
+    /// branch. <see cref="RuleResult.GetDecidedBy"/> still names every evaluated
+    /// sub-result here, exactly as the exhaustion case does -- proving the
+    /// in-loop "decided, and it happened to be everything" branch is handled
+    /// the same as true exhaustion, not conflated with the "still unevaluated"
+    /// branch above.
+    /// </summary>
+    [Fact]
+    public async Task EarlyDecisionThatLandsExactlyOnTheLastItemNamesEveryEvaluatedSubResult()
+    {
+        var evaluator = new SequentialEvaluator<IReadOnlyDictionary<string, object?>>(
+            decider: (latest, _, _) => latest.Passed ? true : null,
+            vacuousResult: false);
+
+        var result = await evaluator.EvaluateAsync(
+            "commits-in-loop-on-the-last-item",
+            new IRule<IReadOnlyDictionary<string, object?>>[] { Rules.Fail("a"), Rules.Fail("b"), Rules.Pass("c") },
+            Rules.Empty);
+
+        Assert.True(result.Passed);
+        Assert.Equal(new[] { "a", "b", "c" }, result.SubResults.Select(r => r.RuleName)); // every rule evaluated
+        Assert.Equal(new[] { "a", "b", "c" }, result.GetDecidedBy().Select(r => r.RuleName)); // all of it, not just "c"
     }
 }
 
@@ -250,7 +350,7 @@ public class CancellationContractTests
         var log = new List<string>();
         var engine = new RulesEngine<Ctx>(new IRule<Ctx>[]
         {
-            new FunctionRule<Ctx>("a", (_, _) => { log.Add("a"); return Task.FromResult(new RuleResult("a", true)); }),
+            new FunctionRule<Ctx>("a", (_, _) => { log.Add("a"); return Task.FromResult(new PredicateOutcome(true)); }),
         });
 
         await Assert.ThrowsAsync<OperationCanceledException>(
@@ -283,7 +383,7 @@ public class CancellationContractTests
     public async Task GenericFunctionRuleRunsNoPredicateOnACancelledToken()
     {
         var log = new List<string>();
-        var rule = new FunctionRule<Ctx>("a", (_, _) => { log.Add("a"); return Task.FromResult(new RuleResult("a", true)); });
+        var rule = new FunctionRule<Ctx>("a", (_, _) => { log.Add("a"); return Task.FromResult(new PredicateOutcome(true)); });
 
         await Assert.ThrowsAsync<OperationCanceledException>(
             () => rule.EvaluateAsync(new Ctx(1), Cancelled()));
