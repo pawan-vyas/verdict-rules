@@ -79,8 +79,8 @@ are in-tree copies, so no network, plugin install, or sibling checkout is needed
 
 ## 2 · Where we are (this session's work)
 
-`main` holds everything. Releases: SDKs `0.4.0` (PR #103), skill `0.8.0` (PR #103) and `0.8.1` (PR
-#104, from the eval findings). PR #105 redesigned two evals and released nothing.
+`main` holds everything. Releases: SDKs `0.4.0` (PR #103), skill `0.8.0` (PR #103) and `0.8.1`
+(PR #104, from the eval findings). PR #105 redesigned two evals and released nothing.
 
 ### What the merged branch did, in order
 
