@@ -1,11 +1,12 @@
 ---
 kind: session-handoff
-handoff_schema: 1
-updated_utc: 2026-10-07T04:57:12Z
-updated_local: 2026-10-07T10:27:12+05:30
+handoff_schema: 2
+sealed: true
+updated_utc: 2026-10-17T10:13:07Z
+updated_local: 2026-10-17T15:43:07+05:30
 branch: diagnostics/debugger-display-all-languages
-state_at_commit: 706c181378391b94f51222c1fb07f9f0cecb3c9e
-state_at_commit_short: 706c181
+state_at_commit: 0042e4ea06cd916861da61f5b5545ed55eb17fd7
+state_at_commit_short: 0042e4e
 # Freshness: run `git log --oneline "$(git log -1 --format=%H -- HANDOFF.md)"..HEAD`. Empty (+ clean
 # tree) = current. Non-empty = stale — reconcile per §0.1 before trusting §2–§3. (Comparing against
 # state_at_commit directly always shows the handoff commit itself as "drift" — see §0.1.)
@@ -157,6 +158,17 @@ minor bump with one changelog entry and no intermediate versions.
     record *which* of the two questions it failed, because the reason rots faster than the verdict
     and has now been wrong twice.
 
+16. **The context-fence upgrade to 0.4.1.** Vendored copies refreshed, `.agents/fence.json`
+    written with every decision accepted, and a "Durable context" index added to `AGENTS.md`
+    (the memory and plans READMEs gained index tables for what the index does not show).
+17. **Mutation testing re-run for all four languages** against the composite-parts contract, one
+    language at a time: Python 242/243, C# 173/175, JS 241/246, Dart 58/58. The survivor sets are
+    unchanged and documented; the score lines in `docs/maintenance/mutation-survivors-*.md` are
+    updated.
+18. **The mermaid validator step in `lint-docs.yml` was broken** since it was wired in: it ran
+    with no arguments and exited 2, so "Markdown lint" failed on every push. It now runs once per
+    tracked doc carrying a diagram, excluding the vendored skills. All PR checks pass.
+
 ### Current green state
 
 Python 1435 · JS 159 core + 1765 graduation + 33 marketplace · Dart 153 core + 1271 + 32 ·
@@ -172,10 +184,9 @@ are accounted for in the concept map.
    eight evals that test `0.4`-only surface are unrunnable (not merely unrun), because an eval
    fixture must pin a version that is actually published. (`origin` was current at this handoff;
    confirm with `git log --oneline origin/HEAD..HEAD` before assuming it still is.)
-2. **Re-run mutation testing** if the library source changes again. It was run for all four
-   languages earlier on this branch, *before* the composite-parts contract landed, so the
-   surviving-mutant records in `docs/maintenance/mutation-survivors-<language>.md` do not cover
-   `SubRules`/`sub_rules`/`subRules` or the new contract's narrowing. One language at a time, per §5.
+2. **Update the PR description** if it has not been replaced: a draft reflecting the final state
+   is in `.agents/scratch/pr-103-body.md` (gitignored; apply with `gh pr edit 103 --body-file`).
+   Re-run mutation testing only if library source changes again, one language at a time.
 
 ## 4 · Known issues / open decisions
 
