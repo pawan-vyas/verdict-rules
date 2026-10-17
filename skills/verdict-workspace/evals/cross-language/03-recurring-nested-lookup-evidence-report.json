@@ -1,0 +1,17 @@
+{
+  "eval_name": "recurring-nested-lookup-evidence-report",
+  "prompt": "I'm building a document-review service on verdict. Rules are nested a few levels deep, and every time I need to run one specific rule from inside the tree on its own, for a 'why did this fail' screen, I write the same small helper: it walks each composite's sub-rules recursively until it finds the rule with the given name, then evaluates just that rule. The engine's run_named only finds the rules I registered, not the ones inside them. This is now the third unrelated project where I've written almost this exact helper -- an access-control gate and a pricing check before this one, two completely different domains. Should I just keep rewriting it, or is this worth telling the verdict maintainers about?",
+  "expected_output": "A response that confirms against the installed version and the skill that nothing in verdict looks a rule up by name below the registered ones, so the recurring helper is a workaround around a missing capability rather than a misuse of an existing one. It treats this as the recurring-pattern situation, not a bug and not a feature to advocate for, checks existing issues first, and prints the report for the user to file (or files it only if it genuinely has access, saying so). The report describes the workaround structurally (a recursive walk over a composite's sub-rules to find a rule by name) without pasting any project's literal code, states it was seen across three unrelated generically-described domains, frames it as evidence for the maintainer to weigh rather than a demand, and is labelled enhancement.",
+  "files": [
+    "files/pyproject.toml"
+  ],
+  "expectations": [
+    "The response establishes, from the skill or the installed package, that verdict has no lookup of a rule by name below the rules registered on an engine, so the helper is a workaround for a missing capability rather than something verdict already provides",
+    "The response identifies this as the recurring-pattern/evidence case, not a bug report and not a feature request the agent should simply build or strongly advocate for",
+    "The response states it will check, or has checked, the project's existing issues for a duplicate before proposing to file a new one",
+    "The response does not claim to have actually created a GitHub issue unless it genuinely did; when it cannot, it prints the report for the user to file",
+    "The report describes the workaround structurally (a recursive walk over a composite's sub-rules to find a rule by name) rather than pasting any one project's literal code, and states it was observed across three separate, generically-described domains without inventing additional proprietary detail",
+    "The response explicitly frames this as evidence for the maintainer to weigh, not a demand or a claim that verdict must add the capability",
+    "The report is labeled (or the response states it should be labeled) 'enhancement', not 'bug'"
+  ]
+}
